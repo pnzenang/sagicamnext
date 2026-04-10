@@ -13,7 +13,7 @@ const AddMember = async () => {
 
   return (
     <section className='mt-16 flex flex-col'>
-      <h1 className='my-8 text-2xl font-semibold capitalize sm:text-6xl'> add loved one</h1>
+      <h1 className='my-8 text-2xl font-semibold capitalize sm:text-6xl'> add new loved one</h1>
       <div className='border-primary bg-muted rounded-lg border p-8'>
         <FormContainer action={createMemberAction}>
           <div className='mt-4 grid gap-4 md:grid-cols-2'>
