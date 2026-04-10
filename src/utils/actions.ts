@@ -132,7 +132,7 @@ export const createMemberAction = async (provState: any, formData: FormData): Pr
       if (error.code === 'P2002') {
         return {
           message:
-            'A member with the same first and last names already exists, please contact the administrator for assistance.'
+            'A member with the same first and last names already exists, please check your previous entries or contact admin for assistance.'
         }
       }
     }
