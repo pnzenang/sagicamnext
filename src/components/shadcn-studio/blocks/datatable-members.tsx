@@ -298,7 +298,7 @@ const MembersDataTable = ({ data }: { data: MemberType[] }) => {
     <div className='border-primary w-full rounded border'>
       <div className='border-b'>
         <div className='flex flex-col gap-4 border-b p-6'>
-          <span className='text-2xl font-semibold sm:text-4xl lg:text-6xl'>All Active Members</span>
+          <span className='text-2xl font-semibold sm:text-4xl lg:text-6xl'>All Active Loved Ones</span>
           <div className='flex items-center justify-between gap-3 px-6 py-4 max-sm:flex-col'>
             <p className='text-primary text-sm font-extrabold whitespace-nowrap' aria-live='polite'>
               <span>{table.getRowCount().toString()} Member(s) Found</span>
