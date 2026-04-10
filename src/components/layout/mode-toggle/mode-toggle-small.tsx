@@ -10,8 +10,8 @@ const ModeToggleSmall = () => {
 
   return (
     <PrimaryFlowButton
-      size='sm'
-      className='bg-accent relative flex h-8 w-8 items-center justify-center rounded-full'
+      size='xs'
+      className='bg-accent relative flex h-6 w-6 items-center justify-center rounded-full'
       onClick={() => setTheme(resolvedTheme === 'light' ? 'dark' : 'light')}
     >
       <MoonStarIcon className='scale-100 dark:scale-0' />
