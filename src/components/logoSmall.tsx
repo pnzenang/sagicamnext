@@ -7,9 +7,9 @@ const LogoSmall = ({ className }: { className?: string }) => {
   return (
     <div className={cn('flex items-center gap-3', className)}>
       <Image
-        src='https://res.cloudinary.com/dp8tkb7hq/image/upload/v1775808900/f_3_qxs8pn.svg'
-        width={100}
-        height={60}
+        src='https://res.cloudinary.com/dp8tkb7hq/image/upload/v1775874776/sagicam_qrivqc.svg'
+        width={110}
+        height={55}
         alt='logo'
       />
       {/* <span className='font-semibold'>SAGI</span> */}

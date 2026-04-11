@@ -10,6 +10,7 @@ import { Separator } from '@/components/ui/separator'
 import Logo from '@/components/logo'
 import { PrimaryFlowButton } from '@/components/ui/flow-button'
 import SectionSeparator from '@/components/section-separator'
+import LogoSmall from '../logoSmall'
 
 const Footer = () => {
   return (
@@ -18,7 +19,10 @@ const Footer = () => {
       <div className='mx-auto grid max-w-7xl grid-cols-6 gap-6 px-4 py-8 sm:gap-8 sm:px-6 sm:py-16 md:py-24 lg:px-8'>
         <div className='col-span-full flex flex-col items-start gap-4 lg:col-span-2'>
           <Link href='/#home'>
-            <Logo />
+            <div className='flex items-center gap-3'>
+              <Logo className='hidden sm:block' />
+              <LogoSmall className='block sm:hidden' />
+            </div>
           </Link>
           <p className='text-muted-foreground'>
             SAGI helps you centralize your product, sales, and user data - all in one simple, real-time dashboard built

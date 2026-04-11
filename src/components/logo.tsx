@@ -7,11 +7,11 @@ const Logo = ({ className }: { className?: string }) => {
   return (
     <div className={cn('relative flex flex-row items-center gap-2', className)}>
       <Image
-        src='https://res.cloudinary.com/dp8tkb7hq/image/upload/v1775808900/f_3_qxs8pn.svg'
+        src='https://res.cloudinary.com/dp8tkb7hq/image/upload/v1775874776/sagicam_qrivqc.svg'
         alt='logo'
         loading='eager'
-        width={100}
-        height={70}
+        width={180}
+        height={90}
       />
       {/* <span className='hidden text-3xl font-extrabold sm:block'>SAGI</span> */}
     </div>

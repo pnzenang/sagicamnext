@@ -58,9 +58,6 @@ model RemovedMember {
   dateOfBirth String
   countryOfBirth String
   memberMatriculationNumber String
-  // delegateRecommendation String
-  // memberStatus String
-  // nameOfBeneficiary String
   associationName String
   associationCode String
   reasonForLeaving String
@@ -72,11 +69,8 @@ model DeceasedMember {
   clerkId String
   firstName String
   lastAndMiddleNames String
-  // dateOfBirth String
   countryOfBirth String
   memberMatriculationNumber String
-  // delegateRecommendation String
-  // memberStatus String
   registrationDate String
   nameOfBeneficiary String
   associationName String

@@ -14,6 +14,7 @@ import { HeaderNavigation, HeaderNavigationSmallScreen, type Navigation } from '
 import { cn } from '@/lib/utils'
 import Logo from '../logo'
 import { ModeToggle } from './mode-toggle/mode-toggle'
+import LogoSmall from '../logoSmall'
 
 type HeaderProps = {
   navigationData: Navigation[]
@@ -50,7 +51,8 @@ const Header = ({ navigationData, className }: HeaderProps) => {
         {/* Logo */}
         <Link href='/#home'>
           <div className='flex items-center gap-3'>
-            <Logo className='size=8 sm:size=2' />
+            <Logo className='hidden sm:block' />
+            <LogoSmall className='block sm:hidden' />
           </div>
         </Link>
 

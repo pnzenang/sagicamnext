@@ -22,7 +22,7 @@ import { pagesItems } from '@/utils/links'
 
 const PagesLayout = ({ children }: Readonly<{ children: ReactNode }>) => {
   return (
-<>
+    <>
       <div className='bg-muted flex min-h-dvh w-full'>
         <SidebarProvider>
           <Sidebar collapsible='icon' className='**:data-[slot=sidebar-inner]:bg-muted border-r-0!'>
@@ -31,7 +31,7 @@ const PagesLayout = ({ children }: Readonly<{ children: ReactNode }>) => {
                 <SidebarMenuItem>
                   <SidebarMenuButton size='lg' className='gap-2.5 bg-transparent [&>svg]:size-8' asChild>
                     <Link href='/' className='flex justify-center'>
-                      <LogoSmall className='size-18' />
+                      <LogoSmall className='size-24' />
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -62,7 +62,7 @@ const PagesLayout = ({ children }: Readonly<{ children: ReactNode }>) => {
           </div>
         </SidebarProvider>
       </div>
-</>
+    </>
   )
 }
 
