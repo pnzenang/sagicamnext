@@ -9,7 +9,6 @@ import CTA from '@/components/blocks/cta/cta'
 
 import { logos } from '@/assets/data/trusted-brands'
 import { plans } from '@/assets/data/pricing'
-import { testimonials } from '@/assets/data/testimonials'
 
 import SectionSeparator from '@/components/section-separator'
 import HeroSection from '@/components/shadcn-studio/blocks/hero-section-12/hero-section-12'
@@ -33,7 +32,7 @@ const Home = () => {
 
       <SectionSeparator />
 
-      <Testimonials testimonials={testimonials} />
+      {/* <Testimonials /> */}
 
       <SectionSeparator />
 

@@ -6,7 +6,11 @@ import { contributionStatus, delegateRecommendation, memberStatus, reasonForLeav
 
 export const profileSchema = z.object({
   associationName: z.string().toUpperCase().min(4, { message: 'Association name must be at least 4 characters' }),
-  associationCode: z.string().toUpperCase().length(4, { message: 'Association code must be exactly 4 characters' }),
+  associationCode: z
+    .string()
+    .toUpperCase()
+    .length(4, { message: 'Association code must be exactly 4 characters' })
+    .regex(/^[a-zA-Z]+$/, { message: 'Association code must contain only letters' }),
   firstDelegateFullName: z.string().toUpperCase().min(2, { message: 'Association name must be at least 2 characters' }),
   firstDelegatePhoneNumber: z
     .string()

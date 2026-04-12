@@ -71,7 +71,7 @@ const FAQ = ({ faqItems }: FAQComponentProps) => {
                     value={`item-${index}`}
                     className='bg-card rounded-md border-b-0 shadow-md data-[state=open]:shadow-lg'
                   >
-                    <AccordionTrigger className='px-5 text-base hover:no-underline [&>svg]:size-5'>
+                    <AccordionTrigger className='text-primary px-5 text-base font-bold hover:no-underline [&>svg]:size-5'>
                       {item.question}
                     </AccordionTrigger>
                     <AccordionContent className='text-muted-foreground px-5 text-base leading-relaxed'>

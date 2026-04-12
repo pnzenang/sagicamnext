@@ -2,7 +2,7 @@ import FAQ from '@/components/shadcn-studio/blocks/faq-component-15/faq-componen
 
 const faqItems = [
   {
-    question: 'What types of accommodations do you offer?',
+    question: 'Who can become a SAGICAM member?',
     answer:
       "We offer a variety of accommodations including hotels, motels, and vacation rentals to suit every traveler's needs."
   },
