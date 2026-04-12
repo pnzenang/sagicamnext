@@ -82,7 +82,7 @@ export type DeceasedMemberType = {
 }
 
 export enum contributionStatus {
-  review = 'Case_In_Review',
+  review = 'Received_And_In_Review',
   denied = 'Contribution_Denied',
   underway = 'Contribution_Underway',
   completed = 'Contribution_Completed'
