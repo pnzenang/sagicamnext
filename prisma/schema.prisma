@@ -48,7 +48,7 @@ model Member {
   associationCode String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  @@unique([firstName, lastAndMiddleNames])
+  @@unique([firstName, lastAndMiddleNames,dateOfBirth, delegateRecommendation])
 }
 model RemovedMember {
   id String @id @default(uuid())

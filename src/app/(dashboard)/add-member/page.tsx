@@ -44,7 +44,7 @@ const AddMember = async () => {
               label='delegate recommendation'
               items={Object.values(delegateRecommendation)}
               name='delegateRecommendation'
-              defaultValue={delegateRecommendation.Confirm}
+              defaultValue={delegateRecommendation.confirm}
             />
             <FormSelect
               label='member status'

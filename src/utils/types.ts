@@ -15,8 +15,10 @@ export type MenuItem = {
 export type actionFunction = (prevState: any, formData: FormData) => Promise<{ message: string }>
 
 export enum delegateRecommendation {
-  Confirm = 'confirm',
-  Transfer = 'transfer'
+  confirm = 'Confirm',
+  transferFromSagi = 'Transfer_From_Sagi',
+  transferOut = 'Transfer_Out',
+  transferIn = 'Transfer_In'
 }
 
 export enum memberStatus {
@@ -33,8 +35,6 @@ export type MemberType = {
   countryOfBirth: string
   memberMatriculationNumber: string
 
-  // delegateRecommendation: string
-  // memberStatus: string
   nameOfBeneficiary?: string
   associationName: string
   associationCode: string
@@ -68,7 +68,6 @@ export type DeceasedMemberType = {
   clerkId: string
   firstName: string
   lastAndMiddleNames: string
-
   contributionStatus: string
   registrationDate: string
   countryOfBirth: string

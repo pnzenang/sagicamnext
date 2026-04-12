@@ -132,7 +132,7 @@ export const createMemberAction = async (provState: any, formData: FormData): Pr
       if (error.code === 'P2002') {
         return {
           message:
-            'A member with the same first and last names already exists, please check your previous entries or contact admin for assistance.'
+            'A member with the same first names, last names date of birth and recommendation already exists, please check your previous entries or contact admin for assistance.'
         }
       }
     }
@@ -181,6 +181,20 @@ export const fetchSingleMemberDetails = async (memberId: string) => {
 
   return member
 }
+export const fetchSingleMemberDetailsForAdmin = async (memberId: string) => {
+  const user = await currentUser()
+
+  const member = await db.member.findUnique({
+    where: {
+      id: memberId
+      // clerkId: user?.id
+    }
+  })
+
+  if (!member) redirect('/admin')
+
+  return member
+}
 
 export const updateMemberDetailsAction = async (prevState: any, formData: FormData) => {
   try {
@@ -204,6 +218,37 @@ export const updateMemberDetailsAction = async (prevState: any, formData: FormDa
   }
 
   redirect('/all-members')
+}
+export const updateMemberDetailsActionForAdmin = async (prevState: any, formData: FormData) => {
+  try {
+    const memberId = formData.get('id') as string
+    const rawData = Object.fromEntries(formData)
+    const validatedFields = validateWithZodSchema(memberSchema, rawData)
+
+    await db.member.update({
+      where: {
+        id: memberId
+      },
+      data: {
+        ...validatedFields
+      }
+    })
+    revalidatePath(`admin/${memberId}/edit`)
+
+    // return { message: `Member Details Updated Successfully` }
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2002') {
+        return {
+          message:
+            'A member with the same first names, last names date of birth and recommendation already exists, please check your previous entries or contact admin for assistance.'
+        }
+      }
+    }
+    return renderError(error)
+  }
+
+  redirect('/admin')
 }
 
 export const createRemovedMemberAction = async (provState: any, formData: FormData): Promise<{ message: string }> => {
@@ -230,6 +275,34 @@ export const createRemovedMemberAction = async (provState: any, formData: FormDa
   }
 
   redirect('/all-members')
+}
+export const createRemovedMemberActionAdmin = async (
+  provState: any,
+  formData: FormData
+): Promise<{ message: string }> => {
+  const user = await getAuthUser()
+
+  try {
+    const memberId = formData.get('id') as string
+    const rawData = Object.fromEntries(formData)
+    const validatedFields = validateWithZodSchema(RemovedMemberSchema, rawData)
+
+    await db.removedMember.create({
+      data: {
+        ...validatedFields,
+        clerkId: user.id
+      }
+    })
+    await db.member.delete({
+      where: {
+        id: memberId
+      }
+    })
+  } catch (error) {
+    return renderError(error)
+  }
+
+  redirect('/admin')
 }
 
 export const fetchRemovedMembersAction = async () => {
@@ -270,8 +343,48 @@ export const createDeceasedMemberAction = async (provState: any, formData: FormD
 
   redirect('/all-members')
 }
+export const createDeceasedMemberActionAdmin = async (
+  provState: any,
+  formData: FormData
+): Promise<{ message: string }> => {
+  const user = await getAuthUser()
+
+  try {
+    const memberId = formData.get('id') as string
+    const rawData = Object.fromEntries(formData)
+    const validatedFields = validateWithZodSchema(DeceasedMemberSchema, rawData)
+
+    await db.deceasedMember.create({
+      data: {
+        ...validatedFields,
+        clerkId: user.id
+      }
+    })
+    await db.member.delete({
+      where: {
+        id: memberId
+      }
+    })
+  } catch (error) {
+    return renderError(error)
+  }
+
+  redirect('/admin')
+}
 
 export const fetchDeceasedMembersAction = async () => {
+  const user = await getAuthUser()
+
+  const deceasedMember = await db.deceasedMember.findMany({
+    where: {
+      clerkId: user.id
+    },
+    orderBy: { createdAt: 'desc' }
+  })
+
+  return deceasedMember
+}
+export const fetchDeceasedMembersActionAdmin = async () => {
   const user = await getAuthUser()
 
   const deceasedMember = await db.deceasedMember.findMany({

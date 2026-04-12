@@ -142,11 +142,19 @@ const columns: ColumnDef<MemberType>[] = [
 
       const styles = {
         transfer: 'text-blue-500 bg-transparent ',
-        confirm: ' text-muted-foreground bg-transparent'
+        confirm: ' text-muted-foreground bg-transparent',
+        Confirm:
+          'bg-green-600/10 text-zinc-600 focus-visible:ring-zinc-600/20 dark:bg-zinc-400/10 dark:text-zinc-400 dark:focus-visible:ring-zinc-400/40 [a&]:hover:bg-zinc-600/5 dark:[a&]:hover:bg-zinc-400/5',
+        Transfer_From_Sagi:
+          'bg-orange-600/10 text-orange-600 focus-visible:ring-orange-600/20 dark:bg-orange-400/10 dark:text-orange-400 dark:focus-visible:ring-orange-400/40 [a&]:hover:bg-orange-600/5 dark:[a&]:hover:bg-orange-400/5',
+        Transfer_Out:
+          'bg-blue-600/10 text-blue-600 focus-visible:ring-blue-600/20 dark:bg-blue-400/10 dark:text-blue-400 dark:focus-visible:ring-blue-400/40 [a&]:hover:bg-blue-600/5 dark:[a&]:hover:bg-blue-400/5',
+        Transfer_In:
+          'bg-purple-600/10 text-purple-600 focus-visible:ring-purple-600/20 dark:bg-purple-400/10 dark:text-purple-400 dark:focus-visible:ring-purple-400/40 [a&]:hover:bg-purple-600/5 dark:[a&]:hover:bg-purple-400/5'
       }[recommendation]
 
       return (
-        <Badge className={cn('rounded-sm border font-bold capitalize focus-visible:outline-none', styles)}>
+        <Badge className={cn('rounded-sm border capitalize focus-visible:outline-none', styles)}>
           {row.getValue('delegateRecommendation')}
         </Badge>
       )
@@ -165,13 +173,13 @@ const columns: ColumnDef<MemberType>[] = [
 
       const styles = {
         vested:
-          'bg-green-600/10 text-green-600 focus-visible:ring-green-600/20 dark:bg-green-400/10 dark:text-green-400 dark:focus-visible:ring-green-400/40 [a&]:hover:bg-green-600/5 dark:[a&]:hover:bg-green-400/5',
+          'bg-teal-600/10 text-green-600 focus-visible:ring-green-600/20 dark:bg-green-400/10 dark:text-green-400 dark:focus-visible:ring-green-400/40 [a&]:hover:bg-green-600/5 dark:[a&]:hover:bg-green-400/5',
         pending:
           'bg-amber-600/10 text-amber-600 focus-visible:ring-amber-600/20 dark:bg-amber-400/10 dark:text-amber-400 dark:focus-visible:ring-amber-400/40 [a&]:hover:bg-amber-600/5 dark:[a&]:hover:bg-amber-400/5'
       }[status]
 
       return (
-        <Badge className={cn('rounded-sm border-none capitalize focus-visible:outline-none', styles)}>
+        <Badge className={cn('rounded-sm border-none font-bold capitalize focus-visible:outline-none', styles)}>
           {row.getValue('memberStatus')}
         </Badge>
       )
@@ -372,8 +380,8 @@ const MembersDataTable = ({ data }: { data: MemberType[] }) => {
         <div className='flex items-start gap-4 p-6 max-sm:flex-col sm:items-center sm:justify-between'>
           <div className='flex w-6/7 flex-col justify-start gap-2 sm:flex-row sm:items-center'>
             <Filter column={table.getColumn('associationCode')!} />
-            <Filter column={table.getColumn('firstName')!} />
             <Filter column={table.getColumn('lastAndMiddleNames')!} />
+            <Filter column={table.getColumn('firstName')!} />
             <Filter column={table.getColumn('delegateRecommendation')!} />
             <Filter column={table.getColumn('memberStatus')!} />
           </div>
@@ -565,6 +573,8 @@ function Filter({ column }: { column: Column<any, unknown> }) {
 }
 
 function RowActions({ memberId }: { memberId: string }) {
+  const currentDay = new Date().getDate()
+  const shouldShow = currentDay >= 12
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -577,7 +587,7 @@ function RowActions({ memberId }: { memberId: string }) {
       <DropdownMenuContent align='center' className='border-primary rounded border'>
         <DropdownMenuGroup>
           <DropdownMenuItem>
-            <Link href={`/all-members/${memberId}/edit`}>
+            <Link href={`/admin/${memberId}/edit`}>
               <span className='flex gap-3 text-blue-500'>
                 <Pencil className='text-blue-500' />
                 View and Edit Member&apos;s Details
@@ -585,21 +595,23 @@ function RowActions({ memberId }: { memberId: string }) {
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem>
-            <Link href={`/all-members/${memberId}/deathAnnouncement`}>
+            <Link href={`/admin/${memberId}/deathAnnouncement`}>
               <span className='flex gap-3 text-purple-500'>
                 <Cross className='text-purple-500' />
                 Announce Member&apos;s Dead
               </span>
             </Link>
           </DropdownMenuItem>
-          <DropdownMenuItem>
-            <Link href={`/all-members/${memberId}/removeMember`}>
-              <span className='flex gap-3 text-red-500'>
-                <Trash2 className='text-red-500' />
-                Remove Member
-              </span>
-            </Link>
-          </DropdownMenuItem>
+          {shouldShow ? (
+            <DropdownMenuItem>
+              <Link href={`/admin/${memberId}/removeMember`}>
+                <span className='flex flex-row gap-3 text-red-500'>
+                  <Trash2 className='text-red-500' />
+                  Remove Member
+                </span>
+              </Link>
+            </DropdownMenuItem>
+          ) : null}
         </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>

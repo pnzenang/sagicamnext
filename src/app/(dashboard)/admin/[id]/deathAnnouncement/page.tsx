@@ -3,23 +3,14 @@ import FormContainer from '@/components/forms/FormContainer'
 import FormInput from '@/components/forms/FormInput'
 import FormSelect from '@/components/forms/FormSelect'
 import MaskDateInput from '@/components/forms/MaskDateInput'
-import {
-  createDeceasedMemberAction,
-  createDeceasedMemberActionAdmin,
-  fetchProfile,
-  fetchSingleMemberDetails,
-  fetchSingleMemberDetailsForAdmin
-} from '@/utils/actions'
+import { createDeceasedMemberActionAdmin, fetchProfile, fetchSingleMemberDetailsForAdmin } from '@/utils/actions'
 import { contributionStatus, delegateRecommendation, memberStatus } from '@/utils/types'
 import { TiWarning } from 'react-icons/ti'
 import { BsSignStopFill } from 'react-icons/bs'
-import { RiArrowGoBackLine } from 'react-icons/ri'
-import Link from 'next/link'
-
 const DeathAnnouncement = async ({ params }: { params: { id: string } }) => {
   const { id } = await params
 
-  const member = await fetchSingleMemberDetails(id)
+  const member = await fetchSingleMemberDetailsForAdmin(id)
 
   const {
     firstName,
@@ -46,7 +37,7 @@ const DeathAnnouncement = async ({ params }: { params: { id: string } }) => {
         </p>
       </div>
       <div className='rounded-lg border border-purple-800 bg-purple-300/50 p-8'>
-        <FormContainer action={createDeceasedMemberAction}>
+        <FormContainer action={createDeceasedMemberActionAdmin}>
           <div>
             <input type='hidden' name='id' value={id} />
             <div className='mt-4 grid gap-4 md:grid-cols-3'>
@@ -123,9 +114,6 @@ const DeathAnnouncement = async ({ params }: { params: { id: string } }) => {
                   You can not announce the death of {member.lastAndMiddleNames} {member.firstName} because he or she was
                   not vested yet.
                 </h1>
-                <Link href='/all-members' className='mt-4 text-red-500 hover:underline'>
-                  <RiArrowGoBackLine className='inline-block' /> Back to Members List
-                </Link>
               </div>
             )}
           </div>
