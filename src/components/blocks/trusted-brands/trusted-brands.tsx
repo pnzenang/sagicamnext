@@ -13,7 +13,7 @@ const TrustedBrands = ({ brandLogos }: { brandLogos: brandLogos[] }) => {
       <div className='mx-auto max-w-7xl px-4 sm:px-6 lg:px-8'>
         {/* Header */}
         <div className='mb-4 space-y-4 text-center sm:mb-6 lg:mb-8'>
-          <p className='text-muted-foreground text-xl'>Trusted by startups, enterprises, and industry giants alike.</p>
+          <p className='text-muted-foreground text-xl'>SAGICAM unites people from all Cameroonian communities.</p>
         </div>
 
         <div className='relative'>
@@ -24,7 +24,7 @@ const TrustedBrands = ({ brandLogos }: { brandLogos: brandLogos[] }) => {
               {brandLogos.map((logo, index) => (
                 <Card key={index} className='border-none bg-transparent py-9 shadow-none'>
                   <CardContent className='flex flex-col items-center px-9'>
-                    <img src={logo.image} alt={logo.name} className='h-6 opacity-75 grayscale dark:invert' />
+                    <img src={logo.image} alt={logo.name} className='h-32 opacity-60' />
                   </CardContent>
                 </Card>
               ))}

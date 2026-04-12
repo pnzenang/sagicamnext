@@ -5,16 +5,16 @@ import Features from '@/components/shadcn-studio/blocks/features-section-01/feat
 const featuresList = [
   {
     icon: SwatchBookIcon,
-    title: 'No Age Limitations',
+    title: 'User-Friendly Interface',
     description:
-      "Navigate effortlessly with our intuitive design, optimized for all devices. Enjoy a seamless experience whether you're on a computer or mobile.",
+      "Navigate effortlessly with our intuitive design, optimised for all devices. Enjoy a seamless experience whether you're on a computer or mobile.",
     cardBorderColor: 'border-primary/40 hover:border-primary',
     avatarTextColor: 'text-primary',
     avatarBgColor: 'bg-primary/10'
   },
   {
     icon: ShieldBanIcon,
-    title: 'No Geographical Restrictions',
+    title: 'Secure Checkout',
     description:
       'Enjoy a safe shopping experience with multiple payment options and SSL encryption. Your personal and financial information is always protected.',
     cardBorderColor: 'border-green-600/40 hover:border-green-600 dark:border-green-400/40 dark:hover:border-green-400',
@@ -23,7 +23,7 @@ const featuresList = [
   },
   {
     icon: SearchIcon,
-    title: 'No Health Checks Required',
+    title: 'Advanced Search',
     description:
       'Find products quickly with advanced filters, sorting options, and suggestion. Save time and effortlessly locate exactly what you need with ease.',
     cardBorderColor: 'border-amber-600/40 hover:border-amber-600 dark:border-amber-400/40 dark:hover:border-amber-400',
@@ -32,7 +32,7 @@ const featuresList = [
   },
   {
     icon: StarIcon,
-    title: 'Any Number Of Loved Ones',
+    title: 'Customer Reviews and Ratings',
     description:
       'Make informed decisions with detailed product reviews and ratings from other buyers. Trust the experiences of fellow shoppers to guide choices.',
     cardBorderColor: 'border-destructive/40 hover:border-destructive',
@@ -41,7 +41,7 @@ const featuresList = [
   },
   {
     icon: SmartphoneIcon,
-    title: 'No Language Barriers',
+    title: 'Mobile App Integration',
     description:
       'Enhance your shopping experience with our mobile app and push notifications. Stay updated on arrivals and exclusive offers directly on phone.',
     cardBorderColor: 'border-sky-600/40 hover:border-sky-600 dark:border-sky-400/40 dark:hover:border-sky-400',
@@ -50,7 +50,7 @@ const featuresList = [
   },
   {
     icon: LockKeyholeIcon,
-    title: 'No Discrimination or Bias',
+    title: 'Security Features',
     description:
       'Protect your data with fraud detection and two-factor authentication. Ensure a secure environment for all transactions and account activities.',
     cardBorderColor: 'border-primary/40 hover:border-primary',
@@ -60,11 +60,7 @@ const featuresList = [
 ]
 
 const FeaturesPage = () => {
-  return (
-    <section id='features' className='py-8 sm:py-16 lg:py-24'>
-      <Features featuresList={featuresList} />
-    </section>
-  )
+  return <Features featuresList={featuresList} />
 }
 
 export default FeaturesPage

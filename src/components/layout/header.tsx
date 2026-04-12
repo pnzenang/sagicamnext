@@ -47,7 +47,7 @@ const Header = ({ navigationData, className }: HeaderProps) => {
         className
       )}
     >
-      <div className='flex h-full items-center justify-between gap-4 border-b px-4 sm:px-6 lg:px-8'>
+      <div className='lg:plx-8 flex h-full items-center justify-between gap-4 border-b px-4 sm:px-6 lg:pl-2'>
         {/* Logo */}
         <Link href='/#home'>
           <div className='flex items-center gap-3'>

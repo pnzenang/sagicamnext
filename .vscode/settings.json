@@ -40,8 +40,10 @@
   "editor.linkedEditing": true,
   "typescript.tsdk": "node_modules/typescript/lib",
   "cSpell.words": [
+    "ADAMAOUA",
     "datatable",
-    "SAGI"
+    "SAGI",
+    "SAGICAM"
   ],
   "[typescriptreact]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"

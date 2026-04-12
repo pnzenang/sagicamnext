@@ -2,22 +2,22 @@ import FAQ from '@/components/shadcn-studio/blocks/faq-component-15/faq-componen
 
 const faqItems = [
   {
-    question: 'What types of accommodations do you offer?',
+    question: 'Who can become a member of SAGICAM?',
     answer:
       "We offer a variety of accommodations including hotels, motels, and vacation rentals to suit every traveler's needs."
   },
   {
-    question: 'How do I make a booking?',
+    question: 'How much is the registration fee?',
     answer:
       'You can make a booking through our website, mobile app, or by calling our customer service team directly. We make it easy for you to reserve your perfect accommodation.'
   },
   {
-    question: 'What is your cancellation policy?',
+    question: 'How do I make a payment?',
     answer:
       'Our cancellation policy varies depending on the property and rate type. Generally, you can cancel up to 24-48 hours before check-in without penalty. Check your booking details for specific terms.'
   },
   {
-    question: 'Can I modify my booking after it has been confirmed?',
+    question: 'Who can be a Sponsor in SAGICAM?',
     answer:
       "Yes, most bookings can be modified depending on availability and the property's terms. Contact our customer service team or use your online account to make changes."
   },
@@ -28,8 +28,8 @@ const faqItems = [
   }
 ]
 
-const FAQs = () => {
+const FAQPage = () => {
   return <FAQ faqItems={faqItems} />
 }
 
-export default FAQs
+export default FAQPage

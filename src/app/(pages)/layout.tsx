@@ -1,14 +1,5 @@
 import type { ReactNode } from 'react'
 
-import {
-  LayoutDashboardIcon,
-  TelescopeIcon,
-  ChartScatterIcon,
-  ChartPieIcon,
-  GitPullRequestIcon,
-  UsersIcon
-} from 'lucide-react'
-
 import Header from '@/components/layout/header'
 import Footer from '@/components/layout/footer'
 import type { Navigation } from '@/components/layout/header-navigation'
@@ -16,58 +7,7 @@ import type { Navigation } from '@/components/layout/header-navigation'
 const navigationData: Navigation[] = [
   {
     title: 'Features',
-    contentClassName: '!w-141 grid-cols-2',
-    splitItems: true,
-    items: [
-      {
-        type: 'section',
-        title: 'Analytics & Insights',
-        items: [
-          {
-            title: 'Unified Dashboard',
-            href: '/#features',
-            description: 'Get every key business metric in one place.',
-            icon: <LayoutDashboardIcon className='size-4' />
-          },
-          {
-            title: 'Competitor Tracking',
-            href: '#',
-            description: 'Benchmark performance and market trends.',
-            icon: <TelescopeIcon className='size-4' />
-          },
-          {
-            title: 'Sales Analytics',
-            href: '#',
-            description: 'Track revenue growth, conversions & profitability.',
-            icon: <ChartScatterIcon className='size-4' />
-          }
-        ]
-      },
-      {
-        type: 'section',
-        title: 'Productivity & Optimization',
-        items: [
-          {
-            title: 'Report & Export',
-            href: '#',
-            description: 'Share insights quickly with automated reporting.',
-            icon: <ChartPieIcon className='size-4' />
-          },
-          {
-            title: 'Workflow Scheduling',
-            href: '#',
-            description: 'Plan content & operational tasks seamlessly.',
-            icon: <GitPullRequestIcon className='size-4' />
-          },
-          {
-            title: 'User Management',
-            href: '#',
-            description: 'Manage roles and access with complete control.',
-            icon: <UsersIcon className='size-4' />
-          }
-        ]
-      }
-    ]
+    href: '/#features'
   },
   {
     title: 'Benefits',
@@ -78,12 +18,12 @@ const navigationData: Navigation[] = [
     href: '/#testimonials'
   },
   {
-    title: 'Pricing',
-    href: '/pricing'
+    title: 'FAQ',
+    href: '/#faq'
   },
   {
-    title: 'Blog',
-    href: '/blog'
+    title: 'Contact',
+    href: '/#contact'
   }
 ]
 

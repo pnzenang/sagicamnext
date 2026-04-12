@@ -10,31 +10,14 @@ import CTA from '@/components/blocks/cta/cta'
 import { logos } from '@/assets/data/trusted-brands'
 import { plans } from '@/assets/data/pricing'
 import { testimonials } from '@/assets/data/testimonials'
-import { faqItems } from '@/assets/data/faqs'
-import { benefits } from '@/assets/data/benefits'
 
 import SectionSeparator from '@/components/section-separator'
-
-const jsonLd = {
-  '@context': 'https://schema.org',
-  '@graph': [
-    {
-      '@context': 'https://schema.org',
-      '@type': 'WebSite',
-      '@id': `${process.env.NEXT_PUBLIC_APP_URL}#website`,
-      name: 'Flow',
-      description:
-        'Grow your product faster with an all-in-one sales and analytics platform. Track performance, automate follow-ups, and make smarter decisions easily.',
-      url: `${process.env.NEXT_PUBLIC_APP_URL}`,
-      inLanguage: 'en-US'
-    }
-  ]
-}
+import HeroSection from '@/components/shadcn-studio/blocks/hero-section-12/hero-section-12'
 
 const Home = () => {
   return (
     <>
-      <Hero />
+      <HeroSection />
 
       <SectionSeparator />
 
@@ -46,7 +29,7 @@ const Home = () => {
 
       <SectionSeparator />
 
-      <Benefits featuresList={benefits} />
+      {/* <Benefits featuresList={benefits} /> */}
 
       <SectionSeparator />
 
@@ -58,17 +41,9 @@ const Home = () => {
 
       <SectionSeparator />
 
-      <FAQ faqItems={faqItems} />
+      <FAQ />
 
       <CTA />
-
-      {/* Add JSON-LD to your page */}
-      <script
-        type='application/ld+json'
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c')
-        }}
-      />
     </>
   )
 }

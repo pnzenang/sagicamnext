@@ -2,31 +2,43 @@ import type { brandLogos } from '@/components/blocks/trusted-brands/trusted-bran
 
 export const logos: brandLogos[] = [
   {
-    image: '/images/brand-logos/amazon.webp',
-    name: 'Amazon'
+    image: 'https://res.cloudinary.com/dp8tkb7hq/image/upload/v1775977833/SOUTH-removebg-preview_ikjqux.png',
+    name: 'SOUTH'
   },
   {
-    image: '/images/brand-logos/deloitte.webp',
-    name: 'Deloitte'
+    image: 'https://res.cloudinary.com/dp8tkb7hq/image/upload/v1775977831/CENTER-removebg-preview_iqtcs6.png',
+    name: 'CENTER'
   },
   {
-    image: '/images/brand-logos/evernote.webp',
-    name: 'Evernote'
+    image: 'https://res.cloudinary.com/dp8tkb7hq/image/upload/v1775977836/EAST_EST_-removebg-preview_de9emc.png',
+    name: 'EAST'
   },
   {
-    image: '/images/brand-logos/fedex.webp',
-    name: 'Fedex'
+    image: 'https://res.cloudinary.com/dp8tkb7hq/image/upload/v1775977839/EXTREME_NORTH-removebg-preview_gctirr.png',
+    name: 'EXTREME-NORTH'
   },
   {
-    image: '/images/brand-logos/hubspot.webp',
-    name: 'Hubspot'
+    image: 'https://res.cloudinary.com/dp8tkb7hq/image/upload/v1775977834/LITTORRAL-removebg-preview_yhz306.png',
+    name: 'LITTORAL'
   },
   {
-    image: '/images/brand-logos/microsoft.webp',
-    name: 'Microsoft'
+    image: 'https://res.cloudinary.com/dp8tkb7hq/image/upload/v1775977833/OUEST-removebg-preview_kqx2hy.png',
+    name: 'WEST'
   },
   {
-    image: '/images/brand-logos/walmart.webp',
-    name: 'Walmart'
+    image: 'https://res.cloudinary.com/dp8tkb7hq/image/upload/v1775977837/NORTH_WEST-removebg-preview_ryh2uw.png',
+    name: 'NORTH-WEST'
+  },
+  {
+    image: 'https://res.cloudinary.com/dp8tkb7hq/image/upload/v1775977838/NORTH-removebg-preview_heupcq.png',
+    name: 'NORTH'
+  },
+  {
+    image: 'https://res.cloudinary.com/dp8tkb7hq/image/upload/v1775977835/ADAMAOUA-removebg-preview_hnjwnu.png',
+    name: 'ADAMAOUA'
+  },
+  {
+    image: 'https://res.cloudinary.com/dp8tkb7hq/image/upload/v1775977835/SOUTH_WEST-removebg-preview_wri3oi.png',
+    name: 'SOUTH-WEST'
   }
 ]
