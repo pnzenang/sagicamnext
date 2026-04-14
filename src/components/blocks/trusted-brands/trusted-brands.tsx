@@ -13,7 +13,10 @@ const TrustedBrands = ({ brandLogos }: { brandLogos: brandLogos[] }) => {
       <div className='mx-auto max-w-7xl px-4 sm:px-6 lg:px-8'>
         {/* Header */}
         <div className='mb-4 space-y-4 text-center sm:mb-6 lg:mb-8'>
-          <p className='text-muted-foreground text-xl'>SAGICAM unites people from all Cameroonian communities.</p>
+          <p className='text-muted-foreground text-xl'>
+            SAGICAM unites people from all Cameroonian communities(Do you recognize the region in which your loved ones
+            are located?)
+          </p>
         </div>
 
         <div className='relative'>

@@ -6,16 +6,16 @@ import type { Navigation } from '@/components/layout/header-navigation'
 
 const navigationData: Navigation[] = [
   {
-    title: 'Features',
-    href: '/#features'
+    title: 'Mission',
+    href: '/#mission'
   },
   {
     title: 'Benefits',
     href: '/#benefits'
   },
   {
-    title: 'Testimonials',
-    href: '/#testimonials'
+    title: 'Fees & Payments',
+    href: '/#fees'
   },
   {
     title: 'FAQ',

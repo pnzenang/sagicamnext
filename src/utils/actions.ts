@@ -74,7 +74,7 @@ export const createProfileAction = async (prevState: any, formData: FormData) =>
     return renderError(error)
   }
 
-  redirect('/all-members')
+  redirect('/navigation-instructions')
 }
 
 export const fetchProfile = async () => {

@@ -1,11 +1,6 @@
 import type { ComponentType } from 'react'
-
-import { ArrowRightIcon } from 'lucide-react'
-
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { BorderBeam } from '@/components/ui/border-beam'
@@ -22,7 +17,7 @@ type Features = {
 
 const Features = ({ featuresList }: { featuresList: Features }) => {
   return (
-    <section className='py-8 sm:py-16 lg:py-24'>
+    <section className='py-2'>
       <MotionPreset
         fade
         zoom={{ initialScale: 0.8 }}

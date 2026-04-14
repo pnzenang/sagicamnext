@@ -20,7 +20,7 @@ const HeroSection = () => {
               delay={0.1}
             >
               <Badge variant='outline' className='bg-background text-primary relative px-3 py-1 font-normal'>
-                Solution for families and friends in Cameroon
+                SOLUTION FOR FAMILIES AND FRIENDS LIVING IN CAMEROON
                 <BorderBeam colorFrom='var(--primary)' colorTo='var(--primary)' size={35} duration={8} />
               </Badge>
             </MotionPreset>
@@ -81,9 +81,12 @@ const HeroSection = () => {
               delay={0.4}
             >
               <p className='text-muted-foreground text-lg'>
-                In today&apos;s fast-paced world, staying ahead means taking bold steps to expand, innovate, and lead.
-                We&apos;re here to equip you with the right strategies, insights, and tools to drive growth and turn
-                your business goals into reality. Let&apos;s transform your vision into measurable success.
+                By sponsoring your loved ones living in Cameroon in SAGICAM, you make their eventual passing a SAGI
+                problem, the whole SAGICAM community will come together to support you in the trying time. At SAGICAM.
+                <br />
+                we the camerooninan solidarity, making one family's problem the problem of the whole community. Making
+                it a little easier for any of us, to face up to the adversity of financially taking care of expenses
+                related to the funeral of a loved one.
               </p>
             </MotionPreset>
             <MotionPreset

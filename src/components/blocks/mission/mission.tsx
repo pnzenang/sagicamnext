@@ -1,58 +1,63 @@
 import { SwatchBookIcon, SearchIcon, StarIcon, SmartphoneIcon, LockKeyholeIcon, ShieldBanIcon } from 'lucide-react'
-
+import { MdAllInclusive } from 'react-icons/md'
+import { FaMapMarkerAlt } from 'react-icons/fa'
+import { RiHealthBookLine } from 'react-icons/ri'
+import { MdLockOpen } from 'react-icons/md'
+import { LuLanguages } from 'react-icons/lu'
+import { PiExclude } from 'react-icons/pi'
 import Features from '@/components/shadcn-studio/blocks/features-section-01/features-section-01'
 
 const featuresList = [
   {
-    icon: SwatchBookIcon,
+    icon: MdAllInclusive,
     title: 'No Age Limitations',
     description:
-      "Navigate effortlessly with our intuitive design, optimized for all devices. Enjoy a seamless experience whether you're on a computer or mobile.",
+      'SAGICAM platform is available to everyone, regardless of whether the loved ones are young or old. It is open for full accessibility.',
     cardBorderColor: 'border-primary/40 hover:border-primary',
     avatarTextColor: 'text-primary',
     avatarBgColor: 'bg-primary/10'
   },
   {
-    icon: ShieldBanIcon,
+    icon: FaMapMarkerAlt,
     title: 'No Geographical Restrictions',
     description:
-      'Enjoy a safe shopping experience with multiple payment options and SSL encryption. Your personal and financial information is always protected.',
+      "SAGICAM covers all regions, ensuring that everyone has access to our platform regardless of their loved one's location in cameroon.",
     cardBorderColor: 'border-green-600/40 hover:border-green-600 dark:border-green-400/40 dark:hover:border-green-400',
     avatarTextColor: 'text-green-600 dark:text-green-400',
     avatarBgColor: 'bg-green-600/10 dark:bg-green-400/10'
   },
   {
-    icon: SearchIcon,
+    icon: RiHealthBookLine,
     title: 'No Health Checks Required',
     description:
-      'Find products quickly with advanced filters, sorting options, and suggestion. Save time and effortlessly locate exactly what you need with ease.',
+      "SAGICAM is not interested in the loved one's health status. No medical exam or health check is needed to get registered.",
     cardBorderColor: 'border-amber-600/40 hover:border-amber-600 dark:border-amber-400/40 dark:hover:border-amber-400',
     avatarTextColor: 'text-amber-600 dark:text-amber-400',
     avatarBgColor: 'bg-amber-600/10 dark:bg-amber-400/10'
   },
   {
-    icon: StarIcon,
+    icon: MdLockOpen,
     title: 'Any Number Of Loved Ones',
     description:
-      'Make informed decisions with detailed product reviews and ratings from other buyers. Trust the experiences of fellow shoppers to guide choices.',
+      'SAGICAM allows sponsors to register any number of people of significant importance if they can handle the financial obligations.',
     cardBorderColor: 'border-destructive/40 hover:border-destructive',
     avatarTextColor: 'text-destructive',
     avatarBgColor: 'bg-destructive/10'
   },
   {
-    icon: SmartphoneIcon,
+    icon: LuLanguages,
     title: 'No Language Barriers',
     description:
-      'Enhance your shopping experience with our mobile app and push notifications. Stay updated on arrivals and exclusive offers directly on phone.',
+      'SAGICAM provides an environment with high accessibility, want to support all sponsors no matter their language of if they speak at all.',
     cardBorderColor: 'border-sky-600/40 hover:border-sky-600 dark:border-sky-400/40 dark:hover:border-sky-400',
     avatarTextColor: 'text-sky-600 dark:text-sky-400',
     avatarBgColor: 'bg-sky-600/10 dark:bg-sky-400/10'
   },
   {
-    icon: LockKeyholeIcon,
+    icon: PiExclude,
     title: 'No Discrimination or Bias',
     description:
-      'Protect your data with fraud detection and two-factor authentication. Ensure a secure environment for all transactions and account activities.',
+      'SAGICAM treats all individuals equally, fairly, and without prejudice based on characteristics like race, gender, religion, or age.',
     cardBorderColor: 'border-primary/40 hover:border-primary',
     avatarTextColor: 'text-primary',
     avatarBgColor: 'bg-primary/10'
@@ -61,7 +66,7 @@ const featuresList = [
 
 const FeaturesPage = () => {
   return (
-    <section id='features' className='py-8 sm:py-16 lg:py-24'>
+    <section id='mission' className='py-8 sm:py-16 lg:py-24'>
       <Features featuresList={featuresList} />
     </section>
   )

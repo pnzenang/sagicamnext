@@ -1,17 +1,12 @@
-import Hero from '@/components/blocks/hero-section/hero-section'
 import TrustedBrands from '@/components/blocks/trusted-brands/trusted-brands'
-import Features from '@/components/blocks/features/features'
-import Benefits from '@/components/blocks/benefits/benefits'
-import Testimonials from '@/components/blocks/testimonials/testimonials'
-import Pricing from '@/components/blocks/pricing/pricing'
+import Features from '@/components/blocks/mission/mission'
 import FAQ from '@/components/blocks/faq/faq'
-import CTA from '@/components/blocks/cta/cta'
-
 import { logos } from '@/assets/data/trusted-brands'
-import { plans } from '@/assets/data/pricing'
-
 import SectionSeparator from '@/components/section-separator'
 import HeroSection from '@/components/shadcn-studio/blocks/hero-section-12/hero-section-12'
+import Pricing from '@/components/blocks/pricing/page'
+import Payout from '@/components/blocks/payout/page'
+import ContactUsPage from '../contact-us-page-10/page'
 
 const Home = () => {
   return (
@@ -28,21 +23,21 @@ const Home = () => {
 
       <SectionSeparator />
 
-      {/* <Benefits featuresList={benefits} /> */}
+      <Pricing />
 
       <SectionSeparator />
 
-      {/* <Testimonials /> */}
-
-      <SectionSeparator />
-
-      <Pricing plans={plans} />
+      <Payout />
 
       <SectionSeparator />
 
       <FAQ />
 
-      <CTA />
+      <SectionSeparator />
+
+      <ContactUsPage />
+
+      <SectionSeparator />
     </>
   )
 }

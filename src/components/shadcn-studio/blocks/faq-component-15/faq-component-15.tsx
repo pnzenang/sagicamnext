@@ -2,6 +2,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Badge } from '@/components/ui/badge'
 import { BorderBeam } from '@/components/ui/border-beam'
 import { MotionPreset } from '@/components/ui/motion-preset'
+import { Separator } from '@/components/ui/separator'
 
 type FAQItem = {
   question: string
@@ -14,21 +15,28 @@ type FAQComponentProps = {
 
 const FAQ = ({ faqItems }: FAQComponentProps) => {
   return (
-    <section id='faq' className='bg-muted py-8 sm:py-16 lg:py-24'>
+    <section id='faq' className='py-1'>
       <MotionPreset
         fade
         zoom={{ initialScale: 0.8 }}
         transition={{ type: 'spring', stiffness: 400, damping: 15 }}
         delay={0.1}
       >
-        <Badge
-          variant='outline'
-          className='bg-background text-primary relative mx-4 mb-12 ml-8 space-y-4 py-1 font-normal'
-        >
+        <Badge variant='outline' className='bg-background text-primary relative mx-4 my-2 ml-8 space-y-2 font-normal'>
           SAGICAM FREQUENTLY ASKED QUESTIONS
           <BorderBeam colorFrom='var(--primary)' colorTo='var(--primary)' size={35} duration={8} />
         </Badge>
       </MotionPreset>
+      <div className='flex flex-col items-start gap-4 px-8 py-8 sm:pb-16'>
+        <div className='flex flex-col gap-0.5 text-start'>
+          <h2 className='text-2xl font-semibold sm:text-3xl lg:text-4xl'>Frequently Asked Questions</h2>
+          <Separator className='bg-primary h-px' />
+        </div>
+        <p className='text-muted-foreground text-start text-xl font-normal'>
+          An idea about what you can expect from SAGICAM service and answers to some of the most common questions we get
+          asked.
+        </p>
+      </div>
       <div className='mx-auto max-w-7xl px-4 sm:px-6 lg:px-8'>
         <div className='grid grid-cols-1 items-center gap-8 lg:grid-cols-2'>
           {/* Left Section - Dark Background with Image */}
@@ -36,11 +44,11 @@ const FAQ = ({ faqItems }: FAQComponentProps) => {
             fade
             slide={{ direction: 'left', offset: 50 }}
             transition={{ duration: 0.7 }}
-            className='bg-primary text-primary-foreground relative z-1 h-100 overflow-hidden rounded-xl p-6 sm:h-95'
+            className='bg-primary text-primary-foreground relative z-1 h-100 overflow-hidden rounded-xl p-6 sm:h-150 lg:p-12'
           >
             <div className='space-y-4'>
               <h2 className='text-3xl leading-tight font-semibold md:text-4xl'>
-                Frequently asked <br className='hidden xl:block' /> question?
+                Frequently asked <br className='hidden xl:block' /> questions?
               </h2>
             </div>
 

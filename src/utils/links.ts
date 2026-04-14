@@ -1,4 +1,15 @@
-import { BookCheck, Cross, Navigation, SquareUser, Trash2, UserCog, UserPlus, Users, Wallet } from 'lucide-react'
+import {
+  BookCheck,
+  Cross,
+  Navigation,
+  SquareUser,
+  Trash2,
+  UserCog,
+  UserPlus,
+  FileStack,
+  Users,
+  Wallet
+} from 'lucide-react'
 
 import type { MenuItem } from './types'
 
@@ -38,6 +49,11 @@ export const pagesItems: MenuItem[] = [
     icon: Cross,
     label: 'Deceased Members',
     href: '/deceased-members'
+  },
+  {
+    icon: FileStack,
+    label: 'Documents Upload',
+    href: '/documents-upload'
   },
   {
     icon: SquareUser,
