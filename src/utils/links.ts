@@ -8,7 +8,10 @@ import {
   UserPlus,
   FileStack,
   Users,
-  Wallet
+  Wallet,
+  FileCheck,
+  WalletCards,
+  WalletMinimal
 } from 'lucide-react'
 
 import type { MenuItem } from './types'
@@ -32,28 +35,44 @@ export const pagesItems: MenuItem[] = [
   },
   {
     icon: Users,
-    label: 'All Members',
+    label: 'All Active Members',
     href: '/all-members'
   },
   {
-    icon: Wallet,
-    label: 'Contributions',
-    href: '/contributions'
-  },
-  {
     icon: Trash2,
-    label: 'Removed Members',
+    label: 'All Removed Members',
     href: '/removed-members'
   },
   {
     icon: Cross,
-    label: 'Deceased Members',
+    label: 'All Deceased Members',
     href: '/deceased-members'
   },
   {
+    icon: WalletMinimal,
+    label: 'Registration Payments  ',
+    href: '/registration-payments'
+  },
+  {
+    icon: WalletCards,
+    label: 'Contributions Payments',
+    href: '/contributions-payments'
+  },
+  {
+    icon: Wallet,
+    label: 'Contributions Recap.',
+    href: '/contributions-recap'
+  },
+
+  {
     icon: FileStack,
-    label: 'Documents Upload',
+    label: 'Death Documentations',
     href: '/documents-upload'
+  },
+  {
+    icon: FileCheck,
+    label: 'Name Change & Documentations',
+    href: '/name-change-documents-upload'
   },
   {
     icon: SquareUser,

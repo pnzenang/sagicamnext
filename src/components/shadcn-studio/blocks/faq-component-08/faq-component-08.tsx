@@ -19,11 +19,11 @@ type FAQTab = {
 
 const FAQ = ({ tabsData }: { tabsData: FAQTab }) => {
   return (
-    <section className='py-8 sm:py-16 lg:py-24'>
+    <section className='py-8 sm:py-16 lg:py-8'>
       <div className='mx-auto max-w-7xl px-4 sm:px-6 lg:px-8'>
         {/* FAQ Header */}
-        <div className='mb-12 space-y-4 md:mb-16'>
-          <h2 className='text-2xl font-semibold md:text-3xl lg:text-4xl'>NAVIGATION INSTRUCTIONS</h2>
+        <div className='mb-12 space-y-4 md:mb-8 lg:mb-12'>
+          <h2 className='text-2xl font-semibold md:text-3xl lg:text-5xl'>NAVIGATION INSTRUCTIONS</h2>
           <p className='text-muted-foreground text-xl'>
             Welcome to your SAGICAM dashboard! <br />
             Here we want to share all the processes to insure that your loved ones account are well managed, all the
