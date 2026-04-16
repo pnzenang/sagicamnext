@@ -75,6 +75,11 @@ export const pagesItems: MenuItem[] = [
     href: '/name-change-documents-upload'
   },
   {
+    icon: FileCheck,
+    label: 'Payment Instructions',
+    href: '/payment-instructions'
+  },
+  {
     icon: SquareUser,
     label: 'Profile',
     href: '/profile'
