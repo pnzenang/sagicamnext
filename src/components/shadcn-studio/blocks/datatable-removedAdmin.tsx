@@ -112,29 +112,17 @@ const columns: ColumnDef<RemovedMemberType>[] = [
   },
   {
     header: 'Code',
-    accessorKey: 'associationCode',
+    accessorKey: 'sponsorCode',
     cell: ({ row }) => (
       <div className='flex items-center gap-2'>
         <div className='flex flex-col'>
-          <span className='font-medium'>{row.getValue('associationCode')}</span>
+          <span className='font-medium'>{row.getValue('sponsorCode')}</span>
         </div>
       </div>
     ),
     size: 150
   },
 
-  {
-    header: 'Groupe Name',
-    accessorKey: 'associationName',
-    cell: ({ row }) => (
-      <div className='flex items-center gap-2'>
-        <div className='flex flex-col'>
-          <span className='font-medium'>{row.getValue('associationName')}</span>
-        </div>
-      </div>
-    ),
-    size: 150
-  },
   {
     header: 'Reason For Leaving',
     accessorKey: 'reasonForLeaving',
@@ -145,6 +133,10 @@ const columns: ColumnDef<RemovedMemberType>[] = [
         </div>
       </div>
     ),
+    meta: {
+      filterVariant: 'select'
+    },
+
     size: 150
   },
 
@@ -353,9 +345,9 @@ const RemovedMembersDataTable = ({ data }: { data: RemovedMemberType[] }) => {
         </div>
         <div className='flex items-start gap-4 p-6 max-sm:flex-col sm:items-center sm:justify-between'>
           <div className='flex w-6/7 flex-col justify-start gap-2 sm:flex-row sm:items-center'>
-            <Filter column={table.getColumn('firstName')!} />
             <Filter column={table.getColumn('lastAndMiddleNames')!} />
-            <Filter column={table.getColumn('associationCode')!} />
+            <Filter column={table.getColumn('firstName')!} />
+            <Filter column={table.getColumn('sponsorCode')!} />
             <Filter column={table.getColumn('reasonForLeaving')!} />
           </div>
           <div className='flex items-center gap-4 sm:justify-between'>

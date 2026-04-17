@@ -46,7 +46,7 @@ const DeathAnnouncement = async ({ params }: { params: { id: string } }) => {
               <FormInput
                 type='text'
                 name='lastAndMiddleNames'
-                label='member last and middle names(last name first)'
+                label='loved one last and middle names(last name first)'
                 defaultValue={lastAndMiddleNames}
               />
               <FormInput
@@ -55,9 +55,7 @@ const DeathAnnouncement = async ({ params }: { params: { id: string } }) => {
                 label='Matriculation'
                 defaultValue={memberMatriculationNumber}
               />
-            </div>
-            <div className='mt-4 grid gap-4 md:grid-cols-3'>
-              <input type='hidden' name='id' value={id} />
+
               <FormInput
                 type='text'
                 name='registrationDate'
@@ -70,7 +68,7 @@ const DeathAnnouncement = async ({ params }: { params: { id: string } }) => {
               <FormInput
                 type='text'
                 name='countryOfBirth'
-                label='member country of birth'
+                label='loved one country of birth'
                 defaultValue={countryOfBirth}
               />
 
@@ -81,18 +79,10 @@ const DeathAnnouncement = async ({ params }: { params: { id: string } }) => {
                 defaultValue={nameOfBeneficiary}
               />
 
-              <FormInput
-                type='text'
-                name='associationCode'
-                label='member association code'
-                defaultValue={sponsorCode}
-              />
-              <FormInput type='text' name='placeOfDeath' label="member's place of death" />
-            </div>
-            <div className='mt-4 grid gap-4 md:grid-cols-3'>
-              <input type='hidden' name='id' value={id} />
+              <FormInput type='text' name='sponsorCode' label='sponsor code' defaultValue={sponsorCode} />
+              <FormInput type='text' name='placeOfDeath' label='loved one place of death' />
 
-              <MaskDateInput type='text' name='dateOfDeath' label="member's date of death" placeholder='MM/DD/YYYY' />
+              <MaskDateInput type='text' name='dateOfDeath' label='loved one date of death' placeholder='MM/DD/YYYY' />
               <FormSelect
                 name='contributionStatus'
                 label='Contribution Status'
@@ -100,7 +90,7 @@ const DeathAnnouncement = async ({ params }: { params: { id: string } }) => {
                 defaultValue={contributionStatus.review}
               />
               {member.memberStatus === memberStatus.Vested && (
-                <SubmitButton text="post member's death" className='mt-4 w-full bg-purple-800 hover:bg-purple-900' />
+                <SubmitButton text="post loved one's death" className='mt-4 w-full bg-purple-800 hover:bg-purple-900' />
               )}
             </div>
             {member.memberStatus !== memberStatus.Vested && (
