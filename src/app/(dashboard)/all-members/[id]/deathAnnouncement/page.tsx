@@ -25,6 +25,7 @@ const DeathAnnouncement = async ({ params }: { params: { id: string } }) => {
     firstName,
     lastAndMiddleNames,
     dateOfBirth,
+    sponsorCode,
     countryOfBirth,
     clerkId,
     nameOfBeneficiary,
@@ -50,17 +51,17 @@ const DeathAnnouncement = async ({ params }: { params: { id: string } }) => {
           <div>
             <input type='hidden' name='id' value={id} />
             <div className='mt-4 grid gap-4 md:grid-cols-3'>
-              <FormInput type='text' name='firstName' label='member first names' defaultValue={firstName} />
+              <FormInput type='text' name='firstName' label='Loved one given names' defaultValue={firstName} />
               <FormInput
                 type='text'
                 name='lastAndMiddleNames'
-                label='member last and middle names(last name first)'
+                label='Loved one last and middle names(last name first)'
                 defaultValue={lastAndMiddleNames}
               />
               <FormInput
                 type='text'
                 name='memberMatriculationNumber'
-                label='Matriculation'
+                label='Loved one Matriculation Number'
                 defaultValue={memberMatriculationNumber}
               />
             </div>
@@ -78,38 +79,25 @@ const DeathAnnouncement = async ({ params }: { params: { id: string } }) => {
               <FormInput
                 type='text'
                 name='countryOfBirth'
-                label='member country of birth'
+                label='Loved one country of birth'
                 defaultValue={countryOfBirth}
               />
 
               <FormInput
                 type='text'
                 name='nameOfBeneficiary'
-                label='Name fo Beneficiary'
+                label='Loved one beneficiary name '
                 defaultValue={nameOfBeneficiary}
               />
-              <FormInput
-                type='text'
-                name='associationName'
-                label='member association name'
-                defaultValue={profile.associationName}
-              />
-              <FormInput
-                type='text'
-                name='associationCode'
-                label='member association code'
-                defaultValue={profile.associationCode}
-              />
-              <FormInput type='text' name='placeOfDeath' label="member's place of death" />
-            </div>
-            <div className='mt-4 grid gap-4 md:grid-cols-3'>
-              <input type='hidden' name='id' value={id} />
+
+              <FormInput type='text' name='sponsorCode' label='sponsor code' defaultValue={sponsorCode} />
+              <FormInput type='text' name='placeOfDeath' label="Loved one's place of death" />
 
               <MaskDateInput type='text' name='dateOfDeath' label="member's date of death" placeholder='MM/DD/YYYY' />
               <FormSelect
                 name='contributionStatus'
                 label='Contribution Status'
-                items={Object.values(contributionStatus)}
+                items={[contributionStatus.review]}
                 defaultValue={contributionStatus.review}
               />
               {member.memberStatus === memberStatus.Vested && (
@@ -117,15 +105,15 @@ const DeathAnnouncement = async ({ params }: { params: { id: string } }) => {
               )}
             </div>
             {member.memberStatus !== memberStatus.Vested && (
-              <div className='mt-10 flex items-center justify-center gap-1 sm:flex-row'>
-                <BsSignStopFill className='size-8 items-center text-red-500' />{' '}
-                <h1 className='text-center text-sm font-semibold text-red-500 sm:text-lg'>
+              <div className='mt-10 flex flex-col items-center justify-center gap-1 sm:flex-row'>
+                <BsSignStopFill className='size-8 text-red-500' />{' '}
+                <h1 className='text-center text-xs font-semibold text-red-500 sm:text-lg'>
                   You can not announce the death of {member.lastAndMiddleNames} {member.firstName} because he or she was
                   not vested yet.
                 </h1>
-                <Link href='/all-members' className='text-red-500 hover:underline'>
-                  Back to Members List
-                  <RiArrowGoBackLine className='inline' />
+                <Link href='/all-members' className='text-red-900/60 hover:underline'>
+                  Back to the loved ones List
+                  <RiArrowGoBackLine className='px- inline' />
                 </Link>
               </div>
             )}

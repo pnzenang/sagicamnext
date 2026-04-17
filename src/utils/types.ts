@@ -34,10 +34,8 @@ export type MemberType = {
   dateOfBirth: string
   countryOfBirth: string
   memberMatriculationNumber: string
-
   nameOfBeneficiary?: string
-  associationName: string
-  associationCode: string
+  sponsorCode: string
   createdAt: Date
   updatedAt: Date
 }
@@ -50,8 +48,7 @@ export type RemovedMemberType = {
   dateOfBirth: string
   countryOfBirth: string
   memberMatriculationNumber: string
-  associationName: string
-  associationCode: string
+  sponsorCode: string
   reasonForLeaving: string
   createdAt: Date
   updatedAt: Date
@@ -73,8 +70,7 @@ export type DeceasedMemberType = {
   countryOfBirth: string
   memberMatriculationNumber: string
   nameOfBeneficiary?: string
-  associationName: string
-  associationCode: string
+  sponsorCode: string
   dateOfDeath: string
   placeOfDeath: string
   createdAt: Date

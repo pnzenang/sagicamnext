@@ -20,8 +20,8 @@ const EditMemberDetailPage = async ({ params }: { params: { id: string } }) => {
     countryOfBirth,
     clerkId,
     nameOfBeneficiary,
-    associationName,
-    associationCode
+
+    sponsorCode
   } = member
 
   const profile = await fetchProfile()
@@ -42,48 +42,31 @@ const EditMemberDetailPage = async ({ params }: { params: { id: string } }) => {
         <FormContainer action={updateMemberDetailsActionForAdmin}>
           <div>
             <input type='hidden' name='id' value={id} />
-            <div className='mt-4 grid gap-4 md:grid-cols-2'>
-              <FormInput type='text' name='firstName' label='member first names' defaultValue={firstName} />
+            <div className='mt-4 grid gap-4 md:grid-cols-3'>
+              <FormInput type='text' name='firstName' label='Loved one first names' defaultValue={firstName} />
               <FormInput
                 type='text'
                 name='lastAndMiddleNames'
-                label='member last and middle names(last name first)'
+                label='loved ones last and middle names(last name first)'
                 defaultValue={lastAndMiddleNames}
               />
-            </div>
-            <div className='mt-4 grid gap-4 md:grid-cols-3'>
-              <input type='hidden' name='id' value={id} />
-              <FormInput type='text' name='dateOfBirth' label='member date of birth' defaultValue={dateOfBirth} />
+
+              <FormInput type='text' name='dateOfBirth' label='loved one date of birth' defaultValue={dateOfBirth} />
               <FormInput
                 type='text'
                 name='countryOfBirth'
-                label='member country of birth'
+                label='Loved One City of birth'
                 defaultValue={countryOfBirth}
               />
               <FormInput
                 type='text'
                 name='nameOfBeneficiary'
-                label='Name fo Beneficiary'
+                label='Beneficiary Name'
                 defaultValue={nameOfBeneficiary}
               />
-            </div>
-            <div className='mt-4 grid gap-4 md:grid-cols-2'>
-              <input type='hidden' name='id' value={id} />
-              <FormInput
-                type='text'
-                name='associationName'
-                label='member association name'
-                defaultValue={associationName}
-              />
-              <FormInput
-                type='text'
-                name='associationCode'
-                label='member association code'
-                defaultValue={associationCode}
-              />
-            </div>
-            <div className='mt-4 grid gap-4 md:grid-cols-2'>
-              <input type='hidden' name='id' value={id} />
+
+              <FormInput type='text' name='sponsorCode' label='sponsor code' defaultValue={sponsorCode} />
+
               <FormSelect
                 label='delegate recommendation'
                 items={Object.values(delegateRecommendation)}
@@ -96,8 +79,7 @@ const EditMemberDetailPage = async ({ params }: { params: { id: string } }) => {
                 items={Object.values(memberStatus)}
                 defaultValue={member.memberStatus}
               />
-            </div>
-            <div className='mt-4 grid gap-4 md:grid-cols-3'>
+
               <SubmitButton text='Update member Information' className='mt-4 w-full' />
             </div>
           </div>

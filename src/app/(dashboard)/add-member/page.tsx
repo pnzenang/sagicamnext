@@ -7,53 +7,41 @@ import { createMemberAction, fetchProfile } from '@/utils/actions'
 import { delegateRecommendation, memberStatus } from '@/utils/types'
 
 const AddMember = async () => {
-  const user = await fetchProfile()
-
-  console.log(user)
+  const sponsor = await fetchProfile()
 
   return (
     <section className='mt-16 flex flex-col'>
       <h1 className='my-8 text-2xl font-semibold capitalize sm:text-6xl'> add loved one</h1>
       <div className='border-primary bg-muted rounded-lg border p-8'>
         <FormContainer action={createMemberAction}>
-          <div className='mt-4 grid gap-4 md:grid-cols-2'>
-            <FormInput type='text' name='firstName' label='member first names' />
-            <FormInput type='text' name='lastAndMiddleNames' label='member last and middle names(last name first)' />
-          </div>
           <div className='mt-4 grid gap-4 md:grid-cols-3'>
-            <MaskDateInput type='text' name='dateOfBirth' label='member date of birth' placeholder='MM / DD / YYYY' />
-            <FormInput type='text' name='countryOfBirth' label='member country of birth' />
-            <FormInput type='text' name='nameOfBeneficiary' label='Name fo Beneficiary' />
-          </div>
-          <div className='mt-4 grid gap-4 md:grid-cols-2'>
-            <FormInput
+            <FormInput type='text' name='firstName' label='Loved one Given name' />
+            <FormInput type='text' name='lastAndMiddleNames' label='Loved one last Family names' />
+
+            <MaskDateInput
               type='text'
-              name='associationName'
-              label='member association name'
-              defaultValue={user.associationName}
+              name='dateOfBirth'
+              label='Loved one date of birth'
+              placeholder='MM / DD / YYYY'
             />
-            <FormInput
-              type='text'
-              name='associationCode'
-              label='member association code'
-              defaultValue={user.associationCode}
-            />
-          </div>
-          <div className='mt-4 grid gap-4 md:grid-cols-2'>
+            <FormInput type='text' name='countryOfBirth' label='Loved one city of birth' />
+            <FormInput type='text' name='nameOfBeneficiary' label='Beneficiary Name' />
+
+            <FormInput type='text' name='sponsorCode' label='Sponsor Code' defaultValue={sponsor.sponsorCode} />
+
             <FormSelect
-              label='delegate recommendation'
+              label='sponsor recommendation'
               items={Object.values(delegateRecommendation)}
               name='delegateRecommendation'
               defaultValue={delegateRecommendation.confirm}
             />
             <FormSelect
-              label='member status'
+              label='loved one status'
               name='memberStatus'
               items={[memberStatus.Pending]}
               defaultValue={memberStatus.Pending}
             />
-          </div>
-          <div className='mt-4 grid gap-4 md:grid-cols-3'>
+
             <SubmitButton text='add member' className='mt-4 w-full' />
           </div>
         </FormContainer>

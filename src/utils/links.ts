@@ -30,22 +30,22 @@ export const pagesItems: MenuItem[] = [
 
   {
     icon: UserPlus,
-    label: 'Add Member',
+    label: 'Add Loved One',
     href: '/add-member'
   },
   {
     icon: Users,
-    label: 'All Active Members',
+    label: 'All Loved Ones',
     href: '/all-members'
   },
   {
     icon: Trash2,
-    label: 'All Removed Members',
+    label: 'All Removed Loved Ones',
     href: '/removed-members'
   },
   {
     icon: Cross,
-    label: 'All Deceased Members',
+    label: 'All Deceased Loved Ones',
     href: '/deceased-members'
   },
   {
@@ -81,7 +81,7 @@ export const pagesItems: MenuItem[] = [
   },
   {
     icon: SquareUser,
-    label: 'Profile',
+    label: 'Sponsor Profile',
     href: '/profile'
   },
   {

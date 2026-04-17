@@ -73,11 +73,11 @@ declare module '@tanstack/react-table' {
 const columns: ColumnDef<MemberType>[] = [
   {
     header: 'Code',
-    accessorKey: 'associationCode',
+    accessorKey: 'sponsorCode',
     cell: ({ row }) => (
       <div className='flex items-center gap-2'>
         <div className='flex flex-col'>
-          <span className='font-medium'>{row.getValue('associationCode')}</span>
+          <span className='font-medium'>{row.getValue('sponsorCode')}</span>
         </div>
       </div>
     ),
@@ -306,7 +306,7 @@ const MembersDataTable = ({ data }: { data: MemberType[] }) => {
     <div className='border-primary w-full rounded border'>
       <div className='border-b'>
         <div className='flex flex-col gap-4 border-b p-6'>
-          <span className='text-2xl font-semibold sm:text-4xl lg:text-6xl'>All Active Loved Ones</span>
+          <span className='text-2xl font-semibold sm:text-4xl lg:text-6xl'>All Registered Loved Ones</span>
           <div className='flex items-center justify-between gap-3 px-6 py-4 max-sm:flex-col'>
             <p className='text-primary text-sm font-extrabold whitespace-nowrap' aria-live='polite'>
               <span>{table.getRowCount().toString()} Member(s) Found</span>
@@ -379,7 +379,7 @@ const MembersDataTable = ({ data }: { data: MemberType[] }) => {
         </div>
         <div className='flex items-start gap-4 p-6 max-sm:flex-col sm:items-center sm:justify-between'>
           <div className='flex w-6/7 flex-col justify-start gap-2 sm:flex-row sm:items-center'>
-            <Filter column={table.getColumn('associationCode')!} />
+            <Filter column={table.getColumn('sponsorCode')!} />
             <Filter column={table.getColumn('lastAndMiddleNames')!} />
             <Filter column={table.getColumn('firstName')!} />
             <Filter column={table.getColumn('delegateRecommendation')!} />

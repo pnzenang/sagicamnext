@@ -22,10 +22,10 @@ const EditCaseStatus = async ({ params }: { params: { id: string } }) => {
     countryOfBirth,
     nameOfBeneficiary,
     memberMatriculationNumber,
-    associationName,
+
     placeOfDeath,
     dateOfDeath,
-    associationCode,
+    sponsorCode,
     createdAt
   } = deceasedMember
 
@@ -79,17 +79,12 @@ const EditCaseStatus = async ({ params }: { params: { id: string } }) => {
                 label='Name fo Beneficiary'
                 defaultValue={nameOfBeneficiary}
               />
-              <FormInput
-                type='text'
-                name='associationName'
-                label='member association name'
-                defaultValue={associationName}
-              />
+
               <FormInput
                 type='text'
                 name='associationCode'
                 label='member association code'
-                defaultValue={associationCode}
+                defaultValue={sponsorCode}
               />
               <FormInput type='text' name='placeOfDeath' label="member's place of death" defaultValue={placeOfDeath} />
             </div>

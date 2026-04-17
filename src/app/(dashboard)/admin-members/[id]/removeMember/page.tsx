@@ -29,24 +29,21 @@ const RemoveMember = async ({ params }: { params: { id: string } }) => {
       <div className='border-destructive rounded-lg border bg-red-800/40 p-8'>
         <FormContainer action={createRemovedMemberActionAdmin}>
           <div>
-            {/* <input type='hidden' name='id' value={id} /> */}
+            <input type='hidden' name='id' value={id} />
             <div className='mt-4 grid gap-4 md:grid-cols-3'>
-              <FormInput type='text' name='firstName' label='member first names' defaultValue={firstName} />
+              <FormInput type='text' name='firstName' label='Loved one first names' defaultValue={firstName} />
               <FormInput
                 type='text'
                 name='lastAndMiddleNames'
-                label='member last and middle names(last name first)'
+                label='loved one last and middle names'
                 defaultValue={lastAndMiddleNames}
               />
-              <FormInput type='text' name='dateOfBirth' label='member date of birth' defaultValue={dateOfBirth} />
-            </div>
-            <div className='mt-4 grid gap-4 md:grid-cols-3'>
-              <input type='hidden' name='id' value={id} />
+              <FormInput type='text' name='dateOfBirth' label='loved one date of birth' defaultValue={dateOfBirth} />
 
               <FormInput
                 type='text'
                 name='countryOfBirth'
-                label='member country of birth'
+                label='loved one city of birth'
                 defaultValue={countryOfBirth}
               />
               <FormInput
@@ -55,21 +52,12 @@ const RemoveMember = async ({ params }: { params: { id: string } }) => {
                 label='matriculation'
                 defaultValue={memberMatriculationNumber}
               />
-              <FormInput
-                type='text'
-                name='associationName'
-                label='member association name'
-                defaultValue={profile.associationName}
-              />
-            </div>
-            <div className='mt-4 grid gap-4 md:grid-cols-3'>
-              <input type='hidden' name='id' value={id} />
 
               <FormInput
                 type='text'
-                name='associationCode'
+                name='sponsorCode'
                 label='member association code'
-                defaultValue={profile.associationCode}
+                defaultValue={profile.sponsorCode}
               />
               <FormSelect
                 label='reason for leaving'
@@ -77,7 +65,7 @@ const RemoveMember = async ({ params }: { params: { id: string } }) => {
                 name='reasonForLeaving'
                 defaultValue={reasonForLeaving.NoReason}
               />
-              <SubmitButton text='withdraw member' className='mt-4 w-full bg-red-500 hover:bg-red-800' />
+              <SubmitButton text='withdraw Loved one' className='mt-4 w-full bg-red-500 hover:bg-red-800' />
             </div>
           </div>
         </FormContainer>

@@ -15,44 +15,22 @@ const CreateProfilePage = async () => {
 
   return (
     <section className='mt-16 flex flex-col'>
-      <h1 className='my-8 text-2xl font-semibold capitalize sm:text-6xl'> create association profile</h1>
+      <h1 className='my-8 text-2xl font-semibold capitalize sm:text-6xl'> create sponsor profile</h1>
       <div className='border-primary bg-muted rounded-lg border p-8'>
         <FormContainer action={createProfileAction}>
-          <div className='mt-4 grid gap-4 md:grid-cols-2'>
-            <FormInput type='text' name='associationName' label='Association Name' />
-            <FormInput type='text' name='associationCode' label='Association Code' />
+          <div className='mt-4 grid gap-4 md:grid-cols-3'>
+            <FormInput type='text' name='sponsorFirstName' label='Sponsor First Name' />
+            <FormInput type='text' name='sponsorLastAndMiddleName' label='Sponsor Last and Middle Names' />
+            <FormInput type='text' name='sponsorCode' label='Sponsor 4-letter Code' />
           </div>
           <div className='mt-4 grid gap-4 md:grid-cols-3'>
-            <FormInput type='text' name='firstDelegateFullName' label='First Delegate Name' />
             <MaskPhoneInput
               type='text'
-              name='firstDelegatePhoneNumber'
-              label='First Delegate Phone Number'
+              name='sponsorPhoneNumber'
+              label='Sponsor Phone Number'
               placeholder='(###) ###-####'
             />
-            <FormInput type='text' name='firstDelegateEmail' label='First Delegate Email' />
-          </div>
-          <div className='mt-4 grid gap-4 md:grid-cols-3'>
-            <FormInput type='text' name='secondDelegateFullName' label='Second Delegate Name' />
-            <MaskPhoneInput
-              type='text'
-              name='secondDelegatePhoneNumber'
-              label='First Delegate Phone Number'
-              placeholder='(###) ###-####'
-            />
-            <FormInput type='text' name='secondDelegateEmail' label='Second Delegate Email' />
-          </div>
-          <div className='mt-4 grid gap-4 md:grid-cols-3'>
-            <FormInput type='text' name='thirdDelegateFullName' label='Third Delegate Name' />
-            <MaskPhoneInput
-              type='text'
-              name='thirdDelegatePhoneNumber'
-              label='First Delegate Phone Number'
-              placeholder='(###) ###-####'
-            />
-            <FormInput type='text' name='thirdDelegateEmail' label='Third Delegate Email' />
-          </div>
-          <div className='mt-4 grid gap-4 md:grid-cols-3'>
+            <FormInput type='text' name='sponsorEmail' label='Sponsor Email' />
             <SubmitButton text='Create Profile' className='mt-3 w-full' />
           </div>
         </FormContainer>

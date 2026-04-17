@@ -318,10 +318,12 @@ const DeceasedMembersDataTable = ({ data }: { data: DeceasedMemberType[] }) => {
     <div className='w-full rounded border border-purple-500'>
       <div className='border-b'>
         <div className='flex flex-col gap-4 border-b p-6'>
-          <span className='text-2xl font-semibold text-purple-500 sm:text-4xl lg:text-6xl'>All Deceased Members</span>
+          <span className='text-2xl font-semibold text-purple-500 sm:text-4xl lg:text-6xl'>
+            All Deceased Loved Ones
+          </span>
           <div className='flex items-center justify-between gap-3 px-6 py-4 max-sm:flex-col'>
             <p className='text-sm font-extrabold whitespace-nowrap text-purple-400' aria-live='polite'>
-              <span>{table.getRowCount().toString()} Deceased Member(s) Found</span>
+              <span>{table.getRowCount().toString()} Deceased Loved One(s) Found</span>
             </p>
 
             <div>
@@ -503,7 +505,7 @@ const DeceasedMembersDataTable = ({ data }: { data: DeceasedMemberType[] }) => {
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length} className='h-24 text-center'>
-                  No Deceased Member(s) Found.
+                  No Deceased Loved Ones Found.
                 </TableCell>
               </TableRow>
             )}
@@ -602,7 +604,7 @@ function RowActions({ deceasedMemberId }: { deceasedMemberId: string }) {
       <DropdownMenuContent align='start' className='rounded border border-purple-500'>
         <DropdownMenuGroup>
           <DropdownMenuItem>
-            <Link href={`/deceased-members/${deceasedMemberId}/edit`}>
+            <Link href={`/admin-deceased/${deceasedMemberId}/edit`}>
               <span className='flex justify-center gap-3 pl-4 text-blue-500'>
                 <Pencil className='text-blue-500' />
                 Edit Case Status
@@ -619,7 +621,7 @@ function RowActions({ deceasedMemberId }: { deceasedMemberId: string }) {
                 // aria-label='Edit '
               >
                 <Trash2 className='text-destructive size-4' aria-hidden='true' />
-                <p>remove deceased member</p>
+                <p>remove deceased Loved Ones</p>
               </Button>
             </FormContainer>
           </DropdownMenuItem>

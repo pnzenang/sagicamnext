@@ -124,7 +124,7 @@ export const createMemberAction = async (provState: any, formData: FormData): Pr
       data: {
         ...validatedFields,
         clerkId: user.id,
-        memberMatriculationNumber: `AS${validatedFields.associationCode}${randomMatriculation()}`
+        memberMatriculationNumber: `SC${validatedFields.sponsorCode}${randomMatriculation()}`
       }
     })
   } catch (error) {
@@ -191,7 +191,7 @@ export const fetchSingleMemberDetailsForAdmin = async (memberId: string) => {
     }
   })
 
-  if (!member) redirect('/admin')
+  if (!member) redirect('/admin-members')
 
   return member
 }
@@ -302,7 +302,7 @@ export const createRemovedMemberActionAdmin = async (
     return renderError(error)
   }
 
-  redirect('/admin')
+  redirect('/admin-members')
 }
 
 export const fetchRemovedMembersAction = async () => {
@@ -381,7 +381,7 @@ export const createDeceasedMemberActionAdmin = async (
     return renderError(error)
   }
 
-  redirect('/admin')
+  redirect('/admin-members')
 }
 
 export const fetchDeceasedMembersAction = async () => {

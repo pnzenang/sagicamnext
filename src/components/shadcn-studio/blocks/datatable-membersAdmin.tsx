@@ -306,7 +306,7 @@ const MembersDataTable = ({ data }: { data: MemberType[] }) => {
     <div className='border-primary w-full rounded border'>
       <div className='border-b'>
         <div className='flex flex-col gap-4 border-b p-6'>
-          <span className='text-2xl font-semibold sm:text-4xl lg:text-6xl'>All Active Loved Ones (Admin)</span>
+          <span className='text-2xl font-semibold sm:text-4xl lg:text-6xl'>All Registered Loved Ones (Admin)</span>
           <div className='flex items-center justify-between gap-3 px-6 py-4 max-sm:flex-col'>
             <p className='text-primary text-sm font-extrabold whitespace-nowrap' aria-live='polite'>
               <span>{table.getRowCount().toString()} Member(s) Found</span>
@@ -595,7 +595,7 @@ function RowActions({ memberId }: { memberId: string }) {
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem>
-            <Link href={`/admin/${memberId}/deathAnnouncement`}>
+            <Link href={`/admin-members/${memberId}/deathAnnouncement`}>
               <span className='flex gap-3 text-purple-500'>
                 <Cross className='text-purple-500' />
                 Announce Member&apos;s Dead
@@ -604,7 +604,7 @@ function RowActions({ memberId }: { memberId: string }) {
           </DropdownMenuItem>
           {shouldShow ? (
             <DropdownMenuItem>
-              <Link href={`/admin/${memberId}/removeMember`}>
+              <Link href={`/admin-members/${memberId}/removeMember`}>
                 <span className='flex flex-row gap-3 text-red-500'>
                   <Trash2 className='text-red-500' />
                   Remove Member

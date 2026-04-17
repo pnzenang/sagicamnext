@@ -18,10 +18,10 @@ const EditMemberDetailPage = async ({ params }: { params: { id: string } }) => {
     lastAndMiddleNames,
     dateOfBirth,
     countryOfBirth,
-    associationName,
-    associationCode,
+    sponsorCode,
     clerkId,
-    nameOfBeneficiary
+    nameOfBeneficiary,
+    memberMatriculationNumber
   } = member
 
   const profile = await fetchProfile()
@@ -34,31 +34,29 @@ const EditMemberDetailPage = async ({ params }: { params: { id: string } }) => {
           view and update member&apos;s details{' '}
         </h1>
         <p className='text-primary text-xs sm:text-lg'>
-          Here you can change the member&apos;s date of birth, the beneficiary&apos;s names or country of birth, but to
-          edit the name you need to email to info@sagiusa.org
+          Here, you can change the member&apos;s date of birth, the beneficiary&apos;s names or country of birth, but to
+          edit the name you need to the name change link in the sidebar.
         </p>
       </div>
       <div className='border-primary bg-muted rounded-lg border p-8'>
         <FormContainer action={updateMemberDetailsAction}>
           <div>
             <input type='hidden' name='id' value={id} />
-            <div className='mt-4 grid gap-4 md:grid-cols-2'>
-              <FormInput type='text' name='firstName' label='member first names' value={firstName} readOnly />
+            <div className='mt-4 grid gap-4 md:grid-cols-3'>
+              <FormInput type='text' name='firstName' label='Loved one given names' value={firstName} readOnly />
               <FormInput
                 type='text'
                 name='lastAndMiddleNames'
-                label='member last and middle names(last name first)'
+                label='Loved one last and middle names(last name first)'
                 value={lastAndMiddleNames}
                 readOnly
               />
-            </div>
-            <div className='mt-4 grid gap-4 md:grid-cols-3'>
-              <input type='hidden' name='id' value={id} />
-              <FormInput type='text' name='dateOfBirth' label='member date of birth' defaultValue={dateOfBirth} />
+
+              <FormInput type='text' name='dateOfBirth' label='Loved one date of birth' defaultValue={dateOfBirth} />
               <FormInput
                 type='text'
                 name='countryOfBirth'
-                label='member country of birth'
+                label='Loved one country of birth'
                 defaultValue={countryOfBirth}
               />
               <FormInput
@@ -67,40 +65,27 @@ const EditMemberDetailPage = async ({ params }: { params: { id: string } }) => {
                 label='Name fo Beneficiary'
                 defaultValue={nameOfBeneficiary}
               />
-            </div>
-            <div className='mt-4 grid gap-4 md:grid-cols-2'>
-              <input type='hidden' name='id' value={id} />
               <FormInput
                 type='text'
-                name='associationName'
-                label='member association name'
-                value={associationName}
-                readOnly
+                name='memberMatriculationNumber'
+                label='Loved one Matriculation Number'
+                defaultValue={memberMatriculationNumber}
               />
-              <FormInput
-                type='text'
-                name='associationCode'
-                label='member association code'
-                value={associationCode}
-                readOnly
-              />
-            </div>
-            <div className='mt-4 grid gap-4 md:grid-cols-2'>
-              <input type='hidden' name='id' value={id} />
+
+              <FormInput type='text' name='sponsorCode' label='sponsor code' value={sponsorCode} readOnly />
+
               <FormSelect
-                label='delegate recommendation'
+                label='sponsor recommendation'
                 items={Object.values(delegateRecommendation)}
                 name='delegateRecommendation'
                 defaultValue={member.delegateRecommendation}
               />
               <FormSelect
-                label='member status'
+                label='loved one status'
                 name='memberStatus'
                 items={[memberStatus.Pending]}
                 defaultValue={memberStatus.Pending}
               />
-            </div>
-            <div className='mt-4 grid gap-4 md:grid-cols-3'>
               <SubmitButton text='Update member Information' className='mt-4 w-full' />
             </div>
           </div>

@@ -5,36 +5,23 @@ import prisma from './db'
 import { contributionStatus, delegateRecommendation, memberStatus, reasonForLeaving } from './types'
 
 export const profileSchema = z.object({
-  associationName: z.string().toUpperCase().min(4, { message: 'Association name must be at least 4 characters' }),
-  associationCode: z
+  sponsorCode: z
     .string()
     .toUpperCase()
-    .length(4, { message: 'Association code must be exactly 4 characters' })
-    .regex(/^[a-zA-Z]+$/, { message: 'Association code must contain only letters' }),
-  firstDelegateFullName: z.string().toUpperCase().min(2, { message: 'Association name must be at least 2 characters' }),
-  firstDelegatePhoneNumber: z
-    .string()
-    .length(14, { message: 'First Delegate Phone number must be exactly 14 characters' }),
-  firstDelegateEmail: z.email('Please enter a valid email address'),
-  secondDelegateFullName: z
+    .length(4, { message: 'Sponsor code must be exactly 4 characters' })
+    .regex(/^[a-zA-Z]+$/, { message: 'Sponsor code must contain only letters' }),
+  sponsorFirstName: z.string().toUpperCase(),
+  sponsorLastAndMiddleName: z
     .string()
     .toUpperCase()
-    .min(2, { message: 'Association name must be at least 2 characters' }),
-  secondDelegatePhoneNumber: z
-    .string()
-    .length(14, { message: 'Second Delegate Phone number must be exactly 14 characters' }),
-  secondDelegateEmail: z.email('Please enter a valid email address'),
-  thirdDelegateFullName: z.string().toUpperCase().min(2, { message: 'Association name must be at least 2 characters' }),
-  thirdDelegatePhoneNumber: z
-    .string()
-    .length(14, { message: 'Third Delegate Phone number must be exactly 14 characters' }),
-  thirdDelegateEmail: z.email('Please enter a valid email address')
+    .min(2, { message: 'Sponsor last and middle name must be at least 2 characters' }),
+  sponsorPhoneNumber: z.string().length(14, { message: 'First Delegate Phone number must be exactly 14 characters' }),
+  sponsorEmail: z.email('Please enter a valid email address')
 })
 
 export const memberSchema = z.object({
   firstName: z.string().toUpperCase(),
-  associationName: z.string().toUpperCase(),
-  associationCode: z.string().toUpperCase(),
+  sponsorCode: z.string().toUpperCase(),
   lastAndMiddleNames: z
     .string()
     .toUpperCase()
@@ -50,8 +37,7 @@ export const memberSchema = z.object({
 })
 export const RemovedMemberSchema = z.object({
   firstName: z.string().toUpperCase(),
-  associationName: z.string().toUpperCase(),
-  associationCode: z.string().toUpperCase(),
+  sponsorCode: z.string().toUpperCase(),
   lastAndMiddleNames: z
     .string()
     .toUpperCase()
@@ -70,8 +56,7 @@ export const RemovedMemberSchema = z.object({
 })
 export const DeceasedMemberSchema = z.object({
   firstName: z.string().toUpperCase(),
-  associationName: z.string().toUpperCase(),
-  associationCode: z.string().toUpperCase(),
+  sponsorCode: z.string().toUpperCase(),
   lastAndMiddleNames: z
     .string()
     .toUpperCase()

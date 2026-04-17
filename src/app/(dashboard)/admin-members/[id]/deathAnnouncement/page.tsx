@@ -18,6 +18,7 @@ const DeathAnnouncement = async ({ params }: { params: { id: string } }) => {
     dateOfBirth,
     countryOfBirth,
     clerkId,
+    sponsorCode,
     nameOfBeneficiary,
     memberMatriculationNumber,
     createdAt
@@ -41,7 +42,7 @@ const DeathAnnouncement = async ({ params }: { params: { id: string } }) => {
           <div>
             <input type='hidden' name='id' value={id} />
             <div className='mt-4 grid gap-4 md:grid-cols-3'>
-              <FormInput type='text' name='firstName' label='member first names' defaultValue={firstName} />
+              <FormInput type='text' name='firstName' label='Loved one first names' defaultValue={firstName} />
               <FormInput
                 type='text'
                 name='lastAndMiddleNames'
@@ -79,17 +80,12 @@ const DeathAnnouncement = async ({ params }: { params: { id: string } }) => {
                 label='Name fo Beneficiary'
                 defaultValue={nameOfBeneficiary}
               />
-              <FormInput
-                type='text'
-                name='associationName'
-                label='member association name'
-                defaultValue={profile.associationName}
-              />
+
               <FormInput
                 type='text'
                 name='associationCode'
                 label='member association code'
-                defaultValue={profile.associationCode}
+                defaultValue={sponsorCode}
               />
               <FormInput type='text' name='placeOfDeath' label="member's place of death" />
             </div>

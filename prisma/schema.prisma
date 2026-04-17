@@ -16,17 +16,11 @@ datasource db {
 model Profile {
   id String @id @default(uuid())
   clerkId String @unique
-  associationName String
-  associationCode String @unique
-  firstDelegateFullName String
-  firstDelegatePhoneNumber String
-  firstDelegateEmail String
-  secondDelegateFullName String
-  secondDelegatePhoneNumber String
-  secondDelegateEmail String
-  thirdDelegateFullName String
-  thirdDelegatePhoneNumber String
-  thirdDelegateEmail String
+  sponsorCode String @unique
+  sponsorFirstName String
+  sponsorLastAndMiddleName String
+  sponsorPhoneNumber String
+  sponsorEmail String
   createdAt DateTime @default(now())
   updateAt DateTime @updatedAt
 
@@ -44,8 +38,7 @@ model Member {
   delegateRecommendation String
   memberStatus String
   nameOfBeneficiary String
-  associationName String
-  associationCode String
+  sponsorCode String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   @@unique([firstName, lastAndMiddleNames,dateOfBirth, delegateRecommendation])
@@ -58,8 +51,7 @@ model RemovedMember {
   dateOfBirth String
   countryOfBirth String
   memberMatriculationNumber String
-  associationName String
-  associationCode String
+  sponsorCode String
   reasonForLeaving String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -73,8 +65,7 @@ model DeceasedMember {
   memberMatriculationNumber String
   registrationDate String
   nameOfBeneficiary String
-  associationName String
-  associationCode String
+  sponsorCode String
   dateOfDeath String
   placeOfDeath String
   contributionStatus String
