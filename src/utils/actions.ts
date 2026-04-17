@@ -233,7 +233,7 @@ export const updateMemberDetailsActionForAdmin = async (prevState: any, formData
         ...validatedFields
       }
     })
-    revalidatePath(`admin/${memberId}/edit`)
+    revalidatePath(`admin-members/${memberId}/edit`)
 
     // return { message: `Member Details Updated Successfully` }
   } catch (error) {
@@ -248,7 +248,7 @@ export const updateMemberDetailsActionForAdmin = async (prevState: any, formData
     return renderError(error)
   }
 
-  redirect('/admin')
+  redirect('/admin-members')
 }
 
 export const createRemovedMemberAction = async (provState: any, formData: FormData): Promise<{ message: string }> => {
@@ -317,6 +317,18 @@ export const fetchRemovedMembersAction = async () => {
 
   return removedMembers
 }
+export const fetchRemovedMembersActionAdmin = async () => {
+  const user = await getAuthUser()
+
+  const removedMembers = await db.removedMember.findMany({
+    where: {
+      // clerkId: user.id
+    },
+    orderBy: { createdAt: 'desc' }
+  })
+
+  return removedMembers
+}
 
 export const createDeceasedMemberAction = async (provState: any, formData: FormData): Promise<{ message: string }> => {
   const user = await getAuthUser()
@@ -377,7 +389,7 @@ export const fetchDeceasedMembersAction = async () => {
 
   const deceasedMember = await db.deceasedMember.findMany({
     where: {
-      clerkId: user.id
+      // clerkId: user.id
     },
     orderBy: { createdAt: 'desc' }
   })
@@ -389,7 +401,7 @@ export const fetchDeceasedMembersActionAdmin = async () => {
 
   const deceasedMember = await db.deceasedMember.findMany({
     where: {
-      clerkId: user.id
+      // clerkId: user.id
     },
     orderBy: { createdAt: 'desc' }
   })
@@ -440,8 +452,8 @@ export const fetchSingleDeceasedMemberDetails = async (deceasedMemberId: string)
 
   const deceasedMember = await db.deceasedMember.findUnique({
     where: {
-      id: deceasedMemberId,
-      clerkId: user?.id
+      id: deceasedMemberId
+      // clerkId: user?.id
     }
   })
 
@@ -450,7 +462,7 @@ export const fetchSingleDeceasedMemberDetails = async (deceasedMemberId: string)
   return deceasedMember
 }
 
-export const updateDeceasedMemberDetailsAction = async (prevState: any, formData: FormData) => {
+export const updateDeceasedMemberDetailsActionAdmin = async (prevState: any, formData: FormData) => {
   try {
     const deceasedMemberId = formData.get('id') as string
     const rawData = Object.fromEntries(formData)
@@ -464,12 +476,12 @@ export const updateDeceasedMemberDetailsAction = async (prevState: any, formData
         ...validatedFields
       }
     })
-    revalidatePath(`deceased-members/${deceasedMemberId}/edit`)
+    revalidatePath(`admin-deceased/${deceasedMemberId}/edit`)
 
     // return { message: `case status Updated Successfully` }
   } catch (error) {
     return renderError(error)
   }
 
-  redirect('/deceased-members')
+  redirect('/admin-deceased')
 }

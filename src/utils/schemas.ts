@@ -39,7 +39,7 @@ export const memberSchema = z.object({
     .string()
     .toUpperCase()
     .min(2, { message: 'the member last name should be at least 2 characters' }),
-  dateOfBirth: z.string().length(10, { message: 'Date of birth should be 10 characters' }),
+  dateOfBirth: z.string().length(10, { message: 'The date of birth is not valid date, please enter a valid date' }),
   countryOfBirth: z.string().toUpperCase().min(2, { message: 'the member las name should be at least 2 characters' }),
   nameOfBeneficiary: z
     .string()

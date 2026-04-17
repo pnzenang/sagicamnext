@@ -13,7 +13,16 @@ const EditMemberDetailPage = async ({ params }: { params: { id: string } }) => {
 
   const member = await fetchSingleMemberDetails(id)
 
-  const { firstName, lastAndMiddleNames, dateOfBirth, countryOfBirth, clerkId, nameOfBeneficiary } = member
+  const {
+    firstName,
+    lastAndMiddleNames,
+    dateOfBirth,
+    countryOfBirth,
+    associationName,
+    associationCode,
+    clerkId,
+    nameOfBeneficiary
+  } = member
 
   const profile = await fetchProfile()
 
@@ -65,14 +74,14 @@ const EditMemberDetailPage = async ({ params }: { params: { id: string } }) => {
                 type='text'
                 name='associationName'
                 label='member association name'
-                value={profile.associationName}
+                value={associationName}
                 readOnly
               />
               <FormInput
                 type='text'
                 name='associationCode'
                 label='member association code'
-                value={profile.associationCode}
+                value={associationCode}
                 readOnly
               />
             </div>

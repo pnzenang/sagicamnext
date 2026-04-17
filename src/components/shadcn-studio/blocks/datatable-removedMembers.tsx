@@ -160,18 +160,18 @@ const columns: ColumnDef<RemovedMemberType>[] = [
       return <div>{formattedLongevity}</div>
     },
     size: 150
-  },
-  {
-    header: 'Actions',
-    accessorKey: 'id',
-    cell: ({ row: { original } }) => {
-      // Destructuring 'id' directly from the row data
-      const { id } = original
-
-      return <RowActions removedMemberId={id} />
-    },
-    size: 20
   }
+  // {
+  //   header: 'Actions',
+  //   accessorKey: 'id',
+  //   cell: ({ row: { original } }) => {
+  //     // Destructuring 'id' directly from the row data
+  //     const { id } = original
+
+  //     return <RowActions removedMemberId={id} />
+  //   },
+  //   size: 20
+  // }
 ]
 
 const RemovedMembersDataTable = ({ data }: { data: RemovedMemberType[] }) => {
@@ -278,7 +278,7 @@ const RemovedMembersDataTable = ({ data }: { data: RemovedMemberType[] }) => {
     <div className='border-destructive w-full rounded border'>
       <div className='border-b'>
         <div className='flex flex-col gap-4 border-b p-6'>
-          <span className='text-2xl font-semibold text-red-500 sm:text-4xl lg:text-6xl'>REMOVED MEMBERS </span>
+          <span className='text-2xl font-semibold text-red-500 sm:text-4xl lg:text-6xl'>Removed Members</span>
           <div className='flex items-center justify-between gap-3 px-6 py-4 max-sm:flex-col'>
             <p className='text-sm font-extrabold whitespace-nowrap text-red-500' aria-live='polite'>
               <span>{table.getRowCount().toString()} Member(s) removed so far this month</span>

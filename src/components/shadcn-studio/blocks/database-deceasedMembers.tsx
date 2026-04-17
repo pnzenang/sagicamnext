@@ -200,18 +200,18 @@ const columns: ColumnDef<DeceasedMemberType>[] = [
       filterVariant: 'select'
     },
     size: 100
-  },
-  {
-    header: 'Actions',
-    accessorKey: 'id',
-    cell: ({ row: { original } }) => {
-      // Destructuring 'id' directly from the row data
-      const { id } = original
-
-      return <RowActions deceasedMemberId={id} />
-    },
-    size: 20
   }
+  // {
+  //   header: 'Actions',
+  //   accessorKey: 'id',
+  //   cell: ({ row: { original } }) => {
+  //     // Destructuring 'id' directly from the row data
+  //     const { id } = original
+
+  //     return <RowActions deceasedMemberId={id} />
+  //   },
+  //   size: 20
+  // }
 ]
 
 const DeceasedMembersDataTable = ({ data }: { data: DeceasedMemberType[] }) => {
@@ -318,7 +318,7 @@ const DeceasedMembersDataTable = ({ data }: { data: DeceasedMemberType[] }) => {
     <div className='w-full rounded border border-purple-500'>
       <div className='border-b'>
         <div className='flex flex-col gap-4 border-b p-6'>
-          <span className='text-2xl font-semibold text-purple-500 sm:text-4xl lg:text-6xl'> Deceased Members</span>
+          <span className='text-2xl font-semibold text-purple-500 sm:text-4xl lg:text-6xl'>All Deceased Members</span>
           <div className='flex items-center justify-between gap-3 px-6 py-4 max-sm:flex-col'>
             <p className='text-sm font-extrabold whitespace-nowrap text-purple-400' aria-live='polite'>
               <span>{table.getRowCount().toString()} Deceased Member(s) Found</span>

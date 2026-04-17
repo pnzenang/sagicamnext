@@ -86,7 +86,17 @@ export const pagesItems: MenuItem[] = [
   },
   {
     icon: UserCog,
-    label: 'Admin',
-    href: '/admin'
+    label: 'Admin Members',
+    href: '/admin-members'
+  },
+  {
+    icon: UserCog,
+    label: 'Admin Removed',
+    href: '/admin-removed'
+  },
+  {
+    icon: UserCog,
+    label: 'Admin Deceased',
+    href: '/admin-deceased'
   }
 ]

@@ -62,7 +62,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { usePagination } from '@/hooks/use-pagination'
 
 import { cn } from '@/lib/utils'
-import { type MemberType } from '@/utils/types'
+
+import { type DeceasedMemberType } from '@/utils/types'
+import { deleteDeceasedMemberAction } from '@/utils/actions'
+import FormContainer from '@/components/forms/FormContainer'
 
 declare module '@tanstack/react-table' {
   interface ColumnMeta<TData extends RowData, TValue> {
@@ -70,31 +73,7 @@ declare module '@tanstack/react-table' {
   }
 }
 
-const columns: ColumnDef<MemberType>[] = [
-  {
-    header: 'Code',
-    accessorKey: 'associationCode',
-    cell: ({ row }) => (
-      <div className='flex items-center gap-2'>
-        <div className='flex flex-col'>
-          <span className='font-medium'>{row.getValue('associationCode')}</span>
-        </div>
-      </div>
-    ),
-    size: 150
-  },
-  {
-    header: 'Matriculation',
-    accessorKey: 'memberMatriculationNumber',
-    cell: ({ row }) => (
-      <div className='flex items-center gap-2'>
-        <div className='flex flex-col'>
-          <span className='font-medium'>{row.getValue('memberMatriculationNumber')}</span>
-        </div>
-      </div>
-    ),
-    size: 150
-  },
+const columns: ColumnDef<DeceasedMemberType>[] = [
   {
     header: 'Last Names',
     accessorKey: 'lastAndMiddleNames',
@@ -120,67 +99,100 @@ const columns: ColumnDef<MemberType>[] = [
   },
 
   {
-    accessorKey: 'createdAt', // The key in your data object
-    header: 'Longevity(Days)',
+    header: 'Matriculation',
+    accessorKey: 'memberMatriculationNumber',
+    cell: ({ row }) => (
+      <div className='flex items-center gap-2'>
+        <div className='flex flex-col'>
+          <span className='font-medium'>{row.getValue('memberMatriculationNumber')}</span>
+        </div>
+      </div>
+    ),
+    size: 150
+  },
+  {
+    header: `Group's Name`,
+    accessorKey: 'associationName',
+    cell: ({ row }) => (
+      <div className='flex items-center gap-2'>
+        <div className='flex flex-col'>
+          <span className='font-medium text-wrap'>{row.getValue('associationName')}</span>
+        </div>
+      </div>
+    ),
+    size: 100
+  },
+  {
+    header: 'Place of Death (State)',
+    accessorKey: 'placeOfDeath',
+    cell: ({ row }) => (
+      <div className='flex items-center gap-2'>
+        <div className='flex flex-col'>
+          <span className='font-medium'>{row.getValue('placeOfDeath')}</span>
+        </div>
+      </div>
+    ),
+    size: 150
+  },
+
+  {
+    accessorKey: 'registrationDate', // The key in your data object
+    header: 'Registration Date',
     cell: ({ row }) => {
-      const field = row.getValue('createdAt') as Date
-      const time = day(Date.now())
+      const field = row.getValue('registrationDate') as string
+      const fieldDate = new Date(field)
 
-      const formattedLongevity = new Intl.NumberFormat('en-US', { style: 'decimal', maximumFractionDigits: 2 }).format(
-        time.diff(field.toDateString(), 'days')
-      )
+      const formattedRegistrationDate = day(fieldDate).format('MMM D, YYYY')
 
-      return <div>{formattedLongevity}</div>
+      return <div>{formattedRegistrationDate}</div>
     },
     size: 150
   },
   {
-    header: 'Recommendation',
-    accessorKey: 'delegateRecommendation',
+    accessorKey: 'dateOfDeath', // The key in your data object
+    header: 'Date of Death',
     cell: ({ row }) => {
-      const recommendation = row.getValue('delegateRecommendation') as string
+      const field = row.getValue('dateOfDeath') as string
+      const fieldDate = new Date(field)
 
-      const styles = {
-        transfer: 'text-blue-500 bg-transparent ',
-        confirm: ' text-muted-foreground bg-transparent',
-        Confirm:
-          'bg-green-600/10 text-zinc-600 focus-visible:ring-zinc-600/20 dark:bg-zinc-400/10 dark:text-zinc-400 dark:focus-visible:ring-zinc-400/40 [a&]:hover:bg-zinc-600/5 dark:[a&]:hover:bg-zinc-400/5',
-        Transfer_From_Sagi:
-          'bg-orange-600/10 text-orange-600 focus-visible:ring-orange-600/20 dark:bg-orange-400/10 dark:text-orange-400 dark:focus-visible:ring-orange-400/40 [a&]:hover:bg-orange-600/5 dark:[a&]:hover:bg-orange-400/5',
-        Transfer_Out:
-          'bg-blue-600/10 text-blue-600 focus-visible:ring-blue-600/20 dark:bg-blue-400/10 dark:text-blue-400 dark:focus-visible:ring-blue-400/40 [a&]:hover:bg-blue-600/5 dark:[a&]:hover:bg-blue-400/5',
-        Transfer_In:
-          'bg-purple-600/10 text-purple-600 focus-visible:ring-purple-600/20 dark:bg-purple-400/10 dark:text-purple-400 dark:focus-visible:ring-purple-400/40 [a&]:hover:bg-purple-600/5 dark:[a&]:hover:bg-purple-400/5'
-      }[recommendation]
+      const formattedDateOfDeath = day(fieldDate).format('MMM D, YYYY')
 
-      return (
-        <Badge className={cn('rounded-sm border capitalize focus-visible:outline-none', styles)}>
-          {row.getValue('delegateRecommendation')}
-        </Badge>
-      )
+      return <div>{formattedDateOfDeath}</div>
     },
-    meta: {
-      filterVariant: 'select'
-    },
-    size: 100
+    size: 150
   },
-
   {
-    header: 'Status',
-    accessorKey: 'memberStatus',
+    accessorKey: 'createdAt', // The key in your data object
+    header: 'Date Announced',
     cell: ({ row }) => {
-      const status = row.getValue('memberStatus') as string
+      const field = row.getValue('createdAt') as Date
+
+      const formattedAnnouncementDate = day(field).format('MMM D, YYYY')
+
+      return <div>{formattedAnnouncementDate}</div>
+    },
+    size: 150
+  },
+  {
+    header: 'contribution status',
+    accessorKey: 'contributionStatus',
+    cell: ({ row }) => {
+      const contributionStatus = row.getValue('contributionStatus') as string
 
       const styles = {
-        vested:
-          'bg-teal-600/10 text-green-600 focus-visible:ring-green-600/20 dark:bg-green-400/10 dark:text-green-400 dark:focus-visible:ring-green-400/40 [a&]:hover:bg-green-600/5 dark:[a&]:hover:bg-green-400/5',
-        pending:
-          'bg-amber-600/10 text-amber-600 focus-visible:ring-amber-600/20 dark:bg-amber-400/10 dark:text-amber-400 dark:focus-visible:ring-amber-400/40 [a&]:hover:bg-amber-600/5 dark:[a&]:hover:bg-amber-400/5'
-      }[status]
+        Received_And_In_Review:
+          'bg-amber-600/10 text-amber-600 focus-visible:ring-amber-600/20 dark:bg-amber-400/10 dark:text-amber-400 dark:focus-visible:ring-amber-400/40 [a&]:hover:bg-amber-600/5 dark:[a&]:hover:bg-amber-400/5',
+        Contribution_Denied:
+          'bg-destructive/10 text-destructive focus-visible:ring-destructive/20 dark:bg-destructive/10 dark:text-destructive dark:focus-visible:ring-destructive/40 [a&]:hover:bg-destructive/5 dark:[a&]:hover:bg-destructive/5',
+        Contribution_Underway:
+          'bg-blue-600/10 text-blue-600 focus-visible:ring-blue-600/20 dark:bg-blue-400/10 dark:text-blue-400 dark:focus-visible:ring-blue-400/40 [a&]:hover:bg-blue-600/5 dark:[a&]:hover:bg-blue-400/5',
+        Contribution_Completed:
+          'bg-green-600/10 text-green-600 focus-visible:ring-green-600/20 dark:bg-green-400/10 dark:text-green-400 dark:focus-visible:ring-green-400/40 [a&]:hover:bg-green-600/5 dark:[a&]:hover:bg-green-400/5'
+      }[contributionStatus]
 
       return (
-        <Badge className={cn('rounded-sm border-none font-bold capitalize focus-visible:outline-none', styles)}>
-          {row.getValue('memberStatus')}
+        <Badge className={cn('rounded-sm border-none capitalize focus-visible:outline-none', styles)}>
+          {row.getValue('contributionStatus')}
         </Badge>
       )
     },
@@ -196,13 +208,13 @@ const columns: ColumnDef<MemberType>[] = [
       // Destructuring 'id' directly from the row data
       const { id } = original
 
-      return <RowActions memberId={id} />
+      return <RowActions deceasedMemberId={id} />
     },
     size: 20
   }
 ]
 
-const MembersDataTable = ({ data }: { data: MemberType[] }) => {
+const DeceasedMembersDataTable = ({ data }: { data: DeceasedMemberType[] }) => {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
 
   const pageSize = 100
@@ -303,13 +315,16 @@ const MembersDataTable = ({ data }: { data: MemberType[] }) => {
   })
 
   return (
-    <div className='border-primary w-full rounded border'>
+    <div className='w-full rounded border border-purple-500'>
       <div className='border-b'>
         <div className='flex flex-col gap-4 border-b p-6'>
-          <span className='text-2xl font-semibold sm:text-4xl lg:text-6xl'>All Active Loved Ones (Admin)</span>
+          <span className='text-2xl font-semibold text-purple-500 sm:text-4xl lg:text-6xl'>
+            {' '}
+            All Deceased Members (Admin){' '}
+          </span>
           <div className='flex items-center justify-between gap-3 px-6 py-4 max-sm:flex-col'>
-            <p className='text-primary text-sm font-extrabold whitespace-nowrap' aria-live='polite'>
-              <span>{table.getRowCount().toString()} Member(s) Found</span>
+            <p className='text-sm font-extrabold whitespace-nowrap text-purple-400' aria-live='polite'>
+              <span>{table.getRowCount().toString()} Deceased Member(s) Found</span>
             </p>
 
             <div>
@@ -323,8 +338,8 @@ const MembersDataTable = ({ data }: { data: MemberType[] }) => {
                       disabled={!table.getCanPreviousPage()}
                       aria-label='Go to previous page'
                     >
-                      <ChevronLeftIcon aria-hidden='true' className='text-primary' />
-                      <span className='text-primary max-sm:hidden'>Previous</span>
+                      <ChevronLeftIcon aria-hidden='true' className='text-purple-500' />
+                      <span className='text-purple-500 max-sm:hidden'>Previous</span>
                     </Button>
                   </PaginationItem>
 
@@ -341,7 +356,7 @@ const MembersDataTable = ({ data }: { data: MemberType[] }) => {
                       <PaginationItem key={page}>
                         <Button
                           size='icon'
-                          className={`${!isActive && 'bg-primary/10 text-primary hover:bg-primary/20 focus-visible:ring-primary/20 dark:focus-visible:ring-red-300/40'}`}
+                          className='bg-purple-500 hover:bg-purple-400'
                           onClick={() => table.setPageIndex(page - 1)}
                           aria-current={isActive ? 'page' : undefined}
                         >
@@ -365,8 +380,8 @@ const MembersDataTable = ({ data }: { data: MemberType[] }) => {
                       disabled={!table.getCanNextPage()}
                       aria-label='Go to next page'
                     >
-                      <span className='text-primary max-sm:hidden'>Next</span>
-                      <ChevronRightIcon aria-hidden='true' className='text-primary' />
+                      <span className='text-purple-500 max-sm:hidden'>Next</span>
+                      <ChevronRightIcon aria-hidden='true' className='text-purple-500' />
                     </Button>
                   </PaginationItem>
                 </PaginationContent>
@@ -379,11 +394,10 @@ const MembersDataTable = ({ data }: { data: MemberType[] }) => {
         </div>
         <div className='flex items-start gap-4 p-6 max-sm:flex-col sm:items-center sm:justify-between'>
           <div className='flex w-6/7 flex-col justify-start gap-2 sm:flex-row sm:items-center'>
-            <Filter column={table.getColumn('associationCode')!} />
-            <Filter column={table.getColumn('lastAndMiddleNames')!} />
             <Filter column={table.getColumn('firstName')!} />
-            <Filter column={table.getColumn('delegateRecommendation')!} />
-            <Filter column={table.getColumn('memberStatus')!} />
+            <Filter column={table.getColumn('lastAndMiddleNames')!} />
+            <Filter column={table.getColumn('associationName')!} />
+            <Filter column={table.getColumn('contributionStatus')!} />
           </div>
           <div className='flex items-center gap-4 sm:justify-between'>
             <div className='flex items-center gap-2'>
@@ -410,7 +424,7 @@ const MembersDataTable = ({ data }: { data: MemberType[] }) => {
             </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button className='bg-primary/10 text-primary hover:bg-primary/20 focus-visible:ring-primary/20 dark:focus-visible:ring-primary/40'>
+                <Button className='text-primary focus-visible:ring-primary/20 dark:focus-visible:ring-primary/40 bg-purple-500/10 hover:bg-purple-400/20'>
                   <UploadIcon />
                   Export
                 </Button>
@@ -436,7 +450,7 @@ const MembersDataTable = ({ data }: { data: MemberType[] }) => {
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map(headerGroup => (
-              <TableRow key={headerGroup.id} className='bg-primary hover:bg-primary/80 h-14 border-t'>
+              <TableRow key={headerGroup.id} className='h-14 border-t bg-purple-500 hover:bg-purple-400'>
                 {headerGroup.headers.map(header => {
                   return (
                     <TableHead
@@ -477,7 +491,11 @@ const MembersDataTable = ({ data }: { data: MemberType[] }) => {
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map(row => (
-                <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'} className='hover:bg-primary/30'>
+                <TableRow
+                  key={row.id}
+                  data-state={row.getIsSelected() && 'selected'}
+                  className='hover:bg-purple-300/30'
+                >
                   {row.getVisibleCells().map(cell => (
                     <TableCell key={cell.id} className='h-14 first:w-12.5 first:pl-4 last:w-29 last:px-4'>
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -488,7 +506,7 @@ const MembersDataTable = ({ data }: { data: MemberType[] }) => {
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length} className='h-24 text-center'>
-                  No Member Found, add members.
+                  No Deceased Member(s) Found.
                 </TableCell>
               </TableRow>
             )}
@@ -499,7 +517,7 @@ const MembersDataTable = ({ data }: { data: MemberType[] }) => {
   )
 }
 
-export default MembersDataTable
+export default DeceasedMembersDataTable
 
 function Filter({ column }: { column: Column<any, unknown> }) {
   const id = useId()
@@ -526,7 +544,7 @@ function Filter({ column }: { column: Column<any, unknown> }) {
 
   if (filterVariant === 'select') {
     return (
-      <div className='border-primary w-full max-w-2xs space-y-2 rounded border'>
+      <div className='w-full max-w-2xs space-y-2 rounded border border-purple-500'>
         {/* <Label htmlFor={`${id}-select`}>Select {columnHeader}</Label> */}
         <Select
           value={columnFilterValue?.toString() ?? 'all'}
@@ -551,7 +569,7 @@ function Filter({ column }: { column: Column<any, unknown> }) {
   }
 
   return (
-    <div className='border-primary w-full max-w-2xs rounded border'>
+    <div className='w-full max-w-2xs rounded border border-purple-500'>
       <Label htmlFor={`${id}-input`} className='sr-only'>
         {columnHeader}
       </Label>
@@ -572,9 +590,9 @@ function Filter({ column }: { column: Column<any, unknown> }) {
   )
 }
 
-function RowActions({ memberId }: { memberId: string }) {
-  const currentDay = new Date().getDate()
-  const shouldShow = currentDay >= 12
+function RowActions({ deceasedMemberId }: { deceasedMemberId: string }) {
+  const deleteDeceasedMember = deleteDeceasedMemberAction.bind(null, { deceasedMemberId })
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -584,34 +602,30 @@ function RowActions({ memberId }: { memberId: string }) {
           </Button>
         </div>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align='center' className='border-primary rounded border'>
+      <DropdownMenuContent align='start' className='rounded border border-purple-500'>
         <DropdownMenuGroup>
           <DropdownMenuItem>
-            <Link href={`/admin-members/${memberId}/edit`}>
-              <span className='flex gap-3 text-blue-500'>
+            <Link href={`/admin-deceased/${deceasedMemberId}/edit`}>
+              <span className='flex justify-center gap-3 pl-4 text-blue-500'>
                 <Pencil className='text-blue-500' />
-                View and Edit Member&apos;s Details
+                Edit Case Status
               </span>
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem>
-            <Link href={`/admin/${memberId}/deathAnnouncement`}>
-              <span className='flex gap-3 text-purple-500'>
-                <Cross className='text-purple-500' />
-                Announce Member&apos;s Dead
-              </span>
-            </Link>
+            <FormContainer action={deleteDeceasedMember}>
+              <Button
+                size='default'
+                variant='ghost'
+                className='text-destructive flex justify-center gap-3 rounded-full hover:bg-transparent'
+
+                // aria-label='Edit '
+              >
+                <Trash2 className='text-destructive size-4' aria-hidden='true' />
+                <p>remove deceased member</p>
+              </Button>
+            </FormContainer>
           </DropdownMenuItem>
-          {shouldShow ? (
-            <DropdownMenuItem>
-              <Link href={`/admin/${memberId}/removeMember`}>
-                <span className='flex flex-row gap-3 text-red-500'>
-                  <Trash2 className='text-red-500' />
-                  Remove Member
-                </span>
-              </Link>
-            </DropdownMenuItem>
-          ) : null}
         </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>

@@ -7,7 +7,7 @@ import {
   createDeceasedMemberAction,
   fetchProfile,
   fetchSingleDeceasedMemberDetails,
-  updateDeceasedMemberDetailsAction
+  updateDeceasedMemberDetailsActionAdmin
 } from '@/utils/actions'
 import { contributionStatus } from '@/utils/types'
 
@@ -37,7 +37,7 @@ const EditCaseStatus = async ({ params }: { params: { id: string } }) => {
         <h1 className='text-xl font-semibold text-purple-600 capitalize sm:text-6xl'> Edit Case Status </h1>
       </div>
       <div className='rounded-lg border border-purple-800 bg-purple-300/50 p-8'>
-        <FormContainer action={updateDeceasedMemberDetailsAction}>
+        <FormContainer action={updateDeceasedMemberDetailsActionAdmin}>
           <div>
             <input type='hidden' name='id' value={id} />
             <div className='mt-4 grid gap-4 md:grid-cols-3'>

@@ -13,7 +13,16 @@ const EditMemberDetailPage = async ({ params }: { params: { id: string } }) => {
 
   const member = await fetchSingleMemberDetailsForAdmin(id)
 
-  const { firstName, lastAndMiddleNames, dateOfBirth, countryOfBirth, clerkId, nameOfBeneficiary } = member
+  const {
+    firstName,
+    lastAndMiddleNames,
+    dateOfBirth,
+    countryOfBirth,
+    clerkId,
+    nameOfBeneficiary,
+    associationName,
+    associationCode
+  } = member
 
   const profile = await fetchProfile()
 
@@ -22,7 +31,7 @@ const EditMemberDetailPage = async ({ params }: { params: { id: string } }) => {
       <div className='my-4 flex flex-col'>
         <h1 className='text-primary text-3xl font-semibold capitalize sm:text-6xl'>
           {' '}
-          view and update member&apos;s details{' '}
+          view and update member&apos;s details (Admin)
         </h1>
         <p className='text-primary text-xs sm:text-lg'>
           Here you can change the member&apos;s date of birth, the beneficiary&apos;s names or country of birth, but to
@@ -64,13 +73,13 @@ const EditMemberDetailPage = async ({ params }: { params: { id: string } }) => {
                 type='text'
                 name='associationName'
                 label='member association name'
-                defaultValue={profile.associationName}
+                defaultValue={associationName}
               />
               <FormInput
                 type='text'
                 name='associationCode'
                 label='member association code'
-                defaultValue={profile.associationCode}
+                defaultValue={associationCode}
               />
             </div>
             <div className='mt-4 grid gap-4 md:grid-cols-2'>

@@ -20,7 +20,7 @@ const SidebarGroupedMenuItems = async ({ data, groupLabel }: { data: MenuItem[];
       <SidebarGroupContent>
         <SidebarMenu>
           {data.map(item => {
-            if (item.label === 'Admin' && !isAdminUser) return null
+            if (item.label.includes('Admin') && !isAdminUser) return null
             return (
               <SidebarMenuItem key={item.label}>
                 <SidebarMenuButton
