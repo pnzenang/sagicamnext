@@ -20,7 +20,7 @@ const Features = () => {
                 </Avatar>
                 <div className='space-y-2'>
                   <CardTitle className='text-primary line-clamp-2 text-lg font-semibold sm:text-4xl'>
-                    Bank Deposit.
+                    Bank Deposit and Transfer
                   </CardTitle>
                   <CardDescription className='line-clamp-2'>
                     Bank:<span className='px-5 font-bold group-hover:text-4xl'>Bank Of America.</span>

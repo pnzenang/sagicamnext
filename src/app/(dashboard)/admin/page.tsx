@@ -4,7 +4,7 @@ import { Divide } from 'lucide-react'
 
 import { Card } from '@/components/ui/card'
 
-import MembersDataTable from '@/components/shadcn-studio/blocks/datatable-members'
+import MembersDataTable from '@/components/shadcn-studio/blocks/datatable-membersAdmin'
 import { fetchProfile, fetchMembersForAdmin } from '@/utils/actions'
 import LoadingContainer from '@/components/global/DataTableLoading'
 

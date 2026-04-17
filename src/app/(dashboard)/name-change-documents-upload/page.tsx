@@ -1,6 +1,8 @@
 'use client'
+import { fetchProfile } from '@/utils/actions'
 import FormfacadeEmbed from '@formfacade/embed-react'
 const NameChangeDocumentation = () => {
+  // const user = await fetchProfile()
   return (
     <section>
       <div className='bg-muted mx-auto my-2 max-w-7xl rounded-lg border p-4'>

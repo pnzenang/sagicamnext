@@ -47,7 +47,7 @@ const PagesLayout = ({ children }: Readonly<{ children: ReactNode }>) => {
                 <SidebarTrigger className='[&_svg]:size-5!' />
                 <LogoSmall className='size-10 sm:hidden' />
               </div>
-              <div className='mx=auto flex items-center justify-center gap-x-3'>
+              <div className='mx=auto flex justify-center gap-x-3'>
                 <ModeToggleSmall />
                 <UserButton />
               </div>

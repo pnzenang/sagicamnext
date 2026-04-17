@@ -34,12 +34,13 @@ const EditMemberDetailPage = async ({ params }: { params: { id: string } }) => {
           <div>
             <input type='hidden' name='id' value={id} />
             <div className='mt-4 grid gap-4 md:grid-cols-2'>
-              <FormInput type='text' name='firstName' label='member first names' defaultValue={firstName} />
+              <FormInput type='text' name='firstName' label='member first names' value={firstName} readOnly />
               <FormInput
                 type='text'
                 name='lastAndMiddleNames'
                 label='member last and middle names(last name first)'
-                defaultValue={lastAndMiddleNames}
+                value={lastAndMiddleNames}
+                readOnly
               />
             </div>
             <div className='mt-4 grid gap-4 md:grid-cols-3'>
@@ -64,13 +65,15 @@ const EditMemberDetailPage = async ({ params }: { params: { id: string } }) => {
                 type='text'
                 name='associationName'
                 label='member association name'
-                defaultValue={profile.associationName}
+                value={profile.associationName}
+                readOnly
               />
               <FormInput
                 type='text'
                 name='associationCode'
                 label='member association code'
-                defaultValue={profile.associationCode}
+                value={profile.associationCode}
+                readOnly
               />
             </div>
             <div className='mt-4 grid gap-4 md:grid-cols-2'>
@@ -84,8 +87,8 @@ const EditMemberDetailPage = async ({ params }: { params: { id: string } }) => {
               <FormSelect
                 label='member status'
                 name='memberStatus'
-                items={Object.values(memberStatus)}
-                defaultValue={member.memberStatus}
+                items={[memberStatus.Pending]}
+                defaultValue={memberStatus.Pending}
               />
             </div>
             <div className='mt-4 grid gap-4 md:grid-cols-3'>

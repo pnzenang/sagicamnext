@@ -587,7 +587,7 @@ function RowActions({ memberId }: { memberId: string }) {
       <DropdownMenuContent align='center' className='border-primary rounded border'>
         <DropdownMenuGroup>
           <DropdownMenuItem>
-            <Link href={`/all-members/${memberId}/edit`}>
+            <Link href={`/admin/${memberId}/edit`}>
               <span className='flex gap-3 text-blue-500'>
                 <Pencil className='text-blue-500' />
                 View and Edit Member&apos;s Details
@@ -595,7 +595,7 @@ function RowActions({ memberId }: { memberId: string }) {
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem>
-            <Link href={`/all-members/${memberId}/deathAnnouncement`}>
+            <Link href={`/admin/${memberId}/deathAnnouncement`}>
               <span className='flex gap-3 text-purple-500'>
                 <Cross className='text-purple-500' />
                 Announce Member&apos;s Dead
@@ -604,7 +604,7 @@ function RowActions({ memberId }: { memberId: string }) {
           </DropdownMenuItem>
           {shouldShow ? (
             <DropdownMenuItem>
-              <Link href={`/all-members/${memberId}/removeMember`}>
+              <Link href={`/admin/${memberId}/removeMember`}>
                 <span className='flex flex-row gap-3 text-red-500'>
                   <Trash2 className='text-red-500' />
                   Remove Member

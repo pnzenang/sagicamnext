@@ -1,7 +1,9 @@
 import Features from '@/components/shadcn-studio/blocks/features-section-10/features-section-10'
+import { fetchProfile } from '@/utils/actions'
 import React from 'react'
 
-const PaymentInstructions = () => {
+const PaymentInstructions = async () => {
+  const user = await fetchProfile()
   return (
     <section className='py-8 sm:py-16 lg:py-8'>
       <div className='mx-auto max-w-7xl px-4 sm:px-6 lg:px-8'>

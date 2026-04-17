@@ -6,6 +6,8 @@ type FormSelectProps = {
   items: string[]
   label?: string
   defaultValue?: string
+  value?: string
+  readOnly?: boolean
 }
 
 const FormSelect = ({ name, items, label, defaultValue }: FormSelectProps) => {

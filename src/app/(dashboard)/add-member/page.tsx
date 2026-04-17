@@ -49,7 +49,7 @@ const AddMember = async () => {
             <FormSelect
               label='member status'
               name='memberStatus'
-              items={Object.values(memberStatus)}
+              items={[memberStatus.Pending]}
               defaultValue={memberStatus.Pending}
             />
           </div>

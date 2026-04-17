@@ -1,9 +1,9 @@
 'use client'
-
-import React from 'react'
 import FormfacadeEmbed from '@formfacade/embed-react'
+import { fetchProfile } from '@/utils/actions'
 
 const ContributionsPayments = () => {
+  // const user = await fetchProfile()
   return (
     <section>
       <div className='bg-muted mx-auto my-2 max-w-7xl rounded-lg border p-4'>

@@ -2,16 +2,18 @@
 
 import React from 'react'
 import FormfacadeEmbed from '@formfacade/embed-react'
+// import { fetchProfile } from '@/utils/actions'
 
 const RegistrationPayments = () => {
+  // const user = await fetchProfile()
   return (
     <section>
       <div className='bg-muted mx-auto my-2 max-w-7xl rounded-lg border p-4'>
         <h1 className='text-muted-foreground py-3 text-sm font-bold sm:text-3xl lg:text-5xl'>REGISTRATION PAYMENTS</h1>
         <h1 className='text-muted-foreground text-sm font-bold sm:text-lg'>
           In this section, please upload the list or screenshot of the members you are adding and the receipt of the
-          payment. Tahis will help us to accurately track the new members and their registration fees. Thank you for
-          your understanding, you will then see your transaction recorded below the form.
+          payment. This will help us to accurately track the new members and their registration fees. Thank you for your
+          understanding, you will then see your transaction recorded below the form.
         </h1>
       </div>
       <FormfacadeEmbed

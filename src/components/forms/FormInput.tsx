@@ -5,12 +5,14 @@ type FormInputProps = {
   name: string
   type: string
   label?: string
+  value?: string
   defaultValue?: string
   placeholder?: string
+  readOnly?: boolean
 }
 
 const FormInput = (props: FormInputProps) => {
-  const { label, type, name, defaultValue, placeholder } = props
+  const { label, type, name, defaultValue, placeholder, value, readOnly } = props
 
   return (
     <div className='mb-2'>
@@ -21,9 +23,11 @@ const FormInput = (props: FormInputProps) => {
         id={name}
         name={name}
         type={type}
+        value={value}
         defaultValue={defaultValue}
         placeholder={placeholder}
         required
+        readOnly={readOnly}
         className='border-primary border uppercase'
       />
     </div>

@@ -1,6 +1,7 @@
+'use client'
 import {
   BriefcaseBusinessIcon,
-  HeadphonesIcon,
+  FolderPen,
   BookCheck,
   Cross,
   Trash2,
@@ -11,6 +12,7 @@ import {
 } from 'lucide-react'
 
 import FAQ from '@/components/shadcn-studio/blocks/faq-component-08/faq-component-08'
+// import { fetchProfile } from '@/utils/actions'
 
 const tabsData = [
   {
@@ -107,7 +109,7 @@ const tabsData = [
       {
         question: 'How do I announce the death of a member?',
         answer:
-          'The death announcement is made by clicking on the 3 dots next to the member and selecting "Announce Member\'s Death", once again it is recommended to double-check the information before submission as the process is irreversible..'
+          'The death announcement is made by clicking on the "All Members" link in the sidebar and then on the 3 dots on the member  row and selecting "Announce Member\'s Death", once again it is recommended to double-check the information before submission as the process is irreversible..'
       },
       {
         question: 'Can I announce the death of a member by email?',
@@ -122,7 +124,7 @@ const tabsData = [
       {
         question: 'How can I submit the necessary documentation?',
         answer:
-          'You should submit the necessary documentation through the online portal by clicking on the "Documents Upload" link.'
+          'You should submit the necessary documentation through the online portal by clicking on the "Death Documentations" link in the sidebar.'
       },
       {
         question: 'How can I check the status of the death contribution of a member?',
@@ -139,7 +141,7 @@ const tabsData = [
       {
         question: 'How can I remove a loved one?',
         answer:
-          'If you decide to remove a member, you need to click on the 3 dots next to the member and select "Remove Member". but make sure to double-check before proceeding, because once removed, the member will be permanently deleted from your association and will only be able to rejoin after a new registration and payment of returning member fees, where they will need to start over.'
+          'If you decide to remove a member, first click on the "All Members" link in the sidebar and then click on the 3 dots on  the member\'s row and select "Remove Member". but make sure to double-check before proceeding, because once removed, the member will be permanently deleted from your association and will only be able to rejoin after a new registration and payment of returning member fees, where they will need to start over.'
       },
       {
         question: 'Can the member be reinstated after removal?',
@@ -210,10 +212,38 @@ const tabsData = [
           'The link to the contributions and payment chart is located on the left sidebar, you can click on the link "Contributions" to access the chart and report your contributions and payments .'
       }
     ]
+  },
+  {
+    value: 'name-change-and-documentation',
+    label: 'Name Change and Documentation',
+    icon: FolderPen,
+    faqs: [
+      {
+        question: 'How do I process a name change?',
+        answer:
+          'Please click on the "Name Change" link in the sidebar to access the SAGICAM Name Change Form and go from there.'
+      },
+      {
+        question: 'What documentation do I need to upload for a name change?',
+        answer:
+          "If the name change is due to a legal document, you will need to upload the official name change document, but if it's due to a typo or error, you do not need to upload any documentation."
+      },
+      {
+        question: 'Can the name change be processed without documentation?',
+        answer:
+          'Yes, if the name change is due to a typo or error, you do not need to upload any documentation. but if the name change is due to a legal document, you will need to upload the official name change document for the change to be processed.'
+      },
+      {
+        question: 'Can I just upload the new ID card or passport for the name change documentation?',
+        answer:
+          "No, you must upload the official name change document for the change to be processed, we don't have a way to verify name changes through ID cards or passports alone, we don't the member's previous Id card."
+      }
+    ]
   }
 ]
 
 const FAQPage = () => {
+  // const user = await fetchProfile()
   return <FAQ tabsData={tabsData} />
 }
 

@@ -41,7 +41,7 @@ const HeroSection = () => {
                   delay={0.5}
                   className='bg-primary/10 relative inline-block border-2 px-3'
                 >
-                  <TextFlip words={['Friends.', 'Families.', 'Generations.', 'promotions.', 'communities.']} />
+                  <TextFlip words={['Friends.', 'Families.', 'Generations.', 'Promotions.', 'Communities.']} />
                   <MotionPreset
                     component='span'
                     zoom={{ initialScale: 0 }}

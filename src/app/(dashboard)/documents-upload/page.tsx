@@ -1,9 +1,9 @@
 'use client'
+
 import FormfacadeEmbed from '@formfacade/embed-react'
-import { Button } from '@/components/ui/button'
-import Link from 'next/link'
 
 const ButtonIconDemo = () => {
+  // const user = await fetchProfile()
   return (
     <section>
       <div className='bg-muted mx-auto my-2 max-w-7xl rounded-lg border p-4'>

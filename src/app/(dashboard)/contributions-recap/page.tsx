@@ -1,6 +1,8 @@
+import { fetchProfile } from '@/utils/actions'
 import React from 'react'
 
-const Contribution = () => {
+const Contribution = async () => {
+  const user = await fetchProfile()
   return (
     <section>
       <div className='bg-muted mx-auto my-2 max-w-7xl rounded-lg border p-4'>
