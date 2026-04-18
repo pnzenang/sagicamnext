@@ -393,8 +393,8 @@ const DeceasedMembersDataTable = ({ data }: { data: DeceasedMemberType[] }) => {
         </div>
         <div className='flex items-start gap-4 p-6 max-sm:flex-col sm:items-center sm:justify-between'>
           <div className='flex w-6/7 flex-col justify-start gap-2 sm:flex-row sm:items-center'>
-            <Filter column={table.getColumn('firstName')!} />
             <Filter column={table.getColumn('lastAndMiddleNames')!} />
+            <Filter column={table.getColumn('firstName')!} />
             <Filter column={table.getColumn('associationName')!} />
             <Filter column={table.getColumn('contributionStatus')!} />
           </div>

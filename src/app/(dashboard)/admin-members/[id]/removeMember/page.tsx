@@ -53,12 +53,7 @@ const RemoveMember = async ({ params }: { params: { id: string } }) => {
                 defaultValue={memberMatriculationNumber}
               />
 
-              <FormInput
-                type='text'
-                name='sponsorCode'
-                label='member association code'
-                defaultValue={profile.sponsorCode}
-              />
+              <FormInput type='text' name='sponsorCode' label='sponsor code' defaultValue={profile.sponsorCode} />
               <FormSelect
                 label='reason for leaving'
                 items={Object.values(reasonForLeaving)}

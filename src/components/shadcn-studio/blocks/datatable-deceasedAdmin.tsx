@@ -19,8 +19,6 @@ import {
   FileTextIcon,
   SearchIcon,
   UploadIcon,
-  Cross,
-  Eye,
   Pencil
 } from 'lucide-react'
 
