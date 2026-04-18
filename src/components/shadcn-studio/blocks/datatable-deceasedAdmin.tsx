@@ -109,19 +109,19 @@ const columns: ColumnDef<DeceasedMemberType>[] = [
     size: 150
   },
   {
-    header: `Group's Name`,
-    accessorKey: 'associationName',
+    header: 'Code',
+    accessorKey: 'sponsorCode',
     cell: ({ row }) => (
       <div className='flex items-center gap-2'>
         <div className='flex flex-col'>
-          <span className='font-medium text-wrap'>{row.getValue('associationName')}</span>
+          <span className='font-medium'>{row.getValue('sponsorCode')}</span>
         </div>
       </div>
     ),
-    size: 100
+    size: 150
   },
   {
-    header: 'Place of Death (State)',
+    header: 'Place of Death',
     accessorKey: 'placeOfDeath',
     cell: ({ row }) => (
       <div className='flex items-center gap-2'>
@@ -392,9 +392,9 @@ const DeceasedMembersDataTable = ({ data }: { data: DeceasedMemberType[] }) => {
         </div>
         <div className='flex items-start gap-4 p-6 max-sm:flex-col sm:items-center sm:justify-between'>
           <div className='flex w-6/7 flex-col justify-start gap-2 sm:flex-row sm:items-center'>
-            <Filter column={table.getColumn('firstName')!} />
             <Filter column={table.getColumn('lastAndMiddleNames')!} />
-            <Filter column={table.getColumn('associationName')!} />
+            <Filter column={table.getColumn('firstName')!} />
+            <Filter column={table.getColumn('sponsorCode')!} />
             <Filter column={table.getColumn('contributionStatus')!} />
           </div>
           <div className='flex items-center gap-4 sm:justify-between'>

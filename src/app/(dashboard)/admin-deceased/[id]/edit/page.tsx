@@ -41,11 +41,11 @@ const EditCaseStatus = async ({ params }: { params: { id: string } }) => {
           <div>
             <input type='hidden' name='id' value={id} />
             <div className='mt-4 grid gap-4 md:grid-cols-3'>
-              <FormInput type='text' name='firstName' label='member first names' defaultValue={firstName} />
+              <FormInput type='text' name='firstName' label='loved one first names' defaultValue={firstName} />
               <FormInput
                 type='text'
                 name='lastAndMiddleNames'
-                label='member last and middle names(last name first)'
+                label='loved one last and middle names'
                 defaultValue={lastAndMiddleNames}
               />
               <FormInput
@@ -54,9 +54,7 @@ const EditCaseStatus = async ({ params }: { params: { id: string } }) => {
                 label='Matriculation'
                 defaultValue={memberMatriculationNumber}
               />
-            </div>
-            <div className='mt-4 grid gap-4 md:grid-cols-3'>
-              <input type='hidden' name='id' value={id} />
+
               <FormInput
                 type='text'
                 name='registrationDate'
@@ -69,36 +67,33 @@ const EditCaseStatus = async ({ params }: { params: { id: string } }) => {
               <FormInput
                 type='text'
                 name='countryOfBirth'
-                label='member country of birth'
+                label='loved one city of birth'
                 defaultValue={countryOfBirth}
               />
 
               <FormInput
                 type='text'
                 name='nameOfBeneficiary'
-                label='Name fo Beneficiary'
+                label='Beneficiary Name'
                 defaultValue={nameOfBeneficiary}
               />
 
+              <FormInput type='text' name='associationCode' label='sponsor code' defaultValue={sponsorCode} />
               <FormInput
                 type='text'
-                name='associationCode'
-                label='member association code'
-                defaultValue={sponsorCode}
+                name='placeOfDeath'
+                label="loved one's place of death"
+                defaultValue={placeOfDeath}
               />
-              <FormInput type='text' name='placeOfDeath' label="member's place of death" defaultValue={placeOfDeath} />
-            </div>
-            <div className='mt-4 grid gap-4 md:grid-cols-3'>
-              <input type='hidden' name='id' value={id} />
 
-              <FormInput type='text' name='dateOfDeath' label='member date of death' defaultValue={dateOfDeath} />
+              <FormInput type='text' name='dateOfDeath' label='loved one date of death' defaultValue={dateOfDeath} />
               <FormSelect
                 name='contributionStatus'
                 label='Contribution Status'
                 items={Object.values(contributionStatus)}
                 defaultValue={deceasedMember.contributionStatus}
               />
-              <SubmitButton text="post member's death" className='mt-4 w-full bg-purple-800 hover:bg-purple-900' />
+              <SubmitButton text="post loved one's death" className='mt-4 w-full bg-purple-800 hover:bg-purple-900' />
             </div>
           </div>
         </FormContainer>
