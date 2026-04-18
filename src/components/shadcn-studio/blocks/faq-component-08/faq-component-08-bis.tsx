@@ -19,43 +19,20 @@ type FAQTab = {
 
 const FAQ = ({ tabsData }: { tabsData: FAQTab }) => {
   return (
-    <section className='py-8 sm:py-8 lg:py-8'>
+    <section className='py-8'>
       <div className='mx-auto max-w-7xl px-4 sm:px-6 lg:px-8'>
         {/* FAQ Header */}
         <div className='mb-12 space-y-4 md:mb-8 lg:mb-16'>
           <div className='mb-4 flex items-center gap-2'>
-            <h2 className='mb-8 text-2xl font-semibold md:text-3xl lg:text-5xl'>NAVIGATION INSTRUCTIONS</h2>
+            <h2 className='mb-8 text-2xl font-semibold md:text-3xl lg:text-5xl'>INTERNAL RULES AT GLANCE</h2>
           </div>
           <p className='text- mt-4'>
-            Welcome to your SAGICAM dashboard! <br />
+            The SAGICAM internal rules is detailed in the various tabs below, you can also download the whole document
+            by clicking here: <br />
           </p>
-          <div className='flex flex-col gap-5'>
-            <h1 className=''>
-              <Check className='inline pr-2' />
-              Here we want to share all the processes to insure that your loved ones account are well managed, all the
-              requirements are fulfilled.
-            </h1>
-            <h1>
-              <Check className='inline pr-2' />
-              All the SAGICAM transactions can be initiated from the appropriate link in the left sidebar,
-            </h1>
-            <h1>
-              <Check className='inline pr-2' />
-              Below, By clicking on the appropriate tab, you can access detailed information on how to fulfill most
-              tasks.
-            </h1>
-            <h1>
-              <Check className='inline pr-2' />
-              For any further question or assistance, please don't hesitate to contact us:
-              <Phone className='text-primary mr-1 ml-2 inline' />
-              1(804)-214-6390
-              <Mail className='text-primary mr-1 ml-2 inline' />
-              info@sagicam.org
-            </h1>
-          </div>
         </div>
 
-        <Tabs defaultValue='general' orientation='vertical'>
+        <Tabs defaultValue='section1' orientation='vertical'>
           <div className='grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-3'>
             {/* Vertical Tabs List */}
             <TabsList className='h-max w-full flex-col gap-2 bg-transparent p-0'>

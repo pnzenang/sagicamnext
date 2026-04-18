@@ -1,4 +1,3 @@
-import { SwatchBookIcon, SearchIcon, StarIcon, SmartphoneIcon, LockKeyholeIcon, ShieldBanIcon } from 'lucide-react'
 import { MdAllInclusive } from 'react-icons/md'
 import { FaMapMarkerAlt } from 'react-icons/fa'
 import { RiHealthBookLine } from 'react-icons/ri'

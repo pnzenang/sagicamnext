@@ -11,7 +11,8 @@ import {
   Wallet,
   FileCheck,
   WalletCards,
-  WalletMinimal
+  WalletMinimal,
+  CreditCard
 } from 'lucide-react'
 
 import type { MenuItem } from './types'
@@ -75,7 +76,7 @@ export const pagesItems: MenuItem[] = [
     href: '/name-change-documents-upload'
   },
   {
-    icon: FileCheck,
+    icon: CreditCard,
     label: 'Payment Instructions',
     href: '/payment-instructions'
   },
