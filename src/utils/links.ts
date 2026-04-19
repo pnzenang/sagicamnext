@@ -68,7 +68,7 @@ export const pagesItems: MenuItem[] = [
   {
     icon: FileStack,
     label: 'Death Documentations',
-    href: '/documents-upload'
+    href: '/death-documentations'
   },
   {
     icon: FileCheck,
