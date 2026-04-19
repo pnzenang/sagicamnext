@@ -12,7 +12,7 @@ const ButtonIconDemo = () => {
       />
       <iframe
         src='https://docs.google.com/spreadsheets/d/e/2PACX-1vRCfxI6ydIQ259MnPJrSmq9f6tZfVfPS-JT9kq34dHnJxxePhct1aFvkhltWfvhLB835a8kmaWU5Z_6/pubhtml?widget=true&amp;headers=false'
-        className='mx-auto mt-5 h-100 w-full max-w-7xl rounded-lg border'
+        className='mx-auto mt-5 h-90 w-full max-w-7xl rounded-lg border'
       >
         {' '}
       </iframe>

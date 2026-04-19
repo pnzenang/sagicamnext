@@ -12,7 +12,7 @@ const ContributionsPayments = () => {
       />
       <iframe
         src='https://docs.google.com/spreadsheets/d/e/2PACX-1vTisW8_PRJbQxFSfQxoIBia6XTvUWaR-VZDT0_3jFunhrs23CijXxlnJztcbxToqZ1qJjri2qlkhJyT/pubhtml?widget=true&amp;headers=false'
-        className='mx-auto h-150 w-full max-w-7xl rounded-lg border py-10'
+        className='mx-auto h-130 w-full max-w-7xl rounded-lg border py-10'
       ></iframe>
     </section>
   )
