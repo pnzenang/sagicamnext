@@ -81,7 +81,7 @@ const EditMemberDetailPage = async ({ params }: { params: { id: string } }) => {
                 defaultValue={member.delegateRecommendation}
               />
               <FormSelect
-                label='loved one status'
+                label='loved one status at registration'
                 name='memberStatus'
                 items={[memberStatus.Pending]}
                 defaultValue={memberStatus.Pending}

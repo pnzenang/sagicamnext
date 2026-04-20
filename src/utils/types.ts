@@ -23,7 +23,8 @@ export enum delegateRecommendation {
 
 export enum memberStatus {
   Pending = 'pending',
-  Vested = 'vested'
+  Vested = 'vested',
+  Delinquent = 'delinquent'
 }
 
 export type MemberType = {
