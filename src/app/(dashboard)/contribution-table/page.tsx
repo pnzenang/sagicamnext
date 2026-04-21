@@ -1,17 +1,14 @@
 import { Card } from '@/components/ui/card'
-import { fetchProfile } from '@/utils/actions'
 import React from 'react'
 
-const Contribution = async () => {
-  const user = await fetchProfile()
+const ContributionTable = () => {
   return (
     <section>
       <Card className='mx-auto my-2 max-w-7xl rounded-lg border bg-white p-4'>
-        <h1 className='text-muted-foreground py-1 text-sm font-bold sm:text-3xl lg:text-5xl'>CONTRIBUTIONS RECAP</h1>
+        <h1 className='text-muted-foreground py-1 text-sm font-bold sm:text-3xl lg:text-5xl'>CONTRIBUTION TABLE</h1>
         <h1 className='text-muted-foreground text-sm font-bold sm:text-lg'>
-          In this section, you can find a comprehensive overview of your contributions over the months. This recap
-          provides a clear summary of your contributions, allowing you to track your payments and stay informed about
-          your financial position.
+          In the contribution table below, you will find find your contribution amount for the present month following
+          your 4-letter code and head to the contributions payments to record your payment when made.
         </h1>
       </Card>
       <iframe
@@ -22,4 +19,4 @@ const Contribution = async () => {
   )
 }
 
-export default Contribution
+export default ContributionTable

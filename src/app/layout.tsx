@@ -1,4 +1,4 @@
-import type  { ReactNode } from 'react'
+import type { ReactNode } from 'react'
 
 import { ClerkProvider } from '@clerk/nextjs'
 import { Geist, Geist_Mono } from 'next/font/google'
@@ -24,8 +24,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    template: 'SAGI | Active Solidarity',
-    default: 'SAGI | Active Solidarity'
+    template: 'SAGICAM by Active Solidarity ',
+    default: 'SAGICAM by Active Solidarity'
   },
   description:
     'Grow your product faster with an all-in-one sales and analytics platform. Track performance, automate follow-ups, and make smarter decisions easily.',
@@ -81,8 +81,8 @@ export const metadata: Metadata = {
   metadataBase: new URL(`${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}`),
   openGraph: {
     title: {
-      template: 'SAGI: Active Solidarity',
-      default: 'SAGI: Active Solidarity'
+      template: 'SAGICAM: Active Solidarity',
+      default: 'SAGICAM: Active Solidarity'
     },
     description:
       'Grow your product faster with an all-in-one sales and analytics platform. Track performance, automate follow-ups, and make smarter decisions easily.',
@@ -113,25 +113,24 @@ export const metadata: Metadata = {
 const RootLayout = ({ children }: Readonly<{ children: ReactNode }>) => {
   return (
     <>
-    <ClerkProvider>
-      <html
-        lang='en'
-        className={cn(geistSans.variable, geistMono.variable, 'flex min-h-full w-full scroll-smooth antialiased')}
-        suppressHydrationWarning
-      >
-        <body className='flex min-h-full w-full flex-auto flex-col'>
-          <ThemeProvider attribute='class' enableSystem={false} disableTransitionOnChange>
-            <TooltipProvider>
-              <main>{children}</main>
-              <Toaster />
-            </TooltipProvider>
-          </ThemeProvider>
-        </body>
-      </html>
-    </ClerkProvider>
+      <ClerkProvider>
+        <html
+          lang='en'
+          className={cn(geistSans.variable, geistMono.variable, 'flex min-h-full w-full scroll-smooth antialiased')}
+          suppressHydrationWarning
+        >
+          <body className='flex min-h-full w-full flex-auto flex-col'>
+            <ThemeProvider attribute='class' enableSystem={false} disableTransitionOnChange>
+              <TooltipProvider>
+                <main>{children}</main>
+                <Toaster />
+              </TooltipProvider>
+            </ThemeProvider>
+          </body>
+        </html>
+      </ClerkProvider>
     </>
   )
-
 }
 
 export default RootLayout

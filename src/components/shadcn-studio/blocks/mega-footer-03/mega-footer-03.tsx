@@ -32,7 +32,7 @@ const MegaFooter = () => {
           <Link href='#' className='text-primary'>
             SAGICAM
           </Link>
-          ,All rights reserved.
+          , All rights reserved.
         </p>
       </div>
     </footer>

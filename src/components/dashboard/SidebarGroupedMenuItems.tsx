@@ -26,7 +26,7 @@ const SidebarGroupedMenuItems = async ({ data, groupLabel }: { data: MenuItem[];
                 <SidebarMenuButton
                   tooltip={item.label}
                   asChild
-                  className='data-[state=open]:text-primary focus:bg-primary my-2 py-1 transition-all duration-500 hover:ml-5 focus:text-neutral-50'
+                  className='data-[state=open]:text-primary focus:bg-primary my-1 py-1 transition-all duration-500 hover:ml-5 focus:text-neutral-50'
                 >
                   <Link href={item.href}>
                     <item.icon />

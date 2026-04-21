@@ -56,6 +56,11 @@ export const pagesItems: MenuItem[] = [
   },
   {
     icon: WalletCards,
+    label: 'Contribution Table',
+    href: '/contribution-table'
+  },
+  {
+    icon: WalletCards,
     label: 'Contributions Payments',
     href: '/contributions-payments'
   },
