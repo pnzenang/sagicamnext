@@ -13,16 +13,7 @@ const EditMemberDetailPage = async ({ params }: { params: { id: string } }) => {
 
   const member = await fetchSingleMemberDetailsForAdmin(id)
 
-  const {
-    firstName,
-    lastAndMiddleNames,
-    dateOfBirth,
-    countryOfBirth,
-    clerkId,
-    nameOfBeneficiary,
-
-    sponsorCode
-  } = member
+  const { firstName, lastAndMiddleNames, dateOfBirth, countryOfBirth, clerkId, nameOfBeneficiary, sponsorCode } = member
 
   const profile = await fetchProfile()
 

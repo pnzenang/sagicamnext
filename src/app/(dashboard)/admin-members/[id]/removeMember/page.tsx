@@ -11,7 +11,7 @@ const RemoveMember = async ({ params }: { params: { id: string } }) => {
 
   const member = await fetchSingleMemberDetailsForAdmin(id)
 
-  const { firstName, lastAndMiddleNames, dateOfBirth, countryOfBirth, memberMatriculationNumber } = member
+  const { firstName, lastAndMiddleNames, dateOfBirth, countryOfBirth, memberMatriculationNumber, sponsorCode } = member
 
   const profile = await fetchProfile()
 
@@ -53,7 +53,7 @@ const RemoveMember = async ({ params }: { params: { id: string } }) => {
                 defaultValue={memberMatriculationNumber}
               />
 
-              <FormInput type='text' name='sponsorCode' label='sponsor code' defaultValue={profile.sponsorCode} />
+              <FormInput type='text' name='sponsorCode' label='sponsor code' defaultValue={sponsorCode} />
               <FormSelect
                 label='reason for leaving'
                 items={Object.values(reasonForLeaving)}
