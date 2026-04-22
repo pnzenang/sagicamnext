@@ -58,7 +58,8 @@ export type RemovedMemberType = {
 export enum reasonForLeaving {
   NoReason = 'No Reason',
   Relocated = 'Moved out of USA',
-  TooExpensive = 'Too Expensive '
+  TooExpensive = 'Too Expensive ',
+  Passed = 'Dead In The Waiting Period'
 }
 
 export type DeceasedMemberType = {
