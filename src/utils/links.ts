@@ -51,6 +51,11 @@ export const pagesItems: MenuItem[] = [
   },
   {
     icon: WalletMinimal,
+    label: 'New Additions  ',
+    href: '/new-additions'
+  },
+  {
+    icon: WalletMinimal,
     label: 'Registration Payments  ',
     href: '/registration-payments'
   },
