@@ -12,7 +12,8 @@ import {
   FileCheck,
   WalletCards,
   WalletMinimal,
-  CreditCard
+  CreditCard,
+  List
 } from 'lucide-react'
 
 import type { MenuItem } from './types'
@@ -50,7 +51,7 @@ export const pagesItems: MenuItem[] = [
     href: '/deceased-members'
   },
   {
-    icon: WalletMinimal,
+    icon: List,
     label: 'New Additions  ',
     href: '/new-additions'
   },
