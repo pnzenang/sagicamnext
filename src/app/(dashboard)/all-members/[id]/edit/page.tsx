@@ -62,7 +62,7 @@ const EditMemberDetailPage = async ({ params }: { params: { id: string } }) => {
               <FormInput
                 type='text'
                 name='nameOfBeneficiary'
-                label='Name fo Beneficiary'
+                label='Name of the Beneficiary'
                 defaultValue={nameOfBeneficiary}
               />
               <FormInput
