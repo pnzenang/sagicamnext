@@ -12,7 +12,7 @@ const NewAdditions = () => {
       </Card>
       <iframe
         src='https://docs.google.com/spreadsheets/d/e/2PACX-1vQT8xQUCPYKSCCB9ggChdonRC76QEN1p0dFCQqiEO_Ox5Afo7OrVMiiVZfjkV5Pr7jSFcpv9BjE0nSx/pubhtml?widget=true&amp;headers=false'
-        className='max-w-9xl mx-auto h-160 w-full items-center'
+        className='mx-auto mt-5 h-160 w-full max-w-19/20 items-center rounded-lg border'
       ></iframe>
     </div>
   )

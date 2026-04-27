@@ -11,7 +11,7 @@ const NameChangeDocumentation = () => {
       />
       <iframe
         src='https://docs.google.com/spreadsheets/d/e/2PACX-1vR1kdnA-WBoLRTfLFG-uGxE7kdeZ1-kPxSaX9c_jB4v0TYWI09OhFVoC7Rg97l-odQU7WDSq56ovtwP/pubhtml?widget=true&amp;headers=false'
-        className='mx-auto mt-5 h-100 w-full max-w-7xl rounded-lg border'
+        className='mx-auto mt-5 h-100 w-full max-w-19/20 rounded-lg border'
       >
         {' '}
       </iframe>
