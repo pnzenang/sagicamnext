@@ -7,7 +7,7 @@ const ContributionsPayments = () => {
   return (
     <section>
       <FormfacadeEmbed
-        formFacadeURL='https://formfacade.com/include/112423225580039142072/form/1FAIpQLSfaNbszEn1G3SHQJSdqmgNvjw0X8xvbtRKIryAabYiCFaZCHQ/classic.js/?div=ff-compose'
+        formFacadeURL='https://formfacade.com/include/112423225580039142072/form/1FAIpQLSfaNbszEn1G3SHQJSdqmgNvjw0X8xvbtRKIryAabYiCFaZCHQ/classic.js/?div=ff-compose '
         onSubmitForm={() => console.log('Form submitted')}
       />
       <iframe
