@@ -48,8 +48,6 @@ export const createProfileAction = async (prevState: any, formData: FormData) =>
 
     if (!user) throw new Error('Please login to create a profile')
 
-    console.log(user)
-
     const rawData = Object.fromEntries(formData)
     const validatedFields = validateWithZodSchema(profileSchema, rawData)
 
@@ -132,7 +130,7 @@ export const createMemberAction = async (provState: any, formData: FormData): Pr
       if (error.code === 'P2002') {
         return {
           message:
-            'A member with the same first names, last names date of birth and recommendation already exists, please check your previous entries or contact admin for assistance.'
+            'A member with the same first names, last names date of birth and recommendation already exists, please check your entries or contact admin for assistance.'
         }
       }
     }
@@ -241,7 +239,7 @@ export const updateMemberDetailsActionForAdmin = async (prevState: any, formData
       if (error.code === 'P2002') {
         return {
           message:
-            'A member with the same first names, last names date of birth and recommendation already exists, please check your previous entries or contact admin for assistance.'
+            'A member with the same first names, last names date of birth and recommendation already exists, please check your entries or contact admin for assistance.'
         }
       }
     }
