@@ -72,7 +72,7 @@ export const pagesItems: MenuItem[] = [
   },
   {
     icon: Wallet,
-    label: 'Contributions Recap.',
+    label: 'Sponsor Financial Position.',
     href: '/contributions-recap'
   },
 
