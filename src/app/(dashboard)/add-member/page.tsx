@@ -14,9 +14,10 @@ const AddMember = async () => {
       <h1 className='my-2 text-2xl font-semibold capitalize sm:text-6xl'> add loved one</h1>
       <p className='pb-4 text-sm sm:text-lg'>
         Adding the loved ones is the first step toward their registration, the waiting period is at least 60 days within
-        witch, their registration fees should be received by the admin. Also,{' '}
+        witch,{' '}
         <span className='font-bold'>
           {' '}
+          their registration fees should be received by the admin before they start participating in the program. Also,{' '}
           if the registration fees is not received withing the 60 days, the loved one will be removed from our database.
         </span>{' '}
         Please, refer to the <span className='font-bold'>Navigation Instructions</span> link for more information about
