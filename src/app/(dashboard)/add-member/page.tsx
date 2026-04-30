@@ -17,8 +17,9 @@ const AddMember = async () => {
         witch,{' '}
         <span className='font-bold'>
           {' '}
-          their registration fees should be received by the admin before they start participating in the program. Also,{' '}
-          if the registration fees is not received withing the 60 days, the loved one will be removed from our database.
+          their $10 registration fees and $30 anticipated contribution should be received by the admin before they start
+          participating in the program. Also, if the registration fees is not received withing the 60 days, the loved
+          one will be removed from our database.
         </span>{' '}
         Please, refer to the <span className='font-bold'>Navigation Instructions</span> link for more information about
         registration.{' '}
