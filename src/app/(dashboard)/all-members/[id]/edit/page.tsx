@@ -21,7 +21,8 @@ const EditMemberDetailPage = async ({ params }: { params: { id: string } }) => {
     sponsorCode,
     clerkId,
     nameOfBeneficiary,
-    memberMatriculationNumber
+    memberMatriculationNumber,
+    memberStatus
   } = member
 
   const profile = await fetchProfile()
@@ -83,8 +84,8 @@ const EditMemberDetailPage = async ({ params }: { params: { id: string } }) => {
               <FormSelect
                 label='loved one status at registration'
                 name='memberStatus'
-                items={[memberStatus.Pending]}
-                defaultValue={memberStatus.Pending}
+                items={[memberStatus]}
+                defaultValue={memberStatus}
               />
               <SubmitButton text='Update member Information' className='mt-4 w-full' />
             </div>
