@@ -72,7 +72,7 @@ const RemoveMember = async ({ params }: { params: { id: string } }) => {
                 defaultValue={reasonForLeaving.NoReason}
               />
               {shouldShow && (
-                <SubmitButton text='Withdraw member' className='mt-4 w-full bg-red-800 hover:bg-red-900' />
+                <SubmitButton text='Withdraw Love One' className='mt-4 w-full bg-red-800 hover:bg-red-900' />
               )}
             </div>
             {!shouldShow && (
