@@ -10,6 +10,7 @@ import {
   updateMemberDetailsAction
 } from '@/utils/actions'
 import { reasonForLeaving } from '@/utils/types'
+import { BsSignStopFill } from 'react-icons/bs'
 import { TiWarning } from 'react-icons/ti'
 
 const RemoveMember = async ({ params }: { params: { id: string } }) => {
@@ -20,16 +21,22 @@ const RemoveMember = async ({ params }: { params: { id: string } }) => {
   const { firstName, lastAndMiddleNames, dateOfBirth, countryOfBirth, memberMatriculationNumber, sponsorCode } = member
 
   const profile = await fetchProfile()
-
+  const currentDay = new Date().getDate()
+  const shouldShow = currentDay <= 6 || currentDay >= 25
   return (
     <section className='mt-16 flex flex-col'>
       <div className='my flex flex-row items-center'>
         <TiWarning className='size-8 items-center text-red-500 sm:size-15' />
         <h1 className='text-3xl font-semibold text-red-600 capitalize sm:text-6xl'> loved one Removal </h1>
       </div>
-      <p className='text-xs text-red-500 sm:text-lg'>
-        Check your entry well before submission as the process is not reversible.
-      </p>
+      <div>
+        {shouldShow ? (
+          <p className='text-xs text-red-500 sm:text-lg'>
+            Check your entry well before submission as the process is not reversible once submitted. Sorry to see your
+            member go.
+          </p>
+        ) : null}
+      </div>
       <div className='border-destructive rounded-lg border bg-red-800/40 p-8 py-12'>
         <FormContainer action={createRemovedMemberAction}>
           <div>
@@ -64,8 +71,19 @@ const RemoveMember = async ({ params }: { params: { id: string } }) => {
                 name='reasonForLeaving'
                 defaultValue={reasonForLeaving.NoReason}
               />
-              <SubmitButton text='withdraw member' className='mt-4 w-full bg-red-500 hover:bg-red-800' />
+              {shouldShow && (
+                <SubmitButton text='Withdraw member' className='mt-4 w-full bg-red-800 hover:bg-red-900' />
+              )}
             </div>
+            {!shouldShow && (
+              <div className='mt-10 flex flex-col items-center justify-center gap-1 sm:flex-row'>
+                <BsSignStopFill className='size-8 items-center text-red-500' />{' '}
+                <h1 className='text-center text-sm font-semibold text-red-500 sm:text-lg'>
+                  SAGI prevents withdrawal between the 6th and the 25th of the month, in order to ensure accuracy of the
+                  contribution.
+                </h1>
+              </div>
+            )}
           </div>
         </FormContainer>
       </div>
