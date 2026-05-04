@@ -13,7 +13,8 @@ import {
   WalletCards,
   WalletMinimal,
   CreditCard,
-  List
+  List,
+  Table
 } from 'lucide-react'
 
 import type { MenuItem } from './types'
@@ -61,7 +62,7 @@ export const pagesItems: MenuItem[] = [
     href: '/registration-payments'
   },
   {
-    icon: WalletCards,
+    icon: Table,
     label: 'Contribution Table',
     href: '/contribution-table'
   },
