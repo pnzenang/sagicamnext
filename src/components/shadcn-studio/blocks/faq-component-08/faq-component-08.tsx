@@ -27,7 +27,7 @@ const FAQ = ({ tabsData }: { tabsData: FAQTab }) => {
         <div className='mb-12 space-y-4 md:mb-8 lg:mb-16'>
           <div className='flex w-full flex-col justify-center'>
             <h1 className='sm:text-2xl'>
-              Please, click on or scan the Qr-code below to join SAGICAM the UPDATES whatsapp group in order to receive
+              Please, click on or scan the Qr-code below to join the SAGICAM UPDATES whatsapp group in order to receive
               all the updates by whatsapp
             </h1>
             <Link href='https://chat.whatsapp.com/Cei0t0msqtB0p8BkhqnkkQ?mode=gi_t'>
