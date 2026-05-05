@@ -4,6 +4,8 @@ import { ChevronRightIcon, Phone, Mail, Check } from 'lucide-react'
 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import Link from 'next/link'
+import Image from 'next/image'
 
 type FAQ = {
   question: string
@@ -23,6 +25,20 @@ const FAQ = ({ tabsData }: { tabsData: FAQTab }) => {
       <div className='mx-auto max-w-7xl px-4 sm:px-6 lg:px-8'>
         {/* FAQ Header */}
         <div className='mb-12 space-y-4 md:mb-8 lg:mb-16'>
+          <div className='flex w-full flex-col justify-center'>
+            <h1 className='sm:text-2xl'>
+              Please, click on or scan the Qr-code below to join SAGICAM the UPDATES whatsapp group in order to receive
+              all the updates by whatsapp
+            </h1>
+            <Link href='https://chat.whatsapp.com/Cei0t0msqtB0p8BkhqnkkQ?mode=gi_t'>
+              <Image
+                src='https://res.cloudinary.com/dp8tkb7hq/image/upload/v1777955982/Untitled_design_gqrtw1.svg'
+                width={300}
+                height={300}
+                alt='qr-code'
+              />
+            </Link>
+          </div>
           <div className='mb-4 flex items-center gap-2'>
             <h2 className='mb-8 text-2xl font-semibold md:text-3xl lg:text-5xl'>NAVIGATION INSTRUCTIONS</h2>
           </div>
