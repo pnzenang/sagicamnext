@@ -79,8 +79,8 @@ const RemoveMember = async ({ params }: { params: { id: string } }) => {
               <div className='mt-10 flex flex-col items-center justify-center gap-1 sm:flex-row'>
                 <BsSignStopFill className='size-8 items-center text-red-500' />{' '}
                 <h1 className='text-center text-sm font-semibold text-red-500 sm:text-lg'>
-                  SAGICAM prevents withdrawal between the 6th and the 25th of the month, in order to ensure accuracy of
-                  the contribution.
+                  In order to ensure accuracy, SAGICAM prevents withdrawal between the 6th and the 25th of the month.
+                  Please complete your withdrawals between the 25th and the 6th.
                 </h1>
               </div>
             )}
