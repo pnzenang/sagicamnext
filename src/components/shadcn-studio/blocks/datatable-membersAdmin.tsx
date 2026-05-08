@@ -607,16 +607,15 @@ function RowActions({ memberId }: { memberId: string }) {
               </span>
             </Link>
           </DropdownMenuItem>
-          {shouldShow ? (
-            <DropdownMenuItem>
-              <Link href={`/admin-members/${memberId}/removeMember`}>
-                <span className='flex flex-row gap-3 text-red-500'>
-                  <Trash2 className='text-red-500' />
-                  Remove Member
-                </span>
-              </Link>
-            </DropdownMenuItem>
-          ) : null}
+
+          <DropdownMenuItem>
+            <Link href={`/admin-members/${memberId}/removeMember`}>
+              <span className='flex flex-row gap-3 text-red-500'>
+                <Trash2 className='text-red-500' />
+                Remove Member
+              </span>
+            </Link>
+          </DropdownMenuItem>
         </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
