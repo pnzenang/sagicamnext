@@ -120,6 +120,9 @@ const columns: ColumnDef<RemovedMemberType>[] = [
         </div>
       </div>
     ),
+    meta: {
+      filterVariant: 'select'
+    },
     size: 150
   },
 
