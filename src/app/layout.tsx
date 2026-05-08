@@ -27,13 +27,12 @@ export const metadata: Metadata = {
     template: 'SAGICAM by Active Solidarity ',
     default: 'SAGICAM by Active Solidarity'
   },
-  description:
-    'Grow your product faster with an all-in-one sales and analytics platform. Track performance, automate follow-ups, and make smarter decisions easily.',
+  description: 'Grow the solidarity ring as big as it can be, because together we are stronger.',
   robots: 'index,follow',
   keywords: [
     'sales analytics',
-    'product growth',
-    'sales dashboard',
+    'solidarity growth',
+    'togetherness dashboard',
     'business analytics',
     'growth tracking',
     'sales performance'
@@ -84,8 +83,7 @@ export const metadata: Metadata = {
       template: 'SAGICAM: Active Solidarity',
       default: 'SAGICAM: Active Solidarity'
     },
-    description:
-      'Grow your product faster with an all-in-one sales and analytics platform. Track performance, automate follow-ups, and make smarter decisions easily.',
+    description: 'Grow the solidarity ring as big as it can be, because together we are stronger..',
     type: 'website',
     siteName: 'Flow',
     url: `${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}`,
@@ -105,8 +103,7 @@ export const metadata: Metadata = {
       template: 'Demo: %s - Flow | Shadcn Studio',
       default: 'Demo: Flow - SaaS Landing page | Shadcn Studio'
     },
-    description:
-      'Grow your product faster with an all-in-one sales and analytics platform. Track performance, automate follow-ups, and make smarter decisions easily.'
+    description: 'Grow the solidarity ring as big as it can be, because together we are stronger.'
   }
 }
 
