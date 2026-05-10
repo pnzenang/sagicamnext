@@ -13,6 +13,7 @@ const AddMember = async () => {
     <section className='mt-16 flex flex-col'>
       <h1 className='my-2 text-2xl font-semibold capitalize sm:text-6xl'> add loved one</h1>
       <p className='pb-4 text-sm sm:text-lg'>
+        <span className='text-primary font-bold'>Please read first: </span>
         Adding the loved ones is the first step toward their registration, the waiting period is at least 60 days within
         witch,{' '}
         <span className='font-bold'>
@@ -21,8 +22,10 @@ const AddMember = async () => {
           participating in the program. Also, if the registration fees is not received withing the 60 days, the loved
           one will be removed from our database.
         </span>{' '}
-        Please, refer to the <span className='font-bold'>Navigation Instructions</span> link for more information about
-        registration.{' '}
+        When you are ready to pay their registration and their anticipated contribution, go to{' '}
+        <span className='font-bold'>Registration Payments</span> in the sidebar to send and records the registration
+        payments of the loved ones you are registering.{' '}
+        <span className='text-primary font-bold'>Not following these steps may delay your registration.</span>
       </p>
       <div className='border-primary bg-muted rounded-lg border p-8'>
         <FormContainer action={createMemberAction}>
@@ -54,7 +57,7 @@ const AddMember = async () => {
               defaultValue={memberStatus.Pending}
             />
 
-            <SubmitButton text='add member' className='mt-4 w-full' />
+            <SubmitButton text='add loved one' className='mt-4 w-full' />
           </div>
         </FormContainer>
       </div>
