@@ -22,10 +22,12 @@ const AddMember = async () => {
           one will be removed from our database.
         </span>
         <br />
+        <br />
         When you are ready to pay for their registration fee and their anticipated contribution, click on the
         <span className='font-bold'> Registration Payments</span> link in the sidebar to record the registration, upload
         the screenshot of the members to register for, and the proof of payment of the registration fee and anticipated
         contribution. This will help us track the payments of the loved ones you are registering. <br />
+        <br />
         <span className='text-primary font-bold'>Not following these steps may delay your registration.</span>
       </p>
       <div className='border-primary bg-muted rounded-lg border p-8'>
