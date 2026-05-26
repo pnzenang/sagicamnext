@@ -13,7 +13,6 @@ const AddMember = async () => {
     <section className='mt-16 flex flex-col'>
       <h1 className='my-2 text-2xl font-semibold capitalize sm:text-6xl'> add loved one</h1>
       <p className='pb-4 text-sm sm:text-lg'>
-        <span className='text-primary font-bold'>Please read first: </span>
         Adding the loved ones is the first step toward their registration, the waiting period is at least 30 days within
         witch,{' '}
         <span className='font-bold'>
@@ -21,10 +20,12 @@ const AddMember = async () => {
           their $10 registration fees and $30 anticipated contribution should be received by the admin before they start
           participating in the program. Also, if the registration fees is not received withing the 60 days, the loved
           one will be removed from our database.
-        </span>{' '}
-        When you are ready to pay for their registration fee and their anticipated contribution, go to{' '}
-        <span className='font-bold'>Registration Payments</span> in the sidebar to send and records the registration
-        payments of the loved ones you are registering.{' '}
+        </span>
+        <br />
+        When you are ready to pay for their registration fee and their anticipated contribution, click on the
+        <span className='font-bold'>Registration Payments</span> link in the sidebar to record the registration, upload
+        the screenshot of the members to register for, and the proof of payment of the registration fee and anticipated
+        contribution. This will help us track the payments of the loved ones you are registering. <br />
         <span className='text-primary font-bold'>Not following these steps may delay your registration.</span>
       </p>
       <div className='border-primary bg-muted rounded-lg border p-8'>
