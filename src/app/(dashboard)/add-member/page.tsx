@@ -28,7 +28,7 @@ const AddMember = async () => {
         the screenshot of the members to register for, and the proof of payment of the registration fee and anticipated
         contribution. This will help us track the payments of the loved ones you are registering. <br />
         <br />
-        <span className='text-primary font-bold'>Not following these steps may delay your registration.</span>
+        <span className='text-primary font-bold'>Not following the steps above may delay your registration.</span>
       </p>
       <div className='border-primary bg-muted rounded-lg border p-8'>
         <FormContainer action={createMemberAction}>
