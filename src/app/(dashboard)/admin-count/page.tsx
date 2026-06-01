@@ -4,6 +4,7 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableFooter,
   TableHead,
   TableHeader,
   TableRow
@@ -27,6 +28,9 @@ const createEmptyStatusCounts = (): SponsorStatusCounts => ({
   [memberStatus.Delinquent]: 0,
   [memberStatus.Awaiting]: 0
 })
+
+const getStatusCountTotal = (counts: SponsorStatusCounts) =>
+  statusColumns.reduce((total, column) => total + counts[column.key], 0)
 
 const AdminCount = async () => {
   const memberCountsBySponsorCode = await db.member.groupBy({
@@ -69,6 +73,17 @@ const AdminCount = async () => {
   })
 
   const sponsorsByCode = new Map(sponsors.map(sponsor => [sponsor.sponsorCode, sponsor]))
+
+  const statusTotals = sponsorCodes.reduce((totals, sponsorCode) => {
+    const counts = statusCountsBySponsorCode.get(sponsorCode) ?? createEmptyStatusCounts()
+
+    statusColumns.forEach(column => {
+      totals[column.key] += counts[column.key]
+    })
+
+    return totals
+  }, createEmptyStatusCounts())
+
   const totalMembers = memberCountsBySponsorCode.reduce((total, item) => total + item._count._all, 0)
 
   return (
@@ -100,12 +115,13 @@ const AdminCount = async () => {
                   {column.label}
                 </TableHead>
               ))}
+              <TableHead className='text-right'>Total</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {sponsorCodes.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className='text-muted-foreground h-24 text-center'>
+                <TableCell colSpan={7} className='text-muted-foreground h-24 text-center'>
                   No members found.
                 </TableCell>
               </TableRow>
@@ -127,11 +143,26 @@ const AdminCount = async () => {
                         {counts[column.key]}
                       </TableCell>
                     ))}
+                    <TableCell className='text-right font-semibold'>{getStatusCountTotal(counts)}</TableCell>
                   </TableRow>
                 )
               })
             )}
           </TableBody>
+          {sponsorCodes.length > 0 && (
+            <TableFooter>
+              <TableRow>
+                <TableCell className='font-semibold'>Total</TableCell>
+                <TableCell />
+                {statusColumns.map(column => (
+                  <TableCell key={column.key} className='text-right font-semibold'>
+                    {statusTotals[column.key]}
+                  </TableCell>
+                ))}
+                <TableCell className='text-right font-semibold'>{totalMembers}</TableCell>
+              </TableRow>
+            </TableFooter>
+          )}
         </Table>
       </div>
     </div>
