@@ -133,14 +133,14 @@ const AdminCountTable = ({ rows, totals }: { rows: AdminCountRow[]; totals: Admi
                 <TableCell className='text-right font-semibold'>{row.pending}</TableCell>
                 <TableCell className='text-right font-semibold'>{row.delinquent}</TableCell>
                 <TableCell className='text-right font-semibold'>{row.awaiting}</TableCell>
-                <TableCell className='text-right font-extrabold'>{row.total}</TableCell>
+                <TableCell className='text-right text-base font-extrabold'>{row.total}</TableCell>
               </TableRow>
             ))
           )}
         </TableBody>
         {sortedRows.length > 0 && (
           <TableFooter>
-            <TableRow>
+            <TableRow className='text-base'>
               <TableCell className='font-extrabold'>Total</TableCell>
               <TableCell className='font-extrabold' />
               <TableCell className='font-extrabold' />
@@ -149,7 +149,7 @@ const AdminCountTable = ({ rows, totals }: { rows: AdminCountRow[]; totals: Admi
               <TableCell className='text-right font-extrabold'>{totals.pending}</TableCell>
               <TableCell className='text-right font-extrabold'>{totals.delinquent}</TableCell>
               <TableCell className='text-right font-extrabold'>{totals.awaiting}</TableCell>
-              <TableCell className='text-right font-extrabold'>{totals.total}</TableCell>
+              <TableCell className='text-right text-lg font-extrabold'>{totals.total}</TableCell>
             </TableRow>
           </TableFooter>
         )}
