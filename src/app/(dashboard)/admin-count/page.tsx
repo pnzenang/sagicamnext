@@ -149,7 +149,7 @@ const AdminCount = async () => {
                         {counts[column.key]}
                       </TableCell>
                     ))}
-                    <TableCell className='text-right font-semibold'>{getStatusCountTotal(counts)}</TableCell>
+                    <TableCell className='text-right font-extrabold'>{getStatusCountTotal(counts)}</TableCell>
                   </TableRow>
                 )
               })
@@ -158,16 +158,16 @@ const AdminCount = async () => {
           {sponsorCodes.length > 0 && (
             <TableFooter>
               <TableRow>
-                <TableCell className='font-semibold'>Total</TableCell>
-                <TableCell />
-                <TableCell />
-                <TableCell />
+                <TableCell className='font-extrabold'>Total</TableCell>
+                <TableCell className='font-extrabold' />
+                <TableCell className='font-extrabold' />
+                <TableCell className='font-extrabold' />
                 {statusColumns.map(column => (
-                  <TableCell key={column.key} className='text-right font-semibold'>
+                  <TableCell key={column.key} className='text-right font-extrabold'>
                     {statusTotals[column.key]}
                   </TableCell>
                 ))}
-                <TableCell className='text-right font-semibold'>{totalMembers}</TableCell>
+                <TableCell className='text-right font-extrabold'>{totalMembers}</TableCell>
               </TableRow>
             </TableFooter>
           )}
