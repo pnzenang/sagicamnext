@@ -1,14 +1,6 @@
 import { UsersRound } from 'lucide-react'
 
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableFooter,
-  TableHead,
-  TableHeader,
-  TableRow
-} from '@/components/ui/table'
+import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import db from '@/utils/db'
 import { memberStatus } from '@/utils/types'
 
@@ -18,6 +10,8 @@ const statusColumns = [
   { key: memberStatus.Delinquent, label: 'Not in good standing' },
   { key: memberStatus.Awaiting, label: 'Awaiting publication' }
 ] as const
+
+const adminCountColumnCount = 9
 
 type StatusKey = (typeof statusColumns)[number]['key']
 type SponsorStatusCounts = Record<StatusKey, number>
@@ -92,9 +86,9 @@ const AdminCount = async () => {
     <div className='space-y-6 py-8 sm:py-10'>
       <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
         <div>
-          <h1 className='text-2xl font-semibold tracking-normal'>Members by sponsor code</h1>
+          <h1 className='text-4xl font-semibold tracking-normal'>Members by sponsor code</h1>
           <p className='text-muted-foreground mt-2 text-sm'>
-            Count of loved ones grouped by sponsor code and member status.
+            Count of loved ones grouped by sponsor code and loved ones status.
           </p>
         </div>
         <div className='border-border bg-muted/40 flex items-center gap-3 rounded-lg border px-4 py-3'>
@@ -107,25 +101,30 @@ const AdminCount = async () => {
       </div>
 
       <div className='border-border overflow-hidden rounded-lg border'>
-        <Table>
+        <Table className='table-fixed [&_td]:break-words [&_td]:whitespace-normal [&_th]:break-words [&_th]:whitespace-normal'>
+          <colgroup>
+            {Array.from({ length: adminCountColumnCount }).map((_, index) => (
+              <col key={index} style={{ width: `${100 / adminCountColumnCount}%` }} />
+            ))}
+          </colgroup>
           <TableHeader>
-            <TableRow>
-              <TableHead>Sponsor name</TableHead>
-              <TableHead>Sponsor email</TableHead>
-              <TableHead>Telephone number</TableHead>
-              <TableHead>Sponsor code</TableHead>
+            <TableRow className='bg-primary hover:bg-primary'>
+              <TableHead className='text-primary-foreground'>Sponsor name</TableHead>
+              <TableHead className='text-primary-foreground'>Sponsor email</TableHead>
+              <TableHead className='text-primary-foreground'>Telephone number</TableHead>
+              <TableHead className='text-primary-foreground'>Sponsor code</TableHead>
               {statusColumns.map(column => (
-                <TableHead key={column.key} className='text-right'>
+                <TableHead key={column.key} className='text-primary-foreground text-right'>
                   {column.label}
                 </TableHead>
               ))}
-              <TableHead className='text-right'>Total</TableHead>
+              <TableHead className='text-primary-foreground text-right'>Total</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {sponsorCodes.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={9} className='text-muted-foreground h-24 text-center'>
+                <TableCell colSpan={adminCountColumnCount} className='text-muted-foreground h-24 text-center'>
                   No members found.
                 </TableCell>
               </TableRow>
