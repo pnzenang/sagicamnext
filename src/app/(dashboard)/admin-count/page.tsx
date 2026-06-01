@@ -7,8 +7,8 @@ import AdminCountTable, { type AdminCountRow } from './AdminCountTable'
 const statusColumns = [
   { key: memberStatus.Vested, label: 'Vested' },
   { key: memberStatus.Pending, label: 'Pending' },
-  { key: memberStatus.Delinquent, label: 'Not in good standing' },
-  { key: memberStatus.Awaiting, label: 'Awaiting publication' }
+  { key: memberStatus.Delinquent, label: 'Delinquent' },
+  { key: memberStatus.Awaiting, label: 'Awaiting' }
 ] as const
 
 type StatusKey = (typeof statusColumns)[number]['key']
@@ -86,20 +86,23 @@ const AdminCount = async () => {
     }
   })
 
-  const statusTotals = rows.reduce((totals, row) => {
-    totals.vested += row.vested
-    totals.pending += row.pending
-    totals.delinquent += row.delinquent
-    totals.awaiting += row.awaiting
+  const statusTotals = rows.reduce(
+    (totals, row) => {
+      totals.vested += row.vested
+      totals.pending += row.pending
+      totals.delinquent += row.delinquent
+      totals.awaiting += row.awaiting
 
-    return totals
-  }, {
-    vested: 0,
-    pending: 0,
-    delinquent: 0,
-    awaiting: 0,
-    total: 0
-  })
+      return totals
+    },
+    {
+      vested: 0,
+      pending: 0,
+      delinquent: 0,
+      awaiting: 0,
+      total: 0
+    }
+  )
 
   const totalMembers = rows.reduce((total, row) => total + row.total, 0)
 
