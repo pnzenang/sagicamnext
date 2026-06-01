@@ -1,8 +1,8 @@
 import { UsersRound } from 'lucide-react'
 
-import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import db from '@/utils/db'
 import { memberStatus } from '@/utils/types'
+import AdminCountTable, { type AdminCountRow } from './AdminCountTable'
 
 const statusColumns = [
   { key: memberStatus.Vested, label: 'Vested' },
@@ -10,8 +10,6 @@ const statusColumns = [
   { key: memberStatus.Delinquent, label: 'Not in good standing' },
   { key: memberStatus.Awaiting, label: 'Awaiting publication' }
 ] as const
-
-const adminCountColumnWidths = [20, 20, ...Array.from({ length: 7 }, () => 60 / 7)]
 
 type StatusKey = (typeof statusColumns)[number]['key']
 type SponsorStatusCounts = Record<StatusKey, number>
@@ -70,17 +68,42 @@ const AdminCount = async () => {
 
   const sponsorsByCode = new Map(sponsors.map(sponsor => [sponsor.sponsorCode, sponsor]))
 
-  const statusTotals = sponsorCodes.reduce((totals, sponsorCode) => {
+  const rows: AdminCountRow[] = sponsorCodes.map(sponsorCode => {
+    const sponsor = sponsorsByCode.get(sponsorCode)
     const counts = statusCountsBySponsorCode.get(sponsorCode) ?? createEmptyStatusCounts()
+    const sponsorName = sponsor ? `${sponsor.sponsorFirstName} ${sponsor.sponsorLastAndMiddleName}` : ''
 
-    statusColumns.forEach(column => {
-      totals[column.key] += counts[column.key]
-    })
+    return {
+      sponsorName,
+      sponsorEmail: sponsor?.sponsorEmail ?? '',
+      sponsorPhoneNumber: sponsor?.sponsorPhoneNumber ?? '',
+      sponsorCode,
+      vested: counts[memberStatus.Vested],
+      pending: counts[memberStatus.Pending],
+      delinquent: counts[memberStatus.Delinquent],
+      awaiting: counts[memberStatus.Awaiting],
+      total: getStatusCountTotal(counts)
+    }
+  })
+
+  const statusTotals = rows.reduce((totals, row) => {
+    totals.vested += row.vested
+    totals.pending += row.pending
+    totals.delinquent += row.delinquent
+    totals.awaiting += row.awaiting
 
     return totals
-  }, createEmptyStatusCounts())
+  }, {
+    vested: 0,
+    pending: 0,
+    delinquent: 0,
+    awaiting: 0,
+    total: 0
+  })
 
-  const totalMembers = memberCountsBySponsorCode.reduce((total, item) => total + item._count._all, 0)
+  const totalMembers = rows.reduce((total, row) => total + row.total, 0)
+
+  statusTotals.total = totalMembers
 
   return (
     <div className='space-y-6 py-8 sm:py-10'>
@@ -100,78 +123,7 @@ const AdminCount = async () => {
         </div>
       </div>
 
-      <div className='border-border overflow-hidden rounded-lg border'>
-        <Table className='table-fixed [&_td]:break-words [&_td]:whitespace-normal [&_th]:break-words [&_th]:whitespace-normal'>
-          <colgroup>
-            {adminCountColumnWidths.map((width, index) => (
-              <col key={index} style={{ width: `${width}%` }} />
-            ))}
-          </colgroup>
-          <TableHeader>
-            <TableRow className='bg-primary hover:bg-primary'>
-              <TableHead className='text-primary-foreground'>Sponsor name</TableHead>
-              <TableHead className='text-primary-foreground'>Sponsor email</TableHead>
-              <TableHead className='text-primary-foreground'>Telephone number</TableHead>
-              <TableHead className='text-primary-foreground'>Sponsor code</TableHead>
-              {statusColumns.map(column => (
-                <TableHead key={column.key} className='text-primary-foreground text-right'>
-                  {column.label}
-                </TableHead>
-              ))}
-              <TableHead className='text-primary-foreground text-right'>Total</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {sponsorCodes.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={adminCountColumnWidths.length} className='text-muted-foreground h-24 text-center'>
-                  No members found.
-                </TableCell>
-              </TableRow>
-            ) : (
-              sponsorCodes.map(sponsorCode => {
-                const sponsor = sponsorsByCode.get(sponsorCode)
-                const counts = statusCountsBySponsorCode.get(sponsorCode) ?? createEmptyStatusCounts()
-
-                const sponsorName = sponsor
-                  ? `${sponsor.sponsorFirstName} ${sponsor.sponsorLastAndMiddleName}`
-                  : 'Sponsor profile not found'
-
-                return (
-                  <TableRow key={sponsorCode} className='odd:bg-muted/30 even:bg-background'>
-                    <TableCell className='font-medium'>{sponsorName}</TableCell>
-                    <TableCell>{sponsor?.sponsorEmail ?? ''}</TableCell>
-                    <TableCell>{sponsor?.sponsorPhoneNumber ?? ''}</TableCell>
-                    <TableCell>{sponsorCode}</TableCell>
-                    {statusColumns.map(column => (
-                      <TableCell key={column.key} className='text-right font-semibold'>
-                        {counts[column.key]}
-                      </TableCell>
-                    ))}
-                    <TableCell className='text-right font-extrabold'>{getStatusCountTotal(counts)}</TableCell>
-                  </TableRow>
-                )
-              })
-            )}
-          </TableBody>
-          {sponsorCodes.length > 0 && (
-            <TableFooter>
-              <TableRow>
-                <TableCell className='font-extrabold'>Total</TableCell>
-                <TableCell className='font-extrabold' />
-                <TableCell className='font-extrabold' />
-                <TableCell className='font-extrabold' />
-                {statusColumns.map(column => (
-                  <TableCell key={column.key} className='text-right font-extrabold'>
-                    {statusTotals[column.key]}
-                  </TableCell>
-                ))}
-                <TableCell className='text-right font-extrabold'>{totalMembers}</TableCell>
-              </TableRow>
-            </TableFooter>
-          )}
-        </Table>
-      </div>
+      <AdminCountTable rows={rows} totals={statusTotals} />
     </div>
   )
 }
