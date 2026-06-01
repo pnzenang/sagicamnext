@@ -11,7 +11,7 @@ const statusColumns = [
   { key: memberStatus.Awaiting, label: 'Awaiting publication' }
 ] as const
 
-const adminCountColumnWidths = [15, 15, 15, ...Array.from({ length: 6 }, () => 55 / 6)]
+const adminCountColumnWidths = [20, 20, ...Array.from({ length: 7 }, () => 60 / 7)]
 
 type StatusKey = (typeof statusColumns)[number]['key']
 type SponsorStatusCounts = Record<StatusKey, number>
