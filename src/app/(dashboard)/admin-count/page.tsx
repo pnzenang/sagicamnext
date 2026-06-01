@@ -65,8 +65,8 @@ const AdminCount = async () => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Sponsor code</TableHead>
               <TableHead>Sponsor name</TableHead>
+              <TableHead>Sponsor code</TableHead>
               <TableHead className='text-right'>Vested members</TableHead>
             </TableRow>
           </TableHeader>
@@ -87,8 +87,8 @@ const AdminCount = async () => {
 
                 return (
                   <TableRow key={item.sponsorCode}>
-                    <TableCell className='font-medium'>{item.sponsorCode}</TableCell>
-                    <TableCell>{sponsorName}</TableCell>
+                    <TableCell className='font-medium'>{sponsorName}</TableCell>
+                    <TableCell>{item.sponsorCode}</TableCell>
                     <TableCell className='text-right font-semibold'>{item._count._all}</TableCell>
                   </TableRow>
                 )
