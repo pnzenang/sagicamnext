@@ -107,9 +107,15 @@ export const pagesItems: MenuItem[] = [
     label: 'Admin Removed',
     href: '/admin-removed'
   },
+
   {
     icon: UserCog,
     label: 'Admin Deceased',
     href: '/admin-deceased'
+  },
+  {
+    icon: UserCog,
+    label: 'Admin Count',
+    href: '/admin-count'
   }
 ]
