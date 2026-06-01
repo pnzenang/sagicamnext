@@ -139,7 +139,7 @@ const AdminCount = async () => {
                   : 'Sponsor profile not found'
 
                 return (
-                  <TableRow key={sponsorCode}>
+                  <TableRow key={sponsorCode} className='odd:bg-muted/30 even:bg-background'>
                     <TableCell className='font-medium'>{sponsorName}</TableCell>
                     <TableCell>{sponsor?.sponsorEmail ?? ''}</TableCell>
                     <TableCell>{sponsor?.sponsorPhoneNumber ?? ''}</TableCell>
