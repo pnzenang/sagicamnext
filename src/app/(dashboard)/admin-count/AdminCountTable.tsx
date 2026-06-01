@@ -32,7 +32,7 @@ type AdminCountColumn = {
 const columns: AdminCountColumn[] = [
   { key: 'sponsorName', label: 'Sponsor name' },
   { key: 'sponsorEmail', label: 'Sponsor email' },
-  { key: 'sponsorPhoneNumber', label: 'Telephone number' },
+  { key: 'sponsorPhoneNumber', label: 'Telephone' },
   { key: 'sponsorCode', label: 'Sponsor code' },
   { key: 'vested', label: 'Vested', align: 'right' },
   { key: 'pending', label: 'Pending', align: 'right' },
@@ -126,7 +126,13 @@ const AdminCountTable = ({ rows, totals }: { rows: AdminCountRow[]; totals: Admi
             sortedRows.map(row => (
               <TableRow key={row.sponsorCode} className='odd:bg-muted/30 even:bg-background'>
                 <TableCell className='font-medium'>{row.sponsorName}</TableCell>
-                <TableCell>{row.sponsorEmail}</TableCell>
+                <TableCell>
+                  {row.sponsorEmail && (
+                    <a className='text-primary underline-offset-4 hover:underline' href={`mailto:${row.sponsorEmail}`}>
+                      {row.sponsorEmail}
+                    </a>
+                  )}
+                </TableCell>
                 <TableCell>{row.sponsorPhoneNumber}</TableCell>
                 <TableCell>{row.sponsorCode}</TableCell>
                 <TableCell className='text-right font-semibold'>{row.vested}</TableCell>
