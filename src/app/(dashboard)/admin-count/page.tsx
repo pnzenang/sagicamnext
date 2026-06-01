@@ -67,8 +67,10 @@ const AdminCount = async () => {
     },
     select: {
       sponsorCode: true,
+      sponsorEmail: true,
       sponsorFirstName: true,
-      sponsorLastAndMiddleName: true
+      sponsorLastAndMiddleName: true,
+      sponsorPhoneNumber: true
     }
   })
 
@@ -110,6 +112,8 @@ const AdminCount = async () => {
             <TableRow>
               <TableHead>Sponsor name</TableHead>
               <TableHead>Sponsor code</TableHead>
+              <TableHead>Sponsor email</TableHead>
+              <TableHead>Telephone number</TableHead>
               {statusColumns.map(column => (
                 <TableHead key={column.key} className='text-right'>
                   {column.label}
@@ -121,7 +125,7 @@ const AdminCount = async () => {
           <TableBody>
             {sponsorCodes.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className='text-muted-foreground h-24 text-center'>
+                <TableCell colSpan={9} className='text-muted-foreground h-24 text-center'>
                   No members found.
                 </TableCell>
               </TableRow>
@@ -138,6 +142,8 @@ const AdminCount = async () => {
                   <TableRow key={sponsorCode}>
                     <TableCell className='font-medium'>{sponsorName}</TableCell>
                     <TableCell>{sponsorCode}</TableCell>
+                    <TableCell>{sponsor?.sponsorEmail ?? ''}</TableCell>
+                    <TableCell>{sponsor?.sponsorPhoneNumber ?? ''}</TableCell>
                     {statusColumns.map(column => (
                       <TableCell key={column.key} className='text-right font-semibold'>
                         {counts[column.key]}
@@ -153,6 +159,8 @@ const AdminCount = async () => {
             <TableFooter>
               <TableRow>
                 <TableCell className='font-semibold'>Total</TableCell>
+                <TableCell />
+                <TableCell />
                 <TableCell />
                 {statusColumns.map(column => (
                   <TableCell key={column.key} className='text-right font-semibold'>
