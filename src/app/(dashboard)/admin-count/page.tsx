@@ -11,7 +11,7 @@ const statusColumns = [
   { key: memberStatus.Awaiting, label: 'Awaiting publication' }
 ] as const
 
-const adminCountColumnCount = 9
+const adminCountColumnWidths = [15, 15, 15, ...Array.from({ length: 6 }, () => 55 / 6)]
 
 type StatusKey = (typeof statusColumns)[number]['key']
 type SponsorStatusCounts = Record<StatusKey, number>
@@ -103,8 +103,8 @@ const AdminCount = async () => {
       <div className='border-border overflow-hidden rounded-lg border'>
         <Table className='table-fixed [&_td]:break-words [&_td]:whitespace-normal [&_th]:break-words [&_th]:whitespace-normal'>
           <colgroup>
-            {Array.from({ length: adminCountColumnCount }).map((_, index) => (
-              <col key={index} style={{ width: `${100 / adminCountColumnCount}%` }} />
+            {adminCountColumnWidths.map((width, index) => (
+              <col key={index} style={{ width: `${width}%` }} />
             ))}
           </colgroup>
           <TableHeader>
@@ -124,7 +124,7 @@ const AdminCount = async () => {
           <TableBody>
             {sponsorCodes.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={adminCountColumnCount} className='text-muted-foreground h-24 text-center'>
+                <TableCell colSpan={adminCountColumnWidths.length} className='text-muted-foreground h-24 text-center'>
                   No members found.
                 </TableCell>
               </TableRow>
