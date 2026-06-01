@@ -416,7 +416,7 @@ const MembersDataTable = ({ data }: { data: MemberType[] }) => {
               <DropdownMenuTrigger asChild>
                 <Button className='bg-primary/10 text-primary hover:bg-primary/20 focus-visible:ring-primary/20 dark:focus-visible:ring-primary/40'>
                   <UploadIcon />
-                  Export
+                  Export as excel file
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align='end'>
@@ -579,6 +579,7 @@ function Filter({ column }: { column: Column<any, unknown> }) {
 function RowActions({ memberId }: { memberId: string }) {
   const currentDay = new Date().getDate()
   const shouldShow = currentDay >= 12
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
