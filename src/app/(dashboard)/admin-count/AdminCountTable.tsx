@@ -107,12 +107,12 @@ const AdminCountTable = ({ rows, totals }: { rows: AdminCountRow[]; totals: Admi
       <div className='flex justify-end'>
         <Button type='button' size='sm' onClick={handleExport} disabled={sortedRows.length === 0}>
           <Download />
-          Export Excel
+          Export
         </Button>
       </div>
 
       <div className='border-border overflow-hidden rounded-lg border'>
-        <Table className='table-fixed [&_td]:break-words [&_td]:whitespace-normal [&_th]:break-words [&_th]:whitespace-normal'>
+        <Table className='[[&_td]:wrap-break-word table-fixed [&_td]:whitespace-normal [&_th]:wrap-break-word [&_th]:whitespace-normal'>
           <colgroup>
             {adminCountColumnWidths.map((width, index) => (
               <col key={index} style={{ width: `${width}%` }} />
@@ -163,7 +163,16 @@ const AdminCountTable = ({ rows, totals }: { rows: AdminCountRow[]; totals: Admi
                       </a>
                     )}
                   </TableCell>
-                  <TableCell>{row.sponsorPhoneNumber}</TableCell>
+                  <TableCell>
+                    {row.sponsorPhoneNumber && (
+                      <a
+                        className='text-primary underline-offset-4 hover:underline'
+                        href={`tel:${row.sponsorPhoneNumber}`}
+                      >
+                        {row.sponsorPhoneNumber}
+                      </a>
+                    )}
+                  </TableCell>
                   <TableCell>{row.sponsorCode}</TableCell>
                   <TableCell className='text-right font-semibold'>{row.vested}</TableCell>
                   <TableCell className='text-right font-semibold'>{row.pending}</TableCell>
