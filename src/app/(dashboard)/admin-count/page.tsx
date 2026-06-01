@@ -111,9 +111,9 @@ const AdminCount = async () => {
           <TableHeader>
             <TableRow>
               <TableHead>Sponsor name</TableHead>
-              <TableHead>Sponsor code</TableHead>
               <TableHead>Sponsor email</TableHead>
               <TableHead>Telephone number</TableHead>
+              <TableHead>Sponsor code</TableHead>
               {statusColumns.map(column => (
                 <TableHead key={column.key} className='text-right'>
                   {column.label}
@@ -141,9 +141,9 @@ const AdminCount = async () => {
                 return (
                   <TableRow key={sponsorCode}>
                     <TableCell className='font-medium'>{sponsorName}</TableCell>
-                    <TableCell>{sponsorCode}</TableCell>
                     <TableCell>{sponsor?.sponsorEmail ?? ''}</TableCell>
                     <TableCell>{sponsor?.sponsorPhoneNumber ?? ''}</TableCell>
+                    <TableCell>{sponsorCode}</TableCell>
                     {statusColumns.map(column => (
                       <TableCell key={column.key} className='text-right font-semibold'>
                         {counts[column.key]}
