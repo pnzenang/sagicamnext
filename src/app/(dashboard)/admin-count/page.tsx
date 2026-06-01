@@ -121,7 +121,7 @@ const AdminCount = async () => {
           <UsersRound className='text-primary size-5' />
           <div>
             <p className='text-muted-foreground text-xs font-medium uppercase'>Total members</p>
-            <p className='text-xl font-semibold'>{totalMembers}</p>
+            <p className='text-2xl font-semibold'>{totalMembers}</p>
           </div>
         </div>
       </div>
