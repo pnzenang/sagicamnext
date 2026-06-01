@@ -36,8 +36,8 @@ const columns: AdminCountColumn[] = [
   { key: 'sponsorCode', label: 'Sponsor code' },
   { key: 'vested', label: 'Vested', align: 'right' },
   { key: 'pending', label: 'Pending', align: 'right' },
-  { key: 'delinquent', label: 'Not in good standing', align: 'right' },
-  { key: 'awaiting', label: 'Awaiting publication', align: 'right' },
+  { key: 'delinquent', label: 'Delinquent', align: 'right' },
+  { key: 'awaiting', label: 'Awaiting', align: 'right' },
   { key: 'total', label: 'Total', align: 'right' }
 ]
 
