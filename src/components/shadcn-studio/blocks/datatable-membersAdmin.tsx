@@ -61,6 +61,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 
 import { usePagination } from '@/hooks/use-pagination'
 
+import MembershipSummaryCards from '@/components/dashboard/MembershipSummaryCards'
 import { cn } from '@/lib/utils'
 import { type MemberType } from '@/utils/types'
 
@@ -209,7 +210,15 @@ const columns: ColumnDef<MemberType>[] = [
   }
 ]
 
-const MembersDataTable = ({ data }: { data: MemberType[] }) => {
+type MembershipSummary = {
+  awaiting: number
+  delinquent: number
+  pending: number
+  total: number
+  vested: number
+}
+
+const MembersDataTable = ({ data, membershipSummary }: { data: MemberType[]; membershipSummary: MembershipSummary }) => {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
 
   const pageSize = 100
@@ -314,6 +323,7 @@ const MembersDataTable = ({ data }: { data: MemberType[] }) => {
       <div className='border-b'>
         <div className='flex flex-col gap-4 border-b p-6'>
           <span className='text-2xl font-semibold sm:text-4xl lg:text-6xl'>All Registered Loved Ones (Admin)</span>
+          <MembershipSummaryCards {...membershipSummary} />
           <div className='flex items-center justify-between gap-3 px-6 py-4 max-sm:flex-col'>
             <p className='text-primary text-sm font-extrabold whitespace-nowrap' aria-live='polite'>
               <span>{table.getRowCount().toString()} Member(s) Found</span>
@@ -582,6 +592,7 @@ function Filter({ column }: { column: Column<any, unknown> }) {
 function RowActions({ memberId }: { memberId: string }) {
   const currentDay = new Date().getDate()
   const shouldShow = currentDay >= 12
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>

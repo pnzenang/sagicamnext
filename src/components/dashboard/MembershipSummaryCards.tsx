@@ -10,34 +10,34 @@ type MembershipSummaryCardsProps = {
 
 const summaryCards = [
   {
-    key: 'vested',
-    label: 'Vested',
-    icon: ShieldCheck,
-    className: 'border-green-600/20 bg-green-600/5 text-green-700 dark:text-green-400'
-  },
-  {
-    key: 'awaiting',
-    label: 'Awaiting',
-    icon: FileClock,
-    className: 'border-blue-600/20 bg-blue-600/5 text-blue-700 dark:text-blue-400'
-  },
-  {
-    key: 'pending',
-    label: 'Pending',
-    icon: Clock,
-    className: 'border-amber-600/20 bg-amber-600/5 text-amber-700 dark:text-amber-400'
-  },
-  {
-    key: 'delinquent',
-    label: 'Delinquent',
-    icon: WalletCards,
-    className: 'border-red-600/20 bg-red-600/5 text-red-700 dark:text-red-400'
-  },
-  {
     key: 'total',
     label: 'All membership',
     icon: UsersRound,
     className: 'border-primary/20 bg-primary/5 text-primary'
+  },
+  {
+    key: 'vested',
+    label: 'All vested',
+    icon: ShieldCheck,
+    className: 'border-green-600/20 bg-green-600/5 text-green-700 dark:text-green-400'
+  },
+  {
+    key: 'pending',
+    label: 'All pending',
+    icon: Clock,
+    className: 'border-amber-600/20 bg-amber-600/5 text-amber-700 dark:text-amber-400'
+  },
+  {
+    key: 'awaiting',
+    label: 'All awaiting',
+    icon: FileClock,
+    className: 'border-blue-600/20 bg-blue-600/5 text-blue-700 dark:text-blue-400'
+  },
+  {
+    key: 'delinquent',
+    label: 'All delinquents',
+    icon: WalletCards,
+    className: 'border-red-600/20 bg-red-600/5 text-red-700 dark:text-red-400'
   }
 ] as const
 
