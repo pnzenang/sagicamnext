@@ -61,7 +61,7 @@ const MembershipSummaryCards = ({ awaiting, delinquent, pending, total, vested }
               <p className='text-xs font-semibold tracking-normal uppercase'>{card.label}</p>
               <Icon className='size-5 shrink-0' />
             </div>
-            <p className='text-foreground mt-3 text-3xl font-bold'>{counts[card.key].toLocaleString()}</p>
+            <p className='mt-3 text-3xl font-bold'>{counts[card.key].toLocaleString()}</p>
           </div>
         )
       })}
