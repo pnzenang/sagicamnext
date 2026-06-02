@@ -10,10 +10,10 @@ type DeceasedSummaryCardsProps = {
 
 const summaryCards = [
   {
-    key: 'inReview',
-    label: 'All in review',
-    icon: ClipboardClock,
-    className: 'border-amber-600/20 bg-amber-600/5 text-amber-700 dark:text-amber-400'
+    key: 'completed',
+    label: 'All completed',
+    icon: CircleCheckBig,
+    className: 'border-green-600/20 bg-green-600/5 text-green-700 dark:text-green-400'
   },
   {
     key: 'underway',
@@ -22,16 +22,16 @@ const summaryCards = [
     className: 'border-blue-600/20 bg-blue-600/5 text-blue-700 dark:text-blue-400'
   },
   {
+    key: 'inReview',
+    label: 'All in review',
+    icon: ClipboardClock,
+    className: 'border-amber-600/20 bg-amber-600/5 text-amber-700 dark:text-amber-400'
+  },
+  {
     key: 'denied',
     label: 'All denied',
     icon: CircleDollarSign,
     className: 'border-red-600/20 bg-red-600/5 text-red-700 dark:text-red-400'
-  },
-  {
-    key: 'completed',
-    label: 'All completed',
-    icon: CircleCheckBig,
-    className: 'border-green-600/20 bg-green-600/5 text-green-700 dark:text-green-400'
   },
   {
     key: 'total',
