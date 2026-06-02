@@ -10,12 +10,6 @@ type MembershipSummaryCardsProps = {
 
 const summaryCards = [
   {
-    key: 'total',
-    label: 'All membership',
-    icon: UsersRound,
-    className: 'border-primary/20 bg-primary/5 text-primary'
-  },
-  {
     key: 'vested',
     label: 'All vested',
     icon: ShieldCheck,
@@ -38,6 +32,12 @@ const summaryCards = [
     label: 'All delinquents',
     icon: WalletCards,
     className: 'border-red-600/20 bg-red-600/5 text-red-700 dark:text-red-400'
+  },
+  {
+    key: 'total',
+    label: 'All membership',
+    icon: UsersRound,
+    className: 'border-primary/20 bg-primary/5 text-primary'
   }
 ] as const
 
