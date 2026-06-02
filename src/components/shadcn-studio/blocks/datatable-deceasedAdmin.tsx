@@ -59,6 +59,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 
 import { usePagination } from '@/hooks/use-pagination'
 
+import DeceasedSummaryCards, { type DeceasedSummary } from '@/components/dashboard/DeceasedSummaryCards'
 import { cn } from '@/lib/utils'
 
 import { type DeceasedMemberType } from '@/utils/types'
@@ -215,7 +216,13 @@ const columns: ColumnDef<DeceasedMemberType>[] = [
   }
 ]
 
-const DeceasedMembersDataTable = ({ data }: { data: DeceasedMemberType[] }) => {
+const DeceasedMembersDataTable = ({
+  data,
+  deceasedSummary
+}: {
+  data: DeceasedMemberType[]
+  deceasedSummary: DeceasedSummary
+}) => {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
 
   const pageSize = 100
@@ -323,6 +330,7 @@ const DeceasedMembersDataTable = ({ data }: { data: DeceasedMemberType[] }) => {
             {' '}
             All Deceased Members (Admin){' '}
           </span>
+          <DeceasedSummaryCards {...deceasedSummary} />
           <div className='flex items-center justify-between gap-3 px-6 py-4 max-sm:flex-col'>
             <p className='text-sm font-extrabold whitespace-nowrap text-purple-400' aria-live='polite'>
               <span>{table.getRowCount().toString()} Deceased Member(s) Found</span>
