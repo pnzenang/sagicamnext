@@ -11,25 +11,25 @@ type DeceasedSummaryCardsProps = {
 const summaryCards = [
   {
     key: 'completed',
-    label: 'All completed',
+    label: 'Case(s) completed',
     icon: CircleCheckBig,
     className: 'border-green-600/20 bg-green-600/5 text-green-700 dark:text-green-400'
   },
   {
     key: 'underway',
-    label: 'All underway',
+    label: 'Case(s) underway',
     icon: HandCoins,
     className: 'border-blue-600/20 bg-blue-600/5 text-blue-700 dark:text-blue-400'
   },
   {
     key: 'inReview',
-    label: 'All in review',
+    label: 'Case(s) in review',
     icon: ClipboardClock,
     className: 'border-amber-600/20 bg-amber-600/5 text-amber-700 dark:text-amber-400'
   },
   {
     key: 'denied',
-    label: 'All denied',
+    label: 'Case(s) denied',
     icon: CircleDollarSign,
     className: 'border-red-600/20 bg-red-600/5 text-red-700 dark:text-red-400'
   },
