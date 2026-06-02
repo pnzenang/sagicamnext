@@ -1,20 +1,26 @@
-import { Suspense } from 'react'
-
-import { Divide } from 'lucide-react'
-
+import MembershipSummaryCards from '@/components/dashboard/MembershipSummaryCards'
 import { Card } from '@/components/ui/card'
 
 import MembersDataTable from '@/components/shadcn-studio/blocks/datatable-membersAdmin'
-import { fetchProfile, fetchMembersForAdmin } from '@/utils/actions'
-import LoadingContainer from '@/components/global/DataTableLoading'
+import { fetchMembersForAdmin } from '@/utils/actions'
+import { memberStatus } from '@/utils/types'
+
+const getMembershipSummary = (members: Awaited<ReturnType<typeof fetchMembersForAdmin>>) => ({
+  awaiting: members.filter(member => member.memberStatus === memberStatus.Awaiting).length,
+  delinquent: members.filter(member => member.memberStatus === memberStatus.Delinquent).length,
+  pending: members.filter(member => member.memberStatus === memberStatus.Pending).length,
+  total: members.length,
+  vested: members.filter(member => member.memberStatus === memberStatus.Vested).length
+})
 
 const DataTablePreview = async () => {
   const members = await fetchMembersForAdmin()
-  const users = await fetchProfile()
+  const membershipSummary = getMembershipSummary(members)
 
   return (
     <div className='py-8 sm:py-10'>
-      <div className='max-w-9xl mx-auto px-4 sm:px-6 lg:px-8'>
+      <div className='max-w-9xl mx-auto space-y-4 px-4 sm:px-6 lg:px-8'>
+        <MembershipSummaryCards {...membershipSummary} />
         <Card className='max-w-9xl mx-auto w-full py-0'>
           <MembersDataTable data={members} />
         </Card>

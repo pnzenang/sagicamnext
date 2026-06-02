@@ -1,5 +1,4 @@
-import { UsersRound } from 'lucide-react'
-
+import MembershipSummaryCards from '@/components/dashboard/MembershipSummaryCards'
 import db from '@/utils/db'
 import { memberStatus } from '@/utils/types'
 import AdminCountTable, { type AdminCountRow } from './AdminCountTable'
@@ -117,14 +116,15 @@ const AdminCount = async () => {
             Count of loved ones grouped by sponsor code and loved ones status.
           </p>
         </div>
-        <div className='border-border bg-muted/40 flex items-center gap-3 rounded-lg border px-4 py-3'>
-          <UsersRound className='text-primary size-5' />
-          <div>
-            <p className='text-muted-foreground text-xs font-medium uppercase'>Total members</p>
-            <p className='text-2xl font-semibold'>{totalMembers}</p>
-          </div>
-        </div>
       </div>
+
+      <MembershipSummaryCards
+        awaiting={statusTotals.awaiting}
+        delinquent={statusTotals.delinquent}
+        pending={statusTotals.pending}
+        total={statusTotals.total}
+        vested={statusTotals.vested}
+      />
 
       <AdminCountTable rows={rows} totals={statusTotals} />
     </div>

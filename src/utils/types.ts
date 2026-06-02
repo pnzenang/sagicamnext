@@ -37,6 +37,7 @@ export type MemberType = {
   countryOfBirth: string
   memberMatriculationNumber: string
   nameOfBeneficiary?: string
+  memberStatus: string
   sponsorCode: string
   createdAt: Date
   updatedAt: Date
