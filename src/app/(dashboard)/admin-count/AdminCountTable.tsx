@@ -43,7 +43,7 @@ const columns: AdminCountColumn[] = [
   { key: 'total', label: 'Total', align: 'right' }
 ]
 
-const adminCountColumnWidths = [20, 20, 12, ...Array.from({ length: 6 }, () => 8)]
+const adminCountColumnWidths = [20, 20, 15, 5, ...Array.from({ length: 5 }, () => 8)]
 
 const getSortIcon = (isActive: boolean, direction: SortDirection) => {
   if (!isActive) return <ArrowUpDown className='size-3.5' />
