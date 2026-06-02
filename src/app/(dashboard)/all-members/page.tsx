@@ -1,4 +1,3 @@
-import MembershipSummaryCards from '@/components/dashboard/MembershipSummaryCards'
 import { Card } from '@/components/ui/card'
 
 import MembersDataTable from '@/components/shadcn-studio/blocks/datatable-members'
@@ -20,9 +19,8 @@ const DataTablePreview = async () => {
   return (
     <div className='py-8 sm:py-10'>
       <div className='max-w-9xl mx-auto space-y-4 px-4 sm:px-6 lg:px-8'>
-        <MembershipSummaryCards {...membershipSummary} />
         <Card className='max-w-9xl mx-auto w-full py-0'>
-          <MembersDataTable data={members} />
+          <MembersDataTable data={members} membershipSummary={membershipSummary} />
         </Card>
       </div>
     </div>
