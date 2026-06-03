@@ -289,7 +289,7 @@ const MembersDataTable = ({ data, membershipSummary }: { data: MemberType[]; mem
   }
 
   const exportFilteredPageToExcel = () => {
-    const dataToExport = table.getFilteredRowModel().rows.map(row => row.original)
+    const dataToExport = table.getPaginationRowModel().rows.map(row => row.original)
     const worksheet = XLSX.utils.json_to_sheet(dataToExport)
     const workbook = XLSX.utils.book_new()
 
