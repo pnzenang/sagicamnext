@@ -16,26 +16,26 @@ const summaryCards = [
     className: 'border-green-600/20 bg-green-600/5 text-green-700 dark:text-green-400'
   },
   {
-    key: 'pending',
-    label: 'All pending',
-    icon: Clock,
-    className: 'border-amber-600/20 bg-amber-600/5 text-amber-700 dark:text-amber-400'
-  },
-  {
     key: 'awaiting',
-    label: 'All awaiting',
+    label: 'All Awaiting',
     icon: FileClock,
     className: 'border-blue-600/20 bg-blue-600/5 text-blue-700 dark:text-blue-400'
   },
   {
+    key: 'pending',
+    label: 'All Pending',
+    icon: Clock,
+    className: 'border-amber-600/20 bg-amber-600/5 text-amber-700 dark:text-amber-400'
+  },
+  {
     key: 'delinquent',
-    label: 'All delinquents',
+    label: 'All Delinquents',
     icon: WalletCards,
     className: 'border-red-600/20 bg-red-600/5 text-red-700 dark:text-red-400'
   },
   {
     key: 'total',
-    label: 'All membership',
+    label: 'All Membership',
     icon: UsersRound,
     className: 'border-primary/20 bg-primary/5 text-primary'
   }
