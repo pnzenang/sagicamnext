@@ -45,6 +45,7 @@
     "react-number-format": "^5.4.4",
     "react-use": "17.6.0",
     "recharts": "2.15.4",
+    "resend": "^6.12.4",
     "sonner": "^2.0.7",
     "tailwind-merge": "3.4.0",
     "use-mask-input": "^3.7.4",

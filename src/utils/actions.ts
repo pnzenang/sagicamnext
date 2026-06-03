@@ -19,6 +19,7 @@ import {
   RemovedMemberSchema,
   validateWithZodSchema
 } from './schemas'
+import { sendLovedOneConfirmationEmail } from './email'
 import { Prisma } from '@/generated/prisma/client'
 import prisma from './db'
 
@@ -118,12 +119,32 @@ export const createMemberAction = async (provState: any, formData: FormData): Pr
     const rawData = Object.fromEntries(formData)
     const validatedFields = validateWithZodSchema(memberSchema, rawData)
 
+    const sponsor = await db.profile.findUnique({
+      where: {
+        clerkId: user.id
+      }
+    })
+
+    if (!sponsor) throw new Error('Sponsor profile not found')
+
+    const memberMatriculationNumber = `SC${validatedFields.sponsorCode}${randomMatriculation()}`
+
     await db.member.create({
       data: {
         ...validatedFields,
         clerkId: user.id,
-        memberMatriculationNumber: `SC${validatedFields.sponsorCode}${randomMatriculation()}`
+        memberMatriculationNumber
       }
+    })
+
+    await sendLovedOneConfirmationEmail({
+      sponsorEmail: sponsor.sponsorEmail,
+      sponsorFirstName: sponsor.sponsorFirstName,
+      lovedOneFirstName: validatedFields.firstName,
+      lovedOneLastAndMiddleNames: validatedFields.lastAndMiddleNames,
+      dateOfBirth: validatedFields.dateOfBirth,
+      sponsorCode: validatedFields.sponsorCode,
+      memberMatriculationNumber
     })
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {

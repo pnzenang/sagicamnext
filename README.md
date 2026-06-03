@@ -146,3 +146,12 @@ These projects form the backbone of shadcn/studio, allowing us to build a powerf
 - [Discord](https://discord.com/invite/kBHkY7DekX)
 - [YouTube](https://www.youtube.com/@themeselection)
 # sagicamnext
+
+## Transactional Email
+
+SAGICAM sends a confirmation email to the sponsor after a loved one is added successfully.
+
+Required environment variables:
+
+- `RESEND_API_KEY`: Resend API key used server-side for transactional email.
+- `RESEND_FROM_EMAIL`: Verified sender address, for example `SAGICAM <no-reply@sagicam.org>`.
