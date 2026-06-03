@@ -8,7 +8,8 @@ import {
   UserPlus,
   Users,
   Wallet,
-  ArrowLeftRight
+  ArrowLeftRight,
+  FileStack
 } from 'lucide-react'
 
 import FAQ from '@/components/shadcn-studio/blocks/faq-component-08/faq-component-08'
@@ -138,7 +139,7 @@ const tabsData = [
   {
     value: 'death-documentation',
     label: 'Death Documentation',
-    icon: Cross,
+    icon: FileStack,
     faqs: [
       {
         question: 'What are the documents to upload for the death documentations?',
