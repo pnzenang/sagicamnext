@@ -127,6 +127,19 @@ const tabsData = [
         answer:
           'You should submit the necessary documentation through the online portal by clicking on the "Death Documentations" link in the sidebar.'
       },
+
+      {
+        question: 'How can I check the status of the death contribution of a member?',
+        answer:
+          'After submitting the death, you can check the status by navigating to the "Deceased Members" and see the death contribution status.'
+      }
+    ]
+  },
+  {
+    value: 'death-documentation',
+    label: 'Death Documentation',
+    icon: Cross,
+    faqs: [
       {
         question: 'What are the documents to upload for the death documentations?',
         answer: (
