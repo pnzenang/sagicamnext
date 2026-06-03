@@ -288,6 +288,26 @@ const MembersDataTable = ({ data, membershipSummary }: { data: MemberType[]; mem
     XLSX.writeFile(workbook, `payments-export-${new Date().toISOString().split('T')[0]}.xlsx`)
   }
 
+  const exportFilteredPageToExcel = () => {
+    const dataToExport = table.getFilteredRowModel().rows.map(row => row.original)
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport)
+    const workbook = XLSX.utils.book_new()
+
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Loved Ones')
+
+    worksheet['!cols'] = [
+      { wch: 14 },
+      { wch: 18 },
+      { wch: 24 },
+      { wch: 18 },
+      { wch: 14 },
+      { wch: 18 },
+      { wch: 18 }
+    ]
+
+    XLSX.writeFile(workbook, `loved-ones-filtered-export-${new Date().toISOString().split('T')[0]}.xlsx`)
+  }
+
   const exportToJSON = () => {
     const selectedRows = table.getSelectedRowModel().rows
 
@@ -422,6 +442,13 @@ const MembersDataTable = ({ data, membershipSummary }: { data: MemberType[]; mem
                 </SelectContent>
               </Select>
             </div>
+            <Button
+              className='bg-primary/10 text-primary hover:bg-primary/20 focus-visible:ring-primary/20 dark:focus-visible:ring-primary/40'
+              onClick={exportFilteredPageToExcel}
+            >
+              <FileSpreadsheetIcon />
+              Export Page
+            </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button className='bg-primary/10 text-primary hover:bg-primary/20 focus-visible:ring-primary/20 dark:focus-visible:ring-primary/40'>
