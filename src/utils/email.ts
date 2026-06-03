@@ -161,21 +161,19 @@ const createDeathAnnouncementConfirmationHtml = ({
           <td style="border: 1px solid #e5e7eb; padding: 10px;">${escapeHtml(contributionStatus)}</td>
         </tr>
       </table>
-      <p>SAGICAM will review the announcement and follow the regular contribution process.</p>
+      <p>Please to allow SAGICAM to review the announcement and begin the regular contribution process.</p>
+      <p>The sponsor should upload the following death documentations:</p>
+      <ul>
+        <li>The death certificate</li>
+        <li>The deceased ID card</li>
+        <li>The funeral program</li>
+      </ul>
       <p>Thank you,<br />SAGICAM</p>
     </div>
   `
 }
 
-const sendTransactionalEmail = async ({
-  html,
-  subject,
-  to
-}: {
-  html: string
-  subject: string
-  to: string
-}) => {
+const sendTransactionalEmail = async ({ html, subject, to }: { html: string; subject: string; to: string }) => {
   const apiKey = process.env.RESEND_API_KEY
   const fromEmail = process.env.RESEND_FROM_EMAIL
 
