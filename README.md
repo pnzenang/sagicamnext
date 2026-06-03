@@ -149,7 +149,8 @@ These projects form the backbone of shadcn/studio, allowing us to build a powerf
 
 ## Transactional Email
 
-SAGICAM sends a confirmation email to the sponsor after a loved one is added successfully.
+SAGICAM sends a confirmation email to the sponsor after a loved one is added, removed, or announced deceased
+successfully.
 
 Required environment variables:
 

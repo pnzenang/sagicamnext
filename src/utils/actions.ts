@@ -19,11 +19,27 @@ import {
   RemovedMemberSchema,
   validateWithZodSchema
 } from './schemas'
-import { sendLovedOneConfirmationEmail } from './email'
+import {
+  sendDeathAnnouncementConfirmationEmail,
+  sendLovedOneConfirmationEmail,
+  sendLovedOneRemovalConfirmationEmail
+} from './email'
 import { Prisma } from '@/generated/prisma/client'
 import prisma from './db'
 
 const randomMatriculation = customAlphabet('1234567890', 6)
+
+const fetchSponsorByCode = async (sponsorCode: string) => {
+  const sponsor = await db.profile.findUnique({
+    where: {
+      sponsorCode
+    }
+  })
+
+  if (!sponsor) throw new Error('Sponsor profile not found')
+
+  return sponsor
+}
 
 const getAuthUser = async () => {
   const user = await currentUser()
@@ -119,14 +135,7 @@ export const createMemberAction = async (provState: any, formData: FormData): Pr
     const rawData = Object.fromEntries(formData)
     const validatedFields = validateWithZodSchema(memberSchema, rawData)
 
-    const sponsor = await db.profile.findUnique({
-      where: {
-        clerkId: user.id
-      }
-    })
-
-    if (!sponsor) throw new Error('Sponsor profile not found')
-
+    const sponsor = await fetchSponsorByCode(validatedFields.sponsorCode)
     const memberMatriculationNumber = `SC${validatedFields.sponsorCode}${randomMatriculation()}`
 
     await db.member.create({
@@ -277,6 +286,7 @@ export const createRemovedMemberAction = async (provState: any, formData: FormDa
     const memberId = formData.get('id') as string
     const rawData = Object.fromEntries(formData)
     const validatedFields = validateWithZodSchema(RemovedMemberSchema, rawData)
+    const sponsor = await fetchSponsorByCode(validatedFields.sponsorCode)
 
     await db.removedMember.create({
       data: {
@@ -288,6 +298,17 @@ export const createRemovedMemberAction = async (provState: any, formData: FormDa
       where: {
         id: memberId
       }
+    })
+
+    await sendLovedOneRemovalConfirmationEmail({
+      sponsorEmail: sponsor.sponsorEmail,
+      sponsorFirstName: sponsor.sponsorFirstName,
+      lovedOneFirstName: validatedFields.firstName,
+      lovedOneLastAndMiddleNames: validatedFields.lastAndMiddleNames,
+      dateOfBirth: validatedFields.dateOfBirth,
+      sponsorCode: validatedFields.sponsorCode,
+      memberMatriculationNumber: validatedFields.memberMatriculationNumber,
+      reasonForLeaving: validatedFields.reasonForLeaving
     })
   } catch (error) {
     return renderError(error)
@@ -305,6 +326,7 @@ export const createRemovedMemberActionAdmin = async (
     const memberId = formData.get('id') as string
     const rawData = Object.fromEntries(formData)
     const validatedFields = validateWithZodSchema(RemovedMemberSchema, rawData)
+    const sponsor = await fetchSponsorByCode(validatedFields.sponsorCode)
 
     await db.removedMember.create({
       data: {
@@ -316,6 +338,17 @@ export const createRemovedMemberActionAdmin = async (
       where: {
         id: memberId
       }
+    })
+
+    await sendLovedOneRemovalConfirmationEmail({
+      sponsorEmail: sponsor.sponsorEmail,
+      sponsorFirstName: sponsor.sponsorFirstName,
+      lovedOneFirstName: validatedFields.firstName,
+      lovedOneLastAndMiddleNames: validatedFields.lastAndMiddleNames,
+      dateOfBirth: validatedFields.dateOfBirth,
+      sponsorCode: validatedFields.sponsorCode,
+      memberMatriculationNumber: validatedFields.memberMatriculationNumber,
+      reasonForLeaving: validatedFields.reasonForLeaving
     })
   } catch (error) {
     return renderError(error)
@@ -356,6 +389,7 @@ export const createDeceasedMemberAction = async (provState: any, formData: FormD
     const memberId = formData.get('id') as string
     const rawData = Object.fromEntries(formData)
     const validatedFields = validateWithZodSchema(DeceasedMemberSchema, rawData)
+    const sponsor = await fetchSponsorByCode(validatedFields.sponsorCode)
 
     await db.deceasedMember.create({
       data: {
@@ -367,6 +401,18 @@ export const createDeceasedMemberAction = async (provState: any, formData: FormD
       where: {
         id: memberId
       }
+    })
+
+    await sendDeathAnnouncementConfirmationEmail({
+      sponsorEmail: sponsor.sponsorEmail,
+      sponsorFirstName: sponsor.sponsorFirstName,
+      lovedOneFirstName: validatedFields.firstName,
+      lovedOneLastAndMiddleNames: validatedFields.lastAndMiddleNames,
+      dateOfDeath: validatedFields.dateOfDeath,
+      placeOfDeath: validatedFields.placeOfDeath,
+      sponsorCode: validatedFields.sponsorCode,
+      memberMatriculationNumber: validatedFields.memberMatriculationNumber,
+      contributionStatus: validatedFields.contributionStatus
     })
   } catch (error) {
     return renderError(error)
@@ -384,6 +430,7 @@ export const createDeceasedMemberActionAdmin = async (
     const memberId = formData.get('id') as string
     const rawData = Object.fromEntries(formData)
     const validatedFields = validateWithZodSchema(DeceasedMemberSchema, rawData)
+    const sponsor = await fetchSponsorByCode(validatedFields.sponsorCode)
 
     await db.deceasedMember.create({
       data: {
@@ -395,6 +442,18 @@ export const createDeceasedMemberActionAdmin = async (
       where: {
         id: memberId
       }
+    })
+
+    await sendDeathAnnouncementConfirmationEmail({
+      sponsorEmail: sponsor.sponsorEmail,
+      sponsorFirstName: sponsor.sponsorFirstName,
+      lovedOneFirstName: validatedFields.firstName,
+      lovedOneLastAndMiddleNames: validatedFields.lastAndMiddleNames,
+      dateOfDeath: validatedFields.dateOfDeath,
+      placeOfDeath: validatedFields.placeOfDeath,
+      sponsorCode: validatedFields.sponsorCode,
+      memberMatriculationNumber: validatedFields.memberMatriculationNumber,
+      contributionStatus: validatedFields.contributionStatus
     })
   } catch (error) {
     return renderError(error)
