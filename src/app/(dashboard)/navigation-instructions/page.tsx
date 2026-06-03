@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 
 import FAQ from '@/components/shadcn-studio/blocks/faq-component-08/faq-component-08'
+
 // import { fetchProfile } from '@/utils/actions'
 
 const tabsData = [
@@ -125,6 +126,17 @@ const tabsData = [
         question: 'How can I submit the necessary documentation?',
         answer:
           'You should submit the necessary documentation through the online portal by clicking on the "Death Documentations" link in the sidebar.'
+      },
+      {
+        question: 'What are the documents to upload for the death documentations?',
+        answer: (
+          <ul className='list-disc space-y-1 pl-5'>
+            <li>The deceased death certificate</li>
+            <li>A deceased picture ID</li>
+            <li>A deceased photo</li>
+            <li>The funeral program</li>
+          </ul>
+        )
       },
       {
         question: 'How can I check the status of the death contribution of a member?',

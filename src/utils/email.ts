@@ -165,7 +165,8 @@ const createDeathAnnouncementConfirmationHtml = ({
       <p>The sponsor should upload the following death documentations:</p>
       <ul>
         <li>The death certificate</li>
-        <li>The deceased ID card</li>
+        <li>A deceased ID card</li>
+        <li>A deceased picture</li>
         <li>The funeral program</li>
       </ul>
       <p>Thank you,<br />SAGICAM</p>

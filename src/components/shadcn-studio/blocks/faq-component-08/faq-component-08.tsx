@@ -1,15 +1,15 @@
-import type { ComponentType } from 'react'
+import type { ComponentType, ReactNode } from 'react'
 
 import { ChevronRightIcon, Phone, Mail, Check } from 'lucide-react'
+import Image from 'next/image'
+import Link from 'next/link'
 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import Link from 'next/link'
-import Image from 'next/image'
 
 type FAQ = {
   question: string
-  answer: string
+  answer: ReactNode
 }[]
 
 type FAQTab = {
@@ -62,7 +62,7 @@ const FAQ = ({ tabsData }: { tabsData: FAQTab }) => {
             </h1>
             <h1>
               <Check className='inline pr-2' />
-              For any further question or assistance, please don't hesitate to contact us:
+              For any further question or assistance, please don&apos;t hesitate to contact us:
               <Phone className='text-primary mr-1 ml-2 inline' />
               1(804)-214-6390
               <Mail className='text-primary mr-1 ml-2 inline' />
