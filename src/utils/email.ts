@@ -137,7 +137,9 @@ const createDeathAnnouncementConfirmationHtml = ({
     <div style="font-family: Arial, sans-serif; color: #111827; line-height: 1.6; max-width: 640px;">
       <p>Hello ${escapeHtml(sponsorFirstName)},</p>
       <p>
-        This email confirms that the death of <strong>${lovedOneName}</strong> has been announced in SAGICAM.
+        We are deeply saddened by the news of the passing of
+        <strong>${lovedOneName}</strong>.
+
       </p>
       <table style="border-collapse: collapse; margin: 24px 0; width: 100%;">
         <tr>
@@ -161,8 +163,11 @@ const createDeathAnnouncementConfirmationHtml = ({
           <td style="border: 1px solid #e5e7eb; padding: 10px;">${escapeHtml(contributionStatus)}</td>
         </tr>
       </table>
-      <p>Please to allow SAGICAM to review the announcement and begin the regular contribution process.</p>
-      <p>The sponsor should upload the following death documentations:</p>
+
+      <p>Our thoughts and prayers are with the bereaved family.
+
+On behalf of the entire SAGICAM family, please accept our sincere condolences..</p>
+      <p>To Allow SAGICAM to review the announcement and begin the regular contribution process, please upload the following death documentations to the dashboard:</p>
       <ul>
         <li>The death certificate</li>
         <li>A deceased ID card</li>
