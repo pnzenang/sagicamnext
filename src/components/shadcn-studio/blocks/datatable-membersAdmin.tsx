@@ -656,7 +656,7 @@ function RowActions({ memberId }: { memberId: string }) {
             <Link href={`/admin-members/${memberId}/deathAnnouncement`}>
               <span className='flex gap-3 text-purple-500'>
                 <Cross className='text-purple-500' />
-                Announce Member&apos;s Dead
+                Announce Member&apos;s Death
               </span>
             </Link>
           </DropdownMenuItem>

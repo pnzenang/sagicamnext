@@ -97,7 +97,7 @@ const DeathAnnouncement = async ({ params }: { params: { id: string } }) => {
               <div className='mt-10 flex flex-col items-center justify-center gap-1 sm:flex-row'>
                 <BsSignStopFill className='size-8 items-center text-red-500' />{' '}
                 <h1 className='text-center text-sm font-semibold text-red-500 sm:text-lg'>
-                  You can not announce the death of {member.lastAndMiddleNames} {member.firstName} because he or she was
+                  You can not announce the death of {member.lastAndMiddleNames} {member.firstName} because he or she is
                   not vested yet.
                 </h1>
               </div>

@@ -1,10 +1,12 @@
 import {
   BookCheck,
   Cross,
-  Navigation,
+  Megaphone,
+  MessageCircle,
   SquareUser,
   Trash2,
   UserCog,
+  UserMinus,
   UserPlus,
   FileStack,
   Users,
@@ -21,8 +23,8 @@ import type { MenuItem } from './types'
 
 export const pagesItems: MenuItem[] = [
   {
-    icon: Navigation,
-    label: 'Navigation Instructions',
+    icon: MessageCircle,
+    label: 'Join WhatsApp Group',
     href: '/navigation-instructions'
   },
   {
@@ -40,6 +42,11 @@ export const pagesItems: MenuItem[] = [
     icon: Users,
     label: 'All Loved Ones',
     href: '/all-members'
+  },
+  {
+    icon: UserMinus,
+    label: 'Remove Member',
+    href: '/remove-member'
   },
   {
     icon: Trash2,
@@ -77,6 +84,11 @@ export const pagesItems: MenuItem[] = [
     href: '/contributions-recap'
   },
 
+  {
+    icon: Megaphone,
+    label: 'Death Announcement',
+    href: '/death-announcement'
+  },
   {
     icon: FileStack,
     label: 'Death Documentations',
