@@ -292,7 +292,7 @@ const MembersDataTable = ({ data, membershipSummary }: { data: MemberType[]; mem
   }
 
   const exportFilteredPageToExcel = () => {
-    const dataToExport = table.getPaginationRowModel().rows.map(row => {
+    const dataToExport = table.getFilteredRowModel().rows.map(row => {
       const member = row.original
 
       return {
