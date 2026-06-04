@@ -292,7 +292,20 @@ const MembersDataTable = ({ data, membershipSummary }: { data: MemberType[]; mem
   }
 
   const exportFilteredPageToExcel = () => {
-    const dataToExport = table.getPaginationRowModel().rows.map(row => row.original)
+    const dataToExport = table.getPaginationRowModel().rows.map(row => {
+      const member = row.original
+
+      return {
+        Code: member.sponsorCode,
+        Matriculation: member.memberMatriculationNumber,
+        'Last Names': member.lastAndMiddleNames,
+        'First Name': member.firstName,
+        'Longevity(Days)': day(Date.now()).diff(day(member.createdAt), 'days'),
+        Recommendation: row.getValue('delegateRecommendation'),
+        Status: member.memberStatus
+      }
+    })
+
     const worksheet = XLSX.utils.json_to_sheet(dataToExport)
     const workbook = XLSX.utils.book_new()
 
