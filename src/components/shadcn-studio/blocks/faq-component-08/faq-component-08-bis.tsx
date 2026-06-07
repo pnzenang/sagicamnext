@@ -1,9 +1,10 @@
 import type { ComponentType } from 'react'
 
-import { BookOpenCheck, ChevronRightIcon, FileText, Scale } from 'lucide-react'
+import { BookOpenCheck, ChevronRightIcon, Download, FileText, Scale } from 'lucide-react'
 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 type FAQ = {
@@ -40,14 +41,23 @@ const FAQ = ({ tabsData }: { tabsData: FAQTab }) => {
                 </div>
               </div>
 
-              <div className='grid grid-cols-2 gap-3 sm:flex lg:justify-end'>
-                <div className='rounded-md border bg-background px-4 py-3 text-left'>
-                  <div className='text-2xl font-semibold'>{tabsData.length}</div>
-                  <div className='text-muted-foreground text-xs uppercase'>Sections</div>
-                </div>
-                <div className='rounded-md border bg-background px-4 py-3 text-left'>
-                  <div className='text-2xl font-semibold'>{rulesCount}</div>
-                  <div className='text-muted-foreground text-xs uppercase'>Rules</div>
+              <div className='flex flex-col gap-3 sm:flex-row lg:flex-col lg:items-stretch'>
+                <Button asChild className='w-full sm:w-auto lg:w-full'>
+                  <a href='/documents/sagicam-internal-rules.pdf' download='SAGICAM Internal Rules.pdf'>
+                    <Download aria-hidden='true' />
+                    Download PDF
+                  </a>
+                </Button>
+
+                <div className='grid grid-cols-2 gap-3 sm:flex lg:grid lg:grid-cols-2'>
+                  <div className='rounded-md border bg-background px-4 py-3 text-left'>
+                    <div className='text-2xl font-semibold'>{tabsData.length}</div>
+                    <div className='text-muted-foreground text-xs uppercase'>Sections</div>
+                  </div>
+                  <div className='rounded-md border bg-background px-4 py-3 text-left'>
+                    <div className='text-2xl font-semibold'>{rulesCount}</div>
+                    <div className='text-muted-foreground text-xs uppercase'>Rules</div>
+                  </div>
                 </div>
               </div>
             </div>
