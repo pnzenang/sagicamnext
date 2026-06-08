@@ -1,4 +1,5 @@
 import MembershipSummaryCards from '@/components/dashboard/MembershipSummaryCards'
+import ContributionAssessmentForm from '@/components/dashboard/ContributionAssessmentForm'
 import db from '@/utils/db'
 import { memberStatus } from '@/utils/types'
 import AdminCountTable, { type AdminCountRow } from './AdminCountTable'
@@ -144,6 +145,8 @@ const AdminCount = async () => {
         total={statusTotals.total}
         vested={statusTotals.vested}
       />
+
+      <ContributionAssessmentForm vestedMembersCount={statusTotals.vested} />
 
       <AdminCountTable rows={rows} totals={statusTotals} />
     </div>
