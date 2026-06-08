@@ -83,6 +83,18 @@ const AdminCount = async () => {
     latestContributionAssessment?.groups.map(group => [group.sponsorCode, group]) ?? []
   )
 
+  const sponsorContributionPayments = await db.sponsorContributionPayment.findMany({
+    where: {
+      sponsorCode: {
+        in: sponsorCodes
+      }
+    }
+  })
+
+  const contributionPaymentsByCode = new Map(
+    sponsorContributionPayments.map(payment => [payment.sponsorCode, decimalToNumber(payment.amountSent)])
+  )
+
   const rows: AdminCountRow[] = sponsorCodes.map(sponsorCode => {
     const sponsor = sponsorsByCode.get(sponsorCode)
     const counts = statusCountsBySponsorCode.get(sponsorCode) ?? createEmptyStatusCounts()
@@ -99,6 +111,7 @@ const AdminCount = async () => {
       delinquent: counts[memberStatus.Delinquent],
       awaiting: counts[memberStatus.Awaiting],
       amountOwed: contributionGroup ? decimalToNumber(contributionGroup.amountOwed) : 0,
+      amountSent: contributionPaymentsByCode.get(sponsorCode) ?? 0,
       total: getStatusCountTotal(counts)
     }
   })
@@ -110,6 +123,7 @@ const AdminCount = async () => {
       totals.delinquent += row.delinquent
       totals.awaiting += row.awaiting
       totals.amountOwed += row.amountOwed
+      totals.amountSent += row.amountSent
 
       return totals
     },
@@ -119,6 +133,7 @@ const AdminCount = async () => {
       delinquent: 0,
       awaiting: 0,
       amountOwed: 0,
+      amountSent: 0,
       total: 0
     }
   )

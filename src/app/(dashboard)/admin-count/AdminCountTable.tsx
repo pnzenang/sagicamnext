@@ -23,12 +23,13 @@ export type AdminCountRow = {
   delinquent: number
   awaiting: number
   amountOwed: number
+  amountSent: number
   total: number
 }
 
 export type AdminCountTotals = Pick<
   AdminCountRow,
-  'vested' | 'pending' | 'delinquent' | 'awaiting' | 'amountOwed' | 'total'
+  'vested' | 'pending' | 'delinquent' | 'awaiting' | 'amountOwed' | 'amountSent' | 'total'
 >
 
 type SortKey = keyof AdminCountRow
@@ -50,10 +51,11 @@ const columns: AdminCountColumn[] = [
   { key: 'delinquent', label: 'Delinquent', align: 'right' },
   { key: 'awaiting', label: 'Awaiting', align: 'right' },
   { key: 'amountOwed', label: 'Amount owed', align: 'right' },
+  { key: 'amountSent', label: 'Amount sent', align: 'right' },
   { key: 'total', label: 'Total', align: 'right' }
 ]
 
-const adminCountColumnWidths = [18, 18, 14, 5, ...Array.from({ length: 6 }, () => 7.5)]
+const adminCountColumnWidths = Array.from({ length: columns.length }, () => 100 / columns.length)
 
 const getSortIcon = (isActive: boolean, direction: SortDirection) => {
   if (!isActive) return <ArrowUpDown className='size-3.5' />
@@ -109,6 +111,7 @@ const AdminCountTable = ({ rows, totals }: { rows: AdminCountRow[]; totals: Admi
         totals.delinquent,
         totals.awaiting,
         totals.amountOwed,
+        totals.amountSent,
         totals.total
       ]
     ]
@@ -200,6 +203,15 @@ const AdminCountTable = ({ rows, totals }: { rows: AdminCountRow[]; totals: Admi
                   <TableCell className='text-right font-semibold'>{row.delinquent}</TableCell>
                   <TableCell className='text-right font-semibold'>{row.awaiting}</TableCell>
                   <TableCell className='text-right font-semibold'>{currencyFormatter.format(row.amountOwed)}</TableCell>
+                  <TableCell
+                    className={`text-right font-semibold ${
+                      row.amountSent >= row.amountOwed
+                        ? 'bg-green-600/10 text-green-700 dark:text-green-300'
+                        : 'bg-red-600/10 text-red-700 dark:text-red-300'
+                    }`}
+                  >
+                    {currencyFormatter.format(row.amountSent)}
+                  </TableCell>
                   <TableCell className='text-right text-base font-extrabold'>{row.total}</TableCell>
                 </TableRow>
               ))
@@ -217,6 +229,7 @@ const AdminCountTable = ({ rows, totals }: { rows: AdminCountRow[]; totals: Admi
                 <TableCell className='text-right font-extrabold'>{totals.delinquent}</TableCell>
                 <TableCell className='text-right font-extrabold'>{totals.awaiting}</TableCell>
                 <TableCell className='text-right font-extrabold'>{currencyFormatter.format(totals.amountOwed)}</TableCell>
+                <TableCell className='text-right font-extrabold'>{currencyFormatter.format(totals.amountSent)}</TableCell>
                 <TableCell className='text-right text-lg font-extrabold'>{totals.total}</TableCell>
               </TableRow>
             </TableFooter>
