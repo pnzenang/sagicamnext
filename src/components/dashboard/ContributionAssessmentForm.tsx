@@ -8,7 +8,7 @@ import { SubmitButton } from '@/components/forms/Buttons'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { createContributionAssessmentAction } from '@/utils/actions'
+import { createContributionAssessmentAction, resetContributionCalculationAction } from '@/utils/actions'
 
 type ContributionAssessmentFormProps = {
   vestedMembersCount: number
@@ -20,6 +20,7 @@ const initialState = {
 
 const ContributionAssessmentForm = ({ vestedMembersCount }: ContributionAssessmentFormProps) => {
   const [state, formAction] = useActionState(createContributionAssessmentAction, initialState)
+  const [resetState, resetFormAction] = useActionState(resetContributionCalculationAction, initialState)
 
   return (
     <Card className='border-primary/30 bg-primary/10 py-0'>
@@ -31,29 +32,41 @@ const ContributionAssessmentForm = ({ vestedMembersCount }: ContributionAssessme
         </CardDescription>
       </CardHeader>
       <CardContent className='py-5'>
-        <form action={formAction} className='grid gap-4 sm:grid-cols-[minmax(260px,420px)_auto] sm:items-end'>
-          <div className='grid gap-2'>
-            <Label htmlFor='totalAmount'>Total amount in dollars</Label>
-            <div className='relative'>
-              <DollarSign className='text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2' />
-              <Input
-                id='totalAmount'
-                name='totalAmount'
-                type='number'
-                inputMode='decimal'
-                min='0.01'
-                step='0.01'
-                placeholder='6000.00'
-                className='pl-9'
-                required
-              />
+        <div className='grid gap-4'>
+          <div className='grid gap-4 md:grid-cols-3 md:items-end'>
+            <form action={formAction} className='contents'>
+            <div className='grid gap-2'>
+              <Label htmlFor='totalAmount'>Total amount in dollars</Label>
+              <div className='relative'>
+                <DollarSign className='text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2' />
+                <Input
+                  id='totalAmount'
+                  name='totalAmount'
+                  type='number'
+                  inputMode='decimal'
+                  min='0.01'
+                  step='0.01'
+                  placeholder='6000.00'
+                  className='pl-9'
+                  required
+                />
+              </div>
             </div>
-            <p className='text-muted-foreground text-sm'>Vested loved ones currently counted: {vestedMembersCount}</p>
-            {state.message ? <p className='text-primary text-sm font-medium'>{state.message}</p> : null}
+
+            <SubmitButton text='Distribute amount' className='w-full' />
+            </form>
+
+            <form action={resetFormAction}>
+              <SubmitButton text='Reset calculation' className='w-full bg-red-600 text-white hover:bg-red-700' />
+            </form>
           </div>
 
-          <SubmitButton text='Distribute amount' className='w-full sm:w-auto' />
-        </form>
+          <div className='grid gap-2'>
+            <p className='text-muted-foreground text-sm'>Vested loved ones currently counted: {vestedMembersCount}</p>
+            {state.message ? <p className='text-primary text-sm font-medium'>{state.message}</p> : null}
+            {resetState.message ? <p className='text-primary text-sm font-medium'>{resetState.message}</p> : null}
+          </div>
+        </div>
       </CardContent>
     </Card>
   )

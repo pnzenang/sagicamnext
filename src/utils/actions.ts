@@ -369,6 +369,23 @@ export const saveSponsorContributionPaymentAction = async (
   }
 }
 
+export const resetContributionCalculationAction = async (): Promise<{ message: string }> => {
+  await getAuthUser()
+
+  try {
+    await db.contributionAssessment.deleteMany()
+    await db.sponsorContributionPayment.deleteMany()
+
+    revalidatePath('/admin-count')
+    revalidatePath('/admin-members')
+    revalidatePath('/all-members')
+
+    return { message: 'Contribution calculation reset successfully.' }
+  } catch (error) {
+    return renderError(error)
+  }
+}
+
 export const fetchSingleMemberDetails = async (memberId: string) => {
   const user = await currentUser()
 
