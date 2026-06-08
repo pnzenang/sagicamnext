@@ -8,6 +8,11 @@ import * as XLSX from 'xlsx'
 
 day.extend(advancedFormat)
 
+const currencyFormatter = new Intl.NumberFormat('en-US', {
+  currency: 'USD',
+  style: 'currency'
+})
+
 import {
   ChevronDownIcon,
   ChevronLeftIcon,
@@ -217,6 +222,7 @@ type MembershipSummary = {
 
 const MembersDataTable = ({ data, membershipSummary }: { data: MemberType[]; membershipSummary: MembershipSummary }) => {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
+  const monthlyContributionAmount = data[0]?.currentContributionAmountOwed ?? 0
 
   const pageSize = 100
 
@@ -354,12 +360,17 @@ const MembersDataTable = ({ data, membershipSummary }: { data: MemberType[]; mem
         <div className='flex flex-col gap-4 border-b p-6'>
           <span className='text-2xl font-semibold sm:text-4xl lg:text-6xl'>All Registered Loved Ones</span>
           <MembershipSummaryCards {...membershipSummary} />
-          <div className='flex items-center justify-between gap-3 px-6 py-4 max-sm:flex-col'>
-            <p className='text-primary text-sm font-extrabold whitespace-nowrap' aria-live='polite'>
-              <span>{table.getRowCount().toString()} Member(s) Found</span>
-            </p>
+          <div className='flex items-center justify-between gap-6 px-6 py-4 max-sm:flex-col max-sm:items-start'>
+            <div className='space-y-5'>
+              <p className='text-primary text-sm font-extrabold whitespace-nowrap' aria-live='polite'>
+                <span>{table.getRowCount().toString()} Member(s) Found</span>
+              </p>
+              <p className='border-primary/20 bg-primary/10 text-primary rounded-md border px-4 py-3 text-xl font-extrabold sm:text-2xl'>
+                Your Contribution This Month is: {currencyFormatter.format(monthlyContributionAmount)}
+              </p>
+            </div>
 
-            <div>
+            <div className='flex flex-col items-end max-sm:items-center'>
               <Pagination>
                 <PaginationContent>
                   <PaginationItem>

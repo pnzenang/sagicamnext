@@ -74,4 +74,27 @@ model DeceasedMember {
 
 }
 
+model ContributionAssessment {
+  id String @id @default(uuid())
+  totalAmount Decimal @db.Decimal(10, 2)
+  totalVestedMembers Int
+  amountPerVestedMember Decimal @db.Decimal(10, 2)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  groups ContributionAssessmentGroup[]
+}
+
+model ContributionAssessmentGroup {
+  id String @id @default(uuid())
+  assessmentId String
+  sponsorCode String
+  vestedMembersCount Int
+  amountOwed Decimal @db.Decimal(10, 2)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  assessment ContributionAssessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+
+  @@unique([assessmentId, sponsorCode])
+  @@index([sponsorCode])
+}
 

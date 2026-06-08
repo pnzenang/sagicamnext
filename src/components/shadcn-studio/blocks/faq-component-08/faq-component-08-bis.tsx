@@ -1,4 +1,6 @@
-import type { ComponentType } from 'react'
+'use client'
+
+import { useState, type ComponentType } from 'react'
 
 import { BookOpenCheck, ChevronRightIcon, Download, FileText, Scale } from 'lucide-react'
 
@@ -21,6 +23,19 @@ type FAQTab = {
 
 const FAQ = ({ tabsData }: { tabsData: FAQTab }) => {
   const rulesCount = tabsData.reduce((total, tab) => total + tab.faqs.length, 0)
+  const [activeSection, setActiveSection] = useState(tabsData[0]?.value ?? '')
+  const activeSectionIndex = tabsData.findIndex(tab => tab.value === activeSection)
+  const hasSections = tabsData.length > 0
+
+  const goToNextSection = () => {
+    if (!hasSections) {
+      return
+    }
+
+    const nextSectionIndex = activeSectionIndex >= 0 ? (activeSectionIndex + 1) % tabsData.length : 0
+
+    setActiveSection(tabsData[nextSectionIndex].value)
+  }
 
   return (
     <section className='py-6 sm:py-8'>
@@ -64,14 +79,14 @@ const FAQ = ({ tabsData }: { tabsData: FAQTab }) => {
           </div>
         </div>
 
-        <Tabs defaultValue='section1' orientation='vertical'>
-          <div className='grid grid-cols-1 gap-6 lg:grid-cols-[minmax(260px,340px)_1fr]'>
-            <div className='rounded-md border bg-background p-3'>
+        <Tabs value={activeSection} onValueChange={setActiveSection} orientation='vertical'>
+          <div className='grid grid-cols-1 gap-6 lg:grid-cols-[340px_minmax(0,1fr)]'>
+            <div className='min-w-0 rounded-md border bg-background p-3'>
               <div className='mb-3 flex items-center gap-2 px-2'>
                 <BookOpenCheck className='text-primary size-5' aria-hidden='true' />
                 <h2 className='text-sm font-semibold uppercase'>Rule Sections</h2>
               </div>
-              <TabsList className='h-auto max-h-[620px] w-full flex-col gap-2 overflow-y-auto bg-transparent p-0'>
+              <TabsList className='h-auto max-h-[620px] w-full items-stretch flex-col gap-2 overflow-y-auto bg-transparent p-0'>
               {tabsData.map(tab => {
                 const IconComponent = tab.icon
 
@@ -79,10 +94,10 @@ const FAQ = ({ tabsData }: { tabsData: FAQTab }) => {
                   <TabsTrigger
                     key={tab.value}
                     value={tab.value}
-                    className='data-[state=active]:bg-primary/10 data-[state=active]:text-primary dark:data-[state=active]:text-primary dark:data-[state=active]:bg-primary/10 border-border data-[state=active]:border-primary/20 dark:data-[state=active]:border-primary/20 bg-background w-full gap-3 rounded-md border px-3 py-3 text-sm data-[state=active]:shadow-none! [&>svg]:size-4'
+                    className='data-[state=active]:bg-primary/10 data-[state=active]:text-primary dark:data-[state=active]:text-primary dark:data-[state=active]:bg-primary/10 border-border data-[state=active]:border-primary/20 dark:data-[state=active]:border-primary/20 bg-background min-h-12 w-full max-w-full flex-none gap-3 rounded-md border px-3 py-3 text-sm data-[state=active]:shadow-none! [&>svg]:size-4'
                   >
                     <IconComponent />
-                    <span className='flex-1 truncate text-start'>{tab.label}</span>
+                    <span className='min-w-0 flex-1 truncate text-start'>{tab.label}</span>
                     <ChevronRightIcon className='size-4 rtl:rotate-180' />
                   </TabsTrigger>
                 )
@@ -92,25 +107,34 @@ const FAQ = ({ tabsData }: { tabsData: FAQTab }) => {
 
             <div className='min-w-0'>
               {tabsData.map(tab => (
-                <TabsContent key={tab.value} value={tab.value} className='mt-0'>
-                  <div className='rounded-md border bg-background'>
+                <TabsContent key={tab.value} value={tab.value} className='mt-0 w-full'>
+                  <div className='w-full rounded-md border bg-background'>
                     <div className='border-b px-5 py-5 sm:px-6'>
-                      <div className='mb-2 flex flex-wrap items-center gap-2'>
-                        <Badge variant='secondary'>{tab.faqs.length} rule(s)</Badge>
-                        <Badge variant='outline'>SAGICAM</Badge>
-                      </div>
-                      <div className='flex items-start gap-3'>
-                        <FileText className='text-primary mt-1 size-5 shrink-0' aria-hidden='true' />
-                        <h2 className='text-xl font-semibold sm:text-2xl'>{tab.label}</h2>
+                      <div className='flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between'>
+                        <div className='min-w-0 flex-1'>
+                          <div className='mb-2 flex flex-wrap items-center gap-2'>
+                            <Badge variant='secondary'>{tab.faqs.length} rule(s)</Badge>
+                            <Badge variant='outline'>SAGICAM</Badge>
+                          </div>
+                          <div className='flex items-start gap-3'>
+                            <FileText className='text-primary mt-1 size-5 shrink-0' aria-hidden='true' />
+                            <h2 className='text-xl font-semibold sm:text-2xl'>{tab.label}</h2>
+                          </div>
+                        </div>
+
+                        <Button onClick={goToNextSection} disabled={!hasSections} className='sm:shrink-0'>
+                          Next Section
+                          <ChevronRightIcon aria-hidden='true' />
+                        </Button>
                       </div>
                     </div>
                     <Accordion type='single' collapsible className='w-full' defaultValue='item-1'>
                       {tab.faqs.map((item, index) => (
-                        <AccordionItem key={index} value={`item-${index + 1}`} className='px-5 sm:px-6'>
-                          <AccordionTrigger className='text-primary text-base leading-6 hover:no-underline'>
+                        <AccordionItem key={index} value={`item-${index + 1}`} className='w-full px-5 sm:px-6'>
+                          <AccordionTrigger className='text-primary w-full text-base leading-6 hover:no-underline'>
                             {item.question}
                           </AccordionTrigger>
-                          <AccordionContent className='text-muted-foreground text-base leading-7'>
+                          <AccordionContent className='text-muted-foreground w-full text-base leading-7'>
                             {item.answer || 'No additional details provided.'}
                           </AccordionContent>
                         </AccordionItem>

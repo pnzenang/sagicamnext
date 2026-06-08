@@ -45,6 +45,12 @@ const DeathAnnouncementPage = () => {
             </span>
             <span>Select Announce Member&apos;s Death and complete the death announcement form.</span>
           </li>
+          <li className='flex gap-3'>
+            <span className='flex size-7 shrink-0 items-center justify-center rounded-full bg-purple-600 text-sm font-semibold text-white'>
+              4
+            </span>
+            <span>Check your email for the next steps after submitting the death announcement.</span>
+          </li>
         </ol>
       </div>
 

@@ -19,6 +19,7 @@ import {
   RemovedMemberSchema,
   validateWithZodSchema
 } from './schemas'
+import { memberStatus } from './types'
 import {
   sendDeathAnnouncementConfirmationEmail,
   sendLovedOneConfirmationEmail,
@@ -28,6 +29,11 @@ import { Prisma } from '@/generated/prisma/client'
 import prisma from './db'
 
 const randomMatriculation = customAlphabet('1234567890', 6)
+
+const currencyFormatter = new Intl.NumberFormat('en-US', {
+  currency: 'USD',
+  style: 'currency'
+})
 
 const fetchSponsorByCode = async (sponsorCode: string) => {
   const sponsor = await db.profile.findUnique({
@@ -57,6 +63,43 @@ const renderError = (error: unknown): { message: string } => {
   console.log(error)
 
   return { message: error instanceof Error ? error.message : 'An error occurred' }
+}
+
+const decimalToNumber = (value: unknown) => Number(value ?? 0)
+
+const fetchLatestContributionAssessment = async () => {
+  return db.contributionAssessment.findFirst({
+    include: {
+      groups: true
+    },
+    orderBy: {
+      createdAt: 'desc'
+    }
+  })
+}
+
+const attachContributionAmounts = async <T extends { sponsorCode: string }>(members: T[]) => {
+  const latestAssessment = await fetchLatestContributionAssessment()
+
+  if (!latestAssessment) {
+    return members
+  }
+
+  const groupsByCode = new Map(latestAssessment.groups.map(group => [group.sponsorCode, group]))
+  const currentContributionAmountPerVestedMember = decimalToNumber(latestAssessment.amountPerVestedMember)
+  const currentContributionTotalAmount = decimalToNumber(latestAssessment.totalAmount)
+
+  return members.map(member => {
+    const contributionGroup = groupsByCode.get(member.sponsorCode)
+
+    return {
+      ...member,
+      currentContributionAmountOwed: contributionGroup ? decimalToNumber(contributionGroup.amountOwed) : 0,
+      currentContributionAmountPerVestedMember,
+      currentContributionTotalAmount,
+      currentContributionVestedCount: contributionGroup?.vestedMembersCount ?? 0
+    }
+  })
 }
 
 export const createProfileAction = async (prevState: any, formData: FormData) => {
@@ -181,7 +224,7 @@ export const fetchMembers = async () => {
     orderBy: { createdAt: 'desc' }
   })
 
-  return members
+  return attachContributionAmounts(members)
 }
 
 export const fetchMembersForAdmin = async () => {
@@ -192,7 +235,68 @@ export const fetchMembersForAdmin = async () => {
     orderBy: { createdAt: 'desc' }
   })
 
-  return members
+  return attachContributionAmounts(members)
+}
+
+export const createContributionAssessmentAction = async (
+  prevState: any,
+  formData: FormData
+): Promise<{ message: string }> => {
+  await getAuthUser()
+
+  try {
+    const rawAmount = String(formData.get('totalAmount') ?? '').replace(/[$,]/g, '').trim()
+    const totalAmount = Number(rawAmount)
+
+    if (!Number.isFinite(totalAmount) || totalAmount <= 0) {
+      throw new Error('Enter a valid dollar amount greater than 0.')
+    }
+
+    const vestedMembers = await db.member.findMany({
+      select: {
+        sponsorCode: true
+      },
+      where: {
+        memberStatus: memberStatus.Vested
+      }
+    })
+
+    if (vestedMembers.length === 0) {
+      throw new Error('No vested loved ones were found.')
+    }
+
+    const vestedMembersByCode = vestedMembers.reduce((counts, member) => {
+      counts.set(member.sponsorCode, (counts.get(member.sponsorCode) ?? 0) + 1)
+
+      return counts
+    }, new Map<string, number>())
+
+    const amountPerVestedMember = Number((totalAmount / vestedMembers.length).toFixed(2))
+
+    await db.contributionAssessment.create({
+      data: {
+        amountPerVestedMember,
+        totalAmount,
+        totalVestedMembers: vestedMembers.length,
+        groups: {
+          create: Array.from(vestedMembersByCode.entries()).map(([sponsorCode, vestedMembersCount]) => ({
+            amountOwed: Number((amountPerVestedMember * vestedMembersCount).toFixed(2)),
+            sponsorCode,
+            vestedMembersCount
+          }))
+        }
+      }
+    })
+
+    revalidatePath('/admin-members')
+    revalidatePath('/all-members')
+
+    return {
+      message: `Distributed ${currencyFormatter.format(totalAmount)} across ${vestedMembers.length} vested loved ones. Each vested loved one is ${currencyFormatter.format(amountPerVestedMember)}.`
+    }
+  } catch (error) {
+    return renderError(error)
+  }
 }
 
 export const fetchSingleMemberDetails = async (memberId: string) => {

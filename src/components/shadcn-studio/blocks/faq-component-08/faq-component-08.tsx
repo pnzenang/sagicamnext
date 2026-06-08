@@ -35,7 +35,7 @@ const FAQ = ({ tabsData: _tabsData }: { tabsData: FAQTab }) => {
           </div>
         </div>
 
-        <div className='flex w-full flex-col items-center gap-6 rounded-md border bg-emerald-50/40 p-6 dark:bg-emerald-950/10 sm:p-8'>
+        <div className='flex w-full flex-col items-center gap-6 rounded-md border bg-emerald-50/40 p-6 sm:p-8 dark:bg-emerald-950/10'>
           <Link
             href='https://chat.whatsapp.com/Cei0t0msqtB0p8BkhqnkkQ?mode=gi_t'
             aria-label='Open SAGICAM WhatsApp group'

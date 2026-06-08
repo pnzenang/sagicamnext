@@ -10,11 +10,18 @@ const adapter = new PrismaPg({
   connectionString: process.env.DATABASE_URL
 })
 
+const cachedPrisma = globalForPrisma.prisma
+
+const shouldReuseCachedPrisma =
+  cachedPrisma && 'contributionAssessment' in (cachedPrisma as unknown as Record<string, unknown>)
+
 const prisma =
-  globalForPrisma.prisma ||
-  new PrismaClient({
-    adapter
-  })
+  shouldReuseCachedPrisma && cachedPrisma
+    ? cachedPrisma
+    : new PrismaClient({
+        adapter
+      })
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
+
 export default prisma

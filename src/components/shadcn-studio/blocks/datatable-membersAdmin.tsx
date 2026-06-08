@@ -8,6 +8,11 @@ import * as XLSX from 'xlsx'
 
 day.extend(advancedFormat)
 
+const currencyFormatter = new Intl.NumberFormat('en-US', {
+  currency: 'USD',
+  style: 'currency'
+})
+
 import {
   ChevronDownIcon,
   ChevronLeftIcon,
@@ -198,6 +203,22 @@ const columns: ColumnDef<MemberType>[] = [
     size: 100
   },
   {
+    header: 'Sponsor Owes',
+    accessorKey: 'currentContributionAmountOwed',
+    cell: ({ row }) => {
+      const amountOwed = row.original.currentContributionAmountOwed ?? 0
+      const vestedCount = row.original.currentContributionVestedCount ?? 0
+
+      return (
+        <div className='flex flex-col'>
+          <span className='font-semibold'>{currencyFormatter.format(amountOwed)}</span>
+          <span className='text-muted-foreground text-xs'>{vestedCount} vested loved one(s)</span>
+        </div>
+      )
+    },
+    size: 150
+  },
+  {
     header: 'Actions',
     accessorKey: 'id',
     cell: ({ row: { original } }) => {
@@ -302,7 +323,9 @@ const MembersDataTable = ({ data, membershipSummary }: { data: MemberType[]; mem
         'First Name': member.firstName,
         'Longevity(Days)': day(Date.now()).diff(day(member.createdAt), 'days'),
         Recommendation: row.getValue('delegateRecommendation'),
-        Status: member.memberStatus
+        Status: member.memberStatus,
+        'Sponsor Owes': member.currentContributionAmountOwed ?? 0,
+        'Vested Under Code': member.currentContributionVestedCount ?? 0
       }
     })
 
@@ -318,6 +341,8 @@ const MembersDataTable = ({ data, membershipSummary }: { data: MemberType[]; mem
       { wch: 18 },
       { wch: 14 },
       { wch: 18 },
+      { wch: 18 },
+      { wch: 16 },
       { wch: 18 }
     ]
 

@@ -12,7 +12,6 @@ import {
 } from 'lucide-react'
 
 import FAQ from '@/components/shadcn-studio/blocks/faq-component-08/faq-component-08-bis'
-// import { fetchProfile } from '@/utils/actions'
 
 const tabsData = [
   {
@@ -337,7 +336,7 @@ const tabsData = [
   },
   {
     value: 'section16',
-    label: 'SECTION 16. DISBURSEMENT',
+    label: 'SECTION 16: DISBURSEMENT',
 
     icon: BookCheck,
     faqs: [

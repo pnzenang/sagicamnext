@@ -39,6 +39,10 @@ export type MemberType = {
   nameOfBeneficiary?: string
   memberStatus: string
   sponsorCode: string
+  currentContributionAmountOwed?: number
+  currentContributionVestedCount?: number
+  currentContributionAmountPerVestedMember?: number
+  currentContributionTotalAmount?: number
   createdAt: Date
   updatedAt: Date
 }
