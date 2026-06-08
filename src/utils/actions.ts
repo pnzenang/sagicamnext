@@ -78,11 +78,32 @@ const fetchLatestContributionAssessment = async () => {
   })
 }
 
+const fetchContributionPaymentsByCode = async (sponsorCodes: string[]) => {
+  if (sponsorCodes.length === 0) {
+    return new Map<string, number>()
+  }
+
+  const payments = await db.sponsorContributionPayment.findMany({
+    where: {
+      sponsorCode: {
+        in: sponsorCodes
+      }
+    }
+  })
+
+  return new Map(payments.map(payment => [payment.sponsorCode, decimalToNumber(payment.amountSent)]))
+}
+
 const attachContributionAmounts = async <T extends { sponsorCode: string }>(members: T[]) => {
   const latestAssessment = await fetchLatestContributionAssessment()
+  const sponsorCodes = Array.from(new Set(members.map(member => member.sponsorCode)))
+  const paymentsByCode = await fetchContributionPaymentsByCode(sponsorCodes)
 
   if (!latestAssessment) {
-    return members
+    return members.map(member => ({
+      ...member,
+      currentContributionAmountSent: paymentsByCode.get(member.sponsorCode) ?? 0
+    }))
   }
 
   const groupsByCode = new Map(latestAssessment.groups.map(group => [group.sponsorCode, group]))
@@ -97,6 +118,7 @@ const attachContributionAmounts = async <T extends { sponsorCode: string }>(memb
       currentContributionAmountOwed: contributionGroup ? decimalToNumber(contributionGroup.amountOwed) : 0,
       currentContributionAmountPerVestedMember,
       currentContributionTotalAmount,
+      currentContributionAmountSent: paymentsByCode.get(member.sponsorCode) ?? 0,
       currentContributionVestedCount: contributionGroup?.vestedMembersCount ?? 0
     }
   })
@@ -299,6 +321,54 @@ export const createContributionAssessmentAction = async (
   }
 }
 
+export const saveSponsorContributionPaymentAction = async (
+  prevState: any,
+  formData: FormData
+): Promise<{ message: string }> => {
+  const user = await getAuthUser()
+
+  try {
+    const profile = await db.profile.findUnique({
+      where: {
+        clerkId: user.id
+      },
+      select: {
+        sponsorCode: true
+      }
+    })
+
+    if (!profile) {
+      throw new Error('Sponsor profile not found.')
+    }
+
+    const rawAmount = String(formData.get('amountSent') ?? '').replace(/[$,]/g, '').trim()
+    const amountSent = Number(rawAmount)
+
+    if (!Number.isFinite(amountSent) || amountSent < 0) {
+      throw new Error('Enter a valid dollar amount.')
+    }
+
+    await db.sponsorContributionPayment.upsert({
+      create: {
+        amountSent,
+        sponsorCode: profile.sponsorCode
+      },
+      update: {
+        amountSent
+      },
+      where: {
+        sponsorCode: profile.sponsorCode
+      }
+    })
+
+    revalidatePath('/all-members')
+
+    return { message: `Saved amount sent: ${currencyFormatter.format(amountSent)}.` }
+  } catch (error) {
+    return renderError(error)
+  }
+}
+
 export const fetchSingleMemberDetails = async (memberId: string) => {
   const user = await currentUser()
 
@@ -313,12 +383,14 @@ export const fetchSingleMemberDetails = async (memberId: string) => {
 
   return member
 }
+
 export const fetchSingleMemberDetailsForAdmin = async (memberId: string) => {
   const user = await currentUser()
 
   const member = await db.member.findUnique({
     where: {
       id: memberId
+
       // clerkId: user?.id
     }
   })
@@ -351,6 +423,7 @@ export const updateMemberDetailsAction = async (prevState: any, formData: FormDa
 
   redirect('/all-members')
 }
+
 export const updateMemberDetailsActionForAdmin = async (prevState: any, formData: FormData) => {
   try {
     const memberId = formData.get('id') as string
@@ -377,6 +450,7 @@ export const updateMemberDetailsActionForAdmin = async (prevState: any, formData
         }
       }
     }
+
     return renderError(error)
   }
 
@@ -420,6 +494,7 @@ export const createRemovedMemberAction = async (provState: any, formData: FormDa
 
   redirect('/all-members')
 }
+
 export const createRemovedMemberActionAdmin = async (
   provState: any,
   formData: FormData
@@ -473,6 +548,7 @@ export const fetchRemovedMembersAction = async () => {
 
   return removedMembers
 }
+
 export const fetchRemovedMembersActionAdmin = async () => {
   const user = await getAuthUser()
 
@@ -524,6 +600,7 @@ export const createDeceasedMemberAction = async (provState: any, formData: FormD
 
   redirect('/all-members')
 }
+
 export const createDeceasedMemberActionAdmin = async (
   provState: any,
   formData: FormData
@@ -578,6 +655,7 @@ export const fetchDeceasedMembersAction = async () => {
 
   return deceasedMember
 }
+
 export const fetchDeceasedMembersActionAdmin = async () => {
   const user = await getAuthUser()
 
@@ -635,6 +713,7 @@ export const fetchSingleDeceasedMemberDetails = async (deceasedMemberId: string)
   const deceasedMember = await db.deceasedMember.findUnique({
     where: {
       id: deceasedMemberId
+
       // clerkId: user?.id
     }
   })

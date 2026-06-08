@@ -22,8 +22,8 @@ const ContributionAssessmentForm = ({ vestedMembersCount }: ContributionAssessme
   const [state, formAction] = useActionState(createContributionAssessmentAction, initialState)
 
   return (
-    <Card className='border-primary/30 py-0'>
-      <CardHeader className='border-b py-5'>
+    <Card className='border-primary/30 bg-primary/10 py-0'>
+      <CardHeader className='border-primary/20 border-b py-5'>
         <CardTitle className='text-xl'>Create amount owed by sponsor code</CardTitle>
         <CardDescription>
           Enter a total dollar amount. The system divides it by all vested loved ones, then multiplies that amount by
@@ -31,7 +31,7 @@ const ContributionAssessmentForm = ({ vestedMembersCount }: ContributionAssessme
         </CardDescription>
       </CardHeader>
       <CardContent className='py-5'>
-        <form action={formAction} className='grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end'>
+        <form action={formAction} className='grid gap-4 sm:grid-cols-[minmax(260px,420px)_auto] sm:items-end'>
           <div className='grid gap-2'>
             <Label htmlFor='totalAmount'>Total amount in dollars</Label>
             <div className='relative'>
@@ -52,7 +52,7 @@ const ContributionAssessmentForm = ({ vestedMembersCount }: ContributionAssessme
             {state.message ? <p className='text-primary text-sm font-medium'>{state.message}</p> : null}
           </div>
 
-          <SubmitButton text='Distribute amount' className='w-full lg:w-auto' />
+          <SubmitButton text='Distribute amount' className='w-full sm:w-auto' />
         </form>
       </CardContent>
     </Card>

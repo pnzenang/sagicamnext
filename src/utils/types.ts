@@ -43,6 +43,7 @@ export type MemberType = {
   currentContributionVestedCount?: number
   currentContributionAmountPerVestedMember?: number
   currentContributionTotalAmount?: number
+  currentContributionAmountSent?: number
   createdAt: Date
   updatedAt: Date
 }

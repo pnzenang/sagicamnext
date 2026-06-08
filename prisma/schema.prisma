@@ -98,3 +98,12 @@ model ContributionAssessmentGroup {
   @@index([sponsorCode])
 }
 
+model SponsorContributionPayment {
+  id String @id @default(uuid())
+  sponsorCode String @unique
+  amountSent Decimal @db.Decimal(10, 2)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([sponsorCode])
+}

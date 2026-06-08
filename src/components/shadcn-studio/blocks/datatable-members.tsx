@@ -67,6 +67,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { usePagination } from '@/hooks/use-pagination'
 
 import MembershipSummaryCards from '@/components/dashboard/MembershipSummaryCards'
+import SponsorContributionPaymentCard from '@/components/dashboard/SponsorContributionPaymentCard'
 import { cn } from '@/lib/utils'
 import { type MemberType } from '@/utils/types'
 
@@ -223,6 +224,7 @@ type MembershipSummary = {
 const MembersDataTable = ({ data, membershipSummary }: { data: MemberType[]; membershipSummary: MembershipSummary }) => {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const monthlyContributionAmount = data[0]?.currentContributionAmountOwed ?? 0
+  const amountSent = data[0]?.currentContributionAmountSent ?? 0
 
   const pageSize = 100
 
@@ -360,19 +362,16 @@ const MembersDataTable = ({ data, membershipSummary }: { data: MemberType[]; mem
         <div className='flex flex-col gap-4 border-b p-6'>
           <span className='text-2xl font-semibold sm:text-4xl lg:text-6xl'>All Registered Loved Ones</span>
           <MembershipSummaryCards {...membershipSummary} />
-          <div className='flex items-center justify-between gap-6 px-6 py-4 max-sm:flex-col max-sm:items-start'>
-            <div className='space-y-5'>
+          <div className='flex items-start justify-between gap-6 px-6 py-4 max-sm:flex-col'>
+            <div>
               <p className='text-primary text-sm font-extrabold whitespace-nowrap' aria-live='polite'>
                 <span>{table.getRowCount().toString()} Member(s) Found</span>
               </p>
-              <p className='border-primary/20 bg-primary/10 text-primary rounded-md border px-4 py-3 text-xl font-extrabold sm:text-2xl'>
-                Your Contribution This Month is: {currencyFormatter.format(monthlyContributionAmount)}
-              </p>
             </div>
 
-            <div className='flex flex-col items-end max-sm:items-center'>
+            <div className='flex flex-col items-end gap-4 max-sm:w-full max-sm:items-start'>
               <Pagination>
-                <PaginationContent>
+                <PaginationContent className='flex-nowrap'>
                   <PaginationItem>
                     <Button
                       className='disabled:pointer-events-none disabled:opacity-50'
@@ -429,6 +428,15 @@ const MembersDataTable = ({ data, membershipSummary }: { data: MemberType[]; mem
                   </PaginationItem>
                 </PaginationContent>
               </Pagination>
+              <div className='grid w-full gap-4 lg:grid-cols-2'>
+                <p className='border-primary/20 bg-primary/10 text-primary rounded-md border px-4 py-3 text-xl font-extrabold sm:text-2xl'>
+                  Your Contribution This Month is: {currencyFormatter.format(monthlyContributionAmount)}
+                </p>
+                <SponsorContributionPaymentCard
+                  amountExpected={monthlyContributionAmount}
+                  amountSent={amountSent}
+                />
+              </div>
             </div>
           </div>
           <div className='grid grid-cols-1 gap-6 max-md:*:last:col-span-full sm:grid-cols-2 md:grid-cols-3'>

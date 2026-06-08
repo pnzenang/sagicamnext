@@ -13,7 +13,9 @@ const adapter = new PrismaPg({
 const cachedPrisma = globalForPrisma.prisma
 
 const shouldReuseCachedPrisma =
-  cachedPrisma && 'contributionAssessment' in (cachedPrisma as unknown as Record<string, unknown>)
+  cachedPrisma &&
+  'contributionAssessment' in (cachedPrisma as unknown as Record<string, unknown>) &&
+  'sponsorContributionPayment' in (cachedPrisma as unknown as Record<string, unknown>)
 
 const prisma =
   shouldReuseCachedPrisma && cachedPrisma
