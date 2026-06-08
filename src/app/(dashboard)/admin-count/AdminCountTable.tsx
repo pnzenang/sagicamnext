@@ -8,6 +8,11 @@ import * as XLSX from 'xlsx'
 import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 
+const currencyFormatter = new Intl.NumberFormat('en-US', {
+  currency: 'USD',
+  style: 'currency'
+})
+
 export type AdminCountRow = {
   sponsorName: string
   sponsorEmail: string
@@ -17,10 +22,14 @@ export type AdminCountRow = {
   pending: number
   delinquent: number
   awaiting: number
+  amountOwed: number
   total: number
 }
 
-export type AdminCountTotals = Pick<AdminCountRow, 'vested' | 'pending' | 'delinquent' | 'awaiting' | 'total'>
+export type AdminCountTotals = Pick<
+  AdminCountRow,
+  'vested' | 'pending' | 'delinquent' | 'awaiting' | 'amountOwed' | 'total'
+>
 
 type SortKey = keyof AdminCountRow
 type SortDirection = 'asc' | 'desc'
@@ -40,10 +49,11 @@ const columns: AdminCountColumn[] = [
   { key: 'pending', label: 'Pending', align: 'right' },
   { key: 'delinquent', label: 'Delinquent', align: 'right' },
   { key: 'awaiting', label: 'Awaiting', align: 'right' },
+  { key: 'amountOwed', label: 'Amount owed', align: 'right' },
   { key: 'total', label: 'Total', align: 'right' }
 ]
 
-const adminCountColumnWidths = [20, 20, 15, 5, ...Array.from({ length: 5 }, () => 8)]
+const adminCountColumnWidths = [18, 18, 14, 5, ...Array.from({ length: 6 }, () => 7.5)]
 
 const getSortIcon = (isActive: boolean, direction: SortDirection) => {
   if (!isActive) return <ArrowUpDown className='size-3.5' />
@@ -89,7 +99,18 @@ const AdminCountTable = ({ rows, totals }: { rows: AdminCountRow[]; totals: Admi
     const worksheetRows = [
       columns.map(column => column.label),
       ...sortedRows.map(row => columns.map(column => row[column.key])),
-      ['Total', '', '', '', totals.vested, totals.pending, totals.delinquent, totals.awaiting, totals.total]
+      [
+        'Total',
+        '',
+        '',
+        '',
+        totals.vested,
+        totals.pending,
+        totals.delinquent,
+        totals.awaiting,
+        totals.amountOwed,
+        totals.total
+      ]
     ]
 
     const worksheet = XLSX.utils.aoa_to_sheet(worksheetRows)
@@ -178,6 +199,7 @@ const AdminCountTable = ({ rows, totals }: { rows: AdminCountRow[]; totals: Admi
                   <TableCell className='text-right font-semibold'>{row.pending}</TableCell>
                   <TableCell className='text-right font-semibold'>{row.delinquent}</TableCell>
                   <TableCell className='text-right font-semibold'>{row.awaiting}</TableCell>
+                  <TableCell className='text-right font-semibold'>{currencyFormatter.format(row.amountOwed)}</TableCell>
                   <TableCell className='text-right text-base font-extrabold'>{row.total}</TableCell>
                 </TableRow>
               ))
@@ -194,6 +216,7 @@ const AdminCountTable = ({ rows, totals }: { rows: AdminCountRow[]; totals: Admi
                 <TableCell className='text-right font-extrabold'>{totals.pending}</TableCell>
                 <TableCell className='text-right font-extrabold'>{totals.delinquent}</TableCell>
                 <TableCell className='text-right font-extrabold'>{totals.awaiting}</TableCell>
+                <TableCell className='text-right font-extrabold'>{currencyFormatter.format(totals.amountOwed)}</TableCell>
                 <TableCell className='text-right text-lg font-extrabold'>{totals.total}</TableCell>
               </TableRow>
             </TableFooter>

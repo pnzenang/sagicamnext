@@ -23,6 +23,8 @@ const createEmptyStatusCounts = (): SponsorStatusCounts => ({
 const getStatusCountTotal = (counts: SponsorStatusCounts) =>
   statusColumns.reduce((total, column) => total + counts[column.key], 0)
 
+const decimalToNumber = (value: unknown) => Number(value ?? 0)
+
 const AdminCount = async () => {
   const memberCountsBySponsorCode = await db.member.groupBy({
     by: ['sponsorCode', 'memberStatus'],
@@ -67,9 +69,23 @@ const AdminCount = async () => {
 
   const sponsorsByCode = new Map(sponsors.map(sponsor => [sponsor.sponsorCode, sponsor]))
 
+  const latestContributionAssessment = await db.contributionAssessment.findFirst({
+    include: {
+      groups: true
+    },
+    orderBy: {
+      createdAt: 'desc'
+    }
+  })
+
+  const contributionGroupsByCode = new Map(
+    latestContributionAssessment?.groups.map(group => [group.sponsorCode, group]) ?? []
+  )
+
   const rows: AdminCountRow[] = sponsorCodes.map(sponsorCode => {
     const sponsor = sponsorsByCode.get(sponsorCode)
     const counts = statusCountsBySponsorCode.get(sponsorCode) ?? createEmptyStatusCounts()
+    const contributionGroup = contributionGroupsByCode.get(sponsorCode)
     const sponsorName = sponsor ? `${sponsor.sponsorFirstName} ${sponsor.sponsorLastAndMiddleName}` : ''
 
     return {
@@ -81,6 +97,7 @@ const AdminCount = async () => {
       pending: counts[memberStatus.Pending],
       delinquent: counts[memberStatus.Delinquent],
       awaiting: counts[memberStatus.Awaiting],
+      amountOwed: contributionGroup ? decimalToNumber(contributionGroup.amountOwed) : 0,
       total: getStatusCountTotal(counts)
     }
   })
@@ -91,6 +108,7 @@ const AdminCount = async () => {
       totals.pending += row.pending
       totals.delinquent += row.delinquent
       totals.awaiting += row.awaiting
+      totals.amountOwed += row.amountOwed
 
       return totals
     },
@@ -99,6 +117,7 @@ const AdminCount = async () => {
       pending: 0,
       delinquent: 0,
       awaiting: 0,
+      amountOwed: 0,
       total: 0
     }
   )
