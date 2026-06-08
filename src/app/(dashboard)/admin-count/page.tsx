@@ -161,7 +161,7 @@ const AdminCount = async () => {
         vested={statusTotals.vested}
       />
 
-      <ContributionAssessmentForm vestedMembersCount={statusTotals.vested} />
+      <ContributionAssessmentForm amountSentTotal={statusTotals.amountSent} vestedMembersCount={statusTotals.vested} />
 
       <AdminCountTable rows={rows} totals={statusTotals} />
     </div>

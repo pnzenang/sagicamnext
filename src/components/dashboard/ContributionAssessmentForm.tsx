@@ -11,14 +11,20 @@ import { Label } from '@/components/ui/label'
 import { createContributionAssessmentAction, resetContributionCalculationAction } from '@/utils/actions'
 
 type ContributionAssessmentFormProps = {
+  amountSentTotal: number
   vestedMembersCount: number
 }
+
+const currencyFormatter = new Intl.NumberFormat('en-US', {
+  currency: 'USD',
+  style: 'currency'
+})
 
 const initialState = {
   message: ''
 }
 
-const ContributionAssessmentForm = ({ vestedMembersCount }: ContributionAssessmentFormProps) => {
+const ContributionAssessmentForm = ({ amountSentTotal, vestedMembersCount }: ContributionAssessmentFormProps) => {
   const [state, formAction] = useActionState(createContributionAssessmentAction, initialState)
   const [resetState, resetFormAction] = useActionState(resetContributionCalculationAction, initialState)
 
@@ -33,28 +39,32 @@ const ContributionAssessmentForm = ({ vestedMembersCount }: ContributionAssessme
       </CardHeader>
       <CardContent className='py-5'>
         <div className='grid gap-4'>
-          <div className='grid gap-4 md:grid-cols-3 md:items-end'>
+          <div className='grid gap-4 md:grid-cols-4 md:items-end'>
             <form action={formAction} className='contents'>
-            <div className='grid gap-2'>
-              <Label htmlFor='totalAmount'>Total amount in dollars</Label>
-              <div className='relative'>
-                <DollarSign className='text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2' />
-                <Input
-                  id='totalAmount'
-                  name='totalAmount'
-                  type='number'
-                  inputMode='decimal'
-                  min='0.01'
-                  step='0.01'
-                  placeholder='6000.00'
-                  className='pl-9'
-                  required
-                />
+              <div className='grid gap-2'>
+                <Label htmlFor='totalAmount'>Total amount in dollars</Label>
+                <div className='relative'>
+                  <DollarSign className='text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2' />
+                  <Input
+                    id='totalAmount'
+                    name='totalAmount'
+                    type='number'
+                    inputMode='decimal'
+                    min='0.01'
+                    step='0.01'
+                    placeholder='6000.00'
+                    className='pl-9'
+                    required
+                  />
+                </div>
               </div>
-            </div>
 
-            <SubmitButton text='Distribute amount' className='w-full' />
+              <SubmitButton text='Distribute amount' className='w-full' />
             </form>
+
+            <div className='border-primary/20 bg-background/70 text-primary flex h-10 items-center justify-center rounded-md border px-3 text-center text-sm font-extrabold'>
+              Amount sent total: {currencyFormatter.format(amountSentTotal)}
+            </div>
 
             <form action={resetFormAction}>
               <SubmitButton text='Reset calculation' className='w-full bg-red-600 text-white hover:bg-red-700' />
