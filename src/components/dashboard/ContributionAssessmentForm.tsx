@@ -25,7 +25,7 @@ const ContributionAssessmentForm = ({ vestedMembersCount }: ContributionAssessme
   return (
     <Card className='border-primary/30 bg-primary/10 py-0'>
       <CardHeader className='border-primary/20 border-b py-5'>
-        <CardTitle className='text-xl'>Create amount owed by sponsor code</CardTitle>
+        <CardTitle className='text-xl'>Amount to be contributed this month</CardTitle>
         <CardDescription>
           Enter a total dollar amount. The system divides it by all vested loved ones, then multiplies that amount by
           the number of vested loved ones under each sponsor code.
@@ -36,7 +36,7 @@ const ContributionAssessmentForm = ({ vestedMembersCount }: ContributionAssessme
           <div className='grid gap-4 md:grid-cols-3 md:items-end'>
             <form action={formAction} className='contents'>
               <div className='grid gap-2'>
-                <Label htmlFor='totalAmount'>Total amount in dollars</Label>
+                <Label htmlFor='totalAmount'>Amount to be contributed this month</Label>
                 <div className='relative'>
                   <DollarSign className='text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2' />
                   <Input
@@ -53,7 +53,7 @@ const ContributionAssessmentForm = ({ vestedMembersCount }: ContributionAssessme
                 </div>
               </div>
 
-              <SubmitButton text='Distribute amount' className='w-full' />
+              <SubmitButton text='Distribute amount to sponsors' className='w-full' />
             </form>
 
             <form action={resetFormAction}>

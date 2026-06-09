@@ -1,7 +1,7 @@
 import { Card } from '@/components/ui/card'
 
 import MembersDataTable from '@/components/shadcn-studio/blocks/datatable-members'
-import { fetchMembers } from '@/utils/actions'
+import { fetchCurrentSponsorContribution, fetchMembers } from '@/utils/actions'
 import { memberStatus } from '@/utils/types'
 
 const getMembershipSummary = (members: Awaited<ReturnType<typeof fetchMembers>>) => ({
@@ -13,14 +13,18 @@ const getMembershipSummary = (members: Awaited<ReturnType<typeof fetchMembers>>)
 })
 
 const DataTablePreview = async () => {
-  const members = await fetchMembers()
+  const [members, currentContribution] = await Promise.all([fetchMembers(), fetchCurrentSponsorContribution()])
   const membershipSummary = getMembershipSummary(members)
 
   return (
     <div className='py-8 sm:py-10'>
       <div className='max-w-9xl mx-auto px-4 sm:px-6 lg:px-8'>
         <Card className='max-w-9xl mx-auto w-full py-0'>
-          <MembersDataTable data={members} membershipSummary={membershipSummary} />
+          <MembersDataTable
+            currentContribution={currentContribution}
+            data={members}
+            membershipSummary={membershipSummary}
+          />
         </Card>
       </div>
     </div>
