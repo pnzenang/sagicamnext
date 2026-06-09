@@ -12,7 +12,7 @@ const ContributionTable = () => {
         </h1>
       </Card>
       <iframe
-        src='https://docs.google.com/spreadsheets/d/e/2PACX-1vT74FtT5PEcEtlD5lyq9rPxPzH3J5D6UcdAN9Z1qlh1dNVTs1_tZ6iisaAAVfYNt-qB4asfYUeR9SCV/pubhtml?gid=1224722656&amp;single=true&amp;widget=true&amp;headers=false'
+        src='https://docs.google.com/spreadsheets/d/e/2PACX-1vT74FtT5PEcEtlD5lyq9rPxPzH3J5D6UcdAN9Z1qlh1dNVTs1_tZ6iisaAAVfYNt-qB4asfYUeR9SCV/pubhtml?widget=true&amp;headers=false'
         className='mx-auto mt-5 h-160 w-full max-w-19/20 items-center rounded-lg border'
       ></iframe>
     </section>
