@@ -51,6 +51,10 @@ model RemovedMember {
   dateOfBirth String
   countryOfBirth String
   memberMatriculationNumber String
+  delegateRecommendation String @default("Confirm")
+  memberStatus String @default("pending")
+  nameOfBeneficiary String @default("")
+  memberCreatedAt DateTime?
   sponsorCode String
   reasonForLeaving String
   createdAt DateTime @default(now())

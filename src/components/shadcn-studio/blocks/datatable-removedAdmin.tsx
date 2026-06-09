@@ -21,7 +21,8 @@ import {
   UploadIcon,
   Cross,
   Eye,
-  Pencil
+  Pencil,
+  RotateCcw
 } from 'lucide-react'
 
 import type { Column, ColumnDef, ColumnFiltersState, PaginationState, RowData } from '@tanstack/react-table'
@@ -64,7 +65,7 @@ import { usePagination } from '@/hooks/use-pagination'
 import { cn } from '@/lib/utils'
 import type { RemovedMemberType } from '@/utils/types'
 import { type MemberType } from '@/utils/types'
-import { deleteRemovedMemberAction } from '@/utils/actions'
+import { deleteRemovedMemberAction, restoreRemovedMemberAction } from '@/utils/actions'
 import FormContainer from '@/components/forms/FormContainer'
 
 declare module '@tanstack/react-table' {
@@ -541,13 +542,34 @@ function Filter({ column }: { column: Column<any, unknown> }) {
 }
 
 function RowActions({ removedMemberId }: { removedMemberId: string }) {
+  const restoreRemovedMember = restoreRemovedMemberAction.bind(null, { removedMemberId })
   const deleteRemovedMember = deleteRemovedMemberAction.bind(null, { removedMemberId })
 
   return (
-    <FormContainer action={deleteRemovedMember}>
-      <Button size='icon' variant='ghost' className='rounded-full p-2 hover:bg-red-300' aria-label='Edit item'>
-        <Trash2 className='text-destructive size-5' aria-hidden='true' />
-      </Button>
-    </FormContainer>
+    <div className='flex items-center gap-1'>
+      <FormContainer action={restoreRemovedMember}>
+        <Button
+          type='submit'
+          size='icon'
+          variant='ghost'
+          className='rounded-full p-2 hover:bg-emerald-100'
+          aria-label='Restore loved one'
+          title='Restore loved one within 48 hours'
+        >
+          <RotateCcw className='size-5 text-emerald-600' aria-hidden='true' />
+        </Button>
+      </FormContainer>
+      <FormContainer action={deleteRemovedMember}>
+        <Button
+          type='submit'
+          size='icon'
+          variant='ghost'
+          className='rounded-full p-2 hover:bg-red-300'
+          aria-label='Delete removed loved one record'
+        >
+          <Trash2 className='text-destructive size-5' aria-hidden='true' />
+        </Button>
+      </FormContainer>
+    </div>
   )
 }

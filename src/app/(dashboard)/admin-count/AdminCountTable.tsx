@@ -39,20 +39,21 @@ type AdminCountColumn = {
   key: SortKey
   label: string
   align?: 'left' | 'right'
+  className?: string
 }
 
 const columns: AdminCountColumn[] = [
-  { key: 'sponsorName', label: 'Sponsor name' },
-  { key: 'sponsorEmail', label: 'Sponsor email' },
-  { key: 'sponsorPhoneNumber', label: 'Telephone' },
+  { key: 'sponsorName', label: 'Sponsor name', className: 'hidden md:table-cell' },
+  { key: 'sponsorEmail', label: 'Sponsor email', className: 'hidden md:table-cell' },
+  { key: 'sponsorPhoneNumber', label: 'Telephone', className: 'hidden md:table-cell' },
   { key: 'sponsorCode', label: 'Code' },
   { key: 'vested', label: 'Vested', align: 'right' },
   { key: 'pending', label: 'Pending', align: 'right' },
   { key: 'delinquent', label: 'Delinquent', align: 'right' },
   { key: 'awaiting', label: 'Awaiting', align: 'right' },
+  { key: 'total', label: 'Total', align: 'right' },
   { key: 'amountOwed', label: 'Amount owed by sponsor code', align: 'right' },
-  { key: 'amountReceived', label: 'Amount received', align: 'right' },
-  { key: 'total', label: 'Total', align: 'right' }
+  { key: 'amountReceived', label: 'Amount received', align: 'right' }
 ]
 
 const adminCountColumnWidths = Array.from({ length: columns.length }, () => 100 / columns.length)
@@ -110,9 +111,9 @@ const AdminCountTable = ({ rows, totals }: { rows: AdminCountRow[]; totals: Admi
         totals.pending,
         totals.delinquent,
         totals.awaiting,
+        totals.total,
         totals.amountOwed,
-        totals.amountReceived,
-        totals.total
+        totals.amountReceived
       ]
     ]
 
@@ -150,7 +151,7 @@ const AdminCountTable = ({ rows, totals }: { rows: AdminCountRow[]; totals: Admi
                 return (
                   <TableHead
                     key={column.key}
-                    className='text-primary-foreground'
+                    className={`text-primary-foreground ${column.className ?? ''}`}
                     aria-sort={isActive ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
                   >
                     <button
@@ -176,8 +177,8 @@ const AdminCountTable = ({ rows, totals }: { rows: AdminCountRow[]; totals: Admi
             ) : (
               sortedRows.map(row => (
                 <TableRow key={row.sponsorCode} className='odd:bg-muted/30 even:bg-background'>
-                  <TableCell className='font-medium'>{row.sponsorName}</TableCell>
-                  <TableCell>
+                  <TableCell className='hidden font-medium md:table-cell'>{row.sponsorName}</TableCell>
+                  <TableCell className='hidden md:table-cell'>
                     {row.sponsorEmail && (
                       <a
                         className='text-primary underline-offset-4 hover:underline'
@@ -187,7 +188,7 @@ const AdminCountTable = ({ rows, totals }: { rows: AdminCountRow[]; totals: Admi
                       </a>
                     )}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className='hidden md:table-cell'>
                     {row.sponsorPhoneNumber && (
                       <a
                         className='text-primary underline-offset-4 hover:underline'
@@ -202,6 +203,7 @@ const AdminCountTable = ({ rows, totals }: { rows: AdminCountRow[]; totals: Admi
                   <TableCell className='text-right font-semibold'>{row.pending}</TableCell>
                   <TableCell className='text-right font-semibold'>{row.delinquent}</TableCell>
                   <TableCell className='text-right font-semibold'>{row.awaiting}</TableCell>
+                  <TableCell className='text-right text-base font-extrabold'>{row.total}</TableCell>
                   <TableCell className='text-right font-semibold'>{currencyFormatter.format(row.amountOwed)}</TableCell>
                   <TableCell
                     className={`text-right font-semibold ${
@@ -212,7 +214,6 @@ const AdminCountTable = ({ rows, totals }: { rows: AdminCountRow[]; totals: Admi
                   >
                     {currencyFormatter.format(row.amountReceived)}
                   </TableCell>
-                  <TableCell className='text-right text-base font-extrabold'>{row.total}</TableCell>
                 </TableRow>
               ))
             )}
@@ -220,19 +221,19 @@ const AdminCountTable = ({ rows, totals }: { rows: AdminCountRow[]; totals: Admi
           {sortedRows.length > 0 && (
             <TableFooter>
               <TableRow className='text-base'>
-                <TableCell className='font-extrabold'>Total</TableCell>
-                <TableCell className='font-extrabold' />
-                <TableCell className='font-extrabold' />
+                <TableCell className='hidden font-extrabold md:table-cell'>Total</TableCell>
+                <TableCell className='hidden font-extrabold md:table-cell' />
+                <TableCell className='hidden font-extrabold md:table-cell' />
                 <TableCell className='font-extrabold' />
                 <TableCell className='text-right font-extrabold'>{totals.vested}</TableCell>
                 <TableCell className='text-right font-extrabold'>{totals.pending}</TableCell>
                 <TableCell className='text-right font-extrabold'>{totals.delinquent}</TableCell>
                 <TableCell className='text-right font-extrabold'>{totals.awaiting}</TableCell>
+                <TableCell className='text-right text-lg font-extrabold'>{totals.total}</TableCell>
                 <TableCell className='text-right font-extrabold'>{currencyFormatter.format(totals.amountOwed)}</TableCell>
                 <TableCell className='text-right font-extrabold'>
                   {currencyFormatter.format(totals.amountReceived)}
                 </TableCell>
-                <TableCell className='text-right text-lg font-extrabold'>{totals.total}</TableCell>
               </TableRow>
             </TableFooter>
           )}

@@ -201,26 +201,6 @@ const columns: ColumnDef<MemberType>[] = [
     size: 100
   },
   {
-    header: 'Amount owed by sponsor code',
-    accessorKey: 'currentContributionAmountOwed',
-    cell: ({ row }) => {
-      const amountOwed = Number(row.getValue('currentContributionAmountOwed') ?? 0)
-
-      return <div className='text-right font-semibold'>{currencyFormatter.format(amountOwed)}</div>
-    },
-    size: 150
-  },
-  {
-    header: 'Amount received',
-    accessorKey: 'currentContributionAmountSent',
-    cell: ({ row }) => {
-      const amountReceived = Number(row.getValue('currentContributionAmountSent') ?? 0)
-
-      return <div className='text-right font-semibold'>{currencyFormatter.format(amountReceived)}</div>
-    },
-    size: 150
-  },
-  {
     header: 'Actions',
     accessorKey: 'id',
     cell: ({ row: { original } }) => {

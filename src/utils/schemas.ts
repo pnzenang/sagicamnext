@@ -45,13 +45,10 @@ export const RemovedMemberSchema = z.object({
   dateOfBirth: z.string().length(10, { message: 'Date of birth should be 10 characters' }),
   countryOfBirth: z.string().toUpperCase().min(2, { message: 'the member las name should be at least 2 characters' }),
   memberMatriculationNumber: z.string(),
-
-  // nameOfBeneficiary: z
-  //   .string()
-  //   .toUpperCase()
-  //   .min(2, { message: 'the member las name should be at least 2 characters' }),
-  // delegateRecommendation: z.enum(delegateRecommendation),
-  // memberStatus: z.enum(memberStatus),
+  nameOfBeneficiary: z.string().toUpperCase(),
+  delegateRecommendation: z.enum(delegateRecommendation),
+  memberStatus: z.enum(memberStatus),
+  memberCreatedAt: z.date().optional(),
   reasonForLeaving: z.enum(reasonForLeaving)
 })
 export const DeceasedMemberSchema = z.object({

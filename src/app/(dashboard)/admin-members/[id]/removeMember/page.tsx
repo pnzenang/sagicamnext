@@ -23,7 +23,8 @@ const RemoveMember = async ({ params }: { params: { id: string } }) => {
           <h1 className='text-2xl font-semibold text-red-600 capitalize sm:text-6xl'> member Removal </h1>
         </div>
         <p className='text-xs text-red-500 sm:text-lg'>
-          Check your entry well before submission, the process is not reversible.
+          Check your entry well before submission. Removed loved ones can be restored within 48 hours from the removed
+          members table.
         </p>
       </div>
       <div className='border-destructive rounded-lg border bg-red-800/40 p-8'>
