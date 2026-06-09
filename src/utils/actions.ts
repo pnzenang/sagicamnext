@@ -604,12 +604,14 @@ export const createDeceasedMemberAction = async (provState: any, formData: FormD
     const memberId = formData.get('id') as string
     const rawData = Object.fromEntries(formData)
     const validatedFields = validateWithZodSchema(DeceasedMemberSchema, rawData)
+
     const member = await db.member.findUnique({
       where: {
         id: memberId,
         clerkId: user.id
       }
     })
+
     const sponsor = await fetchSponsorByCode(validatedFields.sponsorCode)
 
     if (!member) {
@@ -657,11 +659,13 @@ export const createDeceasedMemberActionAdmin = async (
     const memberId = formData.get('id') as string
     const rawData = Object.fromEntries(formData)
     const validatedFields = validateWithZodSchema(DeceasedMemberSchema, rawData)
+
     const member = await db.member.findUnique({
       where: {
         id: memberId
       }
     })
+
     const sponsor = await fetchSponsorByCode(validatedFields.sponsorCode)
 
     if (!member) {
