@@ -32,8 +32,8 @@ const RemoveMember = async ({ params }: { params: { id: string } }) => {
       <div>
         {shouldShow ? (
           <p className='text-xs text-red-500 sm:text-lg'>
-            Check your entry well before submission. Removed loved ones can be restored within 48 hours from the Removed
-            Members page.
+            Check your entry well before submission as the process is not reversible once submitted. Sorry to see your
+            member go.
           </p>
         ) : null}
       </div>

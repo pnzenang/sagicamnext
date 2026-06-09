@@ -56,10 +56,6 @@ export type RemovedMemberType = {
   dateOfBirth: string
   countryOfBirth: string
   memberMatriculationNumber: string
-  delegateRecommendation: string
-  memberStatus: string
-  nameOfBeneficiary?: string
-  memberCreatedAt?: Date | null
   sponsorCode: string
   reasonForLeaving: string
   createdAt: Date

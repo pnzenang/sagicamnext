@@ -36,7 +36,7 @@ const SponsorContributionPaymentCard = ({ amountExpected, amountSent }: SponsorC
       <div className='grid gap-3'>
         <div className='grid gap-2'>
           <Label htmlFor='amountSent' className='text-base font-extrabold'>
-            Amount received
+            Amount sent
           </Label>
           <div className='relative'>
             <DollarSign className='pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 opacity-70' />
@@ -55,7 +55,7 @@ const SponsorContributionPaymentCard = ({ amountExpected, amountSent }: SponsorC
           </div>
         </div>
 
-        <SubmitButton text='Save amount received' className='w-full' />
+        <SubmitButton text='Save amount sent' className='w-full' />
         {state.message ? <p className='text-sm font-semibold'>{state.message}</p> : null}
       </div>
     </form>
