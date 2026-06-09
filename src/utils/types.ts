@@ -1,16 +1,26 @@
 import type { ComponentType } from 'react'
 
 export type MenuSubItem = {
+  icon?: ComponentType
   label: string
   href: string
   badge?: string
 }
 
-export type MenuItem = {
+type BaseMenuItem = {
   icon: ComponentType
   label: string
-  href: string
 }
+
+export type MenuItem =
+  | (BaseMenuItem & {
+      href: string
+      children?: never
+    })
+  | (BaseMenuItem & {
+      href?: never
+      children: MenuSubItem[]
+    })
 
 export type actionFunction = (prevState: any, formData: FormData) => Promise<{ message: string }>
 

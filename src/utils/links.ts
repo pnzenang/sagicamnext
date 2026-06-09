@@ -34,29 +34,35 @@ export const pagesItems: MenuItem[] = [
   },
 
   {
-    icon: UserPlus,
-    label: 'Add Loved One',
-    href: '/add-member'
-  },
-  {
     icon: Users,
-    label: 'All Loved Ones',
-    href: '/all-members'
-  },
-  {
-    icon: UserMinus,
-    label: 'Remove Member',
-    href: '/remove-member'
-  },
-  {
-    icon: Trash2,
-    label: 'All Removed Loved Ones',
-    href: '/removed-members'
-  },
-  {
-    icon: Cross,
-    label: 'All Deceased Loved Ones',
-    href: '/deceased-members'
+    label: 'Loved Ones',
+    children: [
+      {
+        icon: UserPlus,
+        label: 'Add Loved One',
+        href: '/add-member'
+      },
+      {
+        icon: Users,
+        label: 'All Loved Ones',
+        href: '/all-members'
+      },
+      {
+        icon: UserMinus,
+        label: 'Remove Member',
+        href: '/remove-member'
+      },
+      {
+        icon: Trash2,
+        label: 'All Removed Loved Ones',
+        href: '/removed-members'
+      },
+      {
+        icon: Cross,
+        label: 'All Deceased Loved Ones',
+        href: '/deceased-members'
+      }
+    ]
   },
   {
     icon: List,
@@ -73,6 +79,7 @@ export const pagesItems: MenuItem[] = [
     label: 'Contribution Table',
     href: '/contribution-table'
   },
+
   // {
   //   icon: WalletCards,
   //   label: 'Contributions Payments',
@@ -111,23 +118,28 @@ export const pagesItems: MenuItem[] = [
   },
   {
     icon: UserCog,
-    label: 'Admin Members',
-    href: '/admin-members'
-  },
-  {
-    icon: UserCog,
-    label: 'Admin Removed',
-    href: '/admin-removed'
-  },
-
-  {
-    icon: UserCog,
-    label: 'Admin Deceased',
-    href: '/admin-deceased'
-  },
-  {
-    icon: UserCog,
-    label: 'Admin Count',
-    href: '/admin-count'
+    label: 'Admin',
+    children: [
+      {
+        icon: UserCog,
+        label: 'Admin Members',
+        href: '/admin-members'
+      },
+      {
+        icon: UserCog,
+        label: 'Admin Removed',
+        href: '/admin-removed'
+      },
+      {
+        icon: UserCog,
+        label: 'Admin Deceased',
+        href: '/admin-deceased'
+      },
+      {
+        icon: UserCog,
+        label: 'Admin Count',
+        href: '/admin-count'
+      }
+    ]
   }
 ]
