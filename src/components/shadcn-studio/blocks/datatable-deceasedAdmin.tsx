@@ -295,6 +295,43 @@ const DeceasedMembersDataTable = ({
     XLSX.writeFile(workbook, `payments-export-${new Date().toISOString().split('T')[0]}.xlsx`)
   }
 
+  const exportCurrentPageToExcel = () => {
+    const dataToExport = table.getRowModel().rows.map(row => {
+      const deceasedMember = row.original
+
+      return {
+        Code: deceasedMember.sponsorCode,
+        Matriculation: deceasedMember.memberMatriculationNumber,
+        'Last Names': deceasedMember.lastAndMiddleNames,
+        'First Name': deceasedMember.firstName,
+        'Place of Death': deceasedMember.placeOfDeath,
+        'Registration Date': day(deceasedMember.registrationDate).format('MMM D, YYYY'),
+        'Date of Death': day(deceasedMember.dateOfDeath).format('MMM D, YYYY'),
+        'Date Announced': day(deceasedMember.createdAt).format('MMM D, YYYY'),
+        'Contribution Status': deceasedMember.contributionStatus
+      }
+    })
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport)
+    const workbook = XLSX.utils.book_new()
+
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Deceased Members')
+
+    worksheet['!cols'] = [
+      { wch: 14 },
+      { wch: 18 },
+      { wch: 24 },
+      { wch: 18 },
+      { wch: 24 },
+      { wch: 18 },
+      { wch: 18 },
+      { wch: 18 },
+      { wch: 28 }
+    ]
+
+    XLSX.writeFile(workbook, `deceased-members-page-export-${new Date().toISOString().split('T')[0]}.xlsx`)
+  }
+
   const exportToJSON = () => {
     const selectedRows = table.getSelectedRowModel().rows
 
@@ -431,6 +468,14 @@ const DeceasedMembersDataTable = ({
                 </SelectContent>
               </Select>
             </div>
+            <Button
+              className='text-primary focus-visible:ring-primary/20 dark:focus-visible:ring-primary/40 bg-purple-500/10 hover:bg-purple-400/20'
+              onClick={exportCurrentPageToExcel}
+              disabled={table.getRowModel().rows.length === 0}
+            >
+              <FileSpreadsheetIcon />
+              Export Page
+            </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button className='text-primary focus-visible:ring-primary/20 dark:focus-visible:ring-primary/40 bg-purple-500/10 hover:bg-purple-400/20'>
