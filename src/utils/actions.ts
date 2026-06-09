@@ -2,7 +2,7 @@
 
 import { error } from 'console'
 
-import { currentUser, clerkClient } from '@clerk/nextjs/server'
+import { auth } from '@clerk/nextjs/server'
 
 import { redirect } from 'next/navigation'
 
@@ -48,15 +48,24 @@ const fetchSponsorByCode = async (sponsorCode: string) => {
 }
 
 const getAuthUser = async () => {
-  const user = await currentUser()
+  const { userId } = await auth()
 
-  if (!user) {
+  if (!userId) {
     throw new Error('You must be login to access this route')
   }
 
-  if (!user.privateMetadata.hasProfile) redirect('/profile/create')
+  const profile = await db.profile.findUnique({
+    where: {
+      clerkId: userId
+    },
+    select: {
+      id: true
+    }
+  })
 
-  return user
+  if (!profile) redirect('/profile/create')
+
+  return { id: userId }
 }
 
 const renderError = (error: unknown): { message: string } => {
@@ -126,22 +135,17 @@ const attachContributionAmounts = async <T extends { sponsorCode: string }>(memb
 
 export const createProfileAction = async (prevState: any, formData: FormData) => {
   try {
-    const user = await currentUser()
+    const { userId } = await auth()
 
-    if (!user) throw new Error('Please login to create a profile')
+    if (!userId) throw new Error('Please login to create a profile')
 
     const rawData = Object.fromEntries(formData)
     const validatedFields = validateWithZodSchema(profileSchema, rawData)
 
     await db.profile.create({
       data: {
-        clerkId: user.id,
+        clerkId: userId,
         ...validatedFields
-      }
-    })
-    ;(await clerkClient()).users.updateUserMetadata(user.id, {
-      privateMetadata: {
-        hasProfile: true
       }
     })
   } catch (error) {
@@ -267,7 +271,10 @@ export const createContributionAssessmentAction = async (
   await getAuthUser()
 
   try {
-    const rawAmount = String(formData.get('totalAmount') ?? '').replace(/[$,]/g, '').trim()
+    const rawAmount = String(formData.get('totalAmount') ?? '')
+      .replace(/[$,]/g, '')
+      .trim()
+
     const totalAmount = Number(rawAmount)
 
     if (!Number.isFinite(totalAmount) || totalAmount <= 0) {
@@ -341,7 +348,10 @@ export const saveSponsorContributionPaymentAction = async (
       throw new Error('Sponsor profile not found.')
     }
 
-    const rawAmount = String(formData.get('amountSent') ?? '').replace(/[$,]/g, '').trim()
+    const rawAmount = String(formData.get('amountSent') ?? '')
+      .replace(/[$,]/g, '')
+      .trim()
+
     const amountSent = Number(rawAmount)
 
     if (!Number.isFinite(amountSent) || amountSent < 0) {
@@ -387,12 +397,12 @@ export const resetContributionCalculationAction = async (): Promise<{ message: s
 }
 
 export const fetchSingleMemberDetails = async (memberId: string) => {
-  const user = await currentUser()
+  const user = await getAuthUser()
 
   const member = await db.member.findUnique({
     where: {
       id: memberId,
-      clerkId: user?.id
+      clerkId: user.id
     }
   })
 
@@ -402,7 +412,7 @@ export const fetchSingleMemberDetails = async (memberId: string) => {
 }
 
 export const fetchSingleMemberDetailsForAdmin = async (memberId: string) => {
-  const user = await currentUser()
+  await getAuthUser()
 
   const member = await db.member.findUnique({
     where: {
@@ -725,7 +735,7 @@ export const deleteDeceasedMemberAction = async (prevState: { deceasedMemberId: 
 }
 
 export const fetchSingleDeceasedMemberDetails = async (deceasedMemberId: string) => {
-  const user = await currentUser()
+  await getAuthUser()
 
   const deceasedMember = await db.deceasedMember.findUnique({
     where: {
