@@ -8,6 +8,33 @@ import * as XLSX from 'xlsx'
 
 day.extend(advancedFormat)
 
+const formatTableDate = (value: Date | string) => {
+  if (value instanceof Date) {
+    return day(value).format('MMM D, YYYY')
+  }
+
+  const dateValue = String(value ?? '').trim()
+  const usDateMatch = dateValue.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)
+
+  if (usDateMatch) {
+    const [, month, dayOfMonth, year] = usDateMatch
+
+    return day(new Date(Number(year), Number(month) - 1, Number(dayOfMonth))).format('MMM D, YYYY')
+  }
+
+  const isoDateMatch = dateValue.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:$|T)/)
+
+  if (isoDateMatch) {
+    const [, year, month, dayOfMonth] = isoDateMatch
+
+    return day(new Date(Number(year), Number(month) - 1, Number(dayOfMonth))).format('MMM D, YYYY')
+  }
+
+  const parsedDate = day(dateValue)
+
+  return parsedDate.isValid() ? parsedDate.format('MMM D, YYYY') : dateValue
+}
+
 import {
   ChevronDownIcon,
   ChevronLeftIcon,
@@ -142,9 +169,7 @@ const columns: ColumnDef<DeceasedMemberType>[] = [
     header: 'Registration Date',
     cell: ({ row }) => {
       const field = row.getValue('registrationDate') as string
-      const fieldDate = new Date(field)
-
-      const formattedRegistrationDate = day(fieldDate).format('MMM D, YYYY')
+      const formattedRegistrationDate = formatTableDate(field)
 
       return <div>{formattedRegistrationDate}</div>
     },
@@ -155,9 +180,7 @@ const columns: ColumnDef<DeceasedMemberType>[] = [
     header: 'Date of Death',
     cell: ({ row }) => {
       const field = row.getValue('dateOfDeath') as string
-      const fieldDate = new Date(field)
-
-      const formattedDateOfDeath = day(fieldDate).format('MMM D, YYYY')
+      const formattedDateOfDeath = formatTableDate(field)
 
       return <div>{formattedDateOfDeath}</div>
     },
@@ -305,9 +328,9 @@ const DeceasedMembersDataTable = ({
         'Last Names': deceasedMember.lastAndMiddleNames,
         'First Name': deceasedMember.firstName,
         'Place of Death': deceasedMember.placeOfDeath,
-        'Registration Date': day(deceasedMember.registrationDate).format('MMM D, YYYY'),
-        'Date of Death': day(deceasedMember.dateOfDeath).format('MMM D, YYYY'),
-        'Date Announced': day(deceasedMember.createdAt).format('MMM D, YYYY'),
+        'Registration Date': formatTableDate(deceasedMember.registrationDate),
+        'Date of Death': formatTableDate(deceasedMember.dateOfDeath),
+        'Date Announced': formatTableDate(deceasedMember.createdAt),
         'Contribution Status': deceasedMember.contributionStatus
       }
     })

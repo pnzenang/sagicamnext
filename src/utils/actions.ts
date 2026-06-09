@@ -35,6 +35,14 @@ const currencyFormatter = new Intl.NumberFormat('en-US', {
   style: 'currency'
 })
 
+const registrationDateFormatter = new Intl.DateTimeFormat('en-US', {
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric'
+})
+
+const formatRegistrationDate = (date: Date) => registrationDateFormatter.format(date)
+
 const fetchSponsorByCode = async (sponsorCode: string) => {
   const sponsor = await db.profile.findUnique({
     where: {
@@ -596,11 +604,22 @@ export const createDeceasedMemberAction = async (provState: any, formData: FormD
     const memberId = formData.get('id') as string
     const rawData = Object.fromEntries(formData)
     const validatedFields = validateWithZodSchema(DeceasedMemberSchema, rawData)
+    const member = await db.member.findUnique({
+      where: {
+        id: memberId,
+        clerkId: user.id
+      }
+    })
     const sponsor = await fetchSponsorByCode(validatedFields.sponsorCode)
+
+    if (!member) {
+      throw new Error('Loved one not found.')
+    }
 
     await db.deceasedMember.create({
       data: {
         ...validatedFields,
+        registrationDate: formatRegistrationDate(member.createdAt),
         clerkId: user.id
       }
     })
@@ -638,11 +657,21 @@ export const createDeceasedMemberActionAdmin = async (
     const memberId = formData.get('id') as string
     const rawData = Object.fromEntries(formData)
     const validatedFields = validateWithZodSchema(DeceasedMemberSchema, rawData)
+    const member = await db.member.findUnique({
+      where: {
+        id: memberId
+      }
+    })
     const sponsor = await fetchSponsorByCode(validatedFields.sponsorCode)
+
+    if (!member) {
+      throw new Error('Loved one not found.')
+    }
 
     await db.deceasedMember.create({
       data: {
         ...validatedFields,
+        registrationDate: formatRegistrationDate(member.createdAt),
         clerkId: user.id
       }
     })
