@@ -223,8 +223,10 @@ type MembershipSummary = {
 
 type CurrentContribution = {
   amountOwed: number
+  amountPerVestedMember: number
   amountSent: number
   sponsorCode: string
+  vestedMembersCount: number
 }
 
 const MembersDataTable = ({
@@ -443,9 +445,15 @@ const MembersDataTable = ({
                 </PaginationContent>
               </Pagination>
               <div className='grid w-full gap-4 lg:grid-cols-2'>
-                <p className='border-primary/20 bg-primary/10 text-primary rounded-md border px-4 py-3 text-xl font-extrabold sm:text-2xl'>
-                  Your Contribution This Month is: {currencyFormatter.format(monthlyContributionAmount)}
-                </p>
+                <div className='border-primary/20 bg-primary/10 text-primary rounded-md border px-4 py-3'>
+                  <p className='text-xl font-extrabold sm:text-2xl'>
+                    Your Contribution This Month is: {currencyFormatter.format(monthlyContributionAmount)}
+                  </p>
+                  <p className='text-primary/80 mt-1 text-sm font-semibold'>
+                    {currentContribution.vestedMembersCount} vested loved one(s) x{' '}
+                    {currencyFormatter.format(currentContribution.amountPerVestedMember)}
+                  </p>
+                </div>
                 <SponsorContributionPaymentCard
                   amountExpected={monthlyContributionAmount}
                   amountSent={amountSent}
