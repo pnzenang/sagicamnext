@@ -46,7 +46,7 @@ const ContributionAssessmentForm = ({ vestedMembersCount }: ContributionAssessme
                     inputMode='decimal'
                     min='0.01'
                     step='0.01'
-                    placeholder='6000.00'
+                    placeholder='0.00'
                     className='border-primary/40 bg-background pl-9 text-foreground'
                     required
                   />
