@@ -8,11 +8,6 @@ import * as XLSX from 'xlsx'
 
 day.extend(advancedFormat)
 
-const currencyFormatter = new Intl.NumberFormat('en-US', {
-  currency: 'USD',
-  style: 'currency'
-})
-
 import {
   ChevronDownIcon,
   ChevronLeftIcon,
@@ -67,7 +62,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { usePagination } from '@/hooks/use-pagination'
 
 import MembershipSummaryCards from '@/components/dashboard/MembershipSummaryCards'
-import SponsorContributionPaymentCard from '@/components/dashboard/SponsorContributionPaymentCard'
 import { cn } from '@/lib/utils'
 import { type MemberType } from '@/utils/types'
 
@@ -221,26 +215,8 @@ type MembershipSummary = {
   vested: number
 }
 
-type CurrentContribution = {
-  amountOwed: number
-  amountPerVestedMember: number
-  amountSent: number
-  sponsorCode: string
-  vestedMembersCount: number
-}
-
-const MembersDataTable = ({
-  currentContribution,
-  data,
-  membershipSummary
-}: {
-  currentContribution: CurrentContribution
-  data: MemberType[]
-  membershipSummary: MembershipSummary
-}) => {
+const MembersDataTable = ({ data, membershipSummary }: { data: MemberType[]; membershipSummary: MembershipSummary }) => {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
-  const monthlyContributionAmount = currentContribution.amountOwed
-  const amountSent = currentContribution.amountSent
 
   const pageSize = 100
 
@@ -444,21 +420,6 @@ const MembersDataTable = ({
                   </PaginationItem>
                 </PaginationContent>
               </Pagination>
-              <div className='grid w-full gap-4 lg:grid-cols-2'>
-                <div className='border-primary/20 bg-primary/10 text-primary rounded-md border px-4 py-3'>
-                  <p className='text-xl font-extrabold sm:text-2xl'>
-                    Your Contribution This Month is: {currencyFormatter.format(monthlyContributionAmount)}
-                  </p>
-                  <p className='text-primary/80 mt-1 text-sm font-semibold'>
-                    {currentContribution.vestedMembersCount} vested loved one(s) x{' '}
-                    {currencyFormatter.format(currentContribution.amountPerVestedMember)}
-                  </p>
-                </div>
-                <SponsorContributionPaymentCard
-                  amountExpected={monthlyContributionAmount}
-                  amountSent={amountSent}
-                />
-              </div>
             </div>
           </div>
           <div className='grid grid-cols-1 gap-6 max-md:*:last:col-span-full sm:grid-cols-2 md:grid-cols-3'>

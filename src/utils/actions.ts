@@ -261,28 +261,6 @@ export const fetchMembers = async () => {
   return attachContributionAmounts(members)
 }
 
-export const fetchCurrentSponsorContribution = async () => {
-  const profile = await fetchProfile()
-  const latestAssessment = await fetchLatestContributionAssessment()
-  const contributionGroup = latestAssessment?.groups.find(group => group.sponsorCode === profile.sponsorCode)
-  const amountPerVestedMember = decimalToNumber(latestAssessment?.amountPerVestedMember)
-  const vestedMembersCount = contributionGroup?.vestedMembersCount ?? 0
-
-  const payment = await db.sponsorContributionPayment.findUnique({
-    where: {
-      sponsorCode: profile.sponsorCode
-    }
-  })
-
-  return {
-    amountOwed: Number((amountPerVestedMember * vestedMembersCount).toFixed(2)),
-    amountPerVestedMember,
-    amountSent: decimalToNumber(payment?.amountSent),
-    sponsorCode: profile.sponsorCode,
-    vestedMembersCount
-  }
-}
-
 export const fetchMembersForAdmin = async () => {
   const user = await getAuthUser()
 

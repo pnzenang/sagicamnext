@@ -8,11 +8,6 @@ import * as XLSX from 'xlsx'
 import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 
-const currencyFormatter = new Intl.NumberFormat('en-US', {
-  currency: 'USD',
-  style: 'currency'
-})
-
 export type AdminCountRow = {
   sponsorName: string
   sponsorEmail: string
@@ -22,15 +17,10 @@ export type AdminCountRow = {
   pending: number
   delinquent: number
   awaiting: number
-  amountOwed: number
-  amountSent: number
   total: number
 }
 
-export type AdminCountTotals = Pick<
-  AdminCountRow,
-  'vested' | 'pending' | 'delinquent' | 'awaiting' | 'amountOwed' | 'amountSent' | 'total'
->
+export type AdminCountTotals = Pick<AdminCountRow, 'vested' | 'pending' | 'delinquent' | 'awaiting' | 'total'>
 
 type SortKey = keyof AdminCountRow
 type SortDirection = 'asc' | 'desc'
@@ -50,8 +40,6 @@ const columns: AdminCountColumn[] = [
   { key: 'pending', label: 'Pending', align: 'right' },
   { key: 'delinquent', label: 'Delinquent', align: 'right' },
   { key: 'awaiting', label: 'Awaiting', align: 'right' },
-  { key: 'amountOwed', label: 'Amount owed', align: 'right' },
-  { key: 'amountSent', label: 'Amount sent', align: 'right' },
   { key: 'total', label: 'Total', align: 'right' }
 ]
 
@@ -110,8 +98,6 @@ const AdminCountTable = ({ rows, totals }: { rows: AdminCountRow[]; totals: Admi
         totals.pending,
         totals.delinquent,
         totals.awaiting,
-        totals.amountOwed,
-        totals.amountSent,
         totals.total
       ]
     ]
@@ -202,16 +188,6 @@ const AdminCountTable = ({ rows, totals }: { rows: AdminCountRow[]; totals: Admi
                   <TableCell className='text-right font-semibold'>{row.pending}</TableCell>
                   <TableCell className='text-right font-semibold'>{row.delinquent}</TableCell>
                   <TableCell className='text-right font-semibold'>{row.awaiting}</TableCell>
-                  <TableCell className='text-right font-semibold'>{currencyFormatter.format(row.amountOwed)}</TableCell>
-                  <TableCell
-                    className={`text-right font-semibold ${
-                      row.amountSent >= row.amountOwed
-                        ? 'bg-green-600/10 text-green-700 dark:text-green-300'
-                        : 'bg-red-600/10 text-red-700 dark:text-red-300'
-                    }`}
-                  >
-                    {currencyFormatter.format(row.amountSent)}
-                  </TableCell>
                   <TableCell className='text-right text-base font-extrabold'>{row.total}</TableCell>
                 </TableRow>
               ))
@@ -228,8 +204,6 @@ const AdminCountTable = ({ rows, totals }: { rows: AdminCountRow[]; totals: Admi
                 <TableCell className='text-right font-extrabold'>{totals.pending}</TableCell>
                 <TableCell className='text-right font-extrabold'>{totals.delinquent}</TableCell>
                 <TableCell className='text-right font-extrabold'>{totals.awaiting}</TableCell>
-                <TableCell className='text-right font-extrabold'>{currencyFormatter.format(totals.amountOwed)}</TableCell>
-                <TableCell className='text-right font-extrabold'>{currencyFormatter.format(totals.amountSent)}</TableCell>
                 <TableCell className='text-right text-lg font-extrabold'>{totals.total}</TableCell>
               </TableRow>
             </TableFooter>
