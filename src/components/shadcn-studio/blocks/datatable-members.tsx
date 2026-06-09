@@ -221,10 +221,24 @@ type MembershipSummary = {
   vested: number
 }
 
-const MembersDataTable = ({ data, membershipSummary }: { data: MemberType[]; membershipSummary: MembershipSummary }) => {
+type CurrentContribution = {
+  amountOwed: number
+  amountSent: number
+  sponsorCode: string
+}
+
+const MembersDataTable = ({
+  currentContribution,
+  data,
+  membershipSummary
+}: {
+  currentContribution: CurrentContribution
+  data: MemberType[]
+  membershipSummary: MembershipSummary
+}) => {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
-  const monthlyContributionAmount = data[0]?.currentContributionAmountOwed ?? 0
-  const amountSent = data[0]?.currentContributionAmountSent ?? 0
+  const monthlyContributionAmount = currentContribution.amountOwed
+  const amountSent = currentContribution.amountSent
 
   const pageSize = 100
 

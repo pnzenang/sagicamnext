@@ -261,6 +261,24 @@ export const fetchMembers = async () => {
   return attachContributionAmounts(members)
 }
 
+export const fetchCurrentSponsorContribution = async () => {
+  const profile = await fetchProfile()
+  const latestAssessment = await fetchLatestContributionAssessment()
+  const contributionGroup = latestAssessment?.groups.find(group => group.sponsorCode === profile.sponsorCode)
+
+  const payment = await db.sponsorContributionPayment.findUnique({
+    where: {
+      sponsorCode: profile.sponsorCode
+    }
+  })
+
+  return {
+    amountOwed: contributionGroup ? decimalToNumber(contributionGroup.amountOwed) : 0,
+    amountSent: decimalToNumber(payment?.amountSent),
+    sponsorCode: profile.sponsorCode
+  }
+}
+
 export const fetchMembersForAdmin = async () => {
   const user = await getAuthUser()
 
