@@ -14,10 +14,11 @@ const currencyFormatter = new Intl.NumberFormat('en-US', {
 })
 
 import {
-  ChevronDownIcon,
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
   ChevronLeftIcon,
   ChevronRightIcon,
-  ChevronUpIcon,
   Ellipsis,
   Trash2,
   FileSpreadsheetIcon,
@@ -555,9 +556,9 @@ const MembersDataTable = ({
                         >
                           {flexRender(header.column.columnDef.header, header.getContext())}
                           {{
-                            asc: <ChevronUpIcon className='shrink-0 opacity-60' size={16} aria-hidden='true' />,
-                            desc: <ChevronDownIcon className='shrink-0 opacity-60' size={16} aria-hidden='true' />
-                          }[header.column.getIsSorted() as string] ?? null}
+                            asc: <ArrowUp className='shrink-0 opacity-60' size={16} aria-hidden='true' />,
+                            desc: <ArrowDown className='shrink-0 opacity-60' size={16} aria-hidden='true' />
+                          }[header.column.getIsSorted() as string] ?? <ArrowUpDown className='shrink-0 opacity-60' size={16} aria-hidden='true' />}
                         </div>
                       ) : (
                         flexRender(header.column.columnDef.header, header.getContext())
