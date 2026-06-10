@@ -61,6 +61,11 @@ export const pagesItems: MenuItem[] = [
         icon: Cross,
         label: 'All Deceased Loved Ones',
         href: '/deceased-members'
+      },
+      {
+        icon: Megaphone,
+        label: 'Death Announcement',
+        href: '/death-announcement'
       }
     ]
   },
@@ -91,11 +96,6 @@ export const pagesItems: MenuItem[] = [
     href: '/contributions-recap'
   },
 
-  {
-    icon: Megaphone,
-    label: 'Death Announcement',
-    href: '/death-announcement'
-  },
   {
     icon: FileStack,
     label: 'Death Documentations',
