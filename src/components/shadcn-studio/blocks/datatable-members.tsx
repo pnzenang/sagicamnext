@@ -13,6 +13,8 @@ const currencyFormatter = new Intl.NumberFormat('en-US', {
   style: 'currency'
 })
 
+const registrationFeePerAwaitingMember = 40
+
 import {
   ArrowDown,
   ArrowUp,
@@ -241,6 +243,7 @@ const MembersDataTable = ({
 }) => {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const monthlyContributionAmount = currentContribution.amountOwed
+  const registrationPaymentAmount = membershipSummary.pending * registrationFeePerAwaitingMember
 
   const pageSize = 100
 
@@ -458,6 +461,28 @@ const MembersDataTable = ({
                   amountExpected={monthlyContributionAmount}
                   amountSent={currentContribution.amountReceived}
                 />
+                <div className='border-primary/20 bg-primary/10 text-primary rounded-md border px-4 py-3'>
+                  <p className='text-xl font-extrabold sm:text-2xl'>
+                    Your Registration Payment is: {currencyFormatter.format(registrationPaymentAmount)}
+                  </p>
+                  <p className='text-primary/80 mt-1 text-sm font-semibold'>
+                    {membershipSummary.pending} pending loved one(s) x{' '}
+                    {currencyFormatter.format(registrationFeePerAwaitingMember)}
+                  </p>
+                </div>
+                <div className='border-primary/20 bg-primary/10 text-primary rounded-md border px-4 py-3'>
+                  <div className='grid gap-3'>
+                    <div className='grid gap-1'>
+                      <p className='text-base font-extrabold'>Registration payment</p>
+                      <p className='text-primary/80 text-sm font-semibold'>
+                        Record registration fees and anticipated contributions for pending loved ones.
+                      </p>
+                    </div>
+                    <Button asChild className='w-full'>
+                      <Link href='/registration-payments'>Open registration payments</Link>
+                    </Button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
