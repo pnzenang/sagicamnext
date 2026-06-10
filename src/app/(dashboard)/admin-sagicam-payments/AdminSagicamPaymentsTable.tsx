@@ -46,14 +46,14 @@ type AdminSagicamPaymentsColumn = {
 }
 
 const columns: AdminSagicamPaymentsColumn[] = [
-  { key: 'sponsorEmail', label: 'Sponsor email' },
-  { key: 'sponsorCode', label: 'Sponsor code' },
-  { key: 'vestedMembers', label: 'Vested members', align: 'right' },
-  { key: 'awaitingPublication', label: 'Awaiting publication', align: 'right' },
-  { key: 'amountOwed', label: 'Amount owed by sponsor code', align: 'right' },
-  { key: 'amountReceived', label: 'Amount received', align: 'right' },
+  { key: 'sponsorEmail', label: 'Email' },
+  { key: 'sponsorCode', label: 'Code' },
+  { key: 'vestedMembers', label: 'Vested', align: 'right' },
+  { key: 'awaitingPublication', label: 'Awaiting', align: 'right' },
+  { key: 'amountOwed', label: 'Contribution owed', align: 'right' },
+  { key: 'amountReceived', label: 'Contribution received', align: 'right' },
   { key: 'balance', label: 'Balance', align: 'right' },
-  { key: 'registrationFeeOwed', label: 'Registration fee owed', align: 'right' },
+  { key: 'registrationFeeOwed', label: 'Registration owed', align: 'right' },
   { key: 'registrationReceived', label: 'Registration received', align: 'right' },
   { key: 'registrationBalance', label: 'Registration balance', align: 'right' }
 ]
