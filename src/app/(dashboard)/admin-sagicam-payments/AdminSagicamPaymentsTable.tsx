@@ -16,7 +16,9 @@ export type AdminSagicamPaymentsRow = {
   amountReceived: number
   awaitingPublication: number
   balance: number
+  registrationBalance: number
   registrationFeeOwed: number
+  registrationReceived: number
   sponsorCode: string
   sponsorEmail: string
   vestedMembers: number
@@ -28,7 +30,9 @@ export type AdminSagicamPaymentsTotals = Pick<
   | 'amountReceived'
   | 'awaitingPublication'
   | 'balance'
+  | 'registrationBalance'
   | 'registrationFeeOwed'
+  | 'registrationReceived'
   | 'vestedMembers'
 >
 
@@ -48,8 +52,10 @@ const columns: AdminSagicamPaymentsColumn[] = [
   { key: 'awaitingPublication', label: 'Awaiting publication', align: 'right' },
   { key: 'amountOwed', label: 'Amount owed by sponsor code', align: 'right' },
   { key: 'amountReceived', label: 'Amount received', align: 'right' },
-  { key: 'balance', label: 'Contribution balance', align: 'right' },
-  { key: 'registrationFeeOwed', label: 'Registration fee owed', align: 'right' }
+  { key: 'balance', label: 'Balance', align: 'right' },
+  { key: 'registrationFeeOwed', label: 'Registration fee owed', align: 'right' },
+  { key: 'registrationReceived', label: 'Registration received', align: 'right' },
+  { key: 'registrationBalance', label: 'Registration balance', align: 'right' }
 ]
 
 const columnWidths = Array.from({ length: columns.length }, () => `${100 / columns.length}%`)
@@ -171,6 +177,18 @@ const AdminSagicamPaymentsTable = ({
                 <TableCell className='text-right font-semibold'>
                   {currencyFormatter.format(row.registrationFeeOwed)}
                 </TableCell>
+                <TableCell className='text-right font-semibold'>
+                  {currencyFormatter.format(row.registrationReceived)}
+                </TableCell>
+                <TableCell
+                  className={`text-right font-semibold ${
+                    row.registrationBalance >= 0
+                      ? 'bg-green-600/10 text-green-700 dark:text-green-300'
+                      : 'bg-red-600/10 text-red-700 dark:text-red-300'
+                  }`}
+                >
+                  {currencyFormatter.format(row.registrationBalance)}
+                </TableCell>
               </TableRow>
             ))
           )}
@@ -191,6 +209,12 @@ const AdminSagicamPaymentsTable = ({
               <TableCell className='text-right font-extrabold'>{currencyFormatter.format(totals.balance)}</TableCell>
               <TableCell className='text-right font-extrabold'>
                 {currencyFormatter.format(totals.registrationFeeOwed)}
+              </TableCell>
+              <TableCell className='text-right font-extrabold'>
+                {currencyFormatter.format(totals.registrationReceived)}
+              </TableCell>
+              <TableCell className='text-right font-extrabold'>
+                {currencyFormatter.format(totals.registrationBalance)}
               </TableCell>
             </TableRow>
           </TableFooter>
