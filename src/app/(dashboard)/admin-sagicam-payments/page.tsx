@@ -89,8 +89,7 @@ const AdminSagicamPayments = async () => {
   const sponsors = await db.profile.findMany({
     select: {
       sponsorCode: true,
-      sponsorFirstName: true,
-      sponsorLastAndMiddleName: true
+      sponsorEmail: true
     },
     where: {
       sponsorCode: {
@@ -114,18 +113,15 @@ const AdminSagicamPayments = async () => {
     }
 
     const registrationFeeOwed = statusCounts.awaitingPublication * registrationFeePerAwaitingMember
-    const registrationReceived = 0
 
     return {
       amountOwed,
       amountReceived,
       awaitingPublication: statusCounts.awaitingPublication,
       balance: Number((amountReceived - amountOwed).toFixed(2)),
-      registrationBalance: Number((registrationReceived - registrationFeeOwed).toFixed(2)),
       registrationFeeOwed,
-      registrationReceived,
       sponsorCode,
-      sponsorName: sponsor ? `${sponsor.sponsorFirstName} ${sponsor.sponsorLastAndMiddleName}` : '',
+      sponsorEmail: sponsor?.sponsorEmail ?? '',
       vestedMembers: statusCounts.vestedMembers
     }
   })
@@ -136,9 +132,7 @@ const AdminSagicamPayments = async () => {
       currentTotals.amountReceived += row.amountReceived
       currentTotals.awaitingPublication += row.awaitingPublication
       currentTotals.balance += row.balance
-      currentTotals.registrationBalance += row.registrationBalance
       currentTotals.registrationFeeOwed += row.registrationFeeOwed
-      currentTotals.registrationReceived += row.registrationReceived
       currentTotals.vestedMembers += row.vestedMembers
 
       return currentTotals
@@ -148,9 +142,7 @@ const AdminSagicamPayments = async () => {
       amountReceived: 0,
       awaitingPublication: 0,
       balance: 0,
-      registrationBalance: 0,
       registrationFeeOwed: 0,
-      registrationReceived: 0,
       vestedMembers: 0
     }
   )

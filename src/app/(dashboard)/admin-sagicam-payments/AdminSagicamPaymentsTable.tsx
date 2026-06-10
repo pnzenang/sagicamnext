@@ -16,11 +16,9 @@ export type AdminSagicamPaymentsRow = {
   amountReceived: number
   awaitingPublication: number
   balance: number
-  registrationBalance: number
   registrationFeeOwed: number
-  registrationReceived: number
   sponsorCode: string
-  sponsorName: string
+  sponsorEmail: string
   vestedMembers: number
 }
 
@@ -30,9 +28,7 @@ export type AdminSagicamPaymentsTotals = Pick<
   | 'amountReceived'
   | 'awaitingPublication'
   | 'balance'
-  | 'registrationBalance'
   | 'registrationFeeOwed'
-  | 'registrationReceived'
   | 'vestedMembers'
 >
 
@@ -46,16 +42,14 @@ type AdminSagicamPaymentsColumn = {
 }
 
 const columns: AdminSagicamPaymentsColumn[] = [
-  { key: 'sponsorName', label: 'Sponsor name' },
+  { key: 'sponsorEmail', label: 'Sponsor email' },
   { key: 'sponsorCode', label: 'Sponsor code' },
   { key: 'vestedMembers', label: 'Vested members', align: 'right' },
   { key: 'awaitingPublication', label: 'Awaiting publication', align: 'right' },
   { key: 'amountOwed', label: 'Amount owed by sponsor code', align: 'right' },
   { key: 'amountReceived', label: 'Amount received', align: 'right' },
-  { key: 'balance', label: 'Balance', align: 'right' },
-  { key: 'registrationFeeOwed', label: 'Registration fee owed', align: 'right' },
-  { key: 'registrationReceived', label: 'Registration received', align: 'right' },
-  { key: 'registrationBalance', label: 'Registration balance', align: 'right' }
+  { key: 'balance', label: 'Contribution balance', align: 'right' },
+  { key: 'registrationFeeOwed', label: 'Registration fee owed', align: 'right' }
 ]
 
 const columnWidths = Array.from({ length: columns.length }, () => `${100 / columns.length}%`)
@@ -87,7 +81,7 @@ const AdminSagicamPaymentsTable = ({
   rows: AdminSagicamPaymentsRow[]
   totals: AdminSagicamPaymentsTotals
 }) => {
-  const [sortKey, setSortKey] = useState<SortKey>('sponsorName')
+  const [sortKey, setSortKey] = useState<SortKey>('sponsorEmail')
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
 
   const sortedRows = useMemo(() => {
@@ -151,7 +145,13 @@ const AdminSagicamPaymentsTable = ({
           ) : (
             sortedRows.map(row => (
               <TableRow key={row.sponsorCode} className='odd:bg-muted/30 even:bg-background'>
-                <TableCell className='font-medium'>{row.sponsorName}</TableCell>
+                <TableCell className='font-medium'>
+                  {row.sponsorEmail && (
+                    <a className='text-primary underline-offset-4 hover:underline' href={`mailto:${row.sponsorEmail}`}>
+                      {row.sponsorEmail}
+                    </a>
+                  )}
+                </TableCell>
                 <TableCell>{row.sponsorCode}</TableCell>
                 <TableCell className='text-right font-semibold'>{row.vestedMembers}</TableCell>
                 <TableCell className='text-right font-semibold'>{row.awaitingPublication}</TableCell>
@@ -170,18 +170,6 @@ const AdminSagicamPaymentsTable = ({
                 </TableCell>
                 <TableCell className='text-right font-semibold'>
                   {currencyFormatter.format(row.registrationFeeOwed)}
-                </TableCell>
-                <TableCell className='text-right font-semibold'>
-                  {currencyFormatter.format(row.registrationReceived)}
-                </TableCell>
-                <TableCell
-                  className={`text-right font-semibold ${
-                    row.registrationBalance >= 0
-                      ? 'bg-green-600/10 text-green-700 dark:text-green-300'
-                      : 'bg-red-600/10 text-red-700 dark:text-red-300'
-                  }`}
-                >
-                  {currencyFormatter.format(row.registrationBalance)}
                 </TableCell>
               </TableRow>
             ))
@@ -203,12 +191,6 @@ const AdminSagicamPaymentsTable = ({
               <TableCell className='text-right font-extrabold'>{currencyFormatter.format(totals.balance)}</TableCell>
               <TableCell className='text-right font-extrabold'>
                 {currencyFormatter.format(totals.registrationFeeOwed)}
-              </TableCell>
-              <TableCell className='text-right font-extrabold'>
-                {currencyFormatter.format(totals.registrationReceived)}
-              </TableCell>
-              <TableCell className='text-right font-extrabold'>
-                {currencyFormatter.format(totals.registrationBalance)}
               </TableCell>
             </TableRow>
           </TableFooter>
