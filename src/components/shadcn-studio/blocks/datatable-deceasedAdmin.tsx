@@ -39,8 +39,6 @@ import {
   ArrowDown,
   ArrowUp,
   ArrowUpDown,
-  ChevronLeftIcon,
-  ChevronRightIcon,
   Ellipsis,
   Trash2,
   FileSpreadsheetIcon,
@@ -80,7 +78,6 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem } from '@/components/ui/pagination'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -88,6 +85,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { usePagination } from '@/hooks/use-pagination'
 
 import DeceasedSummaryCards, { type DeceasedSummary } from '@/components/dashboard/DeceasedSummaryCards'
+import { TablePaginationControls } from '@/components/dashboard/TablePaginationControls'
 import { cn } from '@/lib/utils'
 
 import { type DeceasedMemberType } from '@/utils/types'
@@ -398,64 +396,14 @@ const DeceasedMembersDataTable = ({
             </p>
 
             <div>
-              <Pagination>
-                <PaginationContent>
-                  <PaginationItem>
-                    <Button
-                      className='disabled:pointer-events-none disabled:opacity-50'
-                      variant={'ghost'}
-                      onClick={() => table.previousPage()}
-                      disabled={!table.getCanPreviousPage()}
-                      aria-label='Go to previous page'
-                    >
-                      <ChevronLeftIcon aria-hidden='true' className='text-purple-500' />
-                      <span className='text-purple-500 max-sm:hidden'>Previous</span>
-                    </Button>
-                  </PaginationItem>
-
-                  {showLeftEllipsis && (
-                    <PaginationItem>
-                      <PaginationEllipsis />
-                    </PaginationItem>
-                  )}
-
-                  {pages.map(page => {
-                    const isActive = page === table.getState().pagination.pageIndex + 1
-
-                    return (
-                      <PaginationItem key={page}>
-                        <Button
-                          size='icon'
-                          className='bg-purple-500 hover:bg-purple-400'
-                          onClick={() => table.setPageIndex(page - 1)}
-                          aria-current={isActive ? 'page' : undefined}
-                        >
-                          {page}
-                        </Button>
-                      </PaginationItem>
-                    )
-                  })}
-
-                  {showRightEllipsis && (
-                    <PaginationItem>
-                      <PaginationEllipsis />
-                    </PaginationItem>
-                  )}
-
-                  <PaginationItem>
-                    <Button
-                      className='disabled:pointer-events-none disabled:opacity-50'
-                      variant={'ghost'}
-                      onClick={() => table.nextPage()}
-                      disabled={!table.getCanNextPage()}
-                      aria-label='Go to next page'
-                    >
-                      <span className='text-purple-500 max-sm:hidden'>Next</span>
-                      <ChevronRightIcon aria-hidden='true' className='text-purple-500' />
-                    </Button>
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
+              <TablePaginationControls
+                table={table}
+                pages={pages}
+                showLeftEllipsis={showLeftEllipsis}
+                showRightEllipsis={showRightEllipsis}
+                navigationClassName='text-purple-500'
+                pageButtonClassName='bg-purple-500 hover:bg-purple-400'
+              />
             </div>
           </div>
           <div className='grid grid-cols-1 gap-6 max-md:*:last:col-span-full sm:grid-cols-2 md:grid-cols-3'>
@@ -590,6 +538,16 @@ const DeceasedMembersDataTable = ({
             )}
           </TableBody>
         </Table>
+        <div className='flex justify-center border-t px-6 py-4'>
+          <TablePaginationControls
+            table={table}
+            pages={pages}
+            showLeftEllipsis={showLeftEllipsis}
+            showRightEllipsis={showRightEllipsis}
+            navigationClassName='text-purple-500'
+            pageButtonClassName='bg-purple-500 hover:bg-purple-400'
+          />
+        </div>
       </div>
     </div>
   )

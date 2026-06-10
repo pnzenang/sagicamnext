@@ -24,8 +24,6 @@ import {
   ArrowDown,
   ArrowUp,
   ArrowUpDown,
-  ChevronLeftIcon,
-  ChevronRightIcon,
   Ellipsis,
   Trash2,
   FileSpreadsheetIcon,
@@ -68,7 +66,6 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem } from '@/components/ui/pagination'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -77,6 +74,7 @@ import { usePagination } from '@/hooks/use-pagination'
 
 import MembershipSummaryCards from '@/components/dashboard/MembershipSummaryCards'
 import SponsorContributionPaymentCard from '@/components/dashboard/SponsorContributionPaymentCard'
+import { TablePaginationControls } from '@/components/dashboard/TablePaginationControls'
 import { cn } from '@/lib/utils'
 import { type MemberType } from '@/utils/types'
 
@@ -395,64 +393,12 @@ const MembersDataTable = ({
             </div>
 
             <div className='flex flex-col items-end gap-4 max-sm:w-full max-sm:items-start'>
-              <Pagination>
-                <PaginationContent className='flex-nowrap'>
-                  <PaginationItem>
-                    <Button
-                      className='disabled:pointer-events-none disabled:opacity-50'
-                      variant={'ghost'}
-                      onClick={() => table.previousPage()}
-                      disabled={!table.getCanPreviousPage()}
-                      aria-label='Go to previous page'
-                    >
-                      <ChevronLeftIcon aria-hidden='true' className='text-primary' />
-                      <span className='text-primary max-sm:hidden'>Previous</span>
-                    </Button>
-                  </PaginationItem>
-
-                  {showLeftEllipsis && (
-                    <PaginationItem>
-                      <PaginationEllipsis />
-                    </PaginationItem>
-                  )}
-
-                  {pages.map(page => {
-                    const isActive = page === table.getState().pagination.pageIndex + 1
-
-                    return (
-                      <PaginationItem key={page}>
-                        <Button
-                          size='icon'
-                          className={`${!isActive && 'bg-primary/10 text-primary hover:bg-primary/20 focus-visible:ring-primary/20 dark:focus-visible:ring-red-300/40'}`}
-                          onClick={() => table.setPageIndex(page - 1)}
-                          aria-current={isActive ? 'page' : undefined}
-                        >
-                          {page}
-                        </Button>
-                      </PaginationItem>
-                    )
-                  })}
-
-                  {showRightEllipsis && (
-                    <PaginationItem>
-                      <PaginationEllipsis />
-                    </PaginationItem>
-                  )}
-
-                  <PaginationItem>
-                    <Button
-                      className='disabled:pointer-events-none disabled:opacity-50'
-                      variant={'ghost'}
-                      onClick={() => table.nextPage()}
-                      disabled={!table.getCanNextPage()}
-                      aria-label='Go to next page'
-                    >
-                      <span className='text-primary max-sm:hidden'>Next</span>
-                      <ChevronRightIcon aria-hidden='true' className='text-primary' />
-                    </Button>
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
+              <TablePaginationControls
+                table={table}
+                pages={pages}
+                showLeftEllipsis={showLeftEllipsis}
+                showRightEllipsis={showRightEllipsis}
+              />
               <div className='mx-auto grid w-full max-w-6xl gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(13rem,0.7fr)_minmax(0,1.15fr)] xl:items-stretch'>
                 <div className='grid h-full gap-4'>
                   <div className='border-primary/20 bg-primary/10 text-primary rounded-md border px-4 py-3'>
@@ -630,6 +576,14 @@ const MembersDataTable = ({
             )}
           </TableBody>
         </Table>
+        <div className='flex justify-center border-t px-6 py-4'>
+          <TablePaginationControls
+            table={table}
+            pages={pages}
+            showLeftEllipsis={showLeftEllipsis}
+            showRightEllipsis={showRightEllipsis}
+          />
+        </div>
       </div>
     </div>
   )
