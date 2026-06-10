@@ -58,7 +58,7 @@ const columns: AdminSagicamPaymentsColumn[] = [
   { key: 'registrationBalance', label: 'Registration balance', align: 'right' }
 ]
 
-const columnWidths = columns.map(column => (column.key === 'sponsorEmail' ? undefined : '7%'))
+const columnWidths = columns.map(column => (column.key === 'sponsorEmail' ? undefined : '9%'))
 
 const getSortIcon = (isActive: boolean, direction: SortDirection) => {
   if (!isActive) return <ArrowUpDown className='size-3.5' />
