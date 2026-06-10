@@ -15,6 +15,11 @@ const currencyFormatter = new Intl.NumberFormat('en-US', {
 
 const registrationFeePerAwaitingMember = 40
 
+const sagicamPaymentUrl =
+  'https://enroll.zellepay.com/qr-codes?data=eyJuYW1lIjoiQUNUSVZFIFNPTElEQVJJVFkgTFREIiwiYWN0aW9uIjoicGF5bWVudCIsInRva2VuIjoiaW5mb0BzYWdpdXNhLm9yZyJ9'
+
+const sagicamQrCodeUrl = 'https://res.cloudinary.com/dp8tkb7hq/image/upload/v1778042720/sagiQrCode_jmwsbf.svg'
+
 import {
   ArrowDown,
   ArrowUp,
@@ -46,6 +51,7 @@ import {
 } from '@tanstack/react-table'
 
 import Link from 'next/link'
+import Image from 'next/image'
 
 import { id } from 'zod/v4/locales'
 
@@ -447,40 +453,50 @@ const MembersDataTable = ({
                   </PaginationItem>
                 </PaginationContent>
               </Pagination>
-              <div className='grid w-full gap-4 lg:grid-cols-2'>
-                <div className='border-primary/20 bg-primary/10 text-primary rounded-md border px-4 py-3'>
-                  <p className='text-xl font-extrabold sm:text-2xl'>
-                    Your Contribution This Month is: {currencyFormatter.format(monthlyContributionAmount)}
-                  </p>
-                  <p className='text-primary/80 mt-1 text-sm font-semibold'>
-                    {currentContribution.vestedMembersCount} vested loved one(s) x{' '}
-                    {currencyFormatter.format(currentContribution.amountPerVestedMember)}
-                  </p>
+              <div className='grid w-full gap-4 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:items-center'>
+                <div className='grid gap-4'>
+                  <div className='border-primary/20 bg-primary/10 text-primary rounded-md border px-4 py-3'>
+                    <p className='text-xl font-extrabold sm:text-2xl'>
+                      Your Contribution This Month is: {currencyFormatter.format(monthlyContributionAmount)}
+                    </p>
+                    <p className='text-primary/80 mt-1 text-sm font-semibold'>
+                      {currentContribution.vestedMembersCount} vested loved one(s) x{' '}
+                      {currencyFormatter.format(currentContribution.amountPerVestedMember)}
+                    </p>
+                  </div>
+                  <div className='border-primary/20 bg-primary/10 text-primary rounded-md border px-4 py-3'>
+                    <p className='text-xl font-extrabold sm:text-2xl'>
+                      Your Registration Payment is: {currencyFormatter.format(registrationPaymentAmount)}
+                    </p>
+                    <p className='text-primary/80 mt-1 text-sm font-semibold'>
+                      {membershipSummary.pending} pending loved one(s) x{' '}
+                      {currencyFormatter.format(registrationFeePerAwaitingMember)}
+                    </p>
+                  </div>
                 </div>
-                <SponsorContributionPaymentCard
-                  amountExpected={monthlyContributionAmount}
-                  amountSent={currentContribution.amountReceived}
-                />
-                <div className='border-primary/20 bg-primary/10 text-primary rounded-md border px-4 py-3'>
-                  <p className='text-xl font-extrabold sm:text-2xl'>
-                    Your Registration Payment is: {currencyFormatter.format(registrationPaymentAmount)}
-                  </p>
-                  <p className='text-primary/80 mt-1 text-sm font-semibold'>
-                    {membershipSummary.pending} pending loved one(s) x{' '}
-                    {currencyFormatter.format(registrationFeePerAwaitingMember)}
-                  </p>
-                </div>
-                <div className='border-primary/20 bg-primary/10 text-primary rounded-md border px-4 py-3'>
-                  <div className='grid gap-3'>
-                    <div className='grid gap-1'>
-                      <p className='text-base font-extrabold'>Registration payment</p>
-                      <p className='text-primary/80 text-sm font-semibold'>
-                        Record registration fees and anticipated contributions for pending loved ones.
-                      </p>
+                <Link
+                  href={sagicamPaymentUrl}
+                  className='border-primary/20 bg-background mx-auto flex h-full min-h-40 w-full max-w-48 items-center justify-center rounded-md border p-3'
+                >
+                  <Image src={sagicamQrCodeUrl} width={160} height={160} alt='SAGICAM payment QR code' />
+                </Link>
+                <div className='grid gap-4'>
+                  <SponsorContributionPaymentCard
+                    amountExpected={monthlyContributionAmount}
+                    amountSent={currentContribution.amountReceived}
+                  />
+                  <div className='border-primary/20 bg-primary/10 text-primary rounded-md border px-4 py-3'>
+                    <div className='grid gap-3'>
+                      <div className='grid gap-1'>
+                        <p className='text-base font-extrabold'>Registration payment</p>
+                        <p className='text-primary/80 text-sm font-semibold'>
+                          Record registration fees and anticipated contributions for pending loved ones.
+                        </p>
+                      </div>
+                      <Button asChild className='w-full'>
+                        <Link href='/registration-payments'>Open registration payments</Link>
+                      </Button>
                     </div>
-                    <Button asChild className='w-full'>
-                      <Link href='/registration-payments'>Open registration payments</Link>
-                    </Button>
                   </div>
                 </div>
               </div>
