@@ -506,7 +506,7 @@ const MembersDataTable = ({ data, membershipSummary }: { data: MemberType[]; mem
                         <div
                           className={cn(
                             header.column.getCanSort() &&
-                              'flex h-full cursor-pointer items-center justify-between gap-2 select-none'
+                              'flex h-full cursor-pointer items-center justify-start gap-1.5 select-none'
                           )}
                           onClick={header.column.getToggleSortingHandler()}
                           onKeyDown={e => {

@@ -130,7 +130,7 @@ const AdminSagicamPaymentsTable = ({
                 >
                   <button
                     type='button'
-                    className={`flex w-full items-center gap-1.5 text-left font-semibold ${column.align === 'right' ? 'justify-end text-right' : 'justify-start'}`}
+                    className={`flex w-full items-center gap-1.5 text-left font-semibold ${column.align === 'right' ? 'justify-end text-right [&>span]:text-right' : 'justify-start'}`}
                     onClick={() => handleSort(column.key)}
                   >
                     <span>{column.label}</span>
