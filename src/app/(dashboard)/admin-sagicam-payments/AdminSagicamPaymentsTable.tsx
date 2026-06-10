@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react'
 import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react'
 
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { cn } from '@/lib/utils'
 
 const currencyFormatter = new Intl.NumberFormat('en-US', {
   currency: 'USD',
@@ -53,9 +54,7 @@ const columns: AdminSagicamPaymentsColumn[] = [
   { key: 'amountOwed', label: 'Contribution owed', align: 'right' },
   { key: 'amountReceived', label: 'Contribution received', align: 'right' },
   { key: 'balance', label: 'Balance', align: 'right' },
-  { key: 'registrationFeeOwed', label: 'Registration owed', align: 'right' },
-  { key: 'registrationReceived', label: 'Registration received', align: 'right' },
-  { key: 'registrationBalance', label: 'Registration balance', align: 'right' }
+  { key: 'registrationFeeOwed', label: 'Registration received', align: 'right' }
 ]
 
 const columnWidths = columns.map(column => (column.key === 'sponsorEmail' ? undefined : '9%'))
@@ -79,6 +78,11 @@ const compareValues = (
     sensitivity: 'base'
   })
 }
+
+const getPositiveNumberCellClassName = (value: number, className: string) => cn(className, value > 0 && 'bg-primary/10')
+
+const getBalanceCellClassName = (value: number, className: string) =>
+  cn(className, value > 0 && 'bg-primary/10', value < 0 && 'bg-red-600/10 text-red-700 dark:text-red-300')
 
 const AdminSagicamPaymentsTable = ({
   rows,
@@ -159,35 +163,27 @@ const AdminSagicamPaymentsTable = ({
                   )}
                 </TableCell>
                 <TableCell>{row.sponsorCode}</TableCell>
-                <TableCell className='text-right font-semibold'>{row.vestedMembers}</TableCell>
-                <TableCell className='text-right font-semibold'>{row.awaitingPublication}</TableCell>
-                <TableCell className='text-right font-semibold'>{currencyFormatter.format(row.amountOwed)}</TableCell>
-                <TableCell className='text-right font-semibold'>
+                <TableCell className={getPositiveNumberCellClassName(row.vestedMembers, 'text-right font-semibold')}>
+                  {row.vestedMembers}
+                </TableCell>
+                <TableCell
+                  className={getPositiveNumberCellClassName(row.awaitingPublication, 'text-right font-semibold')}
+                >
+                  {row.awaitingPublication}
+                </TableCell>
+                <TableCell className={getPositiveNumberCellClassName(row.amountOwed, 'text-right font-semibold')}>
+                  {currencyFormatter.format(row.amountOwed)}
+                </TableCell>
+                <TableCell className={getPositiveNumberCellClassName(row.amountReceived, 'text-right font-semibold')}>
                   {currencyFormatter.format(row.amountReceived)}
                 </TableCell>
-                <TableCell
-                  className={`text-right font-semibold ${
-                    row.balance >= 0
-                      ? 'bg-green-600/10 text-green-700 dark:text-green-300'
-                      : 'bg-red-600/10 text-red-700 dark:text-red-300'
-                  }`}
-                >
+                <TableCell className={getBalanceCellClassName(row.balance, 'text-right font-semibold')}>
                   {currencyFormatter.format(row.balance)}
                 </TableCell>
-                <TableCell className='text-right font-semibold'>
-                  {currencyFormatter.format(row.registrationFeeOwed)}
-                </TableCell>
-                <TableCell className='text-right font-semibold'>
-                  {currencyFormatter.format(row.registrationReceived)}
-                </TableCell>
                 <TableCell
-                  className={`text-right font-semibold ${
-                    row.registrationBalance >= 0
-                      ? 'bg-green-600/10 text-green-700 dark:text-green-300'
-                      : 'bg-red-600/10 text-red-700 dark:text-red-300'
-                  }`}
+                  className={getPositiveNumberCellClassName(row.registrationFeeOwed, 'text-right font-semibold')}
                 >
-                  {currencyFormatter.format(row.registrationBalance)}
+                  {currencyFormatter.format(row.registrationFeeOwed)}
                 </TableCell>
               </TableRow>
             ))
@@ -198,23 +194,29 @@ const AdminSagicamPaymentsTable = ({
             <TableRow className='text-base'>
               <TableCell className='font-extrabold'>Total</TableCell>
               <TableCell />
-              <TableCell className='text-right font-extrabold'>{totals.vestedMembers}</TableCell>
-              <TableCell className='text-right font-extrabold'>{totals.awaitingPublication}</TableCell>
-              <TableCell className='text-right font-extrabold'>
+              <TableCell className={getPositiveNumberCellClassName(totals.vestedMembers, 'text-right font-extrabold')}>
+                {totals.vestedMembers}
+              </TableCell>
+              <TableCell
+                className={getPositiveNumberCellClassName(totals.awaitingPublication, 'text-right font-extrabold')}
+              >
+                {totals.awaitingPublication}
+              </TableCell>
+              <TableCell className={getPositiveNumberCellClassName(totals.amountOwed, 'text-right font-extrabold')}>
                 {currencyFormatter.format(totals.amountOwed)}
               </TableCell>
-              <TableCell className='text-right font-extrabold'>
+              <TableCell
+                className={getPositiveNumberCellClassName(totals.amountReceived, 'text-right font-extrabold')}
+              >
                 {currencyFormatter.format(totals.amountReceived)}
               </TableCell>
-              <TableCell className='text-right font-extrabold'>{currencyFormatter.format(totals.balance)}</TableCell>
-              <TableCell className='text-right font-extrabold'>
+              <TableCell className={getBalanceCellClassName(totals.balance, 'text-right font-extrabold')}>
+                {currencyFormatter.format(totals.balance)}
+              </TableCell>
+              <TableCell
+                className={getPositiveNumberCellClassName(totals.registrationFeeOwed, 'text-right font-extrabold')}
+              >
                 {currencyFormatter.format(totals.registrationFeeOwed)}
-              </TableCell>
-              <TableCell className='text-right font-extrabold'>
-                {currencyFormatter.format(totals.registrationReceived)}
-              </TableCell>
-              <TableCell className='text-right font-extrabold'>
-                {currencyFormatter.format(totals.registrationBalance)}
               </TableCell>
             </TableRow>
           </TableFooter>
