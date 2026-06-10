@@ -398,51 +398,54 @@ const MembersDataTable = ({
                 pages={pages}
                 showLeftEllipsis={showLeftEllipsis}
                 showRightEllipsis={showRightEllipsis}
+                className='mx-0 justify-end'
               />
-              <div className='mx-auto grid w-full max-w-6xl gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(13rem,0.7fr)_minmax(0,1.15fr)] xl:items-stretch'>
-                <div className='grid h-full gap-4'>
-                  <div className='border-primary/20 bg-primary/10 text-primary rounded-md border px-4 py-3'>
-                    <p className='text-xl font-extrabold sm:text-2xl'>
-                      Your Contribution This Month is: {currencyFormatter.format(monthlyContributionAmount)}
-                    </p>
-                    <p className='text-primary/80 mt-1 text-sm font-semibold'>
-                      {currentContribution.vestedMembersCount} vested loved one(s) x{' '}
-                      {currencyFormatter.format(currentContribution.amountPerVestedMember)}
-                    </p>
-                  </div>
-                  <div className='border-primary/20 bg-primary/10 text-primary rounded-md border px-4 py-3'>
-                    <p className='text-xl font-extrabold sm:text-2xl'>
-                      Your Registration Payment is: {currencyFormatter.format(registrationPaymentAmount)}
-                    </p>
-                    <p className='text-primary/80 mt-1 text-sm font-semibold'>
-                      {membershipSummary.pending} pending loved one(s) x{' '}
-                      {currencyFormatter.format(registrationFeePerAwaitingMember)}
-                    </p>
-                  </div>
+            </div>
+          </div>
+          <div className='flex justify-center px-6 pb-4'>
+            <div className='grid w-full max-w-6xl gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(13rem,0.7fr)_minmax(0,1.15fr)] xl:items-stretch'>
+              <div className='grid h-full gap-4'>
+                <div className='border-primary/20 bg-primary/10 text-primary rounded-md border px-4 py-3'>
+                  <p className='text-xl font-extrabold sm:text-2xl'>
+                    Your Contribution This Month is: {currencyFormatter.format(monthlyContributionAmount)}
+                  </p>
+                  <p className='text-primary/80 mt-1 text-sm font-semibold'>
+                    {currentContribution.vestedMembersCount} vested loved one(s) x{' '}
+                    {currencyFormatter.format(currentContribution.amountPerVestedMember)}
+                  </p>
                 </div>
-                <Link
-                  href={sagicamPaymentUrl}
-                  className='border-primary/20 bg-background flex h-full min-h-48 w-full items-center justify-center rounded-md border p-3'
-                >
-                  <Image src={sagicamQrCodeUrl} width={190} height={190} alt='SAGICAM payment QR code' />
-                </Link>
-                <div className='grid h-full gap-4'>
-                  <SponsorContributionPaymentCard
-                    amountExpected={monthlyContributionAmount}
-                    amountSent={currentContribution.amountReceived}
-                  />
-                  <div className='border-primary/20 bg-primary/10 text-primary rounded-md border px-4 py-3'>
-                    <div className='grid gap-3'>
-                      <div className='grid gap-1'>
-                        <p className='text-base font-extrabold'>Registration payment</p>
-                        <p className='text-primary/80 text-sm font-semibold'>
-                          Record registration fees and anticipated contributions for pending loved ones.
-                        </p>
-                      </div>
-                      <Button asChild className='w-full'>
-                        <Link href='/registration-payments'>Open registration payments</Link>
-                      </Button>
+                <div className='border-primary/20 bg-primary/10 text-primary rounded-md border px-4 py-3'>
+                  <p className='text-xl font-extrabold sm:text-2xl'>
+                    Your Registration Payment is: {currencyFormatter.format(registrationPaymentAmount)}
+                  </p>
+                  <p className='text-primary/80 mt-1 text-sm font-semibold'>
+                    {membershipSummary.pending} pending loved one(s) x{' '}
+                    {currencyFormatter.format(registrationFeePerAwaitingMember)}
+                  </p>
+                </div>
+              </div>
+              <Link
+                href={sagicamPaymentUrl}
+                className='border-primary/20 bg-background flex h-full min-h-48 w-full items-center justify-center rounded-md border p-3'
+              >
+                <Image src={sagicamQrCodeUrl} width={190} height={190} alt='SAGICAM payment QR code' />
+              </Link>
+              <div className='grid h-full gap-4'>
+                <SponsorContributionPaymentCard
+                  amountExpected={monthlyContributionAmount}
+                  amountSent={currentContribution.amountReceived}
+                />
+                <div className='border-primary/20 bg-primary/10 text-primary rounded-md border px-4 py-3'>
+                  <div className='grid gap-3'>
+                    <div className='grid gap-1'>
+                      <p className='text-base font-extrabold'>Registration payment</p>
+                      <p className='text-primary/80 text-sm font-semibold'>
+                        Record registration fees and anticipated contributions for pending loved ones.
+                      </p>
                     </div>
+                    <Button asChild className='w-full'>
+                      <Link href='/registration-payments'>Open registration payments</Link>
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -576,12 +579,13 @@ const MembersDataTable = ({
             )}
           </TableBody>
         </Table>
-        <div className='flex justify-center border-t px-6 py-4'>
+        <div className='flex justify-end border-t px-6 py-4'>
           <TablePaginationControls
             table={table}
             pages={pages}
             showLeftEllipsis={showLeftEllipsis}
             showRightEllipsis={showRightEllipsis}
+            className='mx-0 justify-end'
           />
         </div>
       </div>

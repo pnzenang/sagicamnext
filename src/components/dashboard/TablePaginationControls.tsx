@@ -13,6 +13,7 @@ type TablePaginationControlsProps<TData> = {
   pages: number[]
   showLeftEllipsis: boolean
   showRightEllipsis: boolean
+  className?: string
   navigationClassName?: string
   pageButtonClassName?: string
   inactivePageButtonClassName?: string
@@ -23,6 +24,7 @@ export function TablePaginationControls<TData>({
   pages,
   showLeftEllipsis,
   showRightEllipsis,
+  className,
   navigationClassName = 'text-primary',
   pageButtonClassName,
   inactivePageButtonClassName = 'bg-primary/10 text-primary hover:bg-primary/20 focus-visible:ring-primary/20 dark:focus-visible:ring-red-300/40'
@@ -30,7 +32,7 @@ export function TablePaginationControls<TData>({
   const currentPage = table.getState().pagination.pageIndex + 1
 
   return (
-    <Pagination>
+    <Pagination className={className}>
       <PaginationContent className='flex-nowrap'>
         <PaginationItem>
           <Button
