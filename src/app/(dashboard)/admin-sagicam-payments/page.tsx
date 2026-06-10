@@ -1,18 +1,17 @@
 import ContributionAssessmentForm from '@/components/dashboard/ContributionAssessmentForm'
 import { memberStatus } from '@/utils/types'
 import db from '@/utils/db'
-import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-
-const currencyFormatter = new Intl.NumberFormat('en-US', {
-  currency: 'USD',
-  style: 'currency'
-})
+import AdminSagicamPaymentsTable, {
+  type AdminSagicamPaymentsRow,
+  type AdminSagicamPaymentsTotals
+} from './AdminSagicamPaymentsTable'
 
 const dateFormatter = new Intl.DateTimeFormat('en-US', {
   dateStyle: 'medium'
 })
 
 const decimalToNumber = (value: unknown) => Number(value ?? 0)
+const registrationFeePerAwaitingMember = 40
 
 const AdminSagicamPayments = async () => {
   const vestedMembersCount = await db.member.count({
@@ -40,10 +39,45 @@ const AdminSagicamPayments = async () => {
     }
   })
 
+  const memberCountsBySponsorCode = await db.member.groupBy({
+    _count: {
+      _all: true
+    },
+    by: ['sponsorCode', 'memberStatus'],
+    orderBy: {
+      sponsorCode: 'asc'
+    },
+    where: {
+      memberStatus: {
+        in: [memberStatus.Vested, memberStatus.Awaiting]
+      }
+    }
+  })
+
+  const statusCountsByCode = new Map<string, { awaitingPublication: number; vestedMembers: number }>()
+
+  memberCountsBySponsorCode.forEach(item => {
+    const currentCounts = statusCountsByCode.get(item.sponsorCode) ?? {
+      awaitingPublication: 0,
+      vestedMembers: 0
+    }
+
+    if (item.memberStatus === memberStatus.Vested) {
+      currentCounts.vestedMembers = item._count._all
+    }
+
+    if (item.memberStatus === memberStatus.Awaiting) {
+      currentCounts.awaitingPublication = item._count._all
+    }
+
+    statusCountsByCode.set(item.sponsorCode, currentCounts)
+  })
+
   const sponsorCodes = Array.from(
     new Set([
       ...(latestContributionAssessment?.groups.map(group => group.sponsorCode) ?? []),
-      ...sponsorContributionPayments.map(payment => payment.sponsorCode)
+      ...sponsorContributionPayments.map(payment => payment.sponsorCode),
+      ...statusCountsByCode.keys()
     ])
   ).sort((firstCode, secondCode) =>
     firstCode.localeCompare(secondCode, undefined, {
@@ -69,32 +103,55 @@ const AdminSagicamPayments = async () => {
   const owedByCode = new Map(latestContributionAssessment?.groups.map(group => [group.sponsorCode, group]) ?? [])
   const receivedByCode = new Map(sponsorContributionPayments.map(payment => [payment.sponsorCode, payment]))
 
-  const rows = sponsorCodes.map(sponsorCode => {
+  const rows: AdminSagicamPaymentsRow[] = sponsorCodes.map(sponsorCode => {
     const sponsor = sponsorsByCode.get(sponsorCode)
     const amountOwed = decimalToNumber(owedByCode.get(sponsorCode)?.amountOwed)
     const amountReceived = decimalToNumber(receivedByCode.get(sponsorCode)?.amountSent)
 
+    const statusCounts = statusCountsByCode.get(sponsorCode) ?? {
+      awaitingPublication: 0,
+      vestedMembers: 0
+    }
+
+    const registrationFeeOwed = statusCounts.awaitingPublication * registrationFeePerAwaitingMember
+    const registrationReceived = 0
+
     return {
       amountOwed,
       amountReceived,
-      balance: Number((amountOwed - amountReceived).toFixed(2)),
+      awaitingPublication: statusCounts.awaitingPublication,
+      balance: Number((amountReceived - amountOwed).toFixed(2)),
+      registrationBalance: Number((registrationReceived - registrationFeeOwed).toFixed(2)),
+      registrationFeeOwed,
+      registrationReceived,
       sponsorCode,
-      sponsorName: sponsor ? `${sponsor.sponsorFirstName} ${sponsor.sponsorLastAndMiddleName}` : ''
+      sponsorName: sponsor ? `${sponsor.sponsorFirstName} ${sponsor.sponsorLastAndMiddleName}` : '',
+      vestedMembers: statusCounts.vestedMembers
     }
   })
 
-  const totals = rows.reduce(
+  const totals: AdminSagicamPaymentsTotals = rows.reduce(
     (currentTotals, row) => {
       currentTotals.amountOwed += row.amountOwed
       currentTotals.amountReceived += row.amountReceived
+      currentTotals.awaitingPublication += row.awaitingPublication
       currentTotals.balance += row.balance
+      currentTotals.registrationBalance += row.registrationBalance
+      currentTotals.registrationFeeOwed += row.registrationFeeOwed
+      currentTotals.registrationReceived += row.registrationReceived
+      currentTotals.vestedMembers += row.vestedMembers
 
       return currentTotals
     },
     {
       amountOwed: 0,
       amountReceived: 0,
-      balance: 0
+      awaitingPublication: 0,
+      balance: 0,
+      registrationBalance: 0,
+      registrationFeeOwed: 0,
+      registrationReceived: 0,
+      vestedMembers: 0
     }
   )
 
@@ -110,72 +167,7 @@ const AdminSagicamPayments = async () => {
 
       <ContributionAssessmentForm vestedMembersCount={vestedMembersCount} />
 
-      <div className='border-border overflow-hidden rounded-lg border'>
-        <Table className='[[&_td]:wrap-break-word table-fixed [&_td]:whitespace-normal [&_th]:wrap-break-word [&_th]:whitespace-normal'>
-          <colgroup>
-            <col className='w-1/4' />
-            <col className='w-1/4' />
-            <col className='w-1/6' />
-            <col className='w-1/6' />
-            <col className='w-1/6' />
-          </colgroup>
-          <TableHeader>
-            <TableRow className='bg-primary hover:bg-primary'>
-              <TableHead className='text-primary-foreground'>Sponsor name</TableHead>
-              <TableHead className='text-primary-foreground'>Sponsor code</TableHead>
-              <TableHead className='text-primary-foreground text-right'>Amount owed by sponsor code</TableHead>
-              <TableHead className='text-primary-foreground text-right'>Amount received</TableHead>
-              <TableHead className='text-primary-foreground text-right'>Balance</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {rows.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={5} className='text-muted-foreground h-24 text-center'>
-                  No Sagicam payments found.
-                </TableCell>
-              </TableRow>
-            ) : (
-              rows.map(row => (
-                <TableRow key={row.sponsorCode} className='odd:bg-muted/30 even:bg-background'>
-                  <TableCell className='font-medium'>{row.sponsorName}</TableCell>
-                  <TableCell>{row.sponsorCode}</TableCell>
-                  <TableCell className='text-right font-semibold'>{currencyFormatter.format(row.amountOwed)}</TableCell>
-                  <TableCell className='text-right font-semibold'>
-                    {currencyFormatter.format(row.amountReceived)}
-                  </TableCell>
-                  <TableCell
-                    className={`text-right font-semibold ${
-                      row.balance <= 0
-                        ? 'bg-green-600/10 text-green-700 dark:text-green-300'
-                        : 'bg-red-600/10 text-red-700 dark:text-red-300'
-                    }`}
-                  >
-                    {currencyFormatter.format(row.balance)}
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-          {rows.length > 0 && (
-            <TableFooter>
-              <TableRow className='text-base'>
-                <TableCell className='font-extrabold'>Total</TableCell>
-                <TableCell />
-                <TableCell className='text-right font-extrabold'>
-                  {currencyFormatter.format(totals.amountOwed)}
-                </TableCell>
-                <TableCell className='text-right font-extrabold'>
-                  {currencyFormatter.format(totals.amountReceived)}
-                </TableCell>
-                <TableCell className='text-right font-extrabold'>
-                  {currencyFormatter.format(totals.balance)}
-                </TableCell>
-              </TableRow>
-            </TableFooter>
-          )}
-        </Table>
-      </div>
+      <AdminSagicamPaymentsTable rows={rows} totals={totals} />
     </div>
   )
 }
