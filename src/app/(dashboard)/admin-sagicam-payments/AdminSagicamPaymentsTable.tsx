@@ -58,7 +58,13 @@ const columns: AdminSagicamPaymentsColumn[] = [
   { key: 'registrationFeeOwed', label: 'Registration Received', align: 'right' }
 ]
 
-const columnWidths = columns.map(column => (column.key === 'sponsorEmail' ? undefined : '9%'))
+const fixedLeftColumnCount = 2
+const fixedLeftColumnWidth = 20
+const flexibleColumnWidth = (100 - fixedLeftColumnCount * fixedLeftColumnWidth) / (columns.length - fixedLeftColumnCount)
+
+const columnWidths = columns.map((_, index) =>
+  index < fixedLeftColumnCount ? fixedLeftColumnWidth : flexibleColumnWidth
+)
 
 const getSortIcon = (isActive: boolean, direction: SortDirection) => {
   if (!isActive) return <ArrowUpDown className='size-3.5' />
@@ -114,7 +120,7 @@ const AdminSagicamPaymentsTable = ({
       <Table className='[[&_td]:wrap-break-word table-fixed [&_td]:whitespace-normal [&_th]:wrap-break-word [&_th]:whitespace-normal'>
         <colgroup>
           {columnWidths.map((width, index) => (
-            <col key={columns[index].key} style={width ? { width } : undefined} />
+            <col key={columns[index].key} style={{ width: `${width}%` }} />
           ))}
         </colgroup>
         <TableHeader>

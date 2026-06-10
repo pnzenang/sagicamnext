@@ -44,12 +44,12 @@ const columns: AdminCountColumn[] = [
   { key: 'total', label: 'Total', align: 'right' }
 ]
 
-const fixedRightColumnCount = 6
-const fixedRightColumnWidth = 10
-const flexibleColumnWidth = (100 - fixedRightColumnCount * fixedRightColumnWidth) / (columns.length - fixedRightColumnCount)
+const fixedLeftColumnCount = 3
+const fixedLeftColumnWidth = 20
+const flexibleColumnWidth = (100 - fixedLeftColumnCount * fixedLeftColumnWidth) / (columns.length - fixedLeftColumnCount)
 
 const adminCountColumnWidths = columns.map((_, index) =>
-  index >= columns.length - fixedRightColumnCount ? fixedRightColumnWidth : flexibleColumnWidth
+  index < fixedLeftColumnCount ? fixedLeftColumnWidth : flexibleColumnWidth
 )
 
 const getSortIcon = (isActive: boolean, direction: SortDirection) => {
