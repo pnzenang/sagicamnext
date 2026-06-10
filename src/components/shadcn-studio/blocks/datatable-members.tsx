@@ -453,8 +453,8 @@ const MembersDataTable = ({
                   </PaginationItem>
                 </PaginationContent>
               </Pagination>
-              <div className='grid w-full gap-4 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:items-center'>
-                <div className='grid gap-4'>
+              <div className='grid w-full gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(13rem,0.7fr)_minmax(0,1.15fr)] xl:items-stretch'>
+                <div className='grid h-full gap-4'>
                   <div className='border-primary/20 bg-primary/10 text-primary rounded-md border px-4 py-3'>
                     <p className='text-xl font-extrabold sm:text-2xl'>
                       Your Contribution This Month is: {currencyFormatter.format(monthlyContributionAmount)}
@@ -476,11 +476,11 @@ const MembersDataTable = ({
                 </div>
                 <Link
                   href={sagicamPaymentUrl}
-                  className='border-primary/20 bg-background mx-auto flex h-full min-h-40 w-full max-w-48 items-center justify-center rounded-md border p-3'
+                  className='border-primary/20 bg-background flex h-full min-h-48 w-full items-center justify-center rounded-md border p-3'
                 >
-                  <Image src={sagicamQrCodeUrl} width={160} height={160} alt='SAGICAM payment QR code' />
+                  <Image src={sagicamQrCodeUrl} width={190} height={190} alt='SAGICAM payment QR code' />
                 </Link>
-                <div className='grid gap-4'>
+                <div className='grid h-full gap-4'>
                   <SponsorContributionPaymentCard
                     amountExpected={monthlyContributionAmount}
                     amountSent={currentContribution.amountReceived}
