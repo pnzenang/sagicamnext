@@ -21,6 +21,7 @@ export type AdminSagicamPaymentsRow = {
   registrationReceived: number
   sponsorCode: string
   sponsorEmail: string
+  sponsorPhoneNumber: string
   vestedMembers: number
 }
 
@@ -47,6 +48,7 @@ type AdminSagicamPaymentsColumn = {
 
 const columns: AdminSagicamPaymentsColumn[] = [
   { key: 'sponsorEmail', label: 'Email' },
+  { key: 'sponsorPhoneNumber', label: 'Telephone' },
   { key: 'sponsorCode', label: 'Code' },
   { key: 'vestedMembers', label: 'Vested', align: 'right' },
   { key: 'awaitingPublication', label: 'Awaiting', align: 'right' },
@@ -156,6 +158,16 @@ const AdminSagicamPaymentsTable = ({
                     </a>
                   )}
                 </TableCell>
+                <TableCell>
+                  {row.sponsorPhoneNumber && (
+                    <a
+                      className='text-primary underline-offset-4 hover:underline'
+                      href={`tel:${row.sponsorPhoneNumber}`}
+                    >
+                      {row.sponsorPhoneNumber}
+                    </a>
+                  )}
+                </TableCell>
                 <TableCell>{row.sponsorCode}</TableCell>
                 <TableCell className='text-right font-semibold'>{row.vestedMembers}</TableCell>
                 <TableCell className='text-right font-semibold'>{row.awaitingPublication}</TableCell>
@@ -173,7 +185,7 @@ const AdminSagicamPaymentsTable = ({
                   {currencyFormatter.format(row.balance)}
                 </TableCell>
                 <TableCell
-                  className={`text-right font-semibold ${row.registrationFeeOwed > 0 ? 'bg-primary/10' : ''}`}
+                  className={`text-right font-semibold ${row.registrationFeeOwed > 0 ? 'text-primary' : ''}`}
                 >
                   {currencyFormatter.format(row.registrationFeeOwed)}
                 </TableCell>
@@ -182,9 +194,10 @@ const AdminSagicamPaymentsTable = ({
           )}
         </TableBody>
         {sortedRows.length > 0 && (
-          <TableFooter>
-            <TableRow className='text-base'>
+          <TableFooter className='bg-white text-black dark:bg-white dark:text-black'>
+            <TableRow className='bg-white text-base text-black hover:bg-white dark:bg-white dark:text-black dark:hover:bg-white'>
               <TableCell className='font-extrabold'>Total</TableCell>
+              <TableCell />
               <TableCell />
               <TableCell className='text-right font-extrabold'>{totals.vestedMembers}</TableCell>
               <TableCell className='text-right font-extrabold'>{totals.awaitingPublication}</TableCell>
@@ -195,9 +208,7 @@ const AdminSagicamPaymentsTable = ({
                 {currencyFormatter.format(totals.amountReceived)}
               </TableCell>
               <TableCell className='text-right font-extrabold'>{currencyFormatter.format(totals.balance)}</TableCell>
-              <TableCell
-                className={`text-right font-extrabold ${totals.registrationFeeOwed > 0 ? 'bg-primary/10' : ''}`}
-              >
+              <TableCell className='bg-white text-right font-extrabold text-black dark:bg-white dark:text-black'>
                 {currencyFormatter.format(totals.registrationFeeOwed)}
               </TableCell>
             </TableRow>

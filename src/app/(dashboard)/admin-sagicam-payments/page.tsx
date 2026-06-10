@@ -89,7 +89,8 @@ const AdminSagicamPayments = async () => {
   const sponsors = await db.profile.findMany({
     select: {
       sponsorCode: true,
-      sponsorEmail: true
+      sponsorEmail: true,
+      sponsorPhoneNumber: true
     },
     where: {
       sponsorCode: {
@@ -125,6 +126,7 @@ const AdminSagicamPayments = async () => {
       registrationReceived,
       sponsorCode,
       sponsorEmail: sponsor?.sponsorEmail ?? '',
+      sponsorPhoneNumber: sponsor?.sponsorPhoneNumber ?? '',
       vestedMembers: statusCounts.vestedMembers
     }
   })
