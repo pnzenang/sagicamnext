@@ -349,6 +349,7 @@ export const createContributionAssessmentAction = async (
 
     revalidatePath('/admin-members')
     revalidatePath('/admin-count')
+    revalidatePath('/admin-sagicam-payments')
     revalidatePath('/all-members')
 
     return {
@@ -403,6 +404,7 @@ export const saveSponsorContributionPaymentAction = async (
     })
 
     revalidatePath('/admin-count')
+    revalidatePath('/admin-sagicam-payments')
     revalidatePath('/all-members')
 
     return { message: `Saved amount sent: ${currencyFormatter.format(amountSent)}.` }
@@ -420,6 +422,7 @@ export const resetContributionCalculationAction = async (): Promise<{ message: s
 
     revalidatePath('/admin-count')
     revalidatePath('/admin-members')
+    revalidatePath('/admin-sagicam-payments')
     revalidatePath('/all-members')
 
     return { message: 'Contribution calculation reset successfully.' }

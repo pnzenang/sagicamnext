@@ -139,6 +139,11 @@ export const pagesItems: MenuItem[] = [
         icon: UserCog,
         label: 'Admin Count',
         href: '/admin-count'
+      },
+      {
+        icon: WalletCards,
+        label: 'Sagicam Payments',
+        href: '/admin-sagicam-payments'
       }
     ]
   }
