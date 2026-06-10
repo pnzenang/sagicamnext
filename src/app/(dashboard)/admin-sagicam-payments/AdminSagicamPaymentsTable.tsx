@@ -191,7 +191,7 @@ const AdminSagicamPaymentsTable = ({
                   {currencyFormatter.format(row.balance)}
                 </TableCell>
                 <TableCell
-                  className={`text-right font-semibold ${row.registrationFeeOwed > 0 ? 'text-primary' : ''}`}
+                  className={`text-right font-semibold ${row.registrationFeeOwed > 0 ? 'bg-primary/10 text-primary' : ''}`}
                 >
                   {currencyFormatter.format(row.registrationFeeOwed)}
                 </TableCell>
