@@ -145,7 +145,7 @@ const AdminSagicamPayments = async () => {
       balance: Number((amountReceived - amountOwed).toFixed(2)),
       contributionAmountSent,
       pendingMembers: statusCounts.pendingMembers,
-      registrationBalance: Number((registrationFeeOwed - registrationReceived).toFixed(2)),
+      registrationBalance: Number((registrationReceived - registrationFeeOwed).toFixed(2)),
       registrationAmountSent,
       registrationFeeOwed,
       registrationReceived,
