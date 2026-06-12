@@ -459,8 +459,7 @@ const MembersDataTable = ({
                 <div className='border-primary/20 bg-primary/10 text-primary h-full min-w-0 rounded-md border px-3 py-3 sm:px-4'>
                   <p className='text-lg font-extrabold break-words sm:text-xl'>Contribution payment summary</p>
                   <p className='text-primary/80 mt-1 text-sm font-semibold break-words'>
-                    Amount Sent(To Be Verified by SAGICAM) {currencyFormatter.format(currentContribution.amountReceived)} of{' '}
-                    {currencyFormatter.format(monthlyContributionAmount)}.
+                    Amount Sent: {currencyFormatter.format(currentContribution.amountReceived)} (To Be Verified by SAGICAM)
                   </p>
                   <p
                     className={cn(
@@ -474,8 +473,7 @@ const MembersDataTable = ({
                 <div className='border-primary/20 bg-primary/10 text-primary h-full min-w-0 rounded-md border px-3 py-3 sm:px-4'>
                   <p className='text-lg font-extrabold break-words sm:text-xl'>Registration payment summary</p>
                   <p className='text-primary/80 mt-1 text-sm font-semibold break-words'>
-                    Amount Sent(To Be Verified by SAGICAM) {currencyFormatter.format(currentRegistrationPayment.amountReceived)} of{' '}
-                    {currencyFormatter.format(registrationPaymentAmount)}.
+                    Amount Sent: {currencyFormatter.format(currentRegistrationPayment.amountReceived)} (To Be Verified by SAGICAM)
                   </p>
                   <p
                     className={cn(
