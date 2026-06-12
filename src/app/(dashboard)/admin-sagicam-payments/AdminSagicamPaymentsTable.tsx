@@ -49,8 +49,6 @@ type AdminSagicamPaymentsColumn = {
 }
 
 const columns: AdminSagicamPaymentsColumn[] = [
-  { key: 'sponsorEmail', label: 'Email' },
-  { key: 'sponsorPhoneNumber', label: 'Telephone' },
   { key: 'sponsorCode', label: 'Code' },
   { key: 'vestedMembers', label: 'Vested', align: 'right' },
   { key: 'awaitingPublication', label: 'Awaiting', align: 'right' },
@@ -63,11 +61,7 @@ const columns: AdminSagicamPaymentsColumn[] = [
   { key: 'registrationBalance', label: 'Registration balance', align: 'right' }
 ]
 
-const contactColumnCount = 2
-const contactColumnWidth = 12
-const paymentColumnWidth = (100 - contactColumnCount * contactColumnWidth) / (columns.length - contactColumnCount)
-
-const columnWidths = columns.map((_, index) => (index < contactColumnCount ? contactColumnWidth : paymentColumnWidth))
+const columnWidth = 100 / columns.length
 
 const getSortIcon = (isActive: boolean, direction: SortDirection) => {
   if (!isActive) return <ArrowUpDown className='size-3.5' />
@@ -96,7 +90,7 @@ const AdminSagicamPaymentsTable = ({
   rows: AdminSagicamPaymentsRow[]
   totals: AdminSagicamPaymentsTotals
 }) => {
-  const [sortKey, setSortKey] = useState<SortKey>('sponsorEmail')
+  const [sortKey, setSortKey] = useState<SortKey>('sponsorCode')
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
 
   const sortedRows = useMemo(() => {
@@ -122,8 +116,8 @@ const AdminSagicamPaymentsTable = ({
     <div className='border-border overflow-hidden rounded-lg border'>
       <Table className='[[&_td]:wrap-break-word table-fixed [&_td]:whitespace-normal [&_th]:wrap-break-word [&_th]:whitespace-normal'>
         <colgroup>
-          {columnWidths.map((width, index) => (
-            <col key={columns[index].key} style={{ width: `${width}%` }} />
+          {columns.map(column => (
+            <col key={column.key} style={{ width: `${columnWidth}%` }} />
           ))}
         </colgroup>
         <TableHeader>
@@ -160,23 +154,6 @@ const AdminSagicamPaymentsTable = ({
           ) : (
             sortedRows.map(row => (
               <TableRow key={row.sponsorCode} className='odd:bg-muted/30 even:bg-background'>
-                <TableCell className='font-medium'>
-                  {row.sponsorEmail && (
-                    <a className='text-primary underline-offset-4 hover:underline' href={`mailto:${row.sponsorEmail}`}>
-                      {row.sponsorEmail}
-                    </a>
-                  )}
-                </TableCell>
-                <TableCell>
-                  {row.sponsorPhoneNumber && (
-                    <a
-                      className='text-primary underline-offset-4 hover:underline'
-                      href={`tel:${row.sponsorPhoneNumber}`}
-                    >
-                      {row.sponsorPhoneNumber}
-                    </a>
-                  )}
-                </TableCell>
                 <TableCell>{row.sponsorCode}</TableCell>
                 <TableCell className='text-right font-semibold'>{row.vestedMembers}</TableCell>
                 <TableCell className='text-right font-semibold'>{row.awaitingPublication}</TableCell>
@@ -219,8 +196,6 @@ const AdminSagicamPaymentsTable = ({
           <TableFooter className='bg-white text-black dark:bg-white dark:text-black'>
             <TableRow className='bg-white text-base text-black hover:bg-white dark:bg-white dark:text-black dark:hover:bg-white'>
               <TableCell className='font-extrabold'>Total</TableCell>
-              <TableCell />
-              <TableCell />
               <TableCell className='text-right font-extrabold'>{totals.vestedMembers}</TableCell>
               <TableCell className='text-right font-extrabold'>{totals.awaitingPublication}</TableCell>
               <TableCell className='text-right font-extrabold'>{totals.pendingMembers}</TableCell>
