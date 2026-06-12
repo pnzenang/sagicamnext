@@ -285,7 +285,7 @@ const AdminSagicamPaymentsTable = ({
                 <TableCell className='text-right font-semibold'>{currencyFormatter.format(row.amountOwed)}</TableCell>
                 <TableCell
                   className={`text-right font-semibold ${
-                    row.contributionAmountSent > 0 ? 'bg-green-600/10 text-green-700 dark:text-green-300' : ''
+                    row.contributionAmountSent > 0 ? 'text-green-700 dark:text-green-300' : ''
                   }`}
                 >
                   {currencyFormatter.format(row.contributionAmountSent)}
@@ -310,7 +310,7 @@ const AdminSagicamPaymentsTable = ({
                 </TableCell>
                 <TableCell
                   className={`text-right font-semibold ${
-                    row.registrationAmountSent > 0 ? 'bg-green-600/10 text-green-700 dark:text-green-300' : ''
+                    row.registrationAmountSent > 0 ? 'text-green-700 dark:text-green-300' : ''
                   }`}
                 >
                   {currencyFormatter.format(row.registrationAmountSent)}
