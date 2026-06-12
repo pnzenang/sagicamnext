@@ -22,8 +22,8 @@ const DataTablePreview = async () => {
 
   return (
     <div className='py-8 sm:py-10'>
-      <div className='max-w-9xl mx-auto px-0 sm:px-6 lg:px-8'>
-        <Card className='max-w-9xl mx-0 w-full rounded-none border-x-0 py-0 sm:mx-auto sm:rounded-xl sm:border-x'>
+      <div className='max-w-9xl mx-auto px-4 sm:px-6 lg:px-8'>
+        <Card className='max-w-9xl mx-auto w-full py-0'>
           <MembersDataTable
             currentContribution={currentContribution}
             currentRegistrationPayment={currentRegistrationPayment}
