@@ -57,15 +57,15 @@ const columns: AdminSagicamPaymentsColumn[] = [
   { key: 'pendingMembers', label: 'Pending', align: 'right' },
   { key: 'amountOwed', label: 'Contribution owed', align: 'right' },
   { key: 'amountReceived', label: 'Contribution received', align: 'right' },
-  { key: 'balance', label: 'Balance', align: 'right' },
+  { key: 'balance', label: 'Contribution Balance', align: 'right' },
   { key: 'registrationFeeOwed', label: 'Registration owed', align: 'right' },
   { key: 'registrationReceived', label: 'Registration received', align: 'right' },
   { key: 'registrationBalance', label: 'Registration balance', align: 'right' }
 ]
 
 const contactColumnCount = 2
-const paymentColumnWidth = 8
-const contactColumnWidth = (100 - (columns.length - contactColumnCount) * paymentColumnWidth) / contactColumnCount
+const contactColumnWidth = 12
+const paymentColumnWidth = (100 - contactColumnCount * contactColumnWidth) / (columns.length - contactColumnCount)
 
 const columnWidths = columns.map((_, index) => (index < contactColumnCount ? contactColumnWidth : paymentColumnWidth))
 

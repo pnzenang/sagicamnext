@@ -39,12 +39,6 @@ const AdminSagicamPayments = async () => {
     }
   })
 
-  const sponsorRegistrationPayments = await db.sponsorRegistrationPayment.findMany({
-    orderBy: {
-      sponsorCode: 'asc'
-    }
-  })
-
   const memberCountsBySponsorCode = await db.member.groupBy({
     _count: {
       _all: true
@@ -91,7 +85,6 @@ const AdminSagicamPayments = async () => {
     new Set([
       ...(latestContributionAssessment?.groups.map(group => group.sponsorCode) ?? []),
       ...sponsorContributionPayments.map(payment => payment.sponsorCode),
-      ...sponsorRegistrationPayments.map(payment => payment.sponsorCode),
       ...statusCountsByCode.keys()
     ])
   ).sort((firstCode, secondCode) =>
@@ -117,7 +110,6 @@ const AdminSagicamPayments = async () => {
   const sponsorsByCode = new Map(sponsors.map(sponsor => [sponsor.sponsorCode, sponsor]))
   const owedByCode = new Map(latestContributionAssessment?.groups.map(group => [group.sponsorCode, group]) ?? [])
   const receivedByCode = new Map(sponsorContributionPayments.map(payment => [payment.sponsorCode, payment]))
-  const registrationReceivedByCode = new Map(sponsorRegistrationPayments.map(payment => [payment.sponsorCode, payment]))
 
   const rows: AdminSagicamPaymentsRow[] = sponsorCodes.map(sponsorCode => {
     const sponsor = sponsorsByCode.get(sponsorCode)
@@ -130,8 +122,9 @@ const AdminSagicamPayments = async () => {
       vestedMembers: 0
     }
 
-    const registrationFeeOwed = statusCounts.awaitingPublication * registrationFeePerAwaitingMember
-    const registrationReceived = decimalToNumber(registrationReceivedByCode.get(sponsorCode)?.amountSent)
+    const registrationFeeOwed =
+      (statusCounts.pendingMembers + statusCounts.awaitingPublication) * registrationFeePerAwaitingMember
+    const registrationReceived = statusCounts.awaitingPublication * registrationFeePerAwaitingMember
 
     return {
       amountOwed,
@@ -139,7 +132,7 @@ const AdminSagicamPayments = async () => {
       awaitingPublication: statusCounts.awaitingPublication,
       balance: Number((amountReceived - amountOwed).toFixed(2)),
       pendingMembers: statusCounts.pendingMembers,
-      registrationBalance: Number((registrationReceived - registrationFeeOwed).toFixed(2)),
+      registrationBalance: Number((registrationFeeOwed - registrationReceived).toFixed(2)),
       registrationFeeOwed,
       registrationReceived,
       sponsorCode,
