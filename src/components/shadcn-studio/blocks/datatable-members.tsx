@@ -565,7 +565,7 @@ const MembersDataTable = ({
             </DropdownMenu>
           </div>
         </div>
-        <Table>
+        <Table className='table-fixed [&_td]:wrap-break-word [&_td]:whitespace-normal [&_th]:wrap-break-word [&_th]:whitespace-normal'>
           <TableHeader>
             {table.getHeaderGroups().map(headerGroup => (
               <TableRow key={headerGroup.id} className='bg-primary hover:bg-primary/80 h-14 border-t'>
@@ -573,8 +573,8 @@ const MembersDataTable = ({
                   return (
                     <TableHead
                       key={header.id}
-                      style={{ width: `${header.getSize()}px` }}
-                      className='font-extrabold text-white first:pl-4 last:px-4'
+                      style={{ width: `${100 / headerGroup.headers.length}%` }}
+                      className='px-4 font-extrabold text-white'
                     >
                       {header.isPlaceholder ? null : header.column.getCanSort() ? (
                         <div
@@ -611,7 +611,7 @@ const MembersDataTable = ({
               table.getRowModel().rows.map(row => (
                 <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'} className='hover:bg-primary/30'>
                   {row.getVisibleCells().map(cell => (
-                    <TableCell key={cell.id} className='h-14 first:w-12.5 first:pl-4 last:w-29 last:px-4'>
+                    <TableCell key={cell.id} style={{ width: `${100 / row.getVisibleCells().length}%` }} className='h-14 px-4'>
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}
