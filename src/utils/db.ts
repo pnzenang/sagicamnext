@@ -16,6 +16,7 @@ const shouldReuseCachedPrisma =
   cachedPrisma &&
   'contributionAssessment' in (cachedPrisma as unknown as Record<string, unknown>) &&
   'sponsorContributionPayment' in (cachedPrisma as unknown as Record<string, unknown>) &&
+  'sponsorContributionUsage' in (cachedPrisma as unknown as Record<string, unknown>) &&
   'sponsorRegistrationPayment' in (cachedPrisma as unknown as Record<string, unknown>)
 
 const prisma =

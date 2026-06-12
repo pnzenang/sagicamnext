@@ -110,6 +110,16 @@ model SponsorContributionPayment {
   @@index([sponsorCode])
 }
 
+model SponsorContributionUsage {
+  id          String   @id @default(uuid())
+  sponsorCode String   @unique
+  amountUsed  Decimal  @default(0) @db.Decimal(10, 2)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([sponsorCode])
+}
+
 model SponsorRegistrationPayment {
   id             String    @id @default(uuid())
   sponsorCode    String    @unique

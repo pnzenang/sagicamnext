@@ -26,6 +26,7 @@ export type AdminSagicamPaymentsRow = {
   awaitingPublication: number
   balance: number
   contributionAmountSent: number
+  contributionAmountUsed: number
   pendingMembers: number
   registrationAmountSent: number
   registrationBalance: number
@@ -102,7 +103,7 @@ const compareValues = (firstValue: AdminSagicamPaymentsRow[SortKey], secondValue
 const ContributionPaymentControls = ({ row }: { row: AdminSagicamPaymentsRow }) => {
   const hasSubmittedPayment = row.contributionAmountSent > 0
   const hasPaymentValues = row.contributionAmountSent > 0 || row.amountReceived > 0
-  const canSetPaid = row.amountOwed > 0
+  const canSetPaid = row.contributionAmountUsed > 0
 
   return (
     <div className='flex flex-col items-start gap-1'>
@@ -121,7 +122,7 @@ const ContributionPaymentControls = ({ row }: { row: AdminSagicamPaymentsRow }) 
       </form>
       <form action={setSponsorContributionPaidAction} className='w-20'>
         <input type='hidden' name='sponsorCode' value={row.sponsorCode} />
-        <input type='hidden' name='contributionAmountOwed' value={row.amountOwed.toFixed(2)} />
+        <input type='hidden' name='contributionAmountUsed' value={row.contributionAmountUsed.toFixed(2)} />
         <Button
           type='submit'
           size='xs'

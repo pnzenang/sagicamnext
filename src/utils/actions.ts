@@ -306,19 +306,29 @@ export const fetchCurrentSponsorContribution = async () => {
     }
   })
 
+  const contributionUsage = await db.sponsorContributionUsage.findUnique({
+    where: {
+      sponsorCode: profile.sponsorCode
+    }
+  })
+
   const amountOwed = Number((amountPerVestedMember * vestedMembersCount).toFixed(2))
   const amountReceived = decimalToNumber(payment?.amountSent)
   const amountVerified = decimalToNumber(payment?.amountVerified)
-  const totalAmountOwed = decimalToNumber(totalAssessedContribution._sum.amountOwed)
+  const totalAmountUsed = Number(
+    (
+      decimalToNumber(totalAssessedContribution._sum.amountOwed) + decimalToNumber(contributionUsage?.amountUsed)
+    ).toFixed(2)
+  )
 
   return {
     amountOwed,
     amountPerVestedMember,
     amountReceived,
     amountVerified,
-    balance: Number((amountVerified - totalAmountOwed).toFixed(2)),
+    balance: Number((amountVerified - totalAmountUsed).toFixed(2)),
     sponsorCode: profile.sponsorCode,
-    totalAmountOwed,
+    totalAmountUsed,
     vestedMembersCount
   }
 }
@@ -505,17 +515,17 @@ export const setSponsorContributionPaidAction = async (formData: FormData): Prom
 
   try {
     const sponsorCode = getRequiredFormValue(formData, 'sponsorCode')
-    const contributionAmountOwed = getDollarAmountFromForm(formData, 'contributionAmountOwed')
+    const contributionAmountUsed = getDollarAmountFromForm(formData, 'contributionAmountUsed')
 
     await db.sponsorContributionPayment.upsert({
       create: {
-        amountSent: contributionAmountOwed,
-        amountVerified: contributionAmountOwed,
+        amountSent: contributionAmountUsed,
+        amountVerified: contributionAmountUsed,
         sponsorCode,
         verifiedAt: new Date()
       },
       update: {
-        amountVerified: contributionAmountOwed,
+        amountVerified: contributionAmountUsed,
         verifiedAt: new Date()
       },
       where: {
@@ -716,11 +726,29 @@ export const resetContributionCalculationAction = async (): Promise<{ message: s
       return { message: 'No contribution calculation found to reset.' }
     }
 
-    await db.contributionAssessment.delete({
-      where: {
-        id: latestAssessment.id
-      }
-    })
+    await db.$transaction([
+      ...latestAssessment.groups.map(group =>
+        db.sponsorContributionUsage.upsert({
+          create: {
+            amountUsed: group.amountOwed,
+            sponsorCode: group.sponsorCode
+          },
+          update: {
+            amountUsed: {
+              increment: group.amountOwed
+            }
+          },
+          where: {
+            sponsorCode: group.sponsorCode
+          }
+        })
+      ),
+      db.contributionAssessment.delete({
+        where: {
+          id: latestAssessment.id
+        }
+      })
+    ])
 
     revalidatePath('/admin-count')
     revalidatePath('/admin-members')

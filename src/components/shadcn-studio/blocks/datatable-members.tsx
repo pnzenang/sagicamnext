@@ -242,7 +242,7 @@ type CurrentContribution = {
   amountVerified: number
   balance: number
   sponsorCode: string
-  totalAmountOwed: number
+  totalAmountUsed: number
   vestedMembersCount: number
 }
 
@@ -479,6 +479,12 @@ const MembersDataTable = ({
                       </span>
                       <span className='shrink-0 text-right tabular-nums'>
                         {currencyFormatter.format(monthlyContributionAmount)}
+                      </span>
+                    </div>
+                    <div className='text-primary/80 flex items-start justify-between gap-4'>
+                      <span className='min-w-0 break-words'>Total Amount Used for Contributions</span>
+                      <span className='shrink-0 text-right tabular-nums'>
+                        {currencyFormatter.format(currentContribution.totalAmountUsed)}
                       </span>
                     </div>
                   </div>
