@@ -51,17 +51,17 @@ const MembershipSummaryCards = ({ awaiting, delinquent, pending, total, vested }
   }
 
   return (
-    <div className='grid gap-3 sm:grid-cols-2 lg:grid-cols-5'>
+    <div className='grid w-full grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5'>
       {summaryCards.map(card => {
         const Icon = card.icon
 
         return (
-          <div key={card.key} className={`rounded-lg border p-4 ${card.className}`}>
+          <div key={card.key} className={`min-w-0 rounded-lg border p-3 sm:p-4 ${card.className}`}>
             <div className='flex items-center justify-between gap-3'>
-              <p className='text-xs font-semibold tracking-normal uppercase'>{card.label}</p>
+              <p className='min-w-0 text-xs font-semibold tracking-normal break-words uppercase'>{card.label}</p>
               <Icon className='size-5 shrink-0' />
             </div>
-            <p className='mt-3 text-3xl font-bold'>{counts[card.key].toLocaleString()}</p>
+            <p className='mt-3 text-2xl font-bold tabular-nums sm:text-3xl'>{counts[card.key].toLocaleString()}</p>
           </div>
         )
       })}

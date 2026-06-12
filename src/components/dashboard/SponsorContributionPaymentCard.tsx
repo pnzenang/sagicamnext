@@ -27,7 +27,7 @@ const SponsorContributionPaymentCard = ({ amountExpected, amountSent }: SponsorC
     <form
       action={formAction}
       className={cn(
-        'rounded-md border px-4 py-3',
+        'h-full min-w-0 rounded-md border px-3 py-3 sm:px-4',
         cardIsComplete
           ? 'border-green-600/20 bg-green-600/10 text-green-700 dark:text-green-300'
           : 'border-red-600/20 bg-red-600/10 text-red-700 dark:text-red-300'
@@ -35,7 +35,7 @@ const SponsorContributionPaymentCard = ({ amountExpected, amountSent }: SponsorC
     >
       <div className='grid gap-3'>
         <div className='grid gap-2'>
-          <Label htmlFor='amountSent' className='text-base font-extrabold'>
+          <Label htmlFor='amountSent' className='text-sm font-extrabold break-words sm:text-base'>
             Contribution Amount sent
           </Label>
           <div className='relative'>
@@ -55,8 +55,8 @@ const SponsorContributionPaymentCard = ({ amountExpected, amountSent }: SponsorC
           </div>
         </div>
 
-        <SubmitButton text='Save amount sent' className='w-full' />
-        {state.message ? <p className='text-sm font-semibold'>{state.message}</p> : null}
+        <SubmitButton text='Save amount sent' className='w-full whitespace-normal' />
+        {state.message ? <p className='text-sm font-semibold break-words'>{state.message}</p> : null}
       </div>
     </form>
   )

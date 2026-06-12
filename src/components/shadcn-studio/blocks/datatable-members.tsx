@@ -394,50 +394,53 @@ const MembersDataTable = ({
   return (
     <div className='border-primary w-full rounded border'>
       <div className='border-b'>
-        <div className='flex flex-col gap-4 border-b p-6'>
+        <div className='flex flex-col gap-4 border-b p-4 sm:p-6'>
           <span className='text-2xl font-semibold sm:text-4xl lg:text-6xl'>All Registered Loved Ones</span>
           <MembershipSummaryCards {...membershipSummary} />
           <div className='w-full pb-4'>
-            <div className='grid w-full gap-4 lg:grid-cols-2 xl:grid-cols-4 xl:items-stretch'>
-              <div className='grid h-full auto-rows-fr gap-4'>
-                <div className='border-primary/20 bg-primary/10 text-primary h-full w-full rounded-md border px-4 py-3'>
-                  <p className='text-xl font-extrabold sm:text-2xl'>
+            <div className='grid w-full grid-cols-1 items-stretch gap-4 md:grid-cols-2 xl:grid-cols-4'>
+              <div className='grid h-full min-w-0 auto-rows-fr gap-4'>
+                <div className='border-primary/20 bg-primary/10 text-primary h-full min-w-0 rounded-md border px-3 py-3 sm:px-4'>
+                  <p className='text-lg font-extrabold break-words sm:text-xl'>
                     Your Contribution This Month is: {currencyFormatter.format(monthlyContributionAmount)}
                   </p>
-                  <p className='text-primary/80 mt-1 text-sm font-semibold'>
+                  <p className='text-primary/80 mt-1 text-sm font-semibold break-words'>
                     {currentContribution.vestedMembersCount} vested loved one(s) x{' '}
                     {currencyFormatter.format(currentContribution.amountPerVestedMember)}
                   </p>
                 </div>
-                <div className='border-primary/20 bg-primary/10 text-primary h-full w-full rounded-md border px-4 py-3'>
-                  <p className='text-xl font-extrabold sm:text-2xl'>
+                <div className='border-primary/20 bg-primary/10 text-primary h-full min-w-0 rounded-md border px-3 py-3 sm:px-4'>
+                  <p className='text-lg font-extrabold break-words sm:text-xl'>
                     Your Registration Payment is: {currencyFormatter.format(registrationPaymentAmount)}
                   </p>
-                  <p className='text-primary/80 mt-1 text-sm font-semibold'>
+                  <p className='text-primary/80 mt-1 text-sm font-semibold break-words'>
                     {membershipSummary.pending} pending loved one(s) x{' '}
                     {currencyFormatter.format(registrationFeePerAwaitingMember)}
                   </p>
                 </div>
               </div>
-              <div className='grid h-full auto-rows-fr gap-4'>
+              <div className='grid h-full min-w-0 auto-rows-fr gap-4'>
                 <Link
                   href={sagicamPaymentUrl}
-                  className='border-primary/20 bg-background flex h-full min-h-48 w-full items-center justify-center rounded-md border p-3'
+                  className='border-primary/20 bg-background flex h-full min-h-44 min-w-0 items-center justify-center rounded-md border p-3'
                 >
-                  <Image src={sagicamQrCodeUrl} width={190} height={190} alt='SAGICAM payment QR code' />
+                  <Image
+                    src={sagicamQrCodeUrl}
+                    width={190}
+                    height={190}
+                    alt='SAGICAM payment QR code'
+                    className='h-auto max-h-48 w-full max-w-48'
+                  />
                 </Link>
-                <Link
-                  href='/payment-instructions'
-                  className='border-primary/20 bg-primary/10 text-primary flex h-full w-full flex-col justify-center rounded-md border px-4 py-3'
-                >
-                  <p className='text-xl font-extrabold sm:text-2xl'>Payment instructions</p>
-                  <p className='text-primary/80 mt-1 text-sm font-semibold'>
+                <div className='border-primary/20 bg-primary/10 text-primary flex h-full min-w-0 flex-col justify-center rounded-md border px-3 py-3 sm:px-4'>
+                  <p className='text-lg font-extrabold break-words sm:text-xl'>Payment instructions</p>
+                  <p className='text-primary/80 mt-1 text-sm font-semibold break-words'>
                     Scan or click the QR code to send your payment by Zelle, then fill out the Contribution sent or
                     Registration sent form.
                   </p>
-                </Link>
+                </div>
               </div>
-              <div className='grid h-full auto-rows-fr gap-4'>
+              <div className='grid h-full min-w-0 auto-rows-fr gap-4'>
                 <SponsorContributionPaymentCard
                   amountExpected={monthlyContributionAmount}
                   amountSent={currentContribution.amountReceived}
@@ -447,31 +450,31 @@ const MembersDataTable = ({
                   amountSent={currentRegistrationPayment.amountReceived}
                 />
               </div>
-              <div className='grid h-full auto-rows-fr gap-4'>
-                <div className='border-primary/20 bg-primary/10 text-primary h-full w-full rounded-md border px-4 py-3'>
-                  <p className='text-lg font-extrabold sm:text-xl'>Contribution payment summary</p>
-                  <p className='text-primary/80 mt-1 text-sm font-semibold'>
+              <div className='grid h-full min-w-0 auto-rows-fr gap-4'>
+                <div className='border-primary/20 bg-primary/10 text-primary h-full min-w-0 rounded-md border px-3 py-3 sm:px-4'>
+                  <p className='text-lg font-extrabold break-words sm:text-xl'>Contribution payment summary</p>
+                  <p className='text-primary/80 mt-1 text-sm font-semibold break-words'>
                     Sent {currencyFormatter.format(currentContribution.amountReceived)} of{' '}
                     {currencyFormatter.format(monthlyContributionAmount)}.
                   </p>
                   <p
                     className={cn(
-                      'mt-2 text-base font-extrabold',
+                      'mt-2 text-base font-extrabold break-words',
                       contributionPaymentBalance <= 0 ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'
                     )}
                   >
                     Balance: {currencyFormatter.format(contributionPaymentBalance)}
                   </p>
                 </div>
-                <div className='border-primary/20 bg-primary/10 text-primary h-full w-full rounded-md border px-4 py-3'>
-                  <p className='text-lg font-extrabold sm:text-xl'>Registration payment summary</p>
-                  <p className='text-primary/80 mt-1 text-sm font-semibold'>
+                <div className='border-primary/20 bg-primary/10 text-primary h-full min-w-0 rounded-md border px-3 py-3 sm:px-4'>
+                  <p className='text-lg font-extrabold break-words sm:text-xl'>Registration payment summary</p>
+                  <p className='text-primary/80 mt-1 text-sm font-semibold break-words'>
                     Sent {currencyFormatter.format(currentRegistrationPayment.amountReceived)} of{' '}
                     {currencyFormatter.format(registrationPaymentAmount)}.
                   </p>
                   <p
                     className={cn(
-                      'mt-2 text-base font-extrabold',
+                      'mt-2 text-base font-extrabold break-words',
                       registrationPaymentBalance <= 0 ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'
                     )}
                   >
