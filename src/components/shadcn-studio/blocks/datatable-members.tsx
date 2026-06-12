@@ -266,7 +266,9 @@ const MembersDataTable = ({
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const currentMonthName = monthFormatter.format(new Date())
   const monthlyContributionAmount = currentContribution.amountOwed
-  const registrationPaymentAmount = membershipSummary.pending * registrationFeePerAwaitingMember
+  const registrationPaymentMembersCount =
+    membershipSummary.pending + membershipSummary.awaiting + membershipSummary.vested
+  const registrationPaymentAmount = registrationPaymentMembersCount * registrationFeePerAwaitingMember
   const contributionPaymentBalance = currentContribution.balance
   const registrationPaymentBalance = getPaymentBalance(
     currentRegistrationPayment.amountVerified,
@@ -418,7 +420,8 @@ const MembersDataTable = ({
                     Your Registration Payment is: {currencyFormatter.format(registrationPaymentAmount)}
                   </p>
                   <p className='text-primary/80 mt-1 text-sm font-semibold break-words'>
-                    {membershipSummary.pending} pending loved one(s) x{' '}
+                    {membershipSummary.pending} pending + {membershipSummary.awaiting} awaiting +{' '}
+                    {membershipSummary.vested} vested loved one(s) x{' '}
                     {currencyFormatter.format(registrationFeePerAwaitingMember)}
                   </p>
                 </div>
