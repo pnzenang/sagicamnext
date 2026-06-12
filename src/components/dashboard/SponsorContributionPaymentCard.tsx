@@ -36,7 +36,7 @@ const SponsorContributionPaymentCard = ({ amountExpected, amountSent }: SponsorC
       <div className='grid gap-3'>
         <div className='grid gap-2'>
           <Label htmlFor='amountSent' className='text-base font-extrabold'>
-            Amount sent
+            Contribution Amount sent
           </Label>
           <div className='relative'>
             <DollarSign className='pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 opacity-70' />

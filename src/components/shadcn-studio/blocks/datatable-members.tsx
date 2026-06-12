@@ -256,6 +256,10 @@ const MembersDataTable = ({
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const monthlyContributionAmount = currentContribution.amountOwed
   const registrationPaymentAmount = membershipSummary.pending * registrationFeePerAwaitingMember
+  const contributionPaymentBalance = Number((monthlyContributionAmount - currentContribution.amountReceived).toFixed(2))
+  const registrationPaymentBalance = Number(
+    (registrationPaymentAmount - currentRegistrationPayment.amountReceived).toFixed(2)
+  )
 
   const pageSize = 100
 
@@ -394,7 +398,7 @@ const MembersDataTable = ({
           <span className='text-2xl font-semibold sm:text-4xl lg:text-6xl'>All Registered Loved Ones</span>
           <MembershipSummaryCards {...membershipSummary} />
           <div className='w-full pb-4'>
-            <div className='grid w-full gap-4 lg:grid-cols-2 xl:grid-cols-3 xl:items-stretch'>
+            <div className='grid w-full gap-4 lg:grid-cols-2 xl:grid-cols-4 xl:items-stretch'>
               <div className='grid h-full auto-rows-fr gap-4'>
                 <div className='border-primary/20 bg-primary/10 text-primary h-full w-full rounded-md border px-4 py-3'>
                   <p className='text-xl font-extrabold sm:text-2xl'>
@@ -427,7 +431,10 @@ const MembersDataTable = ({
                   className='border-primary/20 bg-primary/10 text-primary flex h-full w-full flex-col justify-center rounded-md border px-4 py-3'
                 >
                   <p className='text-xl font-extrabold sm:text-2xl'>Payment instructions</p>
-                  <p className='text-primary/80 mt-1 text-sm font-semibold'>Review current SAGICAM payment details.</p>
+                  <p className='text-primary/80 mt-1 text-sm font-semibold'>
+                    Scan or click the QR code to send your payment by Zelle, then fill out the Contribution sent or
+                    Registration sent form.
+                  </p>
                 </Link>
               </div>
               <div className='grid h-full auto-rows-fr gap-4'>
@@ -439,6 +446,38 @@ const MembersDataTable = ({
                   amountExpected={registrationPaymentAmount}
                   amountSent={currentRegistrationPayment.amountReceived}
                 />
+              </div>
+              <div className='grid h-full auto-rows-fr gap-4'>
+                <div className='border-primary/20 bg-primary/10 text-primary h-full w-full rounded-md border px-4 py-3'>
+                  <p className='text-lg font-extrabold sm:text-xl'>Contribution payment summary</p>
+                  <p className='text-primary/80 mt-1 text-sm font-semibold'>
+                    Sent {currencyFormatter.format(currentContribution.amountReceived)} of{' '}
+                    {currencyFormatter.format(monthlyContributionAmount)}.
+                  </p>
+                  <p
+                    className={cn(
+                      'mt-2 text-base font-extrabold',
+                      contributionPaymentBalance <= 0 ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'
+                    )}
+                  >
+                    Balance: {currencyFormatter.format(contributionPaymentBalance)}
+                  </p>
+                </div>
+                <div className='border-primary/20 bg-primary/10 text-primary h-full w-full rounded-md border px-4 py-3'>
+                  <p className='text-lg font-extrabold sm:text-xl'>Registration payment summary</p>
+                  <p className='text-primary/80 mt-1 text-sm font-semibold'>
+                    Sent {currencyFormatter.format(currentRegistrationPayment.amountReceived)} of{' '}
+                    {currencyFormatter.format(registrationPaymentAmount)}.
+                  </p>
+                  <p
+                    className={cn(
+                      'mt-2 text-base font-extrabold',
+                      registrationPaymentBalance <= 0 ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'
+                    )}
+                  >
+                    Balance: {currencyFormatter.format(registrationPaymentBalance)}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
