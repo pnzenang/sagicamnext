@@ -242,6 +242,7 @@ type CurrentContribution = {
   amountVerified: number
   balance: number
   sponsorCode: string
+  totalAmountOwed: number
   vestedMembersCount: number
 }
 

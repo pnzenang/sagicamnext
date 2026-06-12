@@ -39,6 +39,16 @@ const AdminSagicamPayments = async () => {
     }
   })
 
+  const contributionTotalsBySponsorCode = await db.contributionAssessmentGroup.groupBy({
+    _sum: {
+      amountOwed: true
+    },
+    by: ['sponsorCode'],
+    orderBy: {
+      sponsorCode: 'asc'
+    }
+  })
+
   const sponsorRegistrationPayments = await db.sponsorRegistrationPayment.findMany({
     orderBy: {
       sponsorCode: 'asc'
@@ -90,6 +100,7 @@ const AdminSagicamPayments = async () => {
   const sponsorCodes = Array.from(
     new Set([
       ...(latestContributionAssessment?.groups.map(group => group.sponsorCode) ?? []),
+      ...contributionTotalsBySponsorCode.map(group => group.sponsorCode),
       ...sponsorContributionPayments.map(payment => payment.sponsorCode),
       ...sponsorRegistrationPayments.map(payment => payment.sponsorCode),
       ...statusCountsByCode.keys()
@@ -116,6 +127,7 @@ const AdminSagicamPayments = async () => {
 
   const sponsorsByCode = new Map(sponsors.map(sponsor => [sponsor.sponsorCode, sponsor]))
   const owedByCode = new Map(latestContributionAssessment?.groups.map(group => [group.sponsorCode, group]) ?? [])
+  const totalOwedByCode = new Map(contributionTotalsBySponsorCode.map(group => [group.sponsorCode, group._sum.amountOwed]))
   const receivedByCode = new Map(sponsorContributionPayments.map(payment => [payment.sponsorCode, payment]))
   const registrationPaymentsByCode = new Map(sponsorRegistrationPayments.map(payment => [payment.sponsorCode, payment]))
 
@@ -125,6 +137,7 @@ const AdminSagicamPayments = async () => {
     const contributionPayment = receivedByCode.get(sponsorCode)
     const contributionAmountSent = decimalToNumber(contributionPayment?.amountSent)
     const amountReceived = decimalToNumber(contributionPayment?.amountVerified)
+    const totalContributionOwed = decimalToNumber(totalOwedByCode.get(sponsorCode))
     const registrationPayment = registrationPaymentsByCode.get(sponsorCode)
 
     const statusCounts = statusCountsByCode.get(sponsorCode) ?? {
@@ -142,7 +155,7 @@ const AdminSagicamPayments = async () => {
       amountOwed,
       amountReceived,
       awaitingPublication: statusCounts.awaitingPublication,
-      balance: Number((amountReceived - amountOwed).toFixed(2)),
+      balance: Number((amountReceived - totalContributionOwed).toFixed(2)),
       contributionAmountSent,
       pendingMembers: statusCounts.pendingMembers,
       registrationBalance: Number((registrationReceived - registrationFeeOwed).toFixed(2)),

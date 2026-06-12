@@ -297,17 +297,28 @@ export const fetchCurrentSponsorContribution = async () => {
     }
   })
 
+  const totalAssessedContribution = await db.contributionAssessmentGroup.aggregate({
+    _sum: {
+      amountOwed: true
+    },
+    where: {
+      sponsorCode: profile.sponsorCode
+    }
+  })
+
   const amountOwed = Number((amountPerVestedMember * vestedMembersCount).toFixed(2))
   const amountReceived = decimalToNumber(payment?.amountSent)
   const amountVerified = decimalToNumber(payment?.amountVerified)
+  const totalAmountOwed = decimalToNumber(totalAssessedContribution._sum.amountOwed)
 
   return {
     amountOwed,
     amountPerVestedMember,
     amountReceived,
     amountVerified,
-    balance: Number((amountVerified - amountOwed).toFixed(2)),
+    balance: Number((amountVerified - totalAmountOwed).toFixed(2)),
     sponsorCode: profile.sponsorCode,
+    totalAmountOwed,
     vestedMembersCount
   }
 }
@@ -525,17 +536,19 @@ export const resetSponsorContributionPaymentAction = async (formData: FormData):
   try {
     const sponsorCode = getRequiredFormValue(formData, 'sponsorCode')
 
-    await db.sponsorContributionPayment.upsert({
-      create: {
-        amountSent: 0,
-        amountVerified: 0,
-        sponsorCode,
-        verifiedAt: null
-      },
-      update: {
-        amountSent: 0,
-        amountVerified: 0,
-        verifiedAt: null
+    const payment = await db.sponsorContributionPayment.findUnique({
+      where: {
+        sponsorCode
+      }
+    })
+
+    if (!payment) {
+      return
+    }
+
+    await db.sponsorContributionPayment.update({
+      data: {
+        amountSent: payment.amountVerified
       },
       where: {
         sponsorCode
@@ -697,15 +710,24 @@ export const resetContributionCalculationAction = async (): Promise<{ message: s
   await getAuthUser()
 
   try {
-    await db.contributionAssessment.deleteMany()
-    await db.sponsorContributionPayment.deleteMany()
+    const latestAssessment = await fetchLatestContributionAssessment()
+
+    if (!latestAssessment) {
+      return { message: 'No contribution calculation found to reset.' }
+    }
+
+    await db.contributionAssessment.delete({
+      where: {
+        id: latestAssessment.id
+      }
+    })
 
     revalidatePath('/admin-count')
     revalidatePath('/admin-members')
     revalidatePath('/admin-sagicam-payments')
     revalidatePath('/all-members')
 
-    return { message: 'Contribution calculation reset successfully.' }
+    return { message: 'Latest contribution calculation reset successfully.' }
   } catch (error) {
     return renderError(error)
   }
