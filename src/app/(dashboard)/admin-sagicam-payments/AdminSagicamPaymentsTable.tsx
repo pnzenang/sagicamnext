@@ -63,13 +63,11 @@ const columns: AdminSagicamPaymentsColumn[] = [
   { key: 'registrationBalance', label: 'Registration balance', align: 'right' }
 ]
 
-const fixedLeftColumnCount = 2
-const fixedLeftColumnWidth = 20
-const flexibleColumnWidth = (100 - fixedLeftColumnCount * fixedLeftColumnWidth) / (columns.length - fixedLeftColumnCount)
+const contactColumnCount = 2
+const paymentColumnWidth = 8
+const contactColumnWidth = (100 - (columns.length - contactColumnCount) * paymentColumnWidth) / contactColumnCount
 
-const columnWidths = columns.map((_, index) =>
-  index < fixedLeftColumnCount ? fixedLeftColumnWidth : flexibleColumnWidth
-)
+const columnWidths = columns.map((_, index) => (index < contactColumnCount ? contactColumnWidth : paymentColumnWidth))
 
 const getSortIcon = (isActive: boolean, direction: SortDirection) => {
   if (!isActive) return <ArrowUpDown className='size-3.5' />
