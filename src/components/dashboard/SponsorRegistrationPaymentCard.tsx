@@ -47,7 +47,6 @@ const SponsorRegistrationPaymentCard = ({ amountExpected, amountSent }: SponsorR
               inputMode='decimal'
               min='0'
               step='0.01'
-              defaultValue={amountSent || ''}
               placeholder='0.00'
               className='bg-background pl-9 text-foreground'
               required
@@ -55,7 +54,7 @@ const SponsorRegistrationPaymentCard = ({ amountExpected, amountSent }: SponsorR
           </div>
         </div>
 
-        <SubmitButton text='Save registration amount' className='w-full whitespace-normal' />
+        <SubmitButton text='Add registration amount' className='w-full whitespace-normal' />
         {state.message ? <p className='text-sm font-semibold break-words'>{state.message}</p> : null}
       </div>
     </form>

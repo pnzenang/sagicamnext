@@ -39,6 +39,12 @@ const AdminSagicamPayments = async () => {
     }
   })
 
+  const sponsorRegistrationPayments = await db.sponsorRegistrationPayment.findMany({
+    orderBy: {
+      sponsorCode: 'asc'
+    }
+  })
+
   const memberCountsBySponsorCode = await db.member.groupBy({
     _count: {
       _all: true
@@ -85,6 +91,7 @@ const AdminSagicamPayments = async () => {
     new Set([
       ...(latestContributionAssessment?.groups.map(group => group.sponsorCode) ?? []),
       ...sponsorContributionPayments.map(payment => payment.sponsorCode),
+      ...sponsorRegistrationPayments.map(payment => payment.sponsorCode),
       ...statusCountsByCode.keys()
     ])
   ).sort((firstCode, secondCode) =>
@@ -110,11 +117,13 @@ const AdminSagicamPayments = async () => {
   const sponsorsByCode = new Map(sponsors.map(sponsor => [sponsor.sponsorCode, sponsor]))
   const owedByCode = new Map(latestContributionAssessment?.groups.map(group => [group.sponsorCode, group]) ?? [])
   const receivedByCode = new Map(sponsorContributionPayments.map(payment => [payment.sponsorCode, payment]))
+  const registrationPaymentsByCode = new Map(sponsorRegistrationPayments.map(payment => [payment.sponsorCode, payment]))
 
   const rows: AdminSagicamPaymentsRow[] = sponsorCodes.map(sponsorCode => {
     const sponsor = sponsorsByCode.get(sponsorCode)
     const amountOwed = decimalToNumber(owedByCode.get(sponsorCode)?.amountOwed)
     const amountReceived = decimalToNumber(receivedByCode.get(sponsorCode)?.amountSent)
+    const registrationPayment = registrationPaymentsByCode.get(sponsorCode)
 
     const statusCounts = statusCountsByCode.get(sponsorCode) ?? {
       awaitingPublication: 0,
@@ -124,7 +133,8 @@ const AdminSagicamPayments = async () => {
 
     const registrationFeeOwed =
       (statusCounts.pendingMembers + statusCounts.awaitingPublication) * registrationFeePerAwaitingMember
-    const registrationReceived = statusCounts.awaitingPublication * registrationFeePerAwaitingMember
+    const registrationAmountSent = decimalToNumber(registrationPayment?.amountSent)
+    const registrationReceived = decimalToNumber(registrationPayment?.amountVerified)
 
     return {
       amountOwed,
@@ -133,6 +143,7 @@ const AdminSagicamPayments = async () => {
       balance: Number((amountReceived - amountOwed).toFixed(2)),
       pendingMembers: statusCounts.pendingMembers,
       registrationBalance: Number((registrationFeeOwed - registrationReceived).toFixed(2)),
+      registrationAmountSent,
       registrationFeeOwed,
       registrationReceived,
       sponsorCode,
@@ -150,6 +161,7 @@ const AdminSagicamPayments = async () => {
       currentTotals.balance += row.balance
       currentTotals.pendingMembers += row.pendingMembers
       currentTotals.registrationBalance += row.registrationBalance
+      currentTotals.registrationAmountSent += row.registrationAmountSent
       currentTotals.registrationFeeOwed += row.registrationFeeOwed
       currentTotals.registrationReceived += row.registrationReceived
       currentTotals.vestedMembers += row.vestedMembers
@@ -163,6 +175,7 @@ const AdminSagicamPayments = async () => {
       balance: 0,
       pendingMembers: 0,
       registrationBalance: 0,
+      registrationAmountSent: 0,
       registrationFeeOwed: 0,
       registrationReceived: 0,
       vestedMembers: 0
@@ -175,7 +188,10 @@ const AdminSagicamPayments = async () => {
         <h1 className='text-4xl font-semibold tracking-normal'>Sagicam Payments</h1>
         <p className='text-muted-foreground mt-2 text-sm'>
           Sponsor payment summary from the latest contribution assessment
-          {latestContributionAssessment ? ` created on ${dateFormatter.format(latestContributionAssessment.createdAt)}` : ''}.
+          {latestContributionAssessment
+            ? ` created on ${dateFormatter.format(latestContributionAssessment.createdAt)}`
+            : ''}
+          .
         </p>
       </div>
 

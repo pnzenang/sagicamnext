@@ -17,6 +17,8 @@ const monthFormatter = new Intl.DateTimeFormat('en-US', {
   month: 'long'
 })
 
+const getPaymentBalance = (amountSent: number, amountUsed: number) => Number((amountSent - amountUsed).toFixed(2))
+
 const registrationFeePerAwaitingMember = 40
 
 const sagicamPaymentUrl =
@@ -237,12 +239,14 @@ type CurrentContribution = {
   amountOwed: number
   amountPerVestedMember: number
   amountReceived: number
+  balance: number
   sponsorCode: string
   vestedMembersCount: number
 }
 
 type CurrentRegistrationPayment = {
   amountReceived: number
+  amountVerified: number
   sponsorCode: string
 }
 
@@ -261,9 +265,10 @@ const MembersDataTable = ({
   const currentMonthName = monthFormatter.format(new Date())
   const monthlyContributionAmount = currentContribution.amountOwed
   const registrationPaymentAmount = membershipSummary.pending * registrationFeePerAwaitingMember
-  const contributionPaymentBalance = Number((monthlyContributionAmount - currentContribution.amountReceived).toFixed(2))
-  const registrationPaymentBalance = Number(
-    (registrationPaymentAmount - currentRegistrationPayment.amountReceived).toFixed(2)
+  const contributionPaymentBalance = currentContribution.balance
+  const registrationPaymentBalance = getPaymentBalance(
+    currentRegistrationPayment.amountVerified,
+    registrationPaymentAmount
   )
 
   const pageSize = 100
@@ -356,15 +361,7 @@ const MembersDataTable = ({
 
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Loved Ones')
 
-    worksheet['!cols'] = [
-      { wch: 14 },
-      { wch: 18 },
-      { wch: 24 },
-      { wch: 18 },
-      { wch: 14 },
-      { wch: 18 },
-      { wch: 18 }
-    ]
+    worksheet['!cols'] = [{ wch: 14 }, { wch: 18 }, { wch: 24 }, { wch: 18 }, { wch: 14 }, { wch: 18 }, { wch: 18 }]
 
     XLSX.writeFile(workbook, `loved-ones-filtered-export-${new Date().toISOString().split('T')[0]}.xlsx`)
   }
@@ -405,7 +402,7 @@ const MembersDataTable = ({
           <div className='w-full pb-4'>
             <div className='grid w-full grid-cols-1 items-stretch gap-4 md:grid-cols-2 xl:grid-cols-4'>
               <div className='grid h-full min-w-0 auto-rows-fr gap-4'>
-                <div className='border-primary/20 bg-primary/10 text-primary h-full min-w-0 rounded-md border px-3 py-3 sm:px-4'>
+                <div className='border-primary/20 bg-primary/10 text-primary flex h-full min-w-0 flex-col rounded-md border px-3 py-3 sm:px-4'>
                   <p className='text-lg font-extrabold break-words sm:text-xl'>
                     {currentMonthName}&apos;s Contribution: {currencyFormatter.format(monthlyContributionAmount)}
                   </p>
@@ -414,7 +411,7 @@ const MembersDataTable = ({
                     {currencyFormatter.format(currentContribution.amountPerVestedMember)}
                   </p>
                 </div>
-                <div className='border-primary/20 bg-primary/10 text-primary h-full min-w-0 rounded-md border px-3 py-3 sm:px-4'>
+                <div className='border-primary/20 bg-primary/10 text-primary flex h-full min-w-0 flex-col rounded-md border px-3 py-3 sm:px-4'>
                   <p className='text-lg font-extrabold break-words sm:text-xl'>
                     Your Registration Payment is: {currencyFormatter.format(registrationPaymentAmount)}
                   </p>
@@ -440,8 +437,8 @@ const MembersDataTable = ({
                 <div className='border-primary/20 bg-primary/10 text-primary flex h-full min-w-0 flex-col justify-center rounded-md border px-3 py-3 sm:px-4'>
                   <p className='text-lg font-extrabold break-words sm:text-xl'>Payment instructions</p>
                   <p className='text-primary/80 mt-1 text-sm font-semibold break-words'>
-                    Scan or click the QR code to send your payment by Zelle, then fill out the Contribution sent or
-                    Registration sent form. Add your sponsor code in the Zelle memo so the payment can be recognized.
+                    Scan or click the QR code to send your payment by Zelle. Add your sponsor code in the Zelle memo so
+                    the payment can be recognized, then fill out the Contribution sent or Registration sent form.
                   </p>
                 </div>
               </div>
@@ -452,41 +449,94 @@ const MembersDataTable = ({
                 />
                 <SponsorRegistrationPaymentCard
                   amountExpected={registrationPaymentAmount}
-                  amountSent={currentRegistrationPayment.amountReceived}
+                  amountSent={Math.max(
+                    currentRegistrationPayment.amountReceived,
+                    currentRegistrationPayment.amountVerified
+                  )}
                 />
               </div>
               <div className='grid h-full min-w-0 auto-rows-fr gap-4'>
-                <div className='border-primary/20 bg-primary/10 text-primary h-full min-w-0 rounded-md border px-3 py-3 sm:px-4'>
+                <div className='border-primary/20 bg-primary/10 text-primary flex h-full min-w-0 flex-col rounded-md border px-3 py-3 sm:px-4'>
                   <p className='text-lg font-extrabold break-words sm:text-xl'>Contribution payment summary</p>
-                  <p className='text-primary/80 mt-1 text-sm font-semibold break-words'>
-                    Amount Sent: {currencyFormatter.format(currentContribution.amountReceived)}
-                  </p>
-                  <p
+                  <div className='mt-2 grid gap-1.5 text-sm font-semibold'>
+                    <div className='text-primary/80 flex items-start justify-between gap-4'>
+                      <span className='min-w-0 break-words'>Amount Sent</span>
+                      <span className='shrink-0 text-right tabular-nums'>
+                        {currencyFormatter.format(currentContribution.amountReceived)}
+                      </span>
+                    </div>
+                    <div className='text-primary/80 flex items-start justify-between gap-4'>
+                      <span className='min-w-0 break-words'>
+                        Amount Used for {currentMonthName}&apos;s Contribution
+                      </span>
+                      <span className='shrink-0 text-right tabular-nums'>
+                        {currencyFormatter.format(monthlyContributionAmount)}
+                      </span>
+                    </div>
+                  </div>
+                  <div
                     className={cn(
-                      'mt-2 text-base font-extrabold break-words',
-                      contributionPaymentBalance <= 0 ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'
+                      'mt-2 flex items-start justify-between gap-4 text-base font-extrabold',
+                      contributionPaymentBalance >= 0
+                        ? 'text-green-700 dark:text-green-300'
+                        : 'text-red-700 dark:text-red-300'
                     )}
                   >
-                    Balance: {currencyFormatter.format(contributionPaymentBalance)}
-                  </p>
-                  <p className='text-primary/80 mt-3 text-xs font-semibold break-words'>
+                    <span className='min-w-0 break-words'>
+                      Balance{' '}
+                      {contributionPaymentBalance >= 0 ? (
+                        <span className='text-[10px] leading-tight font-medium'>(To be used for upcoming months)</span>
+                      ) : null}
+                    </span>
+                    <span className='shrink-0 text-right tabular-nums'>
+                      {currencyFormatter.format(contributionPaymentBalance)}
+                    </span>
+                  </div>
+                  <p className='text-primary/70 mt-auto pt-4 text-[10px] leading-tight font-medium break-words'>
                     All amounts will be verified by SAGICAM and reversed if not accurate.
                   </p>
                 </div>
-                <div className='border-primary/20 bg-primary/10 text-primary h-full min-w-0 rounded-md border px-3 py-3 sm:px-4'>
+                <div className='border-primary/20 bg-primary/10 text-primary flex h-full min-w-0 flex-col rounded-md border px-3 py-3 sm:px-4'>
                   <p className='text-lg font-extrabold break-words sm:text-xl'>Registration payment summary</p>
-                  <p className='text-primary/80 mt-1 text-sm font-semibold break-words'>
-                    Amount Sent: {currencyFormatter.format(currentRegistrationPayment.amountReceived)}
-                  </p>
-                  <p
+                  <div className='mt-2 grid gap-1.5 text-sm font-semibold'>
+                    <div className='text-primary/80 flex items-start justify-between gap-4'>
+                      <span className='min-w-0 break-words'>Amount Sent</span>
+                      <span className='shrink-0 text-right tabular-nums'>
+                        {currencyFormatter.format(currentRegistrationPayment.amountReceived)}
+                      </span>
+                    </div>
+                    <div className='text-primary/80 flex items-start justify-between gap-4'>
+                      <span className='min-w-0 break-words'>Amount Verified by SAGICAM</span>
+                      <span className='shrink-0 text-right tabular-nums'>
+                        {currencyFormatter.format(currentRegistrationPayment.amountVerified)}
+                      </span>
+                    </div>
+                    <div className='text-primary/80 flex items-start justify-between gap-4'>
+                      <span className='min-w-0 break-words'>Amount Used for Registration Payment</span>
+                      <span className='shrink-0 text-right tabular-nums'>
+                        {currencyFormatter.format(registrationPaymentAmount)}
+                      </span>
+                    </div>
+                  </div>
+                  <div
                     className={cn(
-                      'mt-2 text-base font-extrabold break-words',
-                      registrationPaymentBalance <= 0 ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'
+                      'mt-2 flex items-start justify-between gap-4 text-base font-extrabold',
+                      registrationPaymentBalance >= 0
+                        ? 'text-green-700 dark:text-green-300'
+                        : 'text-red-700 dark:text-red-300'
                     )}
                   >
-                    Balance: {currencyFormatter.format(registrationPaymentBalance)}
-                  </p>
-                  <p className='text-primary/80 mt-3 text-xs font-semibold break-words'>
+                    <span className='min-w-0 break-words'>
+                      Balance{' '}
+                      {registrationPaymentBalance >= 0 ? (
+                        <span className='text-[10px] leading-tight font-medium'>(To be used for upcoming months)</span>
+                      ) : null}
+                    </span>
+                    <span className='shrink-0 text-right tabular-nums'>
+                      {currencyFormatter.format(registrationPaymentBalance)}
+                    </span>
+                  </div>
+                  <p className='text-primary/70 mt-auto pt-4 text-[10px] leading-tight font-medium break-words'>
                     All amounts will be verified by SAGICAM and reversed if not accurate.
                   </p>
                 </div>
@@ -604,7 +654,9 @@ const MembersDataTable = ({
                           {{
                             asc: <ArrowUp className='shrink-0 opacity-60' size={16} aria-hidden='true' />,
                             desc: <ArrowDown className='shrink-0 opacity-60' size={16} aria-hidden='true' />
-                          }[header.column.getIsSorted() as string] ?? <ArrowUpDown className='shrink-0 opacity-60' size={16} aria-hidden='true' />}
+                          }[header.column.getIsSorted() as string] ?? (
+                            <ArrowUpDown className='shrink-0 opacity-60' size={16} aria-hidden='true' />
+                          )}
                         </div>
                       ) : (
                         flexRender(header.column.columnDef.header, header.getContext())
@@ -620,7 +672,11 @@ const MembersDataTable = ({
               table.getRowModel().rows.map(row => (
                 <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'} className='hover:bg-primary/30'>
                   {row.getVisibleCells().map(cell => (
-                    <TableCell key={cell.id} style={{ width: `${100 / row.getVisibleCells().length}%` }} className='h-14 px-4'>
+                    <TableCell
+                      key={cell.id}
+                      style={{ width: `${100 / row.getVisibleCells().length}%` }}
+                      className='h-14 px-4'
+                    >
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}

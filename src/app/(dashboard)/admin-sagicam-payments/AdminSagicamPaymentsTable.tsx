@@ -2,9 +2,15 @@
 
 import { useMemo, useState } from 'react'
 
-import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react'
+import { ArrowDown, ArrowUp, ArrowUpDown, CheckCircle2, CircleDollarSign, RotateCcw } from 'lucide-react'
 
+import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import {
+  resetSponsorRegistrationPaymentAction,
+  setSponsorRegistrationPaidAction,
+  verifySponsorRegistrationPaymentAction
+} from '@/utils/actions'
 
 const currencyFormatter = new Intl.NumberFormat('en-US', {
   currency: 'USD',
@@ -17,6 +23,7 @@ export type AdminSagicamPaymentsRow = {
   awaitingPublication: number
   balance: number
   pendingMembers: number
+  registrationAmountSent: number
   registrationBalance: number
   registrationFeeOwed: number
   registrationReceived: number
@@ -33,6 +40,7 @@ export type AdminSagicamPaymentsTotals = Pick<
   | 'awaitingPublication'
   | 'balance'
   | 'pendingMembers'
+  | 'registrationAmountSent'
   | 'registrationBalance'
   | 'registrationFeeOwed'
   | 'registrationReceived'
@@ -57,7 +65,8 @@ const columns: AdminSagicamPaymentsColumn[] = [
   { key: 'amountReceived', label: 'Contribution received', align: 'right' },
   { key: 'balance', label: 'Contribution Balance', align: 'right' },
   { key: 'registrationFeeOwed', label: 'Registration owed', align: 'right' },
-  { key: 'registrationReceived', label: 'Registration received', align: 'right' },
+  { key: 'registrationAmountSent', label: 'Registration sent', align: 'right' },
+  { key: 'registrationReceived', label: 'Registration verified', align: 'right' },
   { key: 'registrationBalance', label: 'Registration balance', align: 'right' }
 ]
 
@@ -69,10 +78,7 @@ const getSortIcon = (isActive: boolean, direction: SortDirection) => {
   return direction === 'asc' ? <ArrowUp className='size-3.5' /> : <ArrowDown className='size-3.5' />
 }
 
-const compareValues = (
-  firstValue: AdminSagicamPaymentsRow[SortKey],
-  secondValue: AdminSagicamPaymentsRow[SortKey]
-) => {
+const compareValues = (firstValue: AdminSagicamPaymentsRow[SortKey], secondValue: AdminSagicamPaymentsRow[SortKey]) => {
   if (typeof firstValue === 'number' && typeof secondValue === 'number') {
     return firstValue - secondValue
   }
@@ -81,6 +87,51 @@ const compareValues = (
     numeric: true,
     sensitivity: 'base'
   })
+}
+
+const RegistrationPaymentControls = ({ row }: { row: AdminSagicamPaymentsRow }) => {
+  const hasSubmittedPayment = row.registrationAmountSent > 0
+  const hasPaymentValues = row.registrationAmountSent > 0 || row.registrationReceived > 0
+  const canSetPaid = row.registrationFeeOwed > 0
+
+  return (
+    <div className='mt-2 flex flex-wrap justify-end gap-1'>
+      <form action={verifySponsorRegistrationPaymentAction}>
+        <input type='hidden' name='sponsorCode' value={row.sponsorCode} />
+        <Button
+          type='submit'
+          size='xs'
+          variant='outline'
+          disabled={!hasSubmittedPayment}
+          className='h-7 px-2 text-[11px]'
+        >
+          <CheckCircle2 className='size-3' />
+          Verify
+        </Button>
+      </form>
+      <form action={setSponsorRegistrationPaidAction}>
+        <input type='hidden' name='sponsorCode' value={row.sponsorCode} />
+        <input type='hidden' name='registrationAmountOwed' value={row.registrationFeeOwed.toFixed(2)} />
+        <Button type='submit' size='xs' variant='secondary' disabled={!canSetPaid} className='h-7 px-2 text-[11px]'>
+          <CircleDollarSign className='size-3' />
+          Paid
+        </Button>
+      </form>
+      <form action={resetSponsorRegistrationPaymentAction}>
+        <input type='hidden' name='sponsorCode' value={row.sponsorCode} />
+        <Button
+          type='submit'
+          size='xs'
+          variant='destructive'
+          disabled={!hasPaymentValues}
+          className='h-7 px-2 text-[11px]'
+        >
+          <RotateCcw className='size-3' />
+          Reset
+        </Button>
+      </form>
+    </div>
+  )
 }
 
 const AdminSagicamPaymentsTable = ({
@@ -175,16 +226,22 @@ const AdminSagicamPaymentsTable = ({
                   {currencyFormatter.format(row.registrationFeeOwed)}
                 </TableCell>
                 <TableCell className='text-right font-semibold'>
+                  {currencyFormatter.format(row.registrationAmountSent)}
+                </TableCell>
+                <TableCell className='text-right font-semibold'>
                   {currencyFormatter.format(row.registrationReceived)}
                 </TableCell>
                 <TableCell
-                  className={`text-right font-semibold ${
+                  className={`text-right align-top font-semibold ${
                     row.registrationBalance >= 0
                       ? 'bg-green-600/10 text-green-700 dark:text-green-300'
                       : 'bg-red-600/10 text-red-700 dark:text-red-300'
                   }`}
                 >
-                  {currencyFormatter.format(row.registrationBalance)}
+                  <div className='flex min-w-0 flex-col items-end'>
+                    <span>{currencyFormatter.format(row.registrationBalance)}</span>
+                    <RegistrationPaymentControls row={row} />
+                  </div>
                 </TableCell>
               </TableRow>
             ))
@@ -197,15 +254,16 @@ const AdminSagicamPaymentsTable = ({
               <TableCell className='text-right font-extrabold'>{totals.vestedMembers}</TableCell>
               <TableCell className='text-right font-extrabold'>{totals.awaitingPublication}</TableCell>
               <TableCell className='text-right font-extrabold'>{totals.pendingMembers}</TableCell>
-              <TableCell className='text-right font-extrabold'>
-                {currencyFormatter.format(totals.amountOwed)}
-              </TableCell>
+              <TableCell className='text-right font-extrabold'>{currencyFormatter.format(totals.amountOwed)}</TableCell>
               <TableCell className='text-right font-extrabold'>
                 {currencyFormatter.format(totals.amountReceived)}
               </TableCell>
               <TableCell className='text-right font-extrabold'>{currencyFormatter.format(totals.balance)}</TableCell>
               <TableCell className='bg-white text-right font-extrabold text-black dark:bg-white dark:text-black'>
                 {currencyFormatter.format(totals.registrationFeeOwed)}
+              </TableCell>
+              <TableCell className='text-right font-extrabold'>
+                {currencyFormatter.format(totals.registrationAmountSent)}
               </TableCell>
               <TableCell className='text-right font-extrabold'>
                 {currencyFormatter.format(totals.registrationReceived)}

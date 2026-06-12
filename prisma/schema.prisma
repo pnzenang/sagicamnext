@@ -14,106 +14,108 @@ datasource db {
 }
 
 model Profile {
-  id String @id @default(uuid())
-  clerkId String @unique
-  sponsorCode String @unique
-  sponsorFirstName String
+  id                       String   @id @default(uuid())
+  clerkId                  String   @unique
+  sponsorCode              String   @unique
+  sponsorFirstName         String
   sponsorLastAndMiddleName String
-  sponsorPhoneNumber String
-  sponsorEmail String
-  createdAt DateTime @default(now())
-  updateAt DateTime @updatedAt
-
-
+  sponsorPhoneNumber       String
+  sponsorEmail             String
+  createdAt                DateTime @default(now())
+  updateAt                 DateTime @updatedAt
 }
 
 model Member {
-  id String @id @default(uuid())
-  clerkId String
-  firstName String
-  lastAndMiddleNames String
-  dateOfBirth String
-  countryOfBirth String
+  id                        String   @id @default(uuid())
+  clerkId                   String
+  firstName                 String
+  lastAndMiddleNames        String
+  dateOfBirth               String
+  countryOfBirth            String
   memberMatriculationNumber String
-  delegateRecommendation String
-  memberStatus String
-  nameOfBeneficiary String
-  sponsorCode String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  @@unique([firstName, lastAndMiddleNames,dateOfBirth, delegateRecommendation])
-}
-model RemovedMember {
-  id String @id @default(uuid())
-  clerkId String
-  firstName String
-  lastAndMiddleNames String
-  dateOfBirth String
-  countryOfBirth String
-  memberMatriculationNumber String
-  sponsorCode String
-  reasonForLeaving String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-model DeceasedMember {
-  id String @id @default(uuid())
-  clerkId String
-  firstName String
-  lastAndMiddleNames String
-  countryOfBirth String
-  memberMatriculationNumber String
-  registrationDate String
-  nameOfBeneficiary String
-  sponsorCode String
-  dateOfDeath String
-  placeOfDeath String
-  contributionStatus String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  delegateRecommendation    String
+  memberStatus              String
+  nameOfBeneficiary         String
+  sponsorCode               String
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
 
+  @@unique([firstName, lastAndMiddleNames, dateOfBirth, delegateRecommendation])
+}
+
+model RemovedMember {
+  id                        String   @id @default(uuid())
+  clerkId                   String
+  firstName                 String
+  lastAndMiddleNames        String
+  dateOfBirth               String
+  countryOfBirth            String
+  memberMatriculationNumber String
+  sponsorCode               String
+  reasonForLeaving          String
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+}
+
+model DeceasedMember {
+  id                        String   @id @default(uuid())
+  clerkId                   String
+  firstName                 String
+  lastAndMiddleNames        String
+  countryOfBirth            String
+  memberMatriculationNumber String
+  registrationDate          String
+  nameOfBeneficiary         String
+  sponsorCode               String
+  dateOfDeath               String
+  placeOfDeath              String
+  contributionStatus        String
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
 }
 
 model ContributionAssessment {
-  id String @id @default(uuid())
-  totalAmount Decimal @db.Decimal(10, 2)
-  totalVestedMembers Int
-  amountPerVestedMember Decimal @db.Decimal(10, 2)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  groups ContributionAssessmentGroup[]
+  id                    String                        @id @default(uuid())
+  totalAmount           Decimal                       @db.Decimal(10, 2)
+  totalVestedMembers    Int
+  amountPerVestedMember Decimal                       @db.Decimal(10, 2)
+  createdAt             DateTime                      @default(now())
+  updatedAt             DateTime                      @updatedAt
+  groups                ContributionAssessmentGroup[]
 }
 
 model ContributionAssessmentGroup {
-  id String @id @default(uuid())
-  assessmentId String
-  sponsorCode String
+  id                 String                 @id @default(uuid())
+  assessmentId       String
+  sponsorCode        String
   vestedMembersCount Int
-  amountOwed Decimal @db.Decimal(10, 2)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  assessment ContributionAssessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  amountOwed         Decimal                @db.Decimal(10, 2)
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+  assessment         ContributionAssessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
 
   @@unique([assessmentId, sponsorCode])
   @@index([sponsorCode])
 }
 
 model SponsorContributionPayment {
-  id String @id @default(uuid())
-  sponsorCode String @unique
-  amountSent Decimal @db.Decimal(10, 2)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(uuid())
+  sponsorCode String   @unique
+  amountSent  Decimal  @db.Decimal(10, 2)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@index([sponsorCode])
 }
 
 model SponsorRegistrationPayment {
-  id String @id @default(uuid())
-  sponsorCode String @unique
-  amountSent Decimal @db.Decimal(10, 2)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             String    @id @default(uuid())
+  sponsorCode    String    @unique
+  amountSent     Decimal   @db.Decimal(10, 2)
+  amountVerified Decimal   @default(0) @db.Decimal(10, 2)
+  verifiedAt     DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   @@index([sponsorCode])
 }

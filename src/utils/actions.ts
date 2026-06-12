@@ -84,6 +84,29 @@ const renderError = (error: unknown): { message: string } => {
 
 const decimalToNumber = (value: unknown) => Number(value ?? 0)
 
+const getRequiredFormValue = (formData: FormData, fieldName: string) => {
+  const value = String(formData.get(fieldName) ?? '').trim()
+
+  if (!value) {
+    throw new Error(`${fieldName} is required.`)
+  }
+
+  return value
+}
+
+const getDollarAmountFromForm = (formData: FormData, fieldName: string) => {
+  const rawAmount = String(formData.get(fieldName) ?? '')
+    .replace(/[$,]/g, '')
+    .trim()
+  const amount = Number(rawAmount)
+
+  if (!Number.isFinite(amount) || amount < 0) {
+    throw new Error('Enter a valid dollar amount.')
+  }
+
+  return amount
+}
+
 const fetchLatestContributionAssessment = async () => {
   return db.contributionAssessment.findFirst({
     include: {
@@ -274,10 +297,14 @@ export const fetchCurrentSponsorContribution = async () => {
     }
   })
 
+  const amountOwed = Number((amountPerVestedMember * vestedMembersCount).toFixed(2))
+  const amountReceived = decimalToNumber(payment?.amountSent)
+
   return {
-    amountOwed: Number((amountPerVestedMember * vestedMembersCount).toFixed(2)),
+    amountOwed,
     amountPerVestedMember,
-    amountReceived: decimalToNumber(payment?.amountSent),
+    amountReceived,
+    balance: Number((amountReceived - amountOwed).toFixed(2)),
     sponsorCode: profile.sponsorCode,
     vestedMembersCount
   }
@@ -294,6 +321,7 @@ export const fetchCurrentSponsorRegistrationPayment = async () => {
 
   return {
     amountReceived: decimalToNumber(payment?.amountSent),
+    amountVerified: decimalToNumber(payment?.amountVerified),
     sponsorCode: profile.sponsorCode
   }
 }
@@ -395,23 +423,17 @@ export const saveSponsorContributionPaymentAction = async (
       throw new Error('Sponsor profile not found.')
     }
 
-    const rawAmount = String(formData.get('amountSent') ?? '')
-      .replace(/[$,]/g, '')
-      .trim()
+    const amountSent = getDollarAmountFromForm(formData, 'amountSent')
 
-    const amountSent = Number(rawAmount)
-
-    if (!Number.isFinite(amountSent) || amountSent < 0) {
-      throw new Error('Enter a valid dollar amount.')
-    }
-
-    await db.sponsorContributionPayment.upsert({
+    const payment = await db.sponsorContributionPayment.upsert({
       create: {
         amountSent,
         sponsorCode: profile.sponsorCode
       },
       update: {
-        amountSent
+        amountSent: {
+          increment: amountSent
+        }
       },
       where: {
         sponsorCode: profile.sponsorCode
@@ -422,7 +444,9 @@ export const saveSponsorContributionPaymentAction = async (
     revalidatePath('/admin-sagicam-payments')
     revalidatePath('/all-members')
 
-    return { message: `Saved amount sent: ${currencyFormatter.format(amountSent)}.` }
+    return {
+      message: `Added amount sent: ${currencyFormatter.format(amountSent)}. Total sent: ${currencyFormatter.format(decimalToNumber(payment.amountSent))}.`
+    }
   } catch (error) {
     return renderError(error)
   }
@@ -448,23 +472,18 @@ export const saveSponsorRegistrationPaymentAction = async (
       throw new Error('Sponsor profile not found.')
     }
 
-    const rawAmount = String(formData.get('registrationAmountSent') ?? '')
-      .replace(/[$,]/g, '')
-      .trim()
+    const amountSent = getDollarAmountFromForm(formData, 'registrationAmountSent')
 
-    const amountSent = Number(rawAmount)
-
-    if (!Number.isFinite(amountSent) || amountSent < 0) {
-      throw new Error('Enter a valid dollar amount.')
-    }
-
-    await db.sponsorRegistrationPayment.upsert({
+    const payment = await db.sponsorRegistrationPayment.upsert({
       create: {
+        amountVerified: 0,
         amountSent,
         sponsorCode: profile.sponsorCode
       },
       update: {
-        amountSent
+        amountSent: {
+          increment: amountSent
+        }
       },
       where: {
         sponsorCode: profile.sponsorCode
@@ -475,9 +494,106 @@ export const saveSponsorRegistrationPaymentAction = async (
     revalidatePath('/admin-sagicam-payments')
     revalidatePath('/all-members')
 
-    return { message: `Saved registration amount sent: ${currencyFormatter.format(amountSent)}.` }
+    return {
+      message: `Added registration amount sent: ${currencyFormatter.format(amountSent)}. Total sent: ${currencyFormatter.format(decimalToNumber(payment.amountSent))}.`
+    }
   } catch (error) {
     return renderError(error)
+  }
+}
+
+export const verifySponsorRegistrationPaymentAction = async (formData: FormData): Promise<void> => {
+  await getAuthUser()
+
+  try {
+    const sponsorCode = getRequiredFormValue(formData, 'sponsorCode')
+
+    const payment = await db.sponsorRegistrationPayment.findUnique({
+      where: {
+        sponsorCode
+      }
+    })
+
+    if (!payment) {
+      throw new Error('No registration payment found for this sponsor code.')
+    }
+
+    const amountSent = decimalToNumber(payment.amountSent)
+
+    await db.sponsorRegistrationPayment.update({
+      data: {
+        amountVerified: amountSent,
+        verifiedAt: new Date()
+      },
+      where: {
+        sponsorCode
+      }
+    })
+
+    revalidatePath('/admin-sagicam-payments')
+    revalidatePath('/all-members')
+  } catch (error) {
+    renderError(error)
+  }
+}
+
+export const setSponsorRegistrationPaidAction = async (formData: FormData): Promise<void> => {
+  await getAuthUser()
+
+  try {
+    const sponsorCode = getRequiredFormValue(formData, 'sponsorCode')
+    const registrationAmountOwed = getDollarAmountFromForm(formData, 'registrationAmountOwed')
+
+    await db.sponsorRegistrationPayment.upsert({
+      create: {
+        amountSent: registrationAmountOwed,
+        amountVerified: registrationAmountOwed,
+        sponsorCode,
+        verifiedAt: new Date()
+      },
+      update: {
+        amountVerified: registrationAmountOwed,
+        verifiedAt: new Date()
+      },
+      where: {
+        sponsorCode
+      }
+    })
+
+    revalidatePath('/admin-sagicam-payments')
+    revalidatePath('/all-members')
+  } catch (error) {
+    renderError(error)
+  }
+}
+
+export const resetSponsorRegistrationPaymentAction = async (formData: FormData): Promise<void> => {
+  await getAuthUser()
+
+  try {
+    const sponsorCode = getRequiredFormValue(formData, 'sponsorCode')
+
+    await db.sponsorRegistrationPayment.upsert({
+      create: {
+        amountSent: 0,
+        amountVerified: 0,
+        sponsorCode,
+        verifiedAt: null
+      },
+      update: {
+        amountSent: 0,
+        amountVerified: 0,
+        verifiedAt: null
+      },
+      where: {
+        sponsorCode
+      }
+    })
+
+    revalidatePath('/admin-sagicam-payments')
+    revalidatePath('/all-members')
+  } catch (error) {
+    renderError(error)
   }
 }
 
