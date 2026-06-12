@@ -76,7 +76,7 @@ const columns: AdminSagicamPaymentsColumn[] = [
   { key: 'registrationBalance', label: 'Registration balance', align: 'right' }
 ]
 
-const balanceColumnWidth = 20
+const balanceColumnWidth = 15
 const regularColumnWidth = (100 - balanceColumnWidth * 2) / (columns.length - 2)
 
 const getColumnWidth = (columnKey: SortKey) =>
