@@ -392,12 +392,14 @@ const MembersDataTable = ({
   })
 
   return (
-    <div className='border-primary w-full rounded border'>
+    <div className='border-primary w-full rounded-none border-x-0 border-y sm:rounded sm:border'>
       <div className='border-b'>
-        <div className='flex flex-col gap-4 border-b p-4 sm:p-6'>
-          <span className='text-2xl font-semibold sm:text-4xl lg:text-6xl'>All Registered Loved Ones</span>
-          <MembershipSummaryCards {...membershipSummary} />
-          <div className='w-full pb-4'>
+        <div className='flex flex-col gap-4 border-b py-4 sm:p-6'>
+          <span className='px-3 text-2xl font-semibold sm:px-0 sm:text-4xl lg:text-6xl'>All Registered Loved Ones</span>
+          <div className='px-3 sm:px-0'>
+            <MembershipSummaryCards {...membershipSummary} />
+          </div>
+          <div className='w-full pb-4 sm:pb-0'>
             <div className='grid w-full grid-cols-1 items-stretch gap-4 md:grid-cols-2 xl:grid-cols-4'>
               <div className='grid h-full min-w-0 auto-rows-fr gap-4'>
                 <div className='border-primary/20 bg-primary/10 text-primary h-full min-w-0 rounded-md border px-3 py-3 sm:px-4'>
