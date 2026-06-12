@@ -16,6 +16,7 @@ export type AdminSagicamPaymentsRow = {
   amountReceived: number
   awaitingPublication: number
   balance: number
+  pendingMembers: number
   registrationBalance: number
   registrationFeeOwed: number
   registrationReceived: number
@@ -31,6 +32,7 @@ export type AdminSagicamPaymentsTotals = Pick<
   | 'amountReceived'
   | 'awaitingPublication'
   | 'balance'
+  | 'pendingMembers'
   | 'registrationBalance'
   | 'registrationFeeOwed'
   | 'registrationReceived'
@@ -52,6 +54,7 @@ const columns: AdminSagicamPaymentsColumn[] = [
   { key: 'sponsorCode', label: 'Code' },
   { key: 'vestedMembers', label: 'Vested', align: 'right' },
   { key: 'awaitingPublication', label: 'Awaiting', align: 'right' },
+  { key: 'pendingMembers', label: 'Pending', align: 'right' },
   { key: 'amountOwed', label: 'Contribution owed', align: 'right' },
   { key: 'amountReceived', label: 'Contribution received', align: 'right' },
   { key: 'balance', label: 'Balance', align: 'right' },
@@ -179,6 +182,7 @@ const AdminSagicamPaymentsTable = ({
                 <TableCell>{row.sponsorCode}</TableCell>
                 <TableCell className='text-right font-semibold'>{row.vestedMembers}</TableCell>
                 <TableCell className='text-right font-semibold'>{row.awaitingPublication}</TableCell>
+                <TableCell className='text-right font-semibold'>{row.pendingMembers}</TableCell>
                 <TableCell className='text-right font-semibold'>{currencyFormatter.format(row.amountOwed)}</TableCell>
                 <TableCell className='text-right font-semibold'>
                   {currencyFormatter.format(row.amountReceived)}
@@ -221,6 +225,7 @@ const AdminSagicamPaymentsTable = ({
               <TableCell />
               <TableCell className='text-right font-extrabold'>{totals.vestedMembers}</TableCell>
               <TableCell className='text-right font-extrabold'>{totals.awaitingPublication}</TableCell>
+              <TableCell className='text-right font-extrabold'>{totals.pendingMembers}</TableCell>
               <TableCell className='text-right font-extrabold'>
                 {currencyFormatter.format(totals.amountOwed)}
               </TableCell>

@@ -55,16 +55,20 @@ const AdminSagicamPayments = async () => {
     },
     where: {
       memberStatus: {
-        in: [memberStatus.Vested, memberStatus.Awaiting]
+        in: [memberStatus.Vested, memberStatus.Awaiting, memberStatus.Pending]
       }
     }
   })
 
-  const statusCountsByCode = new Map<string, { awaitingPublication: number; vestedMembers: number }>()
+  const statusCountsByCode = new Map<
+    string,
+    { awaitingPublication: number; pendingMembers: number; vestedMembers: number }
+  >()
 
   memberCountsBySponsorCode.forEach(item => {
     const currentCounts = statusCountsByCode.get(item.sponsorCode) ?? {
       awaitingPublication: 0,
+      pendingMembers: 0,
       vestedMembers: 0
     }
 
@@ -74,6 +78,10 @@ const AdminSagicamPayments = async () => {
 
     if (item.memberStatus === memberStatus.Awaiting) {
       currentCounts.awaitingPublication = item._count._all
+    }
+
+    if (item.memberStatus === memberStatus.Pending) {
+      currentCounts.pendingMembers = item._count._all
     }
 
     statusCountsByCode.set(item.sponsorCode, currentCounts)
@@ -118,6 +126,7 @@ const AdminSagicamPayments = async () => {
 
     const statusCounts = statusCountsByCode.get(sponsorCode) ?? {
       awaitingPublication: 0,
+      pendingMembers: 0,
       vestedMembers: 0
     }
 
@@ -129,6 +138,7 @@ const AdminSagicamPayments = async () => {
       amountReceived,
       awaitingPublication: statusCounts.awaitingPublication,
       balance: Number((amountReceived - amountOwed).toFixed(2)),
+      pendingMembers: statusCounts.pendingMembers,
       registrationBalance: Number((registrationReceived - registrationFeeOwed).toFixed(2)),
       registrationFeeOwed,
       registrationReceived,
@@ -145,6 +155,7 @@ const AdminSagicamPayments = async () => {
       currentTotals.amountReceived += row.amountReceived
       currentTotals.awaitingPublication += row.awaitingPublication
       currentTotals.balance += row.balance
+      currentTotals.pendingMembers += row.pendingMembers
       currentTotals.registrationBalance += row.registrationBalance
       currentTotals.registrationFeeOwed += row.registrationFeeOwed
       currentTotals.registrationReceived += row.registrationReceived
@@ -157,6 +168,7 @@ const AdminSagicamPayments = async () => {
       amountReceived: 0,
       awaitingPublication: 0,
       balance: 0,
+      pendingMembers: 0,
       registrationBalance: 0,
       registrationFeeOwed: 0,
       registrationReceived: 0,
