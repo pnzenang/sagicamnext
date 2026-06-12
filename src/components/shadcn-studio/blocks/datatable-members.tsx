@@ -393,10 +393,10 @@ const MembersDataTable = ({
         <div className='flex flex-col gap-4 border-b p-6'>
           <span className='text-2xl font-semibold sm:text-4xl lg:text-6xl'>All Registered Loved Ones</span>
           <MembershipSummaryCards {...membershipSummary} />
-          <div className='flex justify-center px-6 pb-4'>
-            <div className='grid w-full max-w-6xl gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(13rem,0.7fr)_minmax(0,1.15fr)] xl:items-stretch'>
-              <div className='grid h-full gap-4'>
-                <div className='border-primary/20 bg-primary/10 text-primary rounded-md border px-4 py-3'>
+          <div className='w-full pb-4'>
+            <div className='grid w-full gap-4 lg:grid-cols-2 xl:grid-cols-3 xl:items-stretch'>
+              <div className='grid h-full auto-rows-fr gap-4'>
+                <div className='border-primary/20 bg-primary/10 text-primary h-full w-full rounded-md border px-4 py-3'>
                   <p className='text-xl font-extrabold sm:text-2xl'>
                     Your Contribution This Month is: {currencyFormatter.format(monthlyContributionAmount)}
                   </p>
@@ -405,7 +405,7 @@ const MembersDataTable = ({
                     {currencyFormatter.format(currentContribution.amountPerVestedMember)}
                   </p>
                 </div>
-                <div className='border-primary/20 bg-primary/10 text-primary rounded-md border px-4 py-3'>
+                <div className='border-primary/20 bg-primary/10 text-primary h-full w-full rounded-md border px-4 py-3'>
                   <p className='text-xl font-extrabold sm:text-2xl'>
                     Your Registration Payment is: {currencyFormatter.format(registrationPaymentAmount)}
                   </p>
@@ -415,13 +415,22 @@ const MembersDataTable = ({
                   </p>
                 </div>
               </div>
-              <Link
-                href={sagicamPaymentUrl}
-                className='border-primary/20 bg-background flex h-full min-h-48 w-full items-center justify-center rounded-md border p-3'
-              >
-                <Image src={sagicamQrCodeUrl} width={190} height={190} alt='SAGICAM payment QR code' />
-              </Link>
-              <div className='grid h-full gap-4'>
+              <div className='grid h-full auto-rows-fr gap-4'>
+                <Link
+                  href={sagicamPaymentUrl}
+                  className='border-primary/20 bg-background flex h-full min-h-48 w-full items-center justify-center rounded-md border p-3'
+                >
+                  <Image src={sagicamQrCodeUrl} width={190} height={190} alt='SAGICAM payment QR code' />
+                </Link>
+                <Link
+                  href='/payment-instructions'
+                  className='border-primary/20 bg-primary/10 text-primary flex h-full w-full flex-col justify-center rounded-md border px-4 py-3'
+                >
+                  <p className='text-xl font-extrabold sm:text-2xl'>Payment instructions</p>
+                  <p className='text-primary/80 mt-1 text-sm font-semibold'>Review current SAGICAM payment details.</p>
+                </Link>
+              </div>
+              <div className='grid h-full auto-rows-fr gap-4'>
                 <SponsorContributionPaymentCard
                   amountExpected={monthlyContributionAmount}
                   amountSent={currentContribution.amountReceived}
