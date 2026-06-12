@@ -120,6 +120,17 @@ model SponsorContributionUsage {
   @@index([sponsorCode])
 }
 
+model SponsorContributionCredit {
+  id                        String   @id @default(uuid())
+  sponsorCode               String
+  memberMatriculationNumber String   @unique
+  amountCredited            Decimal  @default(30) @db.Decimal(10, 2)
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+
+  @@index([sponsorCode])
+}
+
 model SponsorRegistrationPayment {
   id             String    @id @default(uuid())
   sponsorCode    String    @unique

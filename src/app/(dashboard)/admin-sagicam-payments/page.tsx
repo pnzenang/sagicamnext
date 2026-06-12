@@ -11,7 +11,6 @@ const dateFormatter = new Intl.DateTimeFormat('en-US', {
 })
 
 const decimalToNumber = (value: unknown) => Number(value ?? 0)
-const contributionCreditPerVestedMember = 30
 const registrationFeePerAwaitingMember = 40
 
 const AdminSagicamPayments = async () => {
@@ -51,6 +50,16 @@ const AdminSagicamPayments = async () => {
   })
 
   const sponsorContributionUsages = await db.sponsorContributionUsage.findMany({
+    orderBy: {
+      sponsorCode: 'asc'
+    }
+  })
+
+  const contributionCreditsBySponsorCode = await db.sponsorContributionCredit.groupBy({
+    _sum: {
+      amountCredited: true
+    },
+    by: ['sponsorCode'],
     orderBy: {
       sponsorCode: 'asc'
     }
@@ -109,6 +118,7 @@ const AdminSagicamPayments = async () => {
       ...(latestContributionAssessment?.groups.map(group => group.sponsorCode) ?? []),
       ...contributionTotalsBySponsorCode.map(group => group.sponsorCode),
       ...sponsorContributionUsages.map(usage => usage.sponsorCode),
+      ...contributionCreditsBySponsorCode.map(credit => credit.sponsorCode),
       ...sponsorContributionPayments.map(payment => payment.sponsorCode),
       ...sponsorRegistrationPayments.map(payment => payment.sponsorCode),
       ...statusCountsByCode.keys()
@@ -139,6 +149,9 @@ const AdminSagicamPayments = async () => {
     contributionTotalsBySponsorCode.map(group => [group.sponsorCode, group._sum.amountOwed])
   )
   const usedByCode = new Map(sponsorContributionUsages.map(usage => [usage.sponsorCode, usage.amountUsed]))
+  const contributionCreditByCode = new Map(
+    contributionCreditsBySponsorCode.map(credit => [credit.sponsorCode, credit._sum.amountCredited])
+  )
   const receivedByCode = new Map(sponsorContributionPayments.map(payment => [payment.sponsorCode, payment]))
   const registrationPaymentsByCode = new Map(sponsorRegistrationPayments.map(payment => [payment.sponsorCode, payment]))
 
@@ -158,7 +171,7 @@ const AdminSagicamPayments = async () => {
       pendingMembers: 0,
       vestedMembers: 0
     }
-    const vestedContributionCredit = statusCounts.vestedMembers * contributionCreditPerVestedMember
+    const vestedContributionCredit = decimalToNumber(contributionCreditByCode.get(sponsorCode))
 
     const registrationFeeOwed = statusCounts.pendingMembers * registrationFeePerAwaitingMember
     const registrationAmountUsed =
