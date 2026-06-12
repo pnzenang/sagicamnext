@@ -13,6 +13,10 @@ const currencyFormatter = new Intl.NumberFormat('en-US', {
   style: 'currency'
 })
 
+const monthFormatter = new Intl.DateTimeFormat('en-US', {
+  month: 'long'
+})
+
 const registrationFeePerAwaitingMember = 40
 
 const sagicamPaymentUrl =
@@ -254,6 +258,7 @@ const MembersDataTable = ({
   membershipSummary: MembershipSummary
 }) => {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
+  const currentMonthName = monthFormatter.format(new Date())
   const monthlyContributionAmount = currentContribution.amountOwed
   const registrationPaymentAmount = membershipSummary.pending * registrationFeePerAwaitingMember
   const contributionPaymentBalance = Number((monthlyContributionAmount - currentContribution.amountReceived).toFixed(2))
@@ -402,7 +407,7 @@ const MembersDataTable = ({
               <div className='grid h-full min-w-0 auto-rows-fr gap-4'>
                 <div className='border-primary/20 bg-primary/10 text-primary h-full min-w-0 rounded-md border px-3 py-3 sm:px-4'>
                   <p className='text-lg font-extrabold break-words sm:text-xl'>
-                    Your Contribution This Month is: {currencyFormatter.format(monthlyContributionAmount)}
+                    {currentMonthName}&apos;s Contribution: {currencyFormatter.format(monthlyContributionAmount)}
                   </p>
                   <p className='text-primary/80 mt-1 text-sm font-semibold break-words'>
                     {currentContribution.vestedMembersCount} vested loved one(s) x{' '}
@@ -436,7 +441,7 @@ const MembersDataTable = ({
                   <p className='text-lg font-extrabold break-words sm:text-xl'>Payment instructions</p>
                   <p className='text-primary/80 mt-1 text-sm font-semibold break-words'>
                     Scan or click the QR code to send your payment by Zelle, then fill out the Contribution sent or
-                    Registration sent form.
+                    Registration sent form. Add your sponsor code in the Zelle memo so the payment can be recognized.
                   </p>
                 </div>
               </div>
@@ -454,7 +459,7 @@ const MembersDataTable = ({
                 <div className='border-primary/20 bg-primary/10 text-primary h-full min-w-0 rounded-md border px-3 py-3 sm:px-4'>
                   <p className='text-lg font-extrabold break-words sm:text-xl'>Contribution payment summary</p>
                   <p className='text-primary/80 mt-1 text-sm font-semibold break-words'>
-                    Sent {currencyFormatter.format(currentContribution.amountReceived)} of{' '}
+                    Amount Sent(To Be Verified by SAGICAM) {currencyFormatter.format(currentContribution.amountReceived)} of{' '}
                     {currencyFormatter.format(monthlyContributionAmount)}.
                   </p>
                   <p
@@ -469,7 +474,7 @@ const MembersDataTable = ({
                 <div className='border-primary/20 bg-primary/10 text-primary h-full min-w-0 rounded-md border px-3 py-3 sm:px-4'>
                   <p className='text-lg font-extrabold break-words sm:text-xl'>Registration payment summary</p>
                   <p className='text-primary/80 mt-1 text-sm font-semibold break-words'>
-                    Sent {currencyFormatter.format(currentRegistrationPayment.amountReceived)} of{' '}
+                    Amount Sent(To Be Verified by SAGICAM) {currencyFormatter.format(currentRegistrationPayment.amountReceived)} of{' '}
                     {currencyFormatter.format(registrationPaymentAmount)}.
                   </p>
                   <p
