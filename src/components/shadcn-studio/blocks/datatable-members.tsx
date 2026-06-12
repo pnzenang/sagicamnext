@@ -459,7 +459,7 @@ const MembersDataTable = ({
                 <div className='border-primary/20 bg-primary/10 text-primary h-full min-w-0 rounded-md border px-3 py-3 sm:px-4'>
                   <p className='text-lg font-extrabold break-words sm:text-xl'>Contribution payment summary</p>
                   <p className='text-primary/80 mt-1 text-sm font-semibold break-words'>
-                    Amount Sent: {currencyFormatter.format(currentContribution.amountReceived)} (To Be Verified by SAGICAM)
+                    Amount Sent: {currencyFormatter.format(currentContribution.amountReceived)}
                   </p>
                   <p
                     className={cn(
@@ -469,11 +469,14 @@ const MembersDataTable = ({
                   >
                     Balance: {currencyFormatter.format(contributionPaymentBalance)}
                   </p>
+                  <p className='text-primary/80 mt-3 text-xs font-semibold break-words'>
+                    All amounts will be verified by SAGICAM and reversed if not accurate.
+                  </p>
                 </div>
                 <div className='border-primary/20 bg-primary/10 text-primary h-full min-w-0 rounded-md border px-3 py-3 sm:px-4'>
                   <p className='text-lg font-extrabold break-words sm:text-xl'>Registration payment summary</p>
                   <p className='text-primary/80 mt-1 text-sm font-semibold break-words'>
-                    Amount Sent: {currencyFormatter.format(currentRegistrationPayment.amountReceived)} (To Be Verified by SAGICAM)
+                    Amount Sent: {currencyFormatter.format(currentRegistrationPayment.amountReceived)}
                   </p>
                   <p
                     className={cn(
@@ -482,6 +485,9 @@ const MembersDataTable = ({
                     )}
                   >
                     Balance: {currencyFormatter.format(registrationPaymentBalance)}
+                  </p>
+                  <p className='text-primary/80 mt-3 text-xs font-semibold break-words'>
+                    All amounts will be verified by SAGICAM and reversed if not accurate.
                   </p>
                 </div>
               </div>
