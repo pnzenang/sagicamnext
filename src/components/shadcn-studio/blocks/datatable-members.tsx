@@ -266,13 +266,14 @@ const MembersDataTable = ({
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const currentMonthName = monthFormatter.format(new Date())
   const monthlyContributionAmount = currentContribution.amountOwed
-  const registrationPaymentMembersCount =
-    membershipSummary.pending + membershipSummary.awaiting + membershipSummary.vested
+  const registrationPaymentMembersCount = membershipSummary.pending
   const registrationPaymentAmount = registrationPaymentMembersCount * registrationFeePerAwaitingMember
+  const registrationAmountUsedMembersCount = membershipSummary.awaiting + membershipSummary.vested
+  const registrationAmountUsed = registrationAmountUsedMembersCount * registrationFeePerAwaitingMember
   const contributionPaymentBalance = currentContribution.balance
   const registrationPaymentBalance = getPaymentBalance(
     currentRegistrationPayment.amountVerified,
-    registrationPaymentAmount
+    registrationAmountUsed
   )
 
   const pageSize = 100
@@ -420,8 +421,7 @@ const MembersDataTable = ({
                     Your Registration Payment is: {currencyFormatter.format(registrationPaymentAmount)}
                   </p>
                   <p className='text-primary/80 mt-1 text-sm font-semibold break-words'>
-                    {membershipSummary.pending} pending + {membershipSummary.awaiting} awaiting +{' '}
-                    {membershipSummary.vested} vested loved one(s) x{' '}
+                    {membershipSummary.pending} pending loved one(s) x{' '}
                     {currencyFormatter.format(registrationFeePerAwaitingMember)}
                   </p>
                 </div>
@@ -531,7 +531,7 @@ const MembersDataTable = ({
                     <div className='text-primary/80 flex items-start justify-between gap-4'>
                       <span className='min-w-0 break-words'>Amount Used for Registration Payment</span>
                       <span className='shrink-0 text-right tabular-nums'>
-                        {currencyFormatter.format(registrationPaymentAmount)}
+                        {currencyFormatter.format(registrationAmountUsed)}
                       </span>
                     </div>
                   </div>

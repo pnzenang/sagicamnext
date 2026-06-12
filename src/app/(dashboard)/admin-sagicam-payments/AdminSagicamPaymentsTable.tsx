@@ -29,6 +29,7 @@ export type AdminSagicamPaymentsRow = {
   contributionAmountUsed: number
   pendingMembers: number
   registrationAmountSent: number
+  registrationAmountUsed: number
   registrationBalance: number
   registrationFeeOwed: number
   registrationReceived: number
@@ -154,7 +155,7 @@ const ContributionPaymentControls = ({ row }: { row: AdminSagicamPaymentsRow }) 
 const RegistrationPaymentControls = ({ row }: { row: AdminSagicamPaymentsRow }) => {
   const hasSubmittedPayment = row.registrationAmountSent > 0
   const hasPaymentValues = row.registrationAmountSent > 0 || row.registrationReceived > 0
-  const canSetPaid = row.registrationFeeOwed > 0
+  const canSetPaid = row.registrationAmountUsed > 0 || row.registrationFeeOwed > 0
 
   return (
     <div className='flex flex-col items-start gap-1'>
@@ -173,7 +174,11 @@ const RegistrationPaymentControls = ({ row }: { row: AdminSagicamPaymentsRow }) 
       </form>
       <form action={setSponsorRegistrationPaidAction} className='w-20'>
         <input type='hidden' name='sponsorCode' value={row.sponsorCode} />
-        <input type='hidden' name='registrationAmountOwed' value={row.registrationFeeOwed.toFixed(2)} />
+        <input
+          type='hidden'
+          name='registrationAmountOwed'
+          value={(row.registrationAmountUsed + row.registrationFeeOwed).toFixed(2)}
+        />
         <Button
           type='submit'
           size='xs'

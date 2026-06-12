@@ -158,9 +158,9 @@ const AdminSagicamPayments = async () => {
       vestedMembers: 0
     }
 
-    const registrationFeeOwed =
-      (statusCounts.pendingMembers + statusCounts.awaitingPublication + statusCounts.vestedMembers) *
-      registrationFeePerAwaitingMember
+    const registrationFeeOwed = statusCounts.pendingMembers * registrationFeePerAwaitingMember
+    const registrationAmountUsed =
+      (statusCounts.awaitingPublication + statusCounts.vestedMembers) * registrationFeePerAwaitingMember
     const registrationAmountSent = decimalToNumber(registrationPayment?.amountSent)
     const registrationReceived = decimalToNumber(registrationPayment?.amountVerified)
 
@@ -172,7 +172,8 @@ const AdminSagicamPayments = async () => {
       contributionAmountUsed: totalContributionUsed,
       contributionAmountSent,
       pendingMembers: statusCounts.pendingMembers,
-      registrationBalance: Number((registrationReceived - registrationFeeOwed).toFixed(2)),
+      registrationAmountUsed,
+      registrationBalance: Number((registrationReceived - registrationAmountUsed).toFixed(2)),
       registrationAmountSent,
       registrationFeeOwed,
       registrationReceived,
