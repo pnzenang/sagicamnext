@@ -95,7 +95,7 @@ const RegistrationPaymentControls = ({ row }: { row: AdminSagicamPaymentsRow }) 
   const canSetPaid = row.registrationFeeOwed > 0
 
   return (
-    <div className='mt-2 flex flex-col items-end gap-1'>
+    <div className='flex flex-col items-start gap-1'>
       <form action={verifySponsorRegistrationPaymentAction} className='w-20'>
         <input type='hidden' name='sponsorCode' value={row.sponsorCode} />
         <Button
@@ -244,9 +244,9 @@ const AdminSagicamPaymentsTable = ({
                       : 'bg-red-600/10 text-red-700 dark:text-red-300'
                   }`}
                 >
-                  <div className='flex min-w-0 flex-col items-end'>
-                    <span>{currencyFormatter.format(row.registrationBalance)}</span>
+                  <div className='flex min-w-0 items-start justify-between gap-2'>
                     <RegistrationPaymentControls row={row} />
+                    <span className='shrink-0 text-right tabular-nums'>{currencyFormatter.format(row.registrationBalance)}</span>
                   </div>
                 </TableCell>
               </TableRow>
