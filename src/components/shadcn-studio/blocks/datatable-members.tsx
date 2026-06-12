@@ -393,23 +393,6 @@ const MembersDataTable = ({
         <div className='flex flex-col gap-4 border-b p-6'>
           <span className='text-2xl font-semibold sm:text-4xl lg:text-6xl'>All Registered Loved Ones</span>
           <MembershipSummaryCards {...membershipSummary} />
-          <div className='flex items-start justify-between gap-6 px-6 py-4 max-sm:flex-col'>
-            <div>
-              <p className='text-primary text-sm font-extrabold whitespace-nowrap' aria-live='polite'>
-                <span>{table.getRowCount().toString()} Member(s) Found</span>
-              </p>
-            </div>
-
-            <div className='flex flex-col items-end gap-4 max-sm:w-full max-sm:items-start'>
-              <TablePaginationControls
-                table={table}
-                pages={pages}
-                showLeftEllipsis={showLeftEllipsis}
-                showRightEllipsis={showRightEllipsis}
-                className='mx-0 justify-end'
-              />
-            </div>
-          </div>
           <div className='flex justify-center px-6 pb-4'>
             <div className='grid w-full max-w-6xl gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(13rem,0.7fr)_minmax(0,1.15fr)] xl:items-stretch'>
               <div className='grid h-full gap-4'>
@@ -448,6 +431,23 @@ const MembersDataTable = ({
                   amountSent={currentRegistrationPayment.amountReceived}
                 />
               </div>
+            </div>
+          </div>
+          <div className='flex items-start justify-between gap-6 px-6 py-4 max-sm:flex-col'>
+            <div>
+              <p className='text-primary text-sm font-extrabold whitespace-nowrap' aria-live='polite'>
+                <span>{table.getRowCount().toString()} Member(s) Found</span>
+              </p>
+            </div>
+
+            <div className='flex flex-col items-end gap-4 max-sm:w-full max-sm:items-start'>
+              <TablePaginationControls
+                table={table}
+                pages={pages}
+                showLeftEllipsis={showLeftEllipsis}
+                showRightEllipsis={showRightEllipsis}
+                className='mx-0 justify-end'
+              />
             </div>
           </div>
           <div className='grid grid-cols-1 gap-6 max-md:*:last:col-span-full sm:grid-cols-2 md:grid-cols-3'>
