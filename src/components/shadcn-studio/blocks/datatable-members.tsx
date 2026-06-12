@@ -243,6 +243,7 @@ type CurrentContribution = {
   balance: number
   sponsorCode: string
   totalAmountUsed: number
+  vestedContributionCredit: number
   vestedMembersCount: number
 }
 
@@ -490,6 +491,12 @@ const MembersDataTable = ({
                         {currencyFormatter.format(currentContribution.totalAmountUsed)}
                       </span>
                     </div>
+                    <div className='text-primary/80 flex items-start justify-between gap-4'>
+                      <span className='min-w-0 break-words'>Vested Loved One Credit</span>
+                      <span className='shrink-0 text-right tabular-nums'>
+                        {currencyFormatter.format(currentContribution.vestedContributionCredit)}
+                      </span>
+                    </div>
                   </div>
                   <div
                     className={cn(
@@ -516,12 +523,6 @@ const MembersDataTable = ({
                 <div className='border-primary/20 bg-primary/10 text-primary flex h-full min-w-0 flex-col rounded-md border px-3 py-3 sm:px-4'>
                   <p className='text-lg font-extrabold break-words sm:text-xl'>Registration payment summary</p>
                   <div className='mt-2 grid gap-1.5 text-sm font-semibold'>
-                    <div className='text-primary/80 flex items-start justify-between gap-4'>
-                      <span className='min-w-0 break-words'>Registration expected</span>
-                      <span className='shrink-0 text-right tabular-nums'>
-                        {currencyFormatter.format(registrationPaymentAmount)}
-                      </span>
-                    </div>
                     <div className='text-primary/80 flex items-start justify-between gap-4'>
                       <span className='min-w-0 break-words'>Amount Sent</span>
                       <span className='shrink-0 text-right tabular-nums'>

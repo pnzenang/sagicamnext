@@ -27,6 +27,7 @@ export type AdminSagicamPaymentsRow = {
   balance: number
   contributionAmountSent: number
   contributionAmountUsed: number
+  contributionCredit: number
   pendingMembers: number
   registrationAmountSent: number
   registrationAmountUsed: number

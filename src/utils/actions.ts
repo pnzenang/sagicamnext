@@ -83,6 +83,7 @@ const renderError = (error: unknown): { message: string } => {
 }
 
 const decimalToNumber = (value: unknown) => Number(value ?? 0)
+const contributionCreditPerVestedMember = 30
 
 const getRequiredFormValue = (formData: FormData, fieldName: string) => {
   const value = String(formData.get(fieldName) ?? '').trim()
@@ -315,6 +316,7 @@ export const fetchCurrentSponsorContribution = async () => {
   const amountOwed = Number((amountPerVestedMember * vestedMembersCount).toFixed(2))
   const amountReceived = decimalToNumber(payment?.amountSent)
   const amountVerified = decimalToNumber(payment?.amountVerified)
+  const vestedContributionCredit = vestedMembersCount * contributionCreditPerVestedMember
   const totalAmountUsed = Number(
     (
       decimalToNumber(totalAssessedContribution._sum.amountOwed) + decimalToNumber(contributionUsage?.amountUsed)
@@ -326,9 +328,10 @@ export const fetchCurrentSponsorContribution = async () => {
     amountPerVestedMember,
     amountReceived,
     amountVerified,
-    balance: Number((amountVerified - totalAmountUsed).toFixed(2)),
+    balance: Number((amountVerified + vestedContributionCredit - totalAmountUsed).toFixed(2)),
     sponsorCode: profile.sponsorCode,
     totalAmountUsed,
+    vestedContributionCredit,
     vestedMembersCount
   }
 }

@@ -11,6 +11,7 @@ const dateFormatter = new Intl.DateTimeFormat('en-US', {
 })
 
 const decimalToNumber = (value: unknown) => Number(value ?? 0)
+const contributionCreditPerVestedMember = 30
 const registrationFeePerAwaitingMember = 40
 
 const AdminSagicamPayments = async () => {
@@ -157,6 +158,7 @@ const AdminSagicamPayments = async () => {
       pendingMembers: 0,
       vestedMembers: 0
     }
+    const vestedContributionCredit = statusCounts.vestedMembers * contributionCreditPerVestedMember
 
     const registrationFeeOwed = statusCounts.pendingMembers * registrationFeePerAwaitingMember
     const registrationAmountUsed =
@@ -168,7 +170,8 @@ const AdminSagicamPayments = async () => {
       amountOwed,
       amountReceived,
       awaitingPublication: statusCounts.awaitingPublication,
-      balance: Number((amountReceived - totalContributionUsed).toFixed(2)),
+      balance: Number((amountReceived + vestedContributionCredit - totalContributionUsed).toFixed(2)),
+      contributionCredit: vestedContributionCredit,
       contributionAmountUsed: totalContributionUsed,
       contributionAmountSent,
       pendingMembers: statusCounts.pendingMembers,
