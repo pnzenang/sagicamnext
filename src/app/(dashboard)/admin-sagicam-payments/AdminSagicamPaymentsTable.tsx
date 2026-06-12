@@ -76,7 +76,11 @@ const columns: AdminSagicamPaymentsColumn[] = [
   { key: 'registrationBalance', label: 'Registration balance', align: 'right' }
 ]
 
-const columnWidth = 100 / columns.length
+const balanceColumnWidth = 20
+const regularColumnWidth = (100 - balanceColumnWidth * 2) / (columns.length - 2)
+
+const getColumnWidth = (columnKey: SortKey) =>
+  columnKey === 'balance' || columnKey === 'registrationBalance' ? balanceColumnWidth : regularColumnWidth
 
 const getSortIcon = (isActive: boolean, direction: SortDirection) => {
   if (!isActive) return <ArrowUpDown className='size-3.5' />
@@ -231,7 +235,7 @@ const AdminSagicamPaymentsTable = ({
       <Table className='[[&_td]:wrap-break-word table-fixed [&_td]:whitespace-normal [&_th]:wrap-break-word [&_th]:whitespace-normal'>
         <colgroup>
           {columns.map(column => (
-            <col key={column.key} style={{ width: `${columnWidth}%` }} />
+            <col key={column.key} style={{ width: `${getColumnWidth(column.key)}%` }} />
           ))}
         </colgroup>
         <TableHeader>
