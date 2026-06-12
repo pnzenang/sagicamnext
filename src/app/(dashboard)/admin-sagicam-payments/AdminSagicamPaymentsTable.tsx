@@ -102,6 +102,23 @@ const compareValues = (firstValue: AdminSagicamPaymentsRow[SortKey], secondValue
   })
 }
 
+const MobileValue = ({
+  label,
+  value,
+  valueClassName
+}: {
+  label: string
+  value: string | number
+  valueClassName?: string
+}) => (
+  <div className='flex items-start justify-between gap-4'>
+    <span className='text-muted-foreground min-w-0 text-xs leading-snug font-semibold uppercase'>{label}</span>
+    <span className={`shrink-0 text-right text-sm leading-snug font-extrabold tabular-nums ${valueClassName ?? ''}`}>
+      {value}
+    </span>
+  </div>
+)
+
 const ContributionPaymentControls = ({ row }: { row: AdminSagicamPaymentsRow }) => {
   const hasSubmittedPayment = row.contributionAmountSent > 0
   const hasPaymentValues = row.contributionAmountSent > 0 || row.amountReceived > 0
@@ -239,135 +256,230 @@ const AdminSagicamPaymentsTable = ({
 
   return (
     <div className='border-border overflow-hidden rounded-lg border'>
-      <Table className='[[&_td]:wrap-break-word table-fixed [&_td]:whitespace-normal [&_th]:wrap-break-word [&_th]:whitespace-normal'>
-        <colgroup>
-          {columns.map(column => (
-            <col key={column.key} style={{ width: `${getColumnWidth(column.key)}%` }} />
-          ))}
-        </colgroup>
-        <TableHeader>
-          <TableRow className='bg-primary hover:bg-primary'>
-            {columns.map(column => {
-              const isActive = sortKey === column.key
+      <div className='hidden overflow-x-auto md:block'>
+        <Table className='[[&_td]:wrap-break-word table-fixed [&_td]:whitespace-normal [&_th]:wrap-break-word [&_th]:whitespace-normal'>
+          <colgroup>
+            {columns.map(column => (
+              <col key={column.key} style={{ width: `${getColumnWidth(column.key)}%` }} />
+            ))}
+          </colgroup>
+          <TableHeader>
+            <TableRow className='bg-primary hover:bg-primary'>
+              {columns.map(column => {
+                const isActive = sortKey === column.key
 
-              return (
-                <TableHead
-                  key={column.key}
-                  className='text-primary-foreground'
-                  aria-sort={isActive ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
-                >
-                  <button
-                    type='button'
-                    className={`flex w-full items-center gap-1.5 text-left font-semibold ${column.align === 'right' ? 'justify-end text-right [&>span]:text-right' : 'justify-start'}`}
-                    onClick={() => handleSort(column.key)}
+                return (
+                  <TableHead
+                    key={column.key}
+                    className='text-primary-foreground'
+                    aria-sort={isActive ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
                   >
-                    <span>{column.label}</span>
-                    {getSortIcon(isActive, sortDirection)}
-                  </button>
-                </TableHead>
-              )
-            })}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {sortedRows.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={columns.length} className='text-muted-foreground h-24 text-center'>
-                No Sagicam payments found.
-              </TableCell>
+                    <button
+                      type='button'
+                      className={`flex w-full items-center gap-1.5 text-left font-semibold ${column.align === 'right' ? 'justify-end text-right [&>span]:text-right' : 'justify-start'}`}
+                      onClick={() => handleSort(column.key)}
+                    >
+                      <span>{column.label}</span>
+                      {getSortIcon(isActive, sortDirection)}
+                    </button>
+                  </TableHead>
+                )
+              })}
             </TableRow>
-          ) : (
-            sortedRows.map(row => (
-              <TableRow key={row.sponsorCode} className='odd:bg-muted/30 even:bg-background'>
-                <TableCell>{row.sponsorCode}</TableCell>
-                <TableCell className='text-right font-semibold'>{row.vestedMembers}</TableCell>
-                <TableCell className='text-right font-semibold'>{row.awaitingPublication}</TableCell>
-                <TableCell className='text-right font-semibold'>{row.pendingMembers}</TableCell>
-                <TableCell className='text-right font-semibold'>{currencyFormatter.format(row.amountOwed)}</TableCell>
-                <TableCell
-                  className={`text-right font-semibold ${
-                    row.contributionAmountSent > 0 ? 'text-green-700 dark:text-green-300' : ''
-                  }`}
-                >
-                  {currencyFormatter.format(row.contributionAmountSent)}
+          </TableHeader>
+          <TableBody>
+            {sortedRows.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={columns.length} className='text-muted-foreground h-24 text-center'>
+                  No Sagicam payments found.
                 </TableCell>
-                <TableCell className='text-right font-semibold'>
-                  {currencyFormatter.format(row.amountReceived)}
+              </TableRow>
+            ) : (
+              sortedRows.map(row => (
+                <TableRow key={row.sponsorCode} className='odd:bg-muted/30 even:bg-background'>
+                  <TableCell>{row.sponsorCode}</TableCell>
+                  <TableCell className='text-right font-semibold'>{row.vestedMembers}</TableCell>
+                  <TableCell className='text-right font-semibold'>{row.awaitingPublication}</TableCell>
+                  <TableCell className='text-right font-semibold'>{row.pendingMembers}</TableCell>
+                  <TableCell className='text-right font-semibold'>{currencyFormatter.format(row.amountOwed)}</TableCell>
+                  <TableCell
+                    className={`text-right font-semibold ${
+                      row.contributionAmountSent > 0 ? 'text-green-700 dark:text-green-300' : ''
+                    }`}
+                  >
+                    {currencyFormatter.format(row.contributionAmountSent)}
+                  </TableCell>
+                  <TableCell className='text-right font-semibold'>
+                    {currencyFormatter.format(row.amountReceived)}
+                  </TableCell>
+                  <TableCell
+                    className={`text-right align-top font-semibold ${
+                      row.balance >= 0
+                        ? 'bg-green-600/10 text-green-700 dark:text-green-300'
+                        : 'bg-red-600/10 text-red-700 dark:text-red-300'
+                    }`}
+                  >
+                    <div className='flex min-w-0 items-start justify-between gap-2'>
+                      <ContributionPaymentControls row={row} />
+                      <span className='shrink-0 text-right tabular-nums'>{currencyFormatter.format(row.balance)}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className='text-right font-semibold'>
+                    {currencyFormatter.format(row.registrationFeeOwed)}
+                  </TableCell>
+                  <TableCell
+                    className={`text-right font-semibold ${
+                      row.registrationAmountSent > 0 ? 'text-green-700 dark:text-green-300' : ''
+                    }`}
+                  >
+                    {currencyFormatter.format(row.registrationAmountSent)}
+                  </TableCell>
+                  <TableCell className='text-right font-semibold'>
+                    {currencyFormatter.format(row.registrationReceived)}
+                  </TableCell>
+                  <TableCell
+                    className={`text-right align-top font-semibold ${
+                      row.registrationBalance >= 0
+                        ? 'bg-green-600/10 text-green-700 dark:text-green-300'
+                        : 'bg-red-600/10 text-red-700 dark:text-red-300'
+                    }`}
+                  >
+                    <div className='flex min-w-0 items-start justify-between gap-2'>
+                      <RegistrationPaymentControls row={row} />
+                      <span className='shrink-0 text-right tabular-nums'>
+                        {currencyFormatter.format(row.registrationBalance)}
+                      </span>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+          {sortedRows.length > 0 && (
+            <TableFooter className='bg-white text-black dark:bg-white dark:text-black'>
+              <TableRow className='bg-white text-base text-black hover:bg-white dark:bg-white dark:text-black dark:hover:bg-white'>
+                <TableCell className='font-extrabold'>Total</TableCell>
+                <TableCell className='text-right font-extrabold'>{totals.vestedMembers}</TableCell>
+                <TableCell className='text-right font-extrabold'>{totals.awaitingPublication}</TableCell>
+                <TableCell className='text-right font-extrabold'>{totals.pendingMembers}</TableCell>
+                <TableCell className='text-right font-extrabold'>{currencyFormatter.format(totals.amountOwed)}</TableCell>
+                <TableCell className='text-right font-extrabold'>
+                  {currencyFormatter.format(totals.contributionAmountSent)}
                 </TableCell>
-                <TableCell
-                  className={`text-right align-top font-semibold ${
+                <TableCell className='text-right font-extrabold'>
+                  {currencyFormatter.format(totals.amountReceived)}
+                </TableCell>
+                <TableCell className='text-right font-extrabold'>{currencyFormatter.format(totals.balance)}</TableCell>
+                <TableCell className='bg-white text-right font-extrabold text-black dark:bg-white dark:text-black'>
+                  {currencyFormatter.format(totals.registrationFeeOwed)}
+                </TableCell>
+                <TableCell className='text-right font-extrabold'>
+                  {currencyFormatter.format(totals.registrationAmountSent)}
+                </TableCell>
+                <TableCell className='text-right font-extrabold'>
+                  {currencyFormatter.format(totals.registrationReceived)}
+                </TableCell>
+                <TableCell className='text-right font-extrabold'>
+                  {currencyFormatter.format(totals.registrationBalance)}
+                </TableCell>
+              </TableRow>
+            </TableFooter>
+          )}
+        </Table>
+      </div>
+      <div className='grid gap-3 p-3 md:hidden'>
+        {sortedRows.length === 0 ? (
+          <div className='text-muted-foreground rounded-md border px-4 py-10 text-center text-sm'>
+            No Sagicam payments found.
+          </div>
+        ) : (
+          sortedRows.map(row => (
+            <article key={row.sponsorCode} className='bg-background rounded-md border shadow-sm'>
+              <div className='flex items-start justify-between gap-4 border-b px-4 py-3'>
+                <div>
+                  <div className='text-lg font-extrabold'>{row.sponsorCode}</div>
+                  <div className='text-muted-foreground text-xs font-semibold'>{row.sponsorPhoneNumber}</div>
+                </div>
+                <div className='text-right text-xs font-semibold'>
+                  <div>{row.vestedMembers} vested</div>
+                  <div>{row.awaitingPublication} awaiting</div>
+                  <div>{row.pendingMembers} pending</div>
+                </div>
+              </div>
+              <div className='grid gap-2 border-b px-4 py-3'>
+                <div className='text-sm font-extrabold'>Contribution</div>
+                <MobileValue label='Owed' value={currencyFormatter.format(row.amountOwed)} />
+                <MobileValue
+                  label='Sent'
+                  value={currencyFormatter.format(row.contributionAmountSent)}
+                  valueClassName={row.contributionAmountSent > 0 ? 'text-green-700 dark:text-green-300' : ''}
+                />
+                <MobileValue label='Verified' value={currencyFormatter.format(row.amountReceived)} />
+                <div
+                  className={`mt-1 rounded-md p-3 ${
                     row.balance >= 0
                       ? 'bg-green-600/10 text-green-700 dark:text-green-300'
                       : 'bg-red-600/10 text-red-700 dark:text-red-300'
                   }`}
                 >
-                  <div className='flex min-w-0 items-start justify-between gap-2'>
+                  <div className='flex items-start justify-between gap-3'>
                     <ContributionPaymentControls row={row} />
-                    <span className='shrink-0 text-right tabular-nums'>{currencyFormatter.format(row.balance)}</span>
+                    <div className='text-right'>
+                      <div className='text-xs font-semibold uppercase'>Balance</div>
+                      <div className='text-base font-extrabold tabular-nums'>{currencyFormatter.format(row.balance)}</div>
+                    </div>
                   </div>
-                </TableCell>
-                <TableCell className='text-right font-semibold'>
-                  {currencyFormatter.format(row.registrationFeeOwed)}
-                </TableCell>
-                <TableCell
-                  className={`text-right font-semibold ${
-                    row.registrationAmountSent > 0 ? 'text-green-700 dark:text-green-300' : ''
-                  }`}
-                >
-                  {currencyFormatter.format(row.registrationAmountSent)}
-                </TableCell>
-                <TableCell className='text-right font-semibold'>
-                  {currencyFormatter.format(row.registrationReceived)}
-                </TableCell>
-                <TableCell
-                  className={`text-right align-top font-semibold ${
+                </div>
+              </div>
+              <div className='grid gap-2 px-4 py-3'>
+                <div className='text-sm font-extrabold'>Registration</div>
+                <MobileValue label='Owed' value={currencyFormatter.format(row.registrationFeeOwed)} />
+                <MobileValue
+                  label='Sent'
+                  value={currencyFormatter.format(row.registrationAmountSent)}
+                  valueClassName={row.registrationAmountSent > 0 ? 'text-green-700 dark:text-green-300' : ''}
+                />
+                <MobileValue label='Verified' value={currencyFormatter.format(row.registrationReceived)} />
+                <div
+                  className={`mt-1 rounded-md p-3 ${
                     row.registrationBalance >= 0
                       ? 'bg-green-600/10 text-green-700 dark:text-green-300'
                       : 'bg-red-600/10 text-red-700 dark:text-red-300'
                   }`}
                 >
-                  <div className='flex min-w-0 items-start justify-between gap-2'>
+                  <div className='flex items-start justify-between gap-3'>
                     <RegistrationPaymentControls row={row} />
-                    <span className='shrink-0 text-right tabular-nums'>
-                      {currencyFormatter.format(row.registrationBalance)}
-                    </span>
+                    <div className='text-right'>
+                      <div className='text-xs font-semibold uppercase'>Balance</div>
+                      <div className='text-base font-extrabold tabular-nums'>
+                        {currencyFormatter.format(row.registrationBalance)}
+                      </div>
+                    </div>
                   </div>
-                </TableCell>
-              </TableRow>
-            ))
-          )}
-        </TableBody>
-        {sortedRows.length > 0 && (
-          <TableFooter className='bg-white text-black dark:bg-white dark:text-black'>
-            <TableRow className='bg-white text-base text-black hover:bg-white dark:bg-white dark:text-black dark:hover:bg-white'>
-              <TableCell className='font-extrabold'>Total</TableCell>
-              <TableCell className='text-right font-extrabold'>{totals.vestedMembers}</TableCell>
-              <TableCell className='text-right font-extrabold'>{totals.awaitingPublication}</TableCell>
-              <TableCell className='text-right font-extrabold'>{totals.pendingMembers}</TableCell>
-              <TableCell className='text-right font-extrabold'>{currencyFormatter.format(totals.amountOwed)}</TableCell>
-              <TableCell className='text-right font-extrabold'>
-                {currencyFormatter.format(totals.contributionAmountSent)}
-              </TableCell>
-              <TableCell className='text-right font-extrabold'>
-                {currencyFormatter.format(totals.amountReceived)}
-              </TableCell>
-              <TableCell className='text-right font-extrabold'>{currencyFormatter.format(totals.balance)}</TableCell>
-              <TableCell className='bg-white text-right font-extrabold text-black dark:bg-white dark:text-black'>
-                {currencyFormatter.format(totals.registrationFeeOwed)}
-              </TableCell>
-              <TableCell className='text-right font-extrabold'>
-                {currencyFormatter.format(totals.registrationAmountSent)}
-              </TableCell>
-              <TableCell className='text-right font-extrabold'>
-                {currencyFormatter.format(totals.registrationReceived)}
-              </TableCell>
-              <TableCell className='text-right font-extrabold'>
-                {currencyFormatter.format(totals.registrationBalance)}
-              </TableCell>
-            </TableRow>
-          </TableFooter>
+                </div>
+              </div>
+            </article>
+          ))
         )}
-      </Table>
+        {sortedRows.length > 0 && (
+          <article className='rounded-md border bg-white px-4 py-3 text-black shadow-sm dark:bg-white dark:text-black'>
+            <div className='mb-2 text-base font-extrabold'>Total</div>
+            <div className='grid gap-2'>
+              <MobileValue label='Vested' value={totals.vestedMembers} />
+              <MobileValue label='Awaiting' value={totals.awaitingPublication} />
+              <MobileValue label='Pending' value={totals.pendingMembers} />
+              <MobileValue label='Contribution owed' value={currencyFormatter.format(totals.amountOwed)} />
+              <MobileValue label='Contribution sent' value={currencyFormatter.format(totals.contributionAmountSent)} />
+              <MobileValue label='Contribution verified' value={currencyFormatter.format(totals.amountReceived)} />
+              <MobileValue label='Contribution balance' value={currencyFormatter.format(totals.balance)} />
+              <MobileValue label='Registration owed' value={currencyFormatter.format(totals.registrationFeeOwed)} />
+              <MobileValue label='Registration sent' value={currencyFormatter.format(totals.registrationAmountSent)} />
+              <MobileValue label='Registration verified' value={currencyFormatter.format(totals.registrationReceived)} />
+              <MobileValue label='Registration balance' value={currencyFormatter.format(totals.registrationBalance)} />
+            </div>
+          </article>
+        )}
+      </div>
     </div>
   )
 }

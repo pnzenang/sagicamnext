@@ -60,6 +60,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { usePagination } from '@/hooks/use-pagination'
 
 import { cn } from '@/lib/utils'
+import ResponsiveTableCards from '@/components/dashboard/ResponsiveTableCards'
 import { TablePaginationControls } from '@/components/dashboard/TablePaginationControls'
 import type { RemovedMemberType } from '@/utils/types'
 import { type MemberType } from '@/utils/types'
@@ -350,7 +351,8 @@ const RemovedMembersDataTable = ({ data }: { data: RemovedMemberType[] }) => {
             </DropdownMenu>
           </div>
         </div>
-        <Table>
+        <div className='hidden overflow-x-auto md:block'>
+          <Table>
           <TableHeader>
             {table.getHeaderGroups().map(headerGroup => (
               <TableRow key={headerGroup.id} className='h-14 border-t bg-red-400 hover:bg-red-300'>
@@ -410,7 +412,19 @@ const RemovedMembersDataTable = ({ data }: { data: RemovedMemberType[] }) => {
               </TableRow>
             )}
           </TableBody>
-        </Table>
+          </Table>
+        </div>
+        <ResponsiveTableCards
+          table={table}
+          emptyMessage='No Member Found.'
+          accentClassName='border-red-200 dark:border-red-900/60'
+          getCardTitle={row => {
+            const member = row.original
+
+            return `${member.firstName} ${member.lastAndMiddleNames}`
+          }}
+          getCardSubtitle={row => row.original.memberMatriculationNumber}
+        />
         <div className='flex justify-center border-t px-6 py-4'>
           <TablePaginationControls
             table={table}

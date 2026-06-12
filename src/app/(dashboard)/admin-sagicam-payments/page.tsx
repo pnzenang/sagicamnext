@@ -86,10 +86,42 @@ const AdminSagicamPayments = async () => {
     }
   })
 
+  const removedRegistrationUsedCountsBySponsorCode = await db.removedMember.groupBy({
+    _count: {
+      _all: true
+    },
+    by: ['sponsorCode', 'memberStatus'],
+    orderBy: {
+      sponsorCode: 'asc'
+    },
+    where: {
+      memberStatus: {
+        in: [memberStatus.Vested, memberStatus.Awaiting]
+      }
+    }
+  })
+
+  const deceasedRegistrationUsedCountsBySponsorCode = await db.deceasedMember.groupBy({
+    _count: {
+      _all: true
+    },
+    by: ['sponsorCode', 'memberStatus'],
+    orderBy: {
+      sponsorCode: 'asc'
+    },
+    where: {
+      memberStatus: {
+        in: [memberStatus.Vested, memberStatus.Awaiting]
+      }
+    }
+  })
+
   const statusCountsByCode = new Map<
     string,
     { awaitingPublication: number; pendingMembers: number; vestedMembers: number }
   >()
+
+  const archivedRegistrationUsedCountsByCode = new Map<string, number>()
 
   memberCountsBySponsorCode.forEach(item => {
     const currentCounts = statusCountsByCode.get(item.sponsorCode) ?? {
@@ -113,6 +145,13 @@ const AdminSagicamPayments = async () => {
     statusCountsByCode.set(item.sponsorCode, currentCounts)
   })
 
+  ;[...removedRegistrationUsedCountsBySponsorCode, ...deceasedRegistrationUsedCountsBySponsorCode].forEach(item => {
+    archivedRegistrationUsedCountsByCode.set(
+      item.sponsorCode,
+      (archivedRegistrationUsedCountsByCode.get(item.sponsorCode) ?? 0) + item._count._all
+    )
+  })
+
   const sponsorCodes = Array.from(
     new Set([
       ...(latestContributionAssessment?.groups.map(group => group.sponsorCode) ?? []),
@@ -121,7 +160,8 @@ const AdminSagicamPayments = async () => {
       ...contributionCreditsBySponsorCode.map(credit => credit.sponsorCode),
       ...sponsorContributionPayments.map(payment => payment.sponsorCode),
       ...sponsorRegistrationPayments.map(payment => payment.sponsorCode),
-      ...statusCountsByCode.keys()
+      ...statusCountsByCode.keys(),
+      ...archivedRegistrationUsedCountsByCode.keys()
     ])
   ).sort((firstCode, secondCode) =>
     firstCode.localeCompare(secondCode, undefined, {
@@ -145,13 +185,17 @@ const AdminSagicamPayments = async () => {
 
   const sponsorsByCode = new Map(sponsors.map(sponsor => [sponsor.sponsorCode, sponsor]))
   const owedByCode = new Map(latestContributionAssessment?.groups.map(group => [group.sponsorCode, group]) ?? [])
+
   const totalOwedByCode = new Map(
     contributionTotalsBySponsorCode.map(group => [group.sponsorCode, group._sum.amountOwed])
   )
+
   const usedByCode = new Map(sponsorContributionUsages.map(usage => [usage.sponsorCode, usage.amountUsed]))
+
   const contributionCreditByCode = new Map(
     contributionCreditsBySponsorCode.map(credit => [credit.sponsorCode, credit._sum.amountCredited])
   )
+
   const receivedByCode = new Map(sponsorContributionPayments.map(payment => [payment.sponsorCode, payment]))
   const registrationPaymentsByCode = new Map(sponsorRegistrationPayments.map(payment => [payment.sponsorCode, payment]))
 
@@ -161,9 +205,11 @@ const AdminSagicamPayments = async () => {
     const contributionPayment = receivedByCode.get(sponsorCode)
     const contributionAmountSent = decimalToNumber(contributionPayment?.amountSent)
     const amountReceived = decimalToNumber(contributionPayment?.amountVerified)
+
     const totalContributionUsed = Number(
       (decimalToNumber(totalOwedByCode.get(sponsorCode)) + decimalToNumber(usedByCode.get(sponsorCode))).toFixed(2)
     )
+
     const registrationPayment = registrationPaymentsByCode.get(sponsorCode)
 
     const statusCounts = statusCountsByCode.get(sponsorCode) ?? {
@@ -171,11 +217,17 @@ const AdminSagicamPayments = async () => {
       pendingMembers: 0,
       vestedMembers: 0
     }
+
     const vestedContributionCredit = decimalToNumber(contributionCreditByCode.get(sponsorCode))
 
     const registrationFeeOwed = statusCounts.pendingMembers * registrationFeePerAwaitingMember
+
     const registrationAmountUsed =
-      (statusCounts.awaitingPublication + statusCounts.vestedMembers) * registrationFeePerAwaitingMember
+      (statusCounts.awaitingPublication +
+        statusCounts.vestedMembers +
+        (archivedRegistrationUsedCountsByCode.get(sponsorCode) ?? 0)) *
+      registrationFeePerAwaitingMember
+
     const registrationAmountSent = decimalToNumber(registrationPayment?.amountSent)
     const registrationReceived = decimalToNumber(registrationPayment?.amountVerified)
 

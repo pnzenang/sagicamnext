@@ -42,8 +42,41 @@ const registrationDateFormatter = new Intl.DateTimeFormat('en-US', {
 })
 
 const contributionCreditPerVestedMember = 30
+const registrationFeePerEligibleMember = 40
+const registrationUsedStatuses = [memberStatus.Awaiting, memberStatus.Vested]
 
 const formatRegistrationDate = (date: Date) => registrationDateFormatter.format(date)
+
+const fetchRegistrationUsedMemberCount = async (sponsorCode: string) => {
+  const [activeMembers, removedMembers, deceasedMembers] = await Promise.all([
+    db.member.count({
+      where: {
+        memberStatus: {
+          in: registrationUsedStatuses
+        },
+        sponsorCode
+      }
+    }),
+    db.removedMember.count({
+      where: {
+        memberStatus: {
+          in: registrationUsedStatuses
+        },
+        sponsorCode
+      }
+    }),
+    db.deceasedMember.count({
+      where: {
+        memberStatus: {
+          in: registrationUsedStatuses
+        },
+        sponsorCode
+      }
+    })
+  ])
+
+  return activeMembers + removedMembers + deceasedMembers
+}
 
 const createVestedContributionCredit = async ({
   memberMatriculationNumber,
@@ -191,6 +224,7 @@ const getDollarAmountFromForm = (formData: FormData, fieldName: string) => {
   const rawAmount = String(formData.get(fieldName) ?? '')
     .replace(/[$,]/g, '')
     .trim()
+
   const amount = Number(rawAmount)
 
   if (!Number.isFinite(amount) || amount < 0) {
@@ -418,6 +452,7 @@ export const fetchCurrentSponsorContribution = async () => {
   const amountReceived = decimalToNumber(payment?.amountSent)
   const amountVerified = decimalToNumber(payment?.amountVerified)
   const vestedContributionCredit = decimalToNumber(contributionCredit._sum.amountCredited)
+
   const totalAmountUsed = Number(
     (
       decimalToNumber(totalAssessedContribution._sum.amountOwed) + decimalToNumber(contributionUsage?.amountUsed)
@@ -440,15 +475,19 @@ export const fetchCurrentSponsorContribution = async () => {
 export const fetchCurrentSponsorRegistrationPayment = async () => {
   const profile = await fetchProfile()
 
-  const payment = await db.sponsorRegistrationPayment.findUnique({
-    where: {
-      sponsorCode: profile.sponsorCode
-    }
-  })
+  const [payment, registrationUsedMemberCount] = await Promise.all([
+    db.sponsorRegistrationPayment.findUnique({
+      where: {
+        sponsorCode: profile.sponsorCode
+      }
+    }),
+    fetchRegistrationUsedMemberCount(profile.sponsorCode)
+  ])
 
   return {
     amountReceived: decimalToNumber(payment?.amountSent),
     amountVerified: decimalToNumber(payment?.amountVerified),
+    amountUsed: registrationUsedMemberCount * registrationFeePerEligibleMember,
     sponsorCode: profile.sponsorCode
   }
 }
@@ -901,6 +940,7 @@ export const updateMemberDetailsAction = async (prevState: any, formData: FormDa
     const memberId = formData.get('id') as string
     const rawData = Object.fromEntries(formData)
     const validatedFields = validateWithZodSchema(memberSchema, rawData)
+
     const currentMember = await db.member.findUnique({
       where: {
         id: memberId
@@ -919,6 +959,7 @@ export const updateMemberDetailsAction = async (prevState: any, formData: FormDa
         ...validatedFields
       }
     })
+
     if (currentMember) {
       await syncVestedContributionCredit({
         memberMatriculationNumber: currentMember.memberMatriculationNumber,
@@ -928,6 +969,7 @@ export const updateMemberDetailsAction = async (prevState: any, formData: FormDa
         sponsorCode: validatedFields.sponsorCode
       })
     }
+
     revalidatePath(`all-members/${memberId}/edit`)
     revalidateMemberPaymentViews()
 
@@ -944,6 +986,7 @@ export const updateMemberDetailsActionForAdmin = async (prevState: any, formData
     const memberId = formData.get('id') as string
     const rawData = Object.fromEntries(formData)
     const validatedFields = validateWithZodSchema(memberSchema, rawData)
+
     const currentMember = await db.member.findUnique({
       where: {
         id: memberId
@@ -962,6 +1005,7 @@ export const updateMemberDetailsActionForAdmin = async (prevState: any, formData
         ...validatedFields
       }
     })
+
     if (currentMember) {
       await syncVestedContributionCredit({
         memberMatriculationNumber: currentMember.memberMatriculationNumber,
@@ -971,6 +1015,7 @@ export const updateMemberDetailsActionForAdmin = async (prevState: any, formData
         sponsorCode: validatedFields.sponsorCode
       })
     }
+
     revalidatePath(`admin-members/${memberId}/edit`)
     revalidateMemberPaymentViews()
 
@@ -999,6 +1044,7 @@ export const createRemovedMemberAction = async (provState: any, formData: FormDa
     const rawData = Object.fromEntries(formData)
     const validatedFields = validateWithZodSchema(RemovedMemberSchema, rawData)
     const sponsor = await fetchSponsorByCode(validatedFields.sponsorCode)
+
     const member = await db.member.findUnique({
       where: {
         id: memberId,
@@ -1013,7 +1059,8 @@ export const createRemovedMemberAction = async (provState: any, formData: FormDa
     await db.removedMember.create({
       data: {
         ...validatedFields,
-        clerkId: user.id
+        clerkId: user.id,
+        memberStatus: member?.memberStatus
       }
     })
     await db.member.delete({
@@ -1021,6 +1068,7 @@ export const createRemovedMemberAction = async (provState: any, formData: FormDa
         id: memberId
       }
     })
+
     if (member?.memberStatus === memberStatus.Vested) {
       await removeVestedContributionCredit(member.memberMatriculationNumber)
     }
@@ -1054,6 +1102,7 @@ export const createRemovedMemberActionAdmin = async (
     const rawData = Object.fromEntries(formData)
     const validatedFields = validateWithZodSchema(RemovedMemberSchema, rawData)
     const sponsor = await fetchSponsorByCode(validatedFields.sponsorCode)
+
     const member = await db.member.findUnique({
       where: {
         id: memberId
@@ -1067,7 +1116,8 @@ export const createRemovedMemberActionAdmin = async (
     await db.removedMember.create({
       data: {
         ...validatedFields,
-        clerkId: user.id
+        clerkId: user.id,
+        memberStatus: member?.memberStatus
       }
     })
     await db.member.delete({
@@ -1075,6 +1125,7 @@ export const createRemovedMemberActionAdmin = async (
         id: memberId
       }
     })
+
     if (member?.memberStatus === memberStatus.Vested) {
       await removeVestedContributionCredit(member.memberMatriculationNumber)
     }
@@ -1148,7 +1199,8 @@ export const createDeceasedMemberAction = async (provState: any, formData: FormD
       data: {
         ...validatedFields,
         registrationDate: formatRegistrationDate(member.createdAt),
-        clerkId: user.id
+        clerkId: user.id,
+        memberStatus: member.memberStatus
       }
     })
     await db.member.delete({
@@ -1156,6 +1208,7 @@ export const createDeceasedMemberAction = async (provState: any, formData: FormD
         id: memberId
       }
     })
+
     if (member.memberStatus === memberStatus.Vested) {
       await removeVestedContributionCredit(member.memberMatriculationNumber)
     }
@@ -1206,7 +1259,8 @@ export const createDeceasedMemberActionAdmin = async (
       data: {
         ...validatedFields,
         registrationDate: formatRegistrationDate(member.createdAt),
-        clerkId: user.id
+        clerkId: user.id,
+        memberStatus: member.memberStatus
       }
     })
     await db.member.delete({
@@ -1214,6 +1268,7 @@ export const createDeceasedMemberActionAdmin = async (
         id: memberId
       }
     })
+
     if (member.memberStatus === memberStatus.Vested) {
       await removeVestedContributionCredit(member.memberMatriculationNumber)
     }

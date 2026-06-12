@@ -60,6 +60,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { usePagination } from '@/hooks/use-pagination'
 
 import DeceasedSummaryCards, { type DeceasedSummary } from '@/components/dashboard/DeceasedSummaryCards'
+import ResponsiveTableCards from '@/components/dashboard/ResponsiveTableCards'
 import { TablePaginationControls } from '@/components/dashboard/TablePaginationControls'
 import { cn } from '@/lib/utils'
 
@@ -405,7 +406,8 @@ const DeceasedMembersDataTable = ({
             </DropdownMenu>
           </div>
         </div>
-        <Table>
+        <div className='hidden overflow-x-auto md:block'>
+          <Table>
           <TableHeader>
             {table.getHeaderGroups().map(headerGroup => (
               <TableRow key={headerGroup.id} className='h-14 border-t bg-purple-500 hover:bg-purple-400'>
@@ -469,7 +471,19 @@ const DeceasedMembersDataTable = ({
               </TableRow>
             )}
           </TableBody>
-        </Table>
+          </Table>
+        </div>
+        <ResponsiveTableCards
+          table={table}
+          emptyMessage='No Deceased Loved Ones Found.'
+          accentClassName='border-purple-200 dark:border-purple-900/60'
+          getCardTitle={row => {
+            const member = row.original
+
+            return `${member.firstName} ${member.lastAndMiddleNames}`
+          }}
+          getCardSubtitle={row => row.original.memberMatriculationNumber}
+        />
         <div className='flex justify-center border-t px-6 py-4'>
           <TablePaginationControls
             table={table}

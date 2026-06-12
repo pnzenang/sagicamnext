@@ -66,6 +66,7 @@ export type RemovedMemberType = {
   dateOfBirth: string
   countryOfBirth: string
   memberMatriculationNumber: string
+  memberStatus?: string | null
   sponsorCode: string
   reasonForLeaving: string
   createdAt: Date
@@ -89,6 +90,7 @@ export type DeceasedMemberType = {
   countryOfBirth: string
   memberMatriculationNumber: string
   nameOfBeneficiary?: string
+  memberStatus?: string | null
   sponsorCode: string
   dateOfDeath: string
   placeOfDeath: string

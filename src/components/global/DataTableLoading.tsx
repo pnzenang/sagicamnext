@@ -16,7 +16,7 @@ const DataTableLoading = ({ columnCount, rowCount = 10 }: DataTableLoadingProps)
         </div>
         <Skeleton className='ml-auto hidden h-7 w-17.5 lg:flex' />
       </div>
-      <div className='rounded-md border'>
+      <div className='hidden overflow-x-auto rounded-md border md:block'>
         <Table>
           <TableHeader>
             {Array.from({ length: 1 }).map((_, i) => (
@@ -41,6 +41,21 @@ const DataTableLoading = ({ columnCount, rowCount = 10 }: DataTableLoadingProps)
             ))}
           </TableBody>
         </Table>
+      </div>
+      <div className='grid gap-3 md:hidden'>
+        {Array.from({ length: Math.min(rowCount, 6) }).map((_, i) => (
+          <div key={i} className='rounded-md border p-4'>
+            <Skeleton className='h-5 w-2/3' />
+            <div className='mt-4 grid gap-3'>
+              {Array.from({ length: Math.min(columnCount, 5) }).map((_, i) => (
+                <div key={i} className='flex items-center justify-between gap-4'>
+                  <Skeleton className='h-4 w-1/3' />
+                  <Skeleton className='h-4 w-1/2' />
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
       </div>
       <div className='flex w-full flex-col items-center justify-between gap-4 overflow-auto px-2 py-1 sm:flex-row sm:gap-8'>
         <div className='flex-1'>

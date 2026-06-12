@@ -52,9 +52,12 @@ model RemovedMember {
   countryOfBirth            String
   memberMatriculationNumber String
   sponsorCode               String
+  memberStatus              String?
   reasonForLeaving          String
   createdAt                 DateTime @default(now())
   updatedAt                 DateTime @updatedAt
+
+  @@index([sponsorCode, memberStatus])
 }
 
 model DeceasedMember {
@@ -67,11 +70,14 @@ model DeceasedMember {
   registrationDate          String
   nameOfBeneficiary         String
   sponsorCode               String
+  memberStatus              String?
   dateOfDeath               String
   placeOfDeath              String
   contributionStatus        String
   createdAt                 DateTime @default(now())
   updatedAt                 DateTime @updatedAt
+
+  @@index([sponsorCode, memberStatus])
 }
 
 model ContributionAssessment {

@@ -60,6 +60,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { usePagination } from '@/hooks/use-pagination'
 
 import MembershipSummaryCards from '@/components/dashboard/MembershipSummaryCards'
+import ResponsiveTableCards from '@/components/dashboard/ResponsiveTableCards'
 import { TablePaginationControls } from '@/components/dashboard/TablePaginationControls'
 import { cn } from '@/lib/utils'
 import { type MemberType } from '@/utils/types'
@@ -437,67 +438,81 @@ const MembersDataTable = ({ data, membershipSummary }: { data: MemberType[]; mem
             </DropdownMenu>
           </div>
         </div>
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map(headerGroup => (
-              <TableRow key={headerGroup.id} className='bg-primary hover:bg-primary/80 h-14 border-t'>
-                {headerGroup.headers.map(header => {
-                  return (
-                    <TableHead
-                      key={header.id}
-                      style={{ width: `${header.getSize()}px` }}
-                      className='font-extrabold text-white first:pl-4 last:px-4'
-                    >
-                      {header.isPlaceholder ? null : header.column.getCanSort() ? (
-                        <div
-                          className={cn(
-                            header.column.getCanSort() &&
-                              'flex h-full cursor-pointer items-center justify-start gap-1.5 select-none'
-                          )}
-                          onClick={header.column.getToggleSortingHandler()}
-                          onKeyDown={e => {
-                            if (header.column.getCanSort() && (e.key === 'Enter' || e.key === ' ')) {
-                              e.preventDefault()
-                              header.column.getToggleSortingHandler()?.(e)
-                            }
-                          }}
-                          tabIndex={header.column.getCanSort() ? 0 : undefined}
-                        >
-                          {flexRender(header.column.columnDef.header, header.getContext())}
-                          {{
-                            asc: <ArrowUp className='shrink-0 opacity-60' size={16} aria-hidden='true' />,
-                            desc: <ArrowDown className='shrink-0 opacity-60' size={16} aria-hidden='true' />
-                          }[header.column.getIsSorted() as string] ?? <ArrowUpDown className='shrink-0 opacity-60' size={16} aria-hidden='true' />}
-                        </div>
-                      ) : (
-                        flexRender(header.column.columnDef.header, header.getContext())
-                      )}
-                    </TableHead>
-                  )
-                })}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map(row => (
-                <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'} className='hover:bg-primary/30'>
-                  {row.getVisibleCells().map(cell => (
-                    <TableCell key={cell.id} className='h-14 first:w-12.5 first:pl-4 last:w-29 last:px-4'>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
-                  ))}
+        <div className='hidden overflow-x-auto md:block'>
+          <Table>
+            <TableHeader>
+              {table.getHeaderGroups().map(headerGroup => (
+                <TableRow key={headerGroup.id} className='bg-primary hover:bg-primary/80 h-14 border-t'>
+                  {headerGroup.headers.map(header => {
+                    return (
+                      <TableHead
+                        key={header.id}
+                        style={{ width: `${header.getSize()}px` }}
+                        className='font-extrabold text-white first:pl-4 last:px-4'
+                      >
+                        {header.isPlaceholder ? null : header.column.getCanSort() ? (
+                          <div
+                            className={cn(
+                              header.column.getCanSort() &&
+                                'flex h-full cursor-pointer items-center justify-start gap-1.5 select-none'
+                            )}
+                            onClick={header.column.getToggleSortingHandler()}
+                            onKeyDown={e => {
+                              if (header.column.getCanSort() && (e.key === 'Enter' || e.key === ' ')) {
+                                e.preventDefault()
+                                header.column.getToggleSortingHandler()?.(e)
+                              }
+                            }}
+                            tabIndex={header.column.getCanSort() ? 0 : undefined}
+                          >
+                            {flexRender(header.column.columnDef.header, header.getContext())}
+                            {{
+                              asc: <ArrowUp className='shrink-0 opacity-60' size={16} aria-hidden='true' />,
+                              desc: <ArrowDown className='shrink-0 opacity-60' size={16} aria-hidden='true' />
+                            }[header.column.getIsSorted() as string] ?? (
+                              <ArrowUpDown className='shrink-0 opacity-60' size={16} aria-hidden='true' />
+                            )}
+                          </div>
+                        ) : (
+                          flexRender(header.column.columnDef.header, header.getContext())
+                        )}
+                      </TableHead>
+                    )
+                  })}
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={columns.length} className='h-24 text-center'>
-                  No Member Found, add members.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {table.getRowModel().rows?.length ? (
+                table.getRowModel().rows.map(row => (
+                  <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'} className='hover:bg-primary/30'>
+                    {row.getVisibleCells().map(cell => (
+                      <TableCell key={cell.id} className='h-14 first:w-12.5 first:pl-4 last:w-29 last:px-4'>
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={columns.length} className='h-24 text-center'>
+                    No Member Found, add members.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+        <ResponsiveTableCards
+          table={table}
+          emptyMessage='No Member Found, add members.'
+          getCardTitle={row => {
+            const member = row.original
+
+            return `${member.firstName} ${member.lastAndMiddleNames}`
+          }}
+          getCardSubtitle={row => row.original.memberMatriculationNumber}
+        />
         <div className='flex justify-center border-t px-6 py-4'>
           <TablePaginationControls
             table={table}

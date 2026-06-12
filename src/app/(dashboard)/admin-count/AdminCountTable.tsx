@@ -69,6 +69,13 @@ const compareValues = (firstValue: AdminCountRow[SortKey], secondValue: AdminCou
   })
 }
 
+const MobileCountValue = ({ label, value }: { label: string; value: number }) => (
+  <div className='rounded-md border px-3 py-2 text-center'>
+    <div className='text-muted-foreground text-[11px] leading-tight font-semibold uppercase'>{label}</div>
+    <div className='mt-1 text-lg leading-none font-extrabold tabular-nums'>{value}</div>
+  </div>
+)
+
 const AdminCountTable = ({ rows, totals }: { rows: AdminCountRow[]; totals: AdminCountTotals }) => {
   const [sortKey, setSortKey] = useState<SortKey>('sponsorName')
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
@@ -129,93 +136,145 @@ const AdminCountTable = ({ rows, totals }: { rows: AdminCountRow[]; totals: Admi
       </div>
 
       <div className='border-border overflow-hidden rounded-lg border'>
-        <Table className='[[&_td]:wrap-break-word table-fixed [&_td]:whitespace-normal [&_th]:wrap-break-word [&_th]:whitespace-normal'>
-          <colgroup>
-            {adminCountColumnWidths.map((width, index) => (
-              <col key={index} style={{ width: `${width}%` }} />
-            ))}
-          </colgroup>
-          <TableHeader>
-            <TableRow className='bg-primary hover:bg-primary'>
-              {columns.map(column => {
-                const isActive = sortKey === column.key
+        <div className='hidden overflow-x-auto md:block'>
+          <Table className='[[&_td]:wrap-break-word table-fixed [&_td]:whitespace-normal [&_th]:wrap-break-word [&_th]:whitespace-normal'>
+            <colgroup>
+              {adminCountColumnWidths.map((width, index) => (
+                <col key={index} style={{ width: `${width}%` }} />
+              ))}
+            </colgroup>
+            <TableHeader>
+              <TableRow className='bg-primary hover:bg-primary'>
+                {columns.map(column => {
+                  const isActive = sortKey === column.key
 
-                return (
-                  <TableHead
-                    key={column.key}
-                    className={`text-primary-foreground ${column.className ?? ''}`}
-                    aria-sort={isActive ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
-                  >
-                    <button
-                      type='button'
-                      className={`flex w-full items-center gap-1.5 text-left font-semibold ${column.align === 'right' ? 'justify-end text-right [&>span]:text-right' : 'justify-start'}`}
-                      onClick={() => handleSort(column.key)}
+                  return (
+                    <TableHead
+                      key={column.key}
+                      className={`text-primary-foreground ${column.className ?? ''}`}
+                      aria-sort={isActive ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
                     >
-                      <span>{column.label}</span>
-                      {getSortIcon(isActive, sortDirection)}
-                    </button>
-                  </TableHead>
-                )
-              })}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {sortedRows.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={adminCountColumnWidths.length} className='text-muted-foreground h-24 text-center'>
-                  No members found.
-                </TableCell>
+                      <button
+                        type='button'
+                        className={`flex w-full items-center gap-1.5 text-left font-semibold ${column.align === 'right' ? 'justify-end text-right [&>span]:text-right' : 'justify-start'}`}
+                        onClick={() => handleSort(column.key)}
+                      >
+                        <span>{column.label}</span>
+                        {getSortIcon(isActive, sortDirection)}
+                      </button>
+                    </TableHead>
+                  )
+                })}
               </TableRow>
-            ) : (
-              sortedRows.map(row => (
-                <TableRow key={row.sponsorCode} className='odd:bg-muted/30 even:bg-background'>
-                  <TableCell className='hidden font-medium md:table-cell'>{row.sponsorName}</TableCell>
-                  <TableCell className='hidden md:table-cell'>
-                    {row.sponsorEmail && (
-                      <a
-                        className='text-primary underline-offset-4 hover:underline'
-                        href={`mailto:${row.sponsorEmail}`}
-                      >
-                        {row.sponsorEmail}
-                      </a>
-                    )}
+            </TableHeader>
+            <TableBody>
+              {sortedRows.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={adminCountColumnWidths.length} className='text-muted-foreground h-24 text-center'>
+                    No members found.
                   </TableCell>
-                  <TableCell className='hidden md:table-cell'>
-                    {row.sponsorPhoneNumber && (
-                      <a
-                        className='text-primary underline-offset-4 hover:underline'
-                        href={`tel:${row.sponsorPhoneNumber}`}
-                      >
-                        {row.sponsorPhoneNumber}
-                      </a>
-                    )}
-                  </TableCell>
-                  <TableCell>{row.sponsorCode}</TableCell>
-                  <TableCell className='text-right font-semibold'>{row.vested}</TableCell>
-                  <TableCell className='text-right font-semibold'>{row.pending}</TableCell>
-                  <TableCell className='text-right font-semibold'>{row.delinquent}</TableCell>
-                  <TableCell className='text-right font-semibold'>{row.awaiting}</TableCell>
-                  <TableCell className='text-right text-base font-extrabold'>{row.total}</TableCell>
                 </TableRow>
-              ))
+              ) : (
+                sortedRows.map(row => (
+                  <TableRow key={row.sponsorCode} className='odd:bg-muted/30 even:bg-background'>
+                    <TableCell className='hidden font-medium md:table-cell'>{row.sponsorName}</TableCell>
+                    <TableCell className='hidden md:table-cell'>
+                      {row.sponsorEmail && (
+                        <a
+                          className='text-primary underline-offset-4 hover:underline'
+                          href={`mailto:${row.sponsorEmail}`}
+                        >
+                          {row.sponsorEmail}
+                        </a>
+                      )}
+                    </TableCell>
+                    <TableCell className='hidden md:table-cell'>
+                      {row.sponsorPhoneNumber && (
+                        <a
+                          className='text-primary underline-offset-4 hover:underline'
+                          href={`tel:${row.sponsorPhoneNumber}`}
+                        >
+                          {row.sponsorPhoneNumber}
+                        </a>
+                      )}
+                    </TableCell>
+                    <TableCell>{row.sponsorCode}</TableCell>
+                    <TableCell className='text-right font-semibold'>{row.vested}</TableCell>
+                    <TableCell className='text-right font-semibold'>{row.pending}</TableCell>
+                    <TableCell className='text-right font-semibold'>{row.delinquent}</TableCell>
+                    <TableCell className='text-right font-semibold'>{row.awaiting}</TableCell>
+                    <TableCell className='text-right text-base font-extrabold'>{row.total}</TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+            {sortedRows.length > 0 && (
+              <TableFooter>
+                <TableRow className='text-base'>
+                  <TableCell className='hidden font-extrabold md:table-cell'>Total</TableCell>
+                  <TableCell className='hidden font-extrabold md:table-cell' />
+                  <TableCell className='hidden font-extrabold md:table-cell' />
+                  <TableCell className='font-extrabold' />
+                  <TableCell className='text-right font-extrabold'>{totals.vested}</TableCell>
+                  <TableCell className='text-right font-extrabold'>{totals.pending}</TableCell>
+                  <TableCell className='text-right font-extrabold'>{totals.delinquent}</TableCell>
+                  <TableCell className='text-right font-extrabold'>{totals.awaiting}</TableCell>
+                  <TableCell className='text-right text-lg font-extrabold'>{totals.total}</TableCell>
+                </TableRow>
+              </TableFooter>
             )}
-          </TableBody>
-          {sortedRows.length > 0 && (
-            <TableFooter>
-              <TableRow className='text-base'>
-                <TableCell className='hidden font-extrabold md:table-cell'>Total</TableCell>
-                <TableCell className='hidden font-extrabold md:table-cell' />
-                <TableCell className='hidden font-extrabold md:table-cell' />
-                <TableCell className='font-extrabold' />
-                <TableCell className='text-right font-extrabold'>{totals.vested}</TableCell>
-                <TableCell className='text-right font-extrabold'>{totals.pending}</TableCell>
-                <TableCell className='text-right font-extrabold'>{totals.delinquent}</TableCell>
-                <TableCell className='text-right font-extrabold'>{totals.awaiting}</TableCell>
-                <TableCell className='text-right text-lg font-extrabold'>{totals.total}</TableCell>
-              </TableRow>
-            </TableFooter>
+          </Table>
+        </div>
+        <div className='grid gap-3 p-3 md:hidden'>
+          {sortedRows.length === 0 ? (
+            <div className='text-muted-foreground rounded-md border px-4 py-10 text-center text-sm'>No members found.</div>
+          ) : (
+            sortedRows.map(row => (
+              <article key={row.sponsorCode} className='bg-background rounded-md border p-4 shadow-sm'>
+                <div className='flex items-start justify-between gap-4'>
+                  <div className='min-w-0'>
+                    <div className='text-base font-extrabold break-words'>{row.sponsorName || row.sponsorCode}</div>
+                    <div className='text-muted-foreground mt-1 text-xs font-semibold'>{row.sponsorCode}</div>
+                  </div>
+                  <div className='text-right text-2xl leading-none font-extrabold tabular-nums'>{row.total}</div>
+                </div>
+                <div className='mt-3 grid gap-1 text-sm'>
+                  {row.sponsorEmail && (
+                    <a className='text-primary break-words underline-offset-4 hover:underline' href={`mailto:${row.sponsorEmail}`}>
+                      {row.sponsorEmail}
+                    </a>
+                  )}
+                  {row.sponsorPhoneNumber && (
+                    <a className='text-primary break-words underline-offset-4 hover:underline' href={`tel:${row.sponsorPhoneNumber}`}>
+                      {row.sponsorPhoneNumber}
+                    </a>
+                  )}
+                </div>
+                <div className='mt-4 grid grid-cols-2 gap-2'>
+                  <MobileCountValue label='Vested' value={row.vested} />
+                  <MobileCountValue label='Pending' value={row.pending} />
+                  <MobileCountValue label='Delinquent' value={row.delinquent} />
+                  <MobileCountValue label='Awaiting' value={row.awaiting} />
+                </div>
+              </article>
+            ))
           )}
-        </Table>
+          {sortedRows.length > 0 && (
+            <article className='bg-primary text-primary-foreground rounded-md p-4 shadow-sm'>
+              <div className='mb-3 text-base font-extrabold'>Total</div>
+              <div className='grid grid-cols-2 gap-2'>
+                <MobileCountValue label='Vested' value={totals.vested} />
+                <MobileCountValue label='Pending' value={totals.pending} />
+                <MobileCountValue label='Delinquent' value={totals.delinquent} />
+                <MobileCountValue label='Awaiting' value={totals.awaiting} />
+              </div>
+              <div className='mt-3 flex items-center justify-between rounded-md bg-white px-3 py-2 text-black'>
+                <span className='text-xs font-semibold uppercase'>All members</span>
+                <span className='text-xl font-extrabold tabular-nums'>{totals.total}</span>
+              </div>
+            </article>
+          )}
+        </div>
       </div>
     </div>
   )
