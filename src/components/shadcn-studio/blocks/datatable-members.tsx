@@ -517,6 +517,12 @@ const MembersDataTable = ({
                   <p className='text-lg font-extrabold break-words sm:text-xl'>Registration payment summary</p>
                   <div className='mt-2 grid gap-1.5 text-sm font-semibold'>
                     <div className='text-primary/80 flex items-start justify-between gap-4'>
+                      <span className='min-w-0 break-words'>Registration expected</span>
+                      <span className='shrink-0 text-right tabular-nums'>
+                        {currencyFormatter.format(registrationPaymentAmount)}
+                      </span>
+                    </div>
+                    <div className='text-primary/80 flex items-start justify-between gap-4'>
                       <span className='min-w-0 break-words'>Amount Sent</span>
                       <span className='shrink-0 text-right tabular-nums'>
                         {currencyFormatter.format(currentRegistrationPayment.amountReceived)}
