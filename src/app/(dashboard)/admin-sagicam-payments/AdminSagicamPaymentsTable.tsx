@@ -95,36 +95,42 @@ const RegistrationPaymentControls = ({ row }: { row: AdminSagicamPaymentsRow }) 
   const canSetPaid = row.registrationFeeOwed > 0
 
   return (
-    <div className='mt-2 flex flex-wrap justify-end gap-1'>
-      <form action={verifySponsorRegistrationPaymentAction}>
+    <div className='mt-2 flex flex-col items-end gap-1'>
+      <form action={verifySponsorRegistrationPaymentAction} className='w-20'>
         <input type='hidden' name='sponsorCode' value={row.sponsorCode} />
         <Button
           type='submit'
           size='xs'
           variant='outline'
           disabled={!hasSubmittedPayment}
-          className='h-7 px-2 text-[11px]'
+          className='h-7 w-full justify-start px-2 text-[11px]'
         >
           <CheckCircle2 className='size-3' />
           Verify
         </Button>
       </form>
-      <form action={setSponsorRegistrationPaidAction}>
+      <form action={setSponsorRegistrationPaidAction} className='w-20'>
         <input type='hidden' name='sponsorCode' value={row.sponsorCode} />
         <input type='hidden' name='registrationAmountOwed' value={row.registrationFeeOwed.toFixed(2)} />
-        <Button type='submit' size='xs' variant='secondary' disabled={!canSetPaid} className='h-7 px-2 text-[11px]'>
+        <Button
+          type='submit'
+          size='xs'
+          variant='secondary'
+          disabled={!canSetPaid}
+          className='h-7 w-full justify-start px-2 text-[11px]'
+        >
           <CircleDollarSign className='size-3' />
           Paid
         </Button>
       </form>
-      <form action={resetSponsorRegistrationPaymentAction}>
+      <form action={resetSponsorRegistrationPaymentAction} className='w-20'>
         <input type='hidden' name='sponsorCode' value={row.sponsorCode} />
         <Button
           type='submit'
           size='xs'
           variant='destructive'
           disabled={!hasPaymentValues}
-          className='h-7 px-2 text-[11px]'
+          className='h-7 w-full justify-start px-2 text-[11px]'
         >
           <RotateCcw className='size-3' />
           Reset

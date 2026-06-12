@@ -476,7 +476,6 @@ export const saveSponsorRegistrationPaymentAction = async (
 
     const payment = await db.sponsorRegistrationPayment.upsert({
       create: {
-        amountVerified: 0,
         amountSent,
         sponsorCode: profile.sponsorCode
       },
