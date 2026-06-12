@@ -122,7 +122,9 @@ const AdminSagicamPayments = async () => {
   const rows: AdminSagicamPaymentsRow[] = sponsorCodes.map(sponsorCode => {
     const sponsor = sponsorsByCode.get(sponsorCode)
     const amountOwed = decimalToNumber(owedByCode.get(sponsorCode)?.amountOwed)
-    const amountReceived = decimalToNumber(receivedByCode.get(sponsorCode)?.amountSent)
+    const contributionPayment = receivedByCode.get(sponsorCode)
+    const contributionAmountSent = decimalToNumber(contributionPayment?.amountSent)
+    const amountReceived = decimalToNumber(contributionPayment?.amountVerified)
     const registrationPayment = registrationPaymentsByCode.get(sponsorCode)
 
     const statusCounts = statusCountsByCode.get(sponsorCode) ?? {
@@ -141,6 +143,7 @@ const AdminSagicamPayments = async () => {
       amountReceived,
       awaitingPublication: statusCounts.awaitingPublication,
       balance: Number((amountReceived - amountOwed).toFixed(2)),
+      contributionAmountSent,
       pendingMembers: statusCounts.pendingMembers,
       registrationBalance: Number((registrationFeeOwed - registrationReceived).toFixed(2)),
       registrationAmountSent,
@@ -159,6 +162,7 @@ const AdminSagicamPayments = async () => {
       currentTotals.amountReceived += row.amountReceived
       currentTotals.awaitingPublication += row.awaitingPublication
       currentTotals.balance += row.balance
+      currentTotals.contributionAmountSent += row.contributionAmountSent
       currentTotals.pendingMembers += row.pendingMembers
       currentTotals.registrationBalance += row.registrationBalance
       currentTotals.registrationAmountSent += row.registrationAmountSent
@@ -173,6 +177,7 @@ const AdminSagicamPayments = async () => {
       amountReceived: 0,
       awaitingPublication: 0,
       balance: 0,
+      contributionAmountSent: 0,
       pendingMembers: 0,
       registrationBalance: 0,
       registrationAmountSent: 0,

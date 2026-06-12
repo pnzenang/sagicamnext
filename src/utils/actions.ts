@@ -299,12 +299,14 @@ export const fetchCurrentSponsorContribution = async () => {
 
   const amountOwed = Number((amountPerVestedMember * vestedMembersCount).toFixed(2))
   const amountReceived = decimalToNumber(payment?.amountSent)
+  const amountVerified = decimalToNumber(payment?.amountVerified)
 
   return {
     amountOwed,
     amountPerVestedMember,
     amountReceived,
-    balance: Number((amountReceived - amountOwed).toFixed(2)),
+    amountVerified,
+    balance: Number((amountVerified - amountOwed).toFixed(2)),
     sponsorCode: profile.sponsorCode,
     vestedMembersCount
   }
@@ -449,6 +451,101 @@ export const saveSponsorContributionPaymentAction = async (
     }
   } catch (error) {
     return renderError(error)
+  }
+}
+
+export const verifySponsorContributionPaymentAction = async (formData: FormData): Promise<void> => {
+  await getAuthUser()
+
+  try {
+    const sponsorCode = getRequiredFormValue(formData, 'sponsorCode')
+
+    const payment = await db.sponsorContributionPayment.findUnique({
+      where: {
+        sponsorCode
+      }
+    })
+
+    if (!payment) {
+      throw new Error('No contribution payment found for this sponsor code.')
+    }
+
+    const amountSent = decimalToNumber(payment.amountSent)
+
+    await db.sponsorContributionPayment.update({
+      data: {
+        amountVerified: amountSent,
+        verifiedAt: new Date()
+      },
+      where: {
+        sponsorCode
+      }
+    })
+
+    revalidatePath('/admin-sagicam-payments')
+    revalidatePath('/all-members')
+  } catch (error) {
+    renderError(error)
+  }
+}
+
+export const setSponsorContributionPaidAction = async (formData: FormData): Promise<void> => {
+  await getAuthUser()
+
+  try {
+    const sponsorCode = getRequiredFormValue(formData, 'sponsorCode')
+    const contributionAmountOwed = getDollarAmountFromForm(formData, 'contributionAmountOwed')
+
+    await db.sponsorContributionPayment.upsert({
+      create: {
+        amountSent: contributionAmountOwed,
+        amountVerified: contributionAmountOwed,
+        sponsorCode,
+        verifiedAt: new Date()
+      },
+      update: {
+        amountVerified: contributionAmountOwed,
+        verifiedAt: new Date()
+      },
+      where: {
+        sponsorCode
+      }
+    })
+
+    revalidatePath('/admin-sagicam-payments')
+    revalidatePath('/all-members')
+  } catch (error) {
+    renderError(error)
+  }
+}
+
+export const resetSponsorContributionPaymentAction = async (formData: FormData): Promise<void> => {
+  await getAuthUser()
+
+  try {
+    const sponsorCode = getRequiredFormValue(formData, 'sponsorCode')
+
+    await db.sponsorContributionPayment.upsert({
+      create: {
+        amountSent: 0,
+        amountVerified: 0,
+        sponsorCode,
+        verifiedAt: null
+      },
+      update: {
+        amountSent: 0,
+        amountVerified: 0,
+        verifiedAt: null
+      },
+      where: {
+        sponsorCode
+      }
+    })
+
+    revalidatePath('/admin-sagicam-payments')
+    revalidatePath('/all-members')
+  } catch (error) {
+    renderError(error)
   }
 }
 

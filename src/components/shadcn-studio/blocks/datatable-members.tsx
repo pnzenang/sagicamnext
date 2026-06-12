@@ -239,6 +239,7 @@ type CurrentContribution = {
   amountOwed: number
   amountPerVestedMember: number
   amountReceived: number
+  amountVerified: number
   balance: number
   sponsorCode: string
   vestedMembersCount: number
@@ -445,7 +446,7 @@ const MembersDataTable = ({
               <div className='grid h-full min-w-0 auto-rows-fr gap-4'>
                 <SponsorContributionPaymentCard
                   amountExpected={monthlyContributionAmount}
-                  amountSent={currentContribution.amountReceived}
+                  amountSent={Math.max(currentContribution.amountReceived, currentContribution.amountVerified)}
                 />
                 <SponsorRegistrationPaymentCard
                   amountExpected={registrationPaymentAmount}
@@ -463,6 +464,12 @@ const MembersDataTable = ({
                       <span className='min-w-0 break-words'>Amount Sent</span>
                       <span className='shrink-0 text-right tabular-nums'>
                         {currencyFormatter.format(currentContribution.amountReceived)}
+                      </span>
+                    </div>
+                    <div className='text-primary/80 flex items-start justify-between gap-4'>
+                      <span className='min-w-0 break-words'>Amount Verified by SAGICAM</span>
+                      <span className='shrink-0 text-right tabular-nums'>
+                        {currencyFormatter.format(currentContribution.amountVerified)}
                       </span>
                     </div>
                     <div className='text-primary/80 flex items-start justify-between gap-4'>
