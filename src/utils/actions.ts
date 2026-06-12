@@ -283,6 +283,21 @@ export const fetchCurrentSponsorContribution = async () => {
   }
 }
 
+export const fetchCurrentSponsorRegistrationPayment = async () => {
+  const profile = await fetchProfile()
+
+  const payment = await db.sponsorRegistrationPayment.findUnique({
+    where: {
+      sponsorCode: profile.sponsorCode
+    }
+  })
+
+  return {
+    amountReceived: decimalToNumber(payment?.amountSent),
+    sponsorCode: profile.sponsorCode
+  }
+}
+
 export const fetchMembersForAdmin = async () => {
   const user = await getAuthUser()
 
@@ -408,6 +423,59 @@ export const saveSponsorContributionPaymentAction = async (
     revalidatePath('/all-members')
 
     return { message: `Saved amount sent: ${currencyFormatter.format(amountSent)}.` }
+  } catch (error) {
+    return renderError(error)
+  }
+}
+
+export const saveSponsorRegistrationPaymentAction = async (
+  prevState: any,
+  formData: FormData
+): Promise<{ message: string }> => {
+  const user = await getAuthUser()
+
+  try {
+    const profile = await db.profile.findUnique({
+      where: {
+        clerkId: user.id
+      },
+      select: {
+        sponsorCode: true
+      }
+    })
+
+    if (!profile) {
+      throw new Error('Sponsor profile not found.')
+    }
+
+    const rawAmount = String(formData.get('registrationAmountSent') ?? '')
+      .replace(/[$,]/g, '')
+      .trim()
+
+    const amountSent = Number(rawAmount)
+
+    if (!Number.isFinite(amountSent) || amountSent < 0) {
+      throw new Error('Enter a valid dollar amount.')
+    }
+
+    await db.sponsorRegistrationPayment.upsert({
+      create: {
+        amountSent,
+        sponsorCode: profile.sponsorCode
+      },
+      update: {
+        amountSent
+      },
+      where: {
+        sponsorCode: profile.sponsorCode
+      }
+    })
+
+    revalidatePath('/admin-count')
+    revalidatePath('/admin-sagicam-payments')
+    revalidatePath('/all-members')
+
+    return { message: `Saved registration amount sent: ${currencyFormatter.format(amountSent)}.` }
   } catch (error) {
     return renderError(error)
   }

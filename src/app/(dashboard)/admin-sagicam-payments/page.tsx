@@ -39,6 +39,12 @@ const AdminSagicamPayments = async () => {
     }
   })
 
+  const sponsorRegistrationPayments = await db.sponsorRegistrationPayment.findMany({
+    orderBy: {
+      sponsorCode: 'asc'
+    }
+  })
+
   const memberCountsBySponsorCode = await db.member.groupBy({
     _count: {
       _all: true
@@ -77,6 +83,7 @@ const AdminSagicamPayments = async () => {
     new Set([
       ...(latestContributionAssessment?.groups.map(group => group.sponsorCode) ?? []),
       ...sponsorContributionPayments.map(payment => payment.sponsorCode),
+      ...sponsorRegistrationPayments.map(payment => payment.sponsorCode),
       ...statusCountsByCode.keys()
     ])
   ).sort((firstCode, secondCode) =>
@@ -102,6 +109,7 @@ const AdminSagicamPayments = async () => {
   const sponsorsByCode = new Map(sponsors.map(sponsor => [sponsor.sponsorCode, sponsor]))
   const owedByCode = new Map(latestContributionAssessment?.groups.map(group => [group.sponsorCode, group]) ?? [])
   const receivedByCode = new Map(sponsorContributionPayments.map(payment => [payment.sponsorCode, payment]))
+  const registrationReceivedByCode = new Map(sponsorRegistrationPayments.map(payment => [payment.sponsorCode, payment]))
 
   const rows: AdminSagicamPaymentsRow[] = sponsorCodes.map(sponsorCode => {
     const sponsor = sponsorsByCode.get(sponsorCode)
@@ -114,7 +122,7 @@ const AdminSagicamPayments = async () => {
     }
 
     const registrationFeeOwed = statusCounts.awaitingPublication * registrationFeePerAwaitingMember
-    const registrationReceived = 0
+    const registrationReceived = decimalToNumber(registrationReceivedByCode.get(sponsorCode)?.amountSent)
 
     return {
       amountOwed,

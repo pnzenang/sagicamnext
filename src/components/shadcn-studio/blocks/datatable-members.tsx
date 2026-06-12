@@ -74,6 +74,7 @@ import { usePagination } from '@/hooks/use-pagination'
 
 import MembershipSummaryCards from '@/components/dashboard/MembershipSummaryCards'
 import SponsorContributionPaymentCard from '@/components/dashboard/SponsorContributionPaymentCard'
+import SponsorRegistrationPaymentCard from '@/components/dashboard/SponsorRegistrationPaymentCard'
 import { TablePaginationControls } from '@/components/dashboard/TablePaginationControls'
 import { cn } from '@/lib/utils'
 import { type MemberType } from '@/utils/types'
@@ -236,12 +237,19 @@ type CurrentContribution = {
   vestedMembersCount: number
 }
 
+type CurrentRegistrationPayment = {
+  amountReceived: number
+  sponsorCode: string
+}
+
 const MembersDataTable = ({
   currentContribution,
+  currentRegistrationPayment,
   data,
   membershipSummary
 }: {
   currentContribution: CurrentContribution
+  currentRegistrationPayment: CurrentRegistrationPayment
   data: MemberType[]
   membershipSummary: MembershipSummary
 }) => {
@@ -435,19 +443,10 @@ const MembersDataTable = ({
                   amountExpected={monthlyContributionAmount}
                   amountSent={currentContribution.amountReceived}
                 />
-                <div className='border-primary/20 bg-primary/10 text-primary rounded-md border px-4 py-3'>
-                  <div className='grid gap-3'>
-                    <div className='grid gap-1'>
-                      <p className='text-base font-extrabold'>Registration payment</p>
-                      <p className='text-primary/80 text-sm font-semibold'>
-                        Record registration fees and anticipated contributions for pending loved ones.
-                      </p>
-                    </div>
-                    <Button asChild className='w-full'>
-                      <Link href='/registration-payments'>Open registration payments</Link>
-                    </Button>
-                  </div>
-                </div>
+                <SponsorRegistrationPaymentCard
+                  amountExpected={registrationPaymentAmount}
+                  amountSent={currentRegistrationPayment.amountReceived}
+                />
               </div>
             </div>
           </div>

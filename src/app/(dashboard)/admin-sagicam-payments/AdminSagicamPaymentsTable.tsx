@@ -55,7 +55,9 @@ const columns: AdminSagicamPaymentsColumn[] = [
   { key: 'amountOwed', label: 'Contribution owed', align: 'right' },
   { key: 'amountReceived', label: 'Contribution received', align: 'right' },
   { key: 'balance', label: 'Balance', align: 'right' },
-  { key: 'registrationFeeOwed', label: 'Registration Received', align: 'right' }
+  { key: 'registrationFeeOwed', label: 'Registration owed', align: 'right' },
+  { key: 'registrationReceived', label: 'Registration received', align: 'right' },
+  { key: 'registrationBalance', label: 'Registration balance', align: 'right' }
 ]
 
 const fixedLeftColumnCount = 2
@@ -195,6 +197,18 @@ const AdminSagicamPaymentsTable = ({
                 >
                   {currencyFormatter.format(row.registrationFeeOwed)}
                 </TableCell>
+                <TableCell className='text-right font-semibold'>
+                  {currencyFormatter.format(row.registrationReceived)}
+                </TableCell>
+                <TableCell
+                  className={`text-right font-semibold ${
+                    row.registrationBalance >= 0
+                      ? 'bg-green-600/10 text-green-700 dark:text-green-300'
+                      : 'bg-red-600/10 text-red-700 dark:text-red-300'
+                  }`}
+                >
+                  {currencyFormatter.format(row.registrationBalance)}
+                </TableCell>
               </TableRow>
             ))
           )}
@@ -216,6 +230,12 @@ const AdminSagicamPaymentsTable = ({
               <TableCell className='text-right font-extrabold'>{currencyFormatter.format(totals.balance)}</TableCell>
               <TableCell className='bg-white text-right font-extrabold text-black dark:bg-white dark:text-black'>
                 {currencyFormatter.format(totals.registrationFeeOwed)}
+              </TableCell>
+              <TableCell className='text-right font-extrabold'>
+                {currencyFormatter.format(totals.registrationReceived)}
+              </TableCell>
+              <TableCell className='text-right font-extrabold'>
+                {currencyFormatter.format(totals.registrationBalance)}
               </TableCell>
             </TableRow>
           </TableFooter>
