@@ -23,6 +23,9 @@ const shouldReuseCachedPrisma =
   'contributionAssessment' in (cachedPrisma as unknown as Record<string, unknown>) &&
   hasCachedModelField('RemovedMember', 'memberStatus') &&
   hasCachedModelField('DeceasedMember', 'memberStatus') &&
+  hasCachedModelField('SponsorContributionPayment', 'lastSubmittedAt') &&
+  hasCachedModelField('SponsorRegistrationPayment', 'lastSubmittedAt') &&
+  'paymentAlertReset' in (cachedPrisma as unknown as Record<string, unknown>) &&
   'sponsorContributionCredit' in (cachedPrisma as unknown as Record<string, unknown>) &&
   'sponsorContributionPayment' in (cachedPrisma as unknown as Record<string, unknown>) &&
   'sponsorContributionUsage' in (cachedPrisma as unknown as Record<string, unknown>) &&

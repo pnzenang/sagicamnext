@@ -19,6 +19,9 @@ const initialState = {
   message: ''
 }
 
+const zelleReminder =
+  'Please do not enter the amount if you have not sent the Zelle yet. Send the Zelle before you enter the amount in the form.'
+
 const SponsorContributionPaymentCard = ({ amountExpected, amountSent }: SponsorContributionPaymentCardProps) => {
   const [state, formAction] = useActionState(saveSponsorContributionPaymentAction, initialState)
   const cardIsComplete = amountSent >= amountExpected
@@ -54,6 +57,7 @@ const SponsorContributionPaymentCard = ({ amountExpected, amountSent }: SponsorC
           </div>
         </div>
 
+        <p className='text-muted-foreground text-xs leading-snug font-semibold'>{zelleReminder}</p>
         <SubmitButton text='Add Contribution Amount Sent' className='w-full whitespace-normal' />
         {state.message ? <p className='text-sm font-semibold break-words'>{state.message}</p> : null}
       </div>

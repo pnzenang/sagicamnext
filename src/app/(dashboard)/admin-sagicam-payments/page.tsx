@@ -1,4 +1,6 @@
 import ContributionAssessmentForm from '@/components/dashboard/ContributionAssessmentForm'
+import { Button } from '@/components/ui/button'
+import { resetContributionPaymentAlertAction, resetRegistrationPaymentAlertAction } from '@/utils/actions'
 import { memberStatus } from '@/utils/types'
 import db from '@/utils/db'
 import AdminSagicamPaymentsTable, {
@@ -11,7 +13,51 @@ const dateFormatter = new Intl.DateTimeFormat('en-US', {
 })
 
 const decimalToNumber = (value: unknown) => Number(value ?? 0)
+const contributionPaymentAlertType = 'contribution'
 const registrationFeePerAwaitingMember = 40
+const registrationPaymentAlertType = 'registration'
+const defaultPaymentAlertResetAt = new Date(0)
+
+type PaymentAlertCardProps = {
+  action: (formData: FormData) => Promise<void>
+  sponsorCodes: string[]
+  title: string
+}
+
+const PaymentAlertCard = ({ action, sponsorCodes, title }: PaymentAlertCardProps) => {
+  const paymentLabel = sponsorCodes.length === 1 ? 'payment' : 'payments'
+
+  return (
+    <div className='border-primary/20 bg-primary/5 rounded-md border p-4'>
+      <div className='flex items-start justify-between gap-4'>
+        <div>
+          <h2 className='text-lg font-extrabold'>{title}</h2>
+          <p className='text-muted-foreground mt-1 text-sm font-semibold'>
+            You have {sponsorCodes.length} {paymentLabel} from the following sponsors:
+          </p>
+        </div>
+        <form action={action}>
+          <Button type='submit' size='sm' variant='outline' disabled={sponsorCodes.length === 0}>
+            Reset
+          </Button>
+        </form>
+      </div>
+      {sponsorCodes.length > 0 ? (
+        <div className='mt-4 grid grid-cols-2 gap-2'>
+          {sponsorCodes.map(sponsorCode => (
+            <div key={sponsorCode} className='bg-background rounded-md border px-3 py-2 text-sm font-extrabold'>
+              {sponsorCode}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className='text-muted-foreground mt-4 rounded-md border border-dashed px-3 py-4 text-center text-sm'>
+          No new payments since the last reset.
+        </p>
+      )}
+    </div>
+  )
+}
 
 const AdminSagicamPayments = async () => {
   const vestedMembersCount = await db.member.count({
@@ -70,6 +116,40 @@ const AdminSagicamPayments = async () => {
       sponsorCode: 'asc'
     }
   })
+
+  const paymentAlertResets = await db.paymentAlertReset.findMany({
+    where: {
+      alertType: {
+        in: [contributionPaymentAlertType, registrationPaymentAlertType]
+      }
+    }
+  })
+
+  const paymentAlertResetByType = new Map(paymentAlertResets.map(reset => [reset.alertType, reset.resetAt]))
+
+  const contributionPaymentAlertResetAt =
+    paymentAlertResetByType.get(contributionPaymentAlertType) ?? defaultPaymentAlertResetAt
+
+  const registrationPaymentAlertResetAt =
+    paymentAlertResetByType.get(registrationPaymentAlertType) ?? defaultPaymentAlertResetAt
+
+  const contributionPaymentAlertSponsorCodes = sponsorContributionPayments
+    .filter(
+      payment =>
+        decimalToNumber(payment.amountSent) > 0 &&
+        Boolean(payment.lastSubmittedAt) &&
+        payment.lastSubmittedAt! > contributionPaymentAlertResetAt
+    )
+    .map(payment => payment.sponsorCode)
+
+  const registrationPaymentAlertSponsorCodes = sponsorRegistrationPayments
+    .filter(
+      payment =>
+        decimalToNumber(payment.amountSent) > 0 &&
+        Boolean(payment.lastSubmittedAt) &&
+        payment.lastSubmittedAt! > registrationPaymentAlertResetAt
+    )
+    .map(payment => payment.sponsorCode)
 
   const memberCountsBySponsorCode = await db.member.groupBy({
     _count: {
@@ -297,6 +377,19 @@ const AdminSagicamPayments = async () => {
       </div>
 
       <ContributionAssessmentForm vestedMembersCount={vestedMembersCount} />
+
+      <div className='grid gap-4 lg:grid-cols-2'>
+        <PaymentAlertCard
+          title='Contribution Payment Alerts'
+          sponsorCodes={contributionPaymentAlertSponsorCodes}
+          action={resetContributionPaymentAlertAction}
+        />
+        <PaymentAlertCard
+          title='Registration Payment Alerts'
+          sponsorCodes={registrationPaymentAlertSponsorCodes}
+          action={resetRegistrationPaymentAlertAction}
+        />
+      </div>
 
       <AdminSagicamPaymentsTable rows={rows} totals={totals} />
     </div>

@@ -42,6 +42,8 @@ const registrationDateFormatter = new Intl.DateTimeFormat('en-US', {
 })
 
 const contributionCreditPerVestedMember = 30
+const contributionPaymentAlertType = 'contribution'
+const registrationPaymentAlertType = 'registration'
 const registrationFeePerEligibleMember = 40
 const registrationUsedStatuses = [memberStatus.Awaiting, memberStatus.Vested]
 
@@ -590,16 +592,19 @@ export const saveSponsorContributionPaymentAction = async (
     }
 
     const amountSent = getDollarAmountFromForm(formData, 'amountSent')
+    const submittedAt = new Date()
 
     const payment = await db.sponsorContributionPayment.upsert({
       create: {
         amountSent,
+        lastSubmittedAt: submittedAt,
         sponsorCode: profile.sponsorCode
       },
       update: {
         amountSent: {
           increment: amountSent
-        }
+        },
+        lastSubmittedAt: submittedAt
       },
       where: {
         sponsorCode: profile.sponsorCode
@@ -759,16 +764,19 @@ export const saveSponsorRegistrationPaymentAction = async (
     }
 
     const amountSent = getDollarAmountFromForm(formData, 'registrationAmountSent')
+    const submittedAt = new Date()
 
     const payment = await db.sponsorRegistrationPayment.upsert({
       create: {
         amountSent,
+        lastSubmittedAt: submittedAt,
         sponsorCode: profile.sponsorCode
       },
       update: {
         amountSent: {
           increment: amountSent
-        }
+        },
+        lastSubmittedAt: submittedAt
       },
       where: {
         sponsorCode: profile.sponsorCode
@@ -880,6 +888,33 @@ export const resetSponsorRegistrationPaymentAction = async (formData: FormData):
   } catch (error) {
     renderError(error)
   }
+}
+
+const resetPaymentAlert = async (alertType: string) => {
+  await getAuthUser()
+
+  await db.paymentAlertReset.upsert({
+    create: {
+      alertType,
+      resetAt: new Date()
+    },
+    update: {
+      resetAt: new Date()
+    },
+    where: {
+      alertType
+    }
+  })
+
+  revalidatePath('/admin-sagicam-payments')
+}
+
+export const resetContributionPaymentAlertAction = async (_formData: FormData): Promise<void> => {
+  await resetPaymentAlert(contributionPaymentAlertType)
+}
+
+export const resetRegistrationPaymentAlertAction = async (_formData: FormData): Promise<void> => {
+  await resetPaymentAlert(registrationPaymentAlertType)
 }
 
 export const resetContributionCalculationAction = async (): Promise<{ message: string }> => {

@@ -105,15 +105,17 @@ model ContributionAssessmentGroup {
 }
 
 model SponsorContributionPayment {
-  id             String    @id @default(uuid())
-  sponsorCode    String    @unique
-  amountSent     Decimal   @db.Decimal(10, 2)
-  amountVerified Decimal   @default(0) @db.Decimal(10, 2)
-  verifiedAt     DateTime?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  id              String    @id @default(uuid())
+  sponsorCode     String    @unique
+  amountSent      Decimal   @db.Decimal(10, 2)
+  amountVerified  Decimal   @default(0) @db.Decimal(10, 2)
+  lastSubmittedAt DateTime?
+  verifiedAt      DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   @@index([sponsorCode])
+  @@index([lastSubmittedAt])
 }
 
 model SponsorContributionUsage {
@@ -138,13 +140,23 @@ model SponsorContributionCredit {
 }
 
 model SponsorRegistrationPayment {
-  id             String    @id @default(uuid())
-  sponsorCode    String    @unique
-  amountSent     Decimal   @db.Decimal(10, 2)
-  amountVerified Decimal   @default(0) @db.Decimal(10, 2)
-  verifiedAt     DateTime?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  id              String    @id @default(uuid())
+  sponsorCode     String    @unique
+  amountSent      Decimal   @db.Decimal(10, 2)
+  amountVerified  Decimal   @default(0) @db.Decimal(10, 2)
+  lastSubmittedAt DateTime?
+  verifiedAt      DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   @@index([sponsorCode])
+  @@index([lastSubmittedAt])
+}
+
+model PaymentAlertReset {
+  id        String   @id @default(uuid())
+  alertType String   @unique
+  resetAt   DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
