@@ -121,7 +121,7 @@ const MobileValue = ({
 
 const ContributionPaymentControls = ({ row }: { row: AdminSagicamPaymentsRow }) => {
   const hasSubmittedPayment = row.contributionAmountSent > 0
-  const hasPaymentValues = row.contributionAmountSent > 0 || row.amountReceived > 0
+  const hasPaymentValues = row.contributionAmountSent > 0 || row.amountReceived > 0 || row.contributionAmountUsed > 0
   const canSetPaid = row.contributionAmountUsed > 0
 
   return (

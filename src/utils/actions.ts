@@ -689,24 +689,47 @@ export const resetSponsorContributionPaymentAction = async (formData: FormData):
   try {
     const sponsorCode = getRequiredFormValue(formData, 'sponsorCode')
 
-    const payment = await db.sponsorContributionPayment.findUnique({
-      where: {
-        sponsorCode
-      }
-    })
-
-    if (!payment) {
-      return
-    }
-
-    await db.sponsorContributionPayment.update({
-      data: {
-        amountSent: payment.amountVerified
+    const totalAssessedContribution = await db.contributionAssessmentGroup.aggregate({
+      _sum: {
+        amountOwed: true
       },
       where: {
         sponsorCode
       }
     })
+
+    const assessedAmount = decimalToNumber(totalAssessedContribution._sum.amountOwed)
+
+    await db.$transaction([
+      db.sponsorContributionPayment.upsert({
+        create: {
+          amountSent: 0,
+          amountVerified: 0,
+          sponsorCode,
+          verifiedAt: null
+        },
+        update: {
+          amountSent: 0,
+          amountVerified: 0,
+          verifiedAt: null
+        },
+        where: {
+          sponsorCode
+        }
+      }),
+      db.sponsorContributionUsage.upsert({
+        create: {
+          amountUsed: -assessedAmount,
+          sponsorCode
+        },
+        update: {
+          amountUsed: -assessedAmount
+        },
+        where: {
+          sponsorCode
+        }
+      })
+    ])
 
     revalidatePath('/admin-sagicam-payments')
     revalidatePath('/all-members')
