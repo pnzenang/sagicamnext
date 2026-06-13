@@ -21,6 +21,9 @@ import { pagesItems } from '@/utils/links'
 const activeMenuButtonClassName =
   'data-[active=true]:bg-primary data-[active=true]:text-primary-foreground data-[active=true]:hover:bg-primary data-[active=true]:hover:text-primary-foreground data-[active=true]:focus:bg-primary data-[active=true]:focus:text-primary-foreground'
 
+const transparentDropdownButtonClassName =
+  'bg-transparent hover:bg-transparent active:bg-transparent focus:bg-transparent data-[state=open]:bg-transparent data-[state=open]:text-primary data-[state=open]:hover:bg-transparent data-[state=open]:hover:text-primary data-[active=true]:bg-transparent data-[active=true]:text-primary data-[active=true]:hover:bg-transparent data-[active=true]:hover:text-primary data-[active=true]:focus:bg-transparent data-[active=true]:focus:text-primary'
+
 const isHrefActive = (pathname: string, href: string) => pathname === href || pathname.startsWith(`${href}/`)
 
 const SidebarGroupedMenuItemsClient = ({
@@ -50,7 +53,7 @@ const SidebarGroupedMenuItemsClient = ({
                       <SidebarMenuButton
                         tooltip={item.label}
                         isActive={hasActiveChild}
-                        className={`data-[state=open]:text-primary focus:bg-primary my-1 py-1 transition-all duration-500 hover:ml-5 focus:text-neutral-50 ${activeMenuButtonClassName}`}
+                        className={`my-1 py-1 transition-all duration-500 hover:ml-5 ${transparentDropdownButtonClassName}`}
                       >
                         <item.icon />
                         <span className='truncate capitalize'>{item.label}</span>
