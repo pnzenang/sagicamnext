@@ -619,55 +619,23 @@ export const resetSponsorContributionPaymentAction = async (formData: FormData):
   try {
     const sponsorCode = getRequiredFormValue(formData, 'sponsorCode')
 
-    const [totalAssessedContribution, payment, contributionUsage, contributionCredit, balanceAdjustment] =
-      await Promise.all([
-        db.contributionAssessmentGroup.aggregate({
-          _sum: {
-            amountOwed: true
-          },
-          where: {
-            sponsorCode
-          }
-        }),
-        db.sponsorContributionPayment.findUnique({
-          where: {
-            sponsorCode
-          }
-        }),
-        db.sponsorContributionUsage.findUnique({
-          where: {
-            sponsorCode
-          }
-        }),
-        db.sponsorContributionCredit.aggregate({
-          _sum: {
-            amountCredited: true
-          },
-          where: {
-            sponsorCode
-          }
-        }),
-        db.sponsorBalanceAdjustment.findUnique({
-          where: {
-            sponsorCode_balanceType: {
-              balanceType: contributionBalanceAdjustmentType,
-              sponsorCode
-            }
-          }
-        })
-      ])
+    const [totalAssessedContribution, contributionSummary] = await Promise.all([
+      db.contributionAssessmentGroup.aggregate({
+        _sum: {
+          amountOwed: true
+        },
+        where: {
+          sponsorCode
+        }
+      }),
+      fetchSponsorContributionSummary(sponsorCode)
+    ])
 
     const assessedAmount = decimalToNumber(totalAssessedContribution._sum.amountOwed)
-    const currentAmountVerified = decimalToNumber(payment?.amountVerified)
-    const currentAmountUsed = Number((assessedAmount + decimalToNumber(contributionUsage?.amountUsed)).toFixed(2))
-    const currentBalanceAdjustment = decimalToNumber(balanceAdjustment?.amount)
-    const vestedContributionCredit = decimalToNumber(contributionCredit._sum.amountCredited)
 
-    const currentBalance = Number(
-      (currentAmountVerified + vestedContributionCredit + currentBalanceAdjustment - currentAmountUsed).toFixed(2)
+    const preservedBalanceAdjustment = Number(
+      (contributionSummary.balance - contributionSummary.vestedContributionCredit).toFixed(2)
     )
-
-    const preservedBalanceAdjustment = Number((currentBalance - vestedContributionCredit).toFixed(2))
 
     await db.$transaction([
       db.sponsorContributionPayment.upsert({
@@ -795,9 +763,16 @@ export const verifySponsorRegistrationPaymentAction = async (formData: FormData)
 
     const amountSent = decimalToNumber(payment.amountSent)
 
+    if (amountSent <= 0) {
+      throw new Error('No registration amount sent to verify.')
+    }
+
     await db.sponsorRegistrationPayment.update({
       data: {
-        amountVerified: amountSent,
+        amountSent: 0,
+        amountVerified: {
+          increment: amountSent
+        },
         verifiedAt: new Date()
       },
       where: {
@@ -1367,7 +1342,7 @@ export const deleteRemovedMemberAction = async (prevState: { removedMemberId: st
         id: removedMemberId
       }
     })
-    revalidatePath('/removed-members')
+    revalidateMemberPaymentViews()
 
     return { message: 'deleted member removed ' }
   } catch (error) {}
@@ -1386,7 +1361,7 @@ export const deleteDeceasedMemberAction = async (prevState: { deceasedMemberId: 
         id: deceasedMemberId
       }
     })
-    revalidatePath('/deceased-members')
+    revalidateMemberPaymentViews()
 
     return { message: 'deceased member removed ' }
   } catch (error) {}
@@ -1425,6 +1400,7 @@ export const updateDeceasedMemberDetailsActionAdmin = async (prevState: any, for
       }
     })
     revalidatePath(`admin-deceased/${deceasedMemberId}/edit`)
+    revalidateMemberPaymentViews()
 
     // return { message: `case status Updated Successfully` }
   } catch (error) {

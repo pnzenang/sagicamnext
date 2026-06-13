@@ -498,7 +498,7 @@ const MembersDataTable = ({
                     </div>
                     {currentContribution.manualBalanceAdjustment > 0 ? (
                       <div className='text-primary/80 flex items-start justify-between gap-4'>
-                        <span className='min-w-0 break-words'>Manual Balance Adjustment</span>
+                        <span className='min-w-0 break-words'>Balance Adjustment</span>
                         <span className='shrink-0 text-right tabular-nums'>
                           {currencyFormatter.format(currentContribution.manualBalanceAdjustment)}
                         </span>
@@ -543,14 +543,14 @@ const MembersDataTable = ({
                       </span>
                     </div>
                     <div className='text-primary/80 flex items-start justify-between gap-4'>
-                      <span className='min-w-0 break-words'>Amount Used for Registration Payment</span>
+                      <span className='min-w-0 break-words'>Used for Registration</span>
                       <span className='shrink-0 text-right tabular-nums'>
                         {currencyFormatter.format(registrationAmountUsed)}
                       </span>
                     </div>
                     {currentRegistrationPayment.manualBalanceAdjustment > 0 ? (
                       <div className='text-primary/80 flex items-start justify-between gap-4'>
-                        <span className='min-w-0 break-words'>Manual Balance Adjustment</span>
+                        <span className='min-w-0 break-words'>Balance Adjustment</span>
                         <span className='shrink-0 text-right tabular-nums'>
                           {currencyFormatter.format(currentRegistrationPayment.manualBalanceAdjustment)}
                         </span>
