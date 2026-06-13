@@ -2,15 +2,13 @@
 
 import { useMemo, useState } from 'react'
 
-import { ArrowDown, ArrowUp, ArrowUpDown, CheckCircle2, CircleDollarSign, RotateCcw } from 'lucide-react'
+import { ArrowDown, ArrowUp, ArrowUpDown, CheckCircle2, RotateCcw } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import {
   resetSponsorContributionPaymentAction,
   resetSponsorRegistrationPaymentAction,
-  setSponsorContributionPaidAction,
-  setSponsorRegistrationPaidAction,
   verifySponsorContributionPaymentAction,
   verifySponsorRegistrationPaymentAction
 } from '@/utils/actions'
@@ -122,7 +120,6 @@ const MobileValue = ({
 const ContributionPaymentControls = ({ row }: { row: AdminSagicamPaymentsRow }) => {
   const hasSubmittedPayment = row.contributionAmountSent > 0
   const hasPaymentValues = row.contributionAmountSent > 0 || row.amountReceived > 0 || row.contributionAmountUsed > 0
-  const canSetPaid = row.contributionAmountUsed > 0
 
   return (
     <div className='flex flex-col items-start gap-1'>
@@ -137,20 +134,6 @@ const ContributionPaymentControls = ({ row }: { row: AdminSagicamPaymentsRow }) 
         >
           <CheckCircle2 className='size-3' />
           Verify
-        </Button>
-      </form>
-      <form action={setSponsorContributionPaidAction} className='w-20'>
-        <input type='hidden' name='sponsorCode' value={row.sponsorCode} />
-        <input type='hidden' name='contributionAmountUsed' value={row.contributionAmountUsed.toFixed(2)} />
-        <Button
-          type='submit'
-          size='xs'
-          variant='secondary'
-          disabled={!canSetPaid}
-          className='h-7 w-full justify-start px-2 text-[11px]'
-        >
-          <CircleDollarSign className='size-3' />
-          Paid
         </Button>
       </form>
       <form action={resetSponsorContributionPaymentAction} className='w-20'>
@@ -173,7 +156,6 @@ const ContributionPaymentControls = ({ row }: { row: AdminSagicamPaymentsRow }) 
 const RegistrationPaymentControls = ({ row }: { row: AdminSagicamPaymentsRow }) => {
   const hasSubmittedPayment = row.registrationAmountSent > 0
   const hasPaymentValues = row.registrationAmountSent > 0 || row.registrationReceived > 0
-  const canSetPaid = row.registrationAmountUsed > 0 || row.registrationFeeOwed > 0
 
   return (
     <div className='flex flex-col items-start gap-1'>
@@ -188,24 +170,6 @@ const RegistrationPaymentControls = ({ row }: { row: AdminSagicamPaymentsRow }) 
         >
           <CheckCircle2 className='size-3' />
           Verify
-        </Button>
-      </form>
-      <form action={setSponsorRegistrationPaidAction} className='w-20'>
-        <input type='hidden' name='sponsorCode' value={row.sponsorCode} />
-        <input
-          type='hidden'
-          name='registrationAmountOwed'
-          value={(row.registrationAmountUsed + row.registrationFeeOwed).toFixed(2)}
-        />
-        <Button
-          type='submit'
-          size='xs'
-          variant='secondary'
-          disabled={!canSetPaid}
-          className='h-7 w-full justify-start px-2 text-[11px]'
-        >
-          <CircleDollarSign className='size-3' />
-          Paid
         </Button>
       </form>
       <form action={resetSponsorRegistrationPaymentAction} className='w-20'>

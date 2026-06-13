@@ -658,36 +658,6 @@ export const verifySponsorContributionPaymentAction = async (formData: FormData)
   }
 }
 
-export const setSponsorContributionPaidAction = async (formData: FormData): Promise<void> => {
-  await getAuthUser()
-
-  try {
-    const sponsorCode = getRequiredFormValue(formData, 'sponsorCode')
-    const contributionAmountUsed = getDollarAmountFromForm(formData, 'contributionAmountUsed')
-
-    await db.sponsorContributionPayment.upsert({
-      create: {
-        amountSent: contributionAmountUsed,
-        amountVerified: contributionAmountUsed,
-        sponsorCode,
-        verifiedAt: new Date()
-      },
-      update: {
-        amountVerified: contributionAmountUsed,
-        verifiedAt: new Date()
-      },
-      where: {
-        sponsorCode
-      }
-    })
-
-    revalidatePath('/admin-sagicam-payments')
-    revalidatePath('/all-members')
-  } catch (error) {
-    renderError(error)
-  }
-}
-
 export const resetSponsorContributionPaymentAction = async (formData: FormData): Promise<void> => {
   await getAuthUser()
 
@@ -816,36 +786,6 @@ export const verifySponsorRegistrationPaymentAction = async (formData: FormData)
     await db.sponsorRegistrationPayment.update({
       data: {
         amountVerified: amountSent,
-        verifiedAt: new Date()
-      },
-      where: {
-        sponsorCode
-      }
-    })
-
-    revalidatePath('/admin-sagicam-payments')
-    revalidatePath('/all-members')
-  } catch (error) {
-    renderError(error)
-  }
-}
-
-export const setSponsorRegistrationPaidAction = async (formData: FormData): Promise<void> => {
-  await getAuthUser()
-
-  try {
-    const sponsorCode = getRequiredFormValue(formData, 'sponsorCode')
-    const registrationAmountOwed = getDollarAmountFromForm(formData, 'registrationAmountOwed')
-
-    await db.sponsorRegistrationPayment.upsert({
-      create: {
-        amountSent: registrationAmountOwed,
-        amountVerified: registrationAmountOwed,
-        sponsorCode,
-        verifiedAt: new Date()
-      },
-      update: {
-        amountVerified: registrationAmountOwed,
         verifiedAt: new Date()
       },
       where: {
