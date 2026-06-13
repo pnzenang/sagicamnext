@@ -90,6 +90,12 @@ const AdminSagicamRegistrations = async () => {
     }
   })
 
+  const sponsorRegistrationUsages = await db.sponsorRegistrationUsage.findMany({
+    select: {
+      sponsorCode: true
+    }
+  })
+
   const paymentAlertResets = await db.paymentAlertReset.findMany({
     where: {
       alertType: registrationPaymentAlertType
@@ -199,6 +205,7 @@ const AdminSagicamRegistrations = async () => {
     new Set([
       ...sponsorRegistrationPayments.map(payment => payment.sponsorCode),
       ...sponsorBalanceAdjustments.map(adjustment => adjustment.sponsorCode),
+      ...sponsorRegistrationUsages.map(usage => usage.sponsorCode),
       ...statusCountsByCode.keys(),
       ...archivedRegistrationUsedCountsByCode.keys()
     ])

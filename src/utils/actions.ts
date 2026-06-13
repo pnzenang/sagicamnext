@@ -28,7 +28,8 @@ import {
 import { fetchSponsorContributionSummary } from './sagicam-contribution-summary'
 import {
   fetchSponsorRegistrationSummary,
-  registrationBalanceAdjustmentType
+  registrationBalanceAdjustmentType,
+  registrationFeePerEligibleMember
 } from './sagicam-registration-summary'
 import { Prisma } from '@/generated/prisma/client'
 import prisma from './db'
@@ -53,6 +54,66 @@ const contributionPaymentAlertType = 'contribution'
 const registrationPaymentAlertType = 'registration'
 
 const formatRegistrationDate = (date: Date) => registrationDateFormatter.format(date)
+
+const createPendingRegistrationUsage = async ({
+  memberMatriculationNumber,
+  sponsorCode
+}: {
+  memberMatriculationNumber: string
+  sponsorCode: string
+}) => {
+  await db.sponsorRegistrationUsage.upsert({
+    create: {
+      amountUsed: registrationFeePerEligibleMember,
+      memberMatriculationNumber,
+      sponsorCode
+    },
+    update: {
+      amountUsed: registrationFeePerEligibleMember,
+      sponsorCode
+    },
+    where: {
+      memberMatriculationNumber
+    }
+  })
+}
+
+const syncPendingRegistrationUsage = async ({
+  memberMatriculationNumber,
+  nextStatus,
+  previousMatriculationNumber,
+  previousStatus,
+  sponsorCode
+}: {
+  memberMatriculationNumber: string
+  nextStatus: string
+  previousMatriculationNumber: string
+  previousStatus: string
+  sponsorCode: string
+}) => {
+  if (nextStatus !== memberStatus.Pending) {
+    return
+  }
+
+  if (previousStatus === memberStatus.Pending && previousMatriculationNumber !== memberMatriculationNumber) {
+    const updatedUsage = await db.sponsorRegistrationUsage.updateMany({
+      data: {
+        amountUsed: registrationFeePerEligibleMember,
+        memberMatriculationNumber,
+        sponsorCode
+      },
+      where: {
+        memberMatriculationNumber: previousMatriculationNumber
+      }
+    })
+
+    if (updatedUsage.count > 0) {
+      return
+    }
+  }
+
+  await createPendingRegistrationUsage({ memberMatriculationNumber, sponsorCode })
+}
 
 const createVestedContributionCredit = async ({
   memberMatriculationNumber,
@@ -81,6 +142,23 @@ const removeVestedContributionCredit = async (memberMatriculationNumber: string)
   await db.sponsorContributionCredit.deleteMany({
     where: {
       memberMatriculationNumber
+    }
+  })
+}
+
+const addDeceasedMemberContributionUsage = async (sponsorCode: string) => {
+  await db.sponsorContributionUsage.upsert({
+    create: {
+      amountUsed: contributionCreditPerVestedMember,
+      sponsorCode
+    },
+    update: {
+      amountUsed: {
+        increment: contributionCreditPerVestedMember
+      }
+    },
+    where: {
+      sponsorCode
     }
   })
 }
@@ -359,6 +437,13 @@ export const createMemberAction = async (provState: any, formData: FormData): Pr
         memberMatriculationNumber
       }
     })
+
+    if (validatedFields.memberStatus === memberStatus.Pending) {
+      await createPendingRegistrationUsage({
+        memberMatriculationNumber,
+        sponsorCode: validatedFields.sponsorCode
+      })
+    }
 
     await sendLovedOneConfirmationEmail({
       sponsorEmail: sponsor.sponsorEmail,
@@ -974,6 +1059,14 @@ export const updateMemberDetailsAction = async (prevState: any, formData: FormDa
     })
 
     if (currentMember) {
+      await syncPendingRegistrationUsage({
+        memberMatriculationNumber: currentMember.memberMatriculationNumber,
+        nextStatus: validatedFields.memberStatus,
+        previousMatriculationNumber: currentMember.memberMatriculationNumber,
+        previousStatus: currentMember.memberStatus,
+        sponsorCode: validatedFields.sponsorCode
+      })
+
       await syncVestedContributionCredit({
         memberMatriculationNumber: currentMember.memberMatriculationNumber,
         nextStatus: validatedFields.memberStatus,
@@ -1020,6 +1113,14 @@ export const updateMemberDetailsActionForAdmin = async (prevState: any, formData
     })
 
     if (currentMember) {
+      await syncPendingRegistrationUsage({
+        memberMatriculationNumber: currentMember.memberMatriculationNumber,
+        nextStatus: validatedFields.memberStatus,
+        previousMatriculationNumber: currentMember.memberMatriculationNumber,
+        previousStatus: currentMember.memberStatus,
+        sponsorCode: validatedFields.sponsorCode
+      })
+
       await syncVestedContributionCredit({
         memberMatriculationNumber: currentMember.memberMatriculationNumber,
         nextStatus: validatedFields.memberStatus,
@@ -1082,10 +1183,6 @@ export const createRemovedMemberAction = async (provState: any, formData: FormDa
       }
     })
 
-    if (member?.memberStatus === memberStatus.Vested) {
-      await removeVestedContributionCredit(member.memberMatriculationNumber)
-    }
-
     await sendLovedOneRemovalConfirmationEmail({
       sponsorEmail: sponsor.sponsorEmail,
       sponsorFirstName: sponsor.sponsorFirstName,
@@ -1138,10 +1235,6 @@ export const createRemovedMemberActionAdmin = async (
         id: memberId
       }
     })
-
-    if (member?.memberStatus === memberStatus.Vested) {
-      await removeVestedContributionCredit(member.memberMatriculationNumber)
-    }
 
     await sendLovedOneRemovalConfirmationEmail({
       sponsorEmail: sponsor.sponsorEmail,
@@ -1222,9 +1315,7 @@ export const createDeceasedMemberAction = async (provState: any, formData: FormD
       }
     })
 
-    if (member.memberStatus === memberStatus.Vested) {
-      await removeVestedContributionCredit(member.memberMatriculationNumber)
-    }
+    await addDeceasedMemberContributionUsage(validatedFields.sponsorCode)
 
     await sendDeathAnnouncementConfirmationEmail({
       sponsorEmail: sponsor.sponsorEmail,
@@ -1282,9 +1373,7 @@ export const createDeceasedMemberActionAdmin = async (
       }
     })
 
-    if (member.memberStatus === memberStatus.Vested) {
-      await removeVestedContributionCredit(member.memberMatriculationNumber)
-    }
+    await addDeceasedMemberContributionUsage(validatedFields.sponsorCode)
 
     await sendDeathAnnouncementConfirmationEmail({
       sponsorEmail: sponsor.sponsorEmail,

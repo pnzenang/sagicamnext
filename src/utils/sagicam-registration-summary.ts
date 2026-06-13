@@ -1,12 +1,9 @@
 import { unstable_noStore as noStore } from 'next/cache'
 
 import db from './db'
-import { memberStatus } from './types'
 
 export const registrationBalanceAdjustmentType = 'registration'
 export const registrationFeePerEligibleMember = 40
-
-const registrationUsedStatuses = [memberStatus.Awaiting, memberStatus.Vested]
 
 type FetchSponsorRegistrationSummaryOptions = {
   noStore?: boolean
@@ -24,34 +21,11 @@ export type SponsorRegistrationSummary = {
 const decimalToNumber = (value: unknown) => Number(value ?? 0)
 
 export const fetchRegistrationUsedMemberCount = async (sponsorCode: string) => {
-  const [activeMembers, removedMembers, deceasedMembers] = await Promise.all([
-    db.member.count({
-      where: {
-        memberStatus: {
-          in: registrationUsedStatuses
-        },
-        sponsorCode
-      }
-    }),
-    db.removedMember.count({
-      where: {
-        memberStatus: {
-          in: registrationUsedStatuses
-        },
-        sponsorCode
-      }
-    }),
-    db.deceasedMember.count({
-      where: {
-        memberStatus: {
-          in: registrationUsedStatuses
-        },
-        sponsorCode
-      }
-    })
-  ])
-
-  return activeMembers + removedMembers + deceasedMembers
+  return db.sponsorRegistrationUsage.count({
+    where: {
+      sponsorCode
+    }
+  })
 }
 
 export const fetchSponsorRegistrationSummary = async (
@@ -62,13 +36,20 @@ export const fetchSponsorRegistrationSummary = async (
     noStore()
   }
 
-  const [payment, registrationUsedMemberCount, balanceAdjustment] = await Promise.all([
+  const [payment, registrationUsage, balanceAdjustment] = await Promise.all([
     db.sponsorRegistrationPayment.findUnique({
       where: {
         sponsorCode
       }
     }),
-    fetchRegistrationUsedMemberCount(sponsorCode),
+    db.sponsorRegistrationUsage.aggregate({
+      _sum: {
+        amountUsed: true
+      },
+      where: {
+        sponsorCode
+      }
+    }),
     db.sponsorBalanceAdjustment.findUnique({
       where: {
         sponsorCode_balanceType: {
@@ -79,7 +60,7 @@ export const fetchSponsorRegistrationSummary = async (
     })
   ])
 
-  const amountUsed = registrationUsedMemberCount * registrationFeePerEligibleMember
+  const amountUsed = decimalToNumber(registrationUsage._sum.amountUsed)
   const manualBalanceAdjustment = decimalToNumber(balanceAdjustment?.amount)
   const amountVerified = decimalToNumber(payment?.amountVerified)
 
