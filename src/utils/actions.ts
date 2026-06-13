@@ -619,70 +619,24 @@ export const resetSponsorContributionPaymentAction = async (formData: FormData):
   try {
     const sponsorCode = getRequiredFormValue(formData, 'sponsorCode')
 
-    const [totalAssessedContribution, contributionSummary] = await Promise.all([
-      db.contributionAssessmentGroup.aggregate({
-        _sum: {
-          amountOwed: true
-        },
-        where: {
-          sponsorCode
-        }
-      }),
-      fetchSponsorContributionSummary(sponsorCode)
-    ])
-
-    const assessedAmount = decimalToNumber(totalAssessedContribution._sum.amountOwed)
-
-    const preservedBalanceAdjustment = Number(
-      (contributionSummary.balance - contributionSummary.vestedContributionCredit).toFixed(2)
-    )
-
-    await db.$transaction([
-      db.sponsorContributionPayment.upsert({
-        create: {
-          amountSent: 0,
-          amountVerified: 0,
-          sponsorCode,
-          verifiedAt: null
-        },
-        update: {
-          amountSent: 0,
-          amountVerified: 0,
-          verifiedAt: null
-        },
-        where: {
-          sponsorCode
-        }
-      }),
-      db.sponsorContributionUsage.upsert({
-        create: {
-          amountUsed: -assessedAmount,
-          sponsorCode
-        },
-        update: {
-          amountUsed: -assessedAmount
-        },
-        where: {
-          sponsorCode
-        }
-      }),
-      db.sponsorBalanceAdjustment.upsert({
-        create: {
-          amount: preservedBalanceAdjustment,
-          balanceType: contributionBalanceAdjustmentType,
-          sponsorCode
-        },
-        update: {
-          amount: preservedBalanceAdjustment
-        },
-        where: {
-          sponsorCode_balanceType: {
-            balanceType: contributionBalanceAdjustmentType,
-            sponsorCode
-          }
-        }
-      })
-    ])
+    await db.sponsorContributionPayment.upsert({
+      create: {
+        amountSent: 0,
+        amountVerified: 0,
+        lastSubmittedAt: null,
+        sponsorCode,
+        verifiedAt: null
+      },
+      update: {
+        amountSent: 0,
+        amountVerified: 0,
+        lastSubmittedAt: null,
+        verifiedAt: null
+      },
+      where: {
+        sponsorCode
+      }
+    })
 
     revalidatePath('/admin-sagicam-payments')
     revalidatePath('/admin-sagicam-registrations')
@@ -882,20 +836,66 @@ export const resetContributionCalculationAction = async (): Promise<{ message: s
       return { message: 'No contribution calculation found to reset.' }
     }
 
+    const sponsorContributionPayments = await db.sponsorContributionPayment.findMany({
+      where: {
+        OR: [{ amountSent: { gt: 0 } }, { amountVerified: { gt: 0 } }]
+      }
+    })
+
+    const latestGroupAmountByCode = new Map(
+      latestAssessment.groups.map(group => [group.sponsorCode, decimalToNumber(group.amountOwed)])
+    )
+
+    const affectedSponsorCodes = Array.from(
+      new Set([
+        ...latestAssessment.groups.map(group => group.sponsorCode),
+        ...sponsorContributionPayments.map(payment => payment.sponsorCode)
+      ])
+    )
+
+    const contributionSummaries = await Promise.all(
+      affectedSponsorCodes.map(sponsorCode => fetchSponsorContributionSummary(sponsorCode))
+    )
+
+    const balanceAdjustments = contributionSummaries.map(summary => {
+      const latestGroupAmount = latestGroupAmountByCode.get(summary.sponsorCode) ?? 0
+      const totalAmountUsedAfterReset = Number((summary.totalAmountUsed - latestGroupAmount).toFixed(2))
+
+      return {
+        amount: Number((summary.balance - summary.vestedContributionCredit + totalAmountUsedAfterReset).toFixed(2)),
+        sponsorCode: summary.sponsorCode
+      }
+    })
+
     await db.$transaction([
-      ...latestAssessment.groups.map(group =>
-        db.sponsorContributionUsage.upsert({
+      db.sponsorContributionPayment.updateMany({
+        data: {
+          amountSent: 0,
+          amountVerified: 0,
+          lastSubmittedAt: null,
+          verifiedAt: null
+        },
+        where: {
+          sponsorCode: {
+            in: sponsorContributionPayments.map(payment => payment.sponsorCode)
+          }
+        }
+      }),
+      ...balanceAdjustments.map(adjustment =>
+        db.sponsorBalanceAdjustment.upsert({
           create: {
-            amountUsed: group.amountOwed,
-            sponsorCode: group.sponsorCode
+            amount: adjustment.amount,
+            balanceType: contributionBalanceAdjustmentType,
+            sponsorCode: adjustment.sponsorCode
           },
           update: {
-            amountUsed: {
-              increment: group.amountOwed
-            }
+            amount: adjustment.amount
           },
           where: {
-            sponsorCode: group.sponsorCode
+            sponsorCode_balanceType: {
+              balanceType: contributionBalanceAdjustmentType,
+              sponsorCode: adjustment.sponsorCode
+            }
           }
         })
       ),
@@ -911,7 +911,7 @@ export const resetContributionCalculationAction = async (): Promise<{ message: s
     revalidatePath('/admin-sagicam-payments')
     revalidatePath('/all-members')
 
-    return { message: 'Latest contribution calculation reset successfully.' }
+    return { message: 'Latest contribution calculation reset successfully. Contribution sent and verified were cleared.' }
   } catch (error) {
     return renderError(error)
   }

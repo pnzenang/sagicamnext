@@ -583,7 +583,7 @@ const MembersDataTable = ({
             </div>
           </div>
         </div>
-        <div className='flex items-start justify-between gap-6 px-6 pt-4 pb-2 max-sm:flex-col'>
+        <div className='flex items-start justify-between gap-6 px-4 pt-4 pb-2 max-sm:flex-col sm:px-6'>
           <div>
             <p className='text-primary text-sm font-extrabold whitespace-nowrap' aria-live='polite'>
               <span>{table.getRowCount().toString()} Member(s) Found</span>
@@ -596,20 +596,20 @@ const MembersDataTable = ({
               pages={pages}
               showLeftEllipsis={showLeftEllipsis}
               showRightEllipsis={showRightEllipsis}
-              className='mx-0 justify-end'
+              className='mx-0 w-full justify-start sm:justify-end'
             />
           </div>
         </div>
-        <div className='flex items-start gap-4 px-6 pt-2 pb-6 max-sm:flex-col sm:items-center sm:justify-between'>
-          <div className='flex w-6/7 flex-col justify-start gap-2 sm:flex-row sm:items-center'>
+        <div className='flex items-start gap-4 px-4 pt-2 pb-6 max-sm:flex-col sm:items-center sm:justify-between sm:px-6'>
+          <div className='flex w-full min-w-0 flex-col justify-start gap-2 sm:w-6/7 sm:flex-row sm:items-center'>
             <Filter column={table.getColumn('sponsorCode')!} />
             <Filter column={table.getColumn('lastAndMiddleNames')!} />
             <Filter column={table.getColumn('firstName')!} />
             <Filter column={table.getColumn('delegateRecommendation')!} />
             <Filter column={table.getColumn('memberStatus')!} />
           </div>
-          <div className='flex items-center gap-4 sm:justify-between'>
-            <div className='flex items-center gap-2'>
+          <div className='flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-between sm:gap-4'>
+            <div className='flex min-w-0 items-center gap-2 max-sm:flex-1'>
               <Label htmlFor='#rowSelect' className=''>
                 Show
               </Label>
@@ -619,7 +619,7 @@ const MembersDataTable = ({
                   table.setPageSize(Number(value))
                 }}
               >
-                <SelectTrigger id='rowSelect' className='w-fit whitespace-nowrap'>
+                <SelectTrigger id='rowSelect' className='w-fit whitespace-nowrap max-sm:w-full'>
                   <SelectValue placeholder='Select number of results' />
                 </SelectTrigger>
                 <SelectContent className='[&_*[role=option]]:pr-8 [&_*[role=option]]:pl-2 [&_*[role=option]>span]:right-2 [&_*[role=option]>span]:left-auto'>
@@ -632,7 +632,7 @@ const MembersDataTable = ({
               </Select>
             </div>
             <Button
-              className='bg-primary/10 text-primary hover:bg-primary/20 focus-visible:ring-primary/20 dark:focus-visible:ring-primary/40'
+              className='bg-primary/10 text-primary hover:bg-primary/20 focus-visible:ring-primary/20 max-sm:flex-1 max-sm:justify-center dark:focus-visible:ring-primary/40'
               onClick={exportFilteredPageToExcel}
             >
               <FileSpreadsheetIcon />
@@ -640,7 +640,7 @@ const MembersDataTable = ({
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button className='bg-primary/10 text-primary hover:bg-primary/20 focus-visible:ring-primary/20 dark:focus-visible:ring-primary/40'>
+                <Button className='bg-primary/10 text-primary hover:bg-primary/20 focus-visible:ring-primary/20 max-sm:flex-1 max-sm:justify-center dark:focus-visible:ring-primary/40'>
                   <UploadIcon />
                   Export
                 </Button>
@@ -742,13 +742,13 @@ const MembersDataTable = ({
           }}
           getCardSubtitle={row => row.original.memberMatriculationNumber}
         />
-        <div className='flex justify-end border-t px-6 py-4'>
+        <div className='flex justify-start border-t px-4 py-4 sm:justify-end sm:px-6'>
           <TablePaginationControls
             table={table}
             pages={pages}
             showLeftEllipsis={showLeftEllipsis}
             showRightEllipsis={showRightEllipsis}
-            className='mx-0 justify-end'
+            className='mx-0 w-full justify-start sm:justify-end'
           />
         </div>
       </div>
@@ -783,7 +783,7 @@ function Filter({ column }: { column: Column<any, unknown> }) {
 
   if (filterVariant === 'select') {
     return (
-      <div className='border-primary w-full max-w-2xs space-y-2 rounded border'>
+      <div className='border-primary w-full space-y-2 rounded border sm:max-w-2xs'>
         {/* <Label htmlFor={`${id}-select`}>Select {columnHeader}</Label> */}
         <Select
           value={columnFilterValue?.toString() ?? 'all'}
@@ -808,7 +808,7 @@ function Filter({ column }: { column: Column<any, unknown> }) {
   }
 
   return (
-    <div className='border-primary w-full max-w-2xs rounded border'>
+    <div className='border-primary w-full rounded border sm:max-w-2xs'>
       <Label htmlFor={`${id}-input`} className='sr-only'>
         {columnHeader}
       </Label>
