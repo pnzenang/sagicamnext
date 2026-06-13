@@ -1,6 +1,10 @@
 import ContributionAssessmentForm from '@/components/dashboard/ContributionAssessmentForm'
 import { Button } from '@/components/ui/button'
-import { resetContributionPaymentAlertAction, resetRegistrationPaymentAlertAction } from '@/utils/actions'
+import { resetContributionPaymentAlertAction } from '@/utils/actions'
+import {
+  contributionBalanceAdjustmentType,
+  fetchSponsorContributionSummary
+} from '@/utils/sagicam-contribution-summary'
 import { memberStatus } from '@/utils/types'
 import db from '@/utils/db'
 import AdminSagicamPaymentsTable, {
@@ -12,20 +16,23 @@ const dateFormatter = new Intl.DateTimeFormat('en-US', {
   dateStyle: 'medium'
 })
 
+const alertTimeFormatter = new Intl.DateTimeFormat('en-US', {
+  dateStyle: 'medium',
+  timeStyle: 'short'
+})
+
 const decimalToNumber = (value: unknown) => Number(value ?? 0)
 const contributionPaymentAlertType = 'contribution'
-const registrationFeePerAwaitingMember = 40
-const registrationPaymentAlertType = 'registration'
 const defaultPaymentAlertResetAt = new Date(0)
 
 type PaymentAlertCardProps = {
   action: (formData: FormData) => Promise<void>
-  sponsorCodes: string[]
+  alerts: { sponsorCode: string; submittedAt: Date }[]
   title: string
 }
 
-const PaymentAlertCard = ({ action, sponsorCodes, title }: PaymentAlertCardProps) => {
-  const paymentLabel = sponsorCodes.length === 1 ? 'payment' : 'payments'
+const PaymentAlertCard = ({ action, alerts, title }: PaymentAlertCardProps) => {
+  const paymentLabel = alerts.length === 1 ? 'payment' : 'payments'
 
   return (
     <div className='border-primary/20 bg-primary/5 rounded-md border p-4'>
@@ -33,20 +40,26 @@ const PaymentAlertCard = ({ action, sponsorCodes, title }: PaymentAlertCardProps
         <div>
           <h2 className='text-lg font-extrabold'>{title}</h2>
           <p className='text-muted-foreground mt-1 text-sm font-semibold'>
-            You have {sponsorCodes.length} {paymentLabel} from the following sponsors:
+            You have {alerts.length} {paymentLabel} from the following sponsors:
           </p>
         </div>
         <form action={action}>
-          <Button type='submit' size='sm' variant='outline' disabled={sponsorCodes.length === 0}>
+          <Button type='submit' size='sm' variant='outline' disabled={alerts.length === 0}>
             Reset
           </Button>
         </form>
       </div>
-      {sponsorCodes.length > 0 ? (
+      {alerts.length > 0 ? (
         <div className='mt-4 grid grid-cols-2 gap-2'>
-          {sponsorCodes.map(sponsorCode => (
-            <div key={sponsorCode} className='bg-background rounded-md border px-3 py-2 text-sm font-extrabold'>
-              {sponsorCode}
+          {alerts.map(alert => (
+            <div
+              key={`${alert.sponsorCode}-${alert.submittedAt.toISOString()}`}
+              className='bg-background flex items-center justify-between gap-3 rounded-md border px-3 py-2 text-sm font-extrabold'
+            >
+              <span>{alert.sponsorCode}</span>
+              <span className='text-muted-foreground shrink-0 text-right text-xs font-semibold'>
+                {alertTimeFormatter.format(alert.submittedAt)}
+              </span>
             </div>
           ))}
         </div>
@@ -111,7 +124,10 @@ const AdminSagicamPayments = async () => {
     }
   })
 
-  const sponsorRegistrationPayments = await db.sponsorRegistrationPayment.findMany({
+  const sponsorBalanceAdjustments = await db.sponsorBalanceAdjustment.findMany({
+    where: {
+      balanceType: contributionBalanceAdjustmentType
+    },
     orderBy: {
       sponsorCode: 'asc'
     }
@@ -119,9 +135,7 @@ const AdminSagicamPayments = async () => {
 
   const paymentAlertResets = await db.paymentAlertReset.findMany({
     where: {
-      alertType: {
-        in: [contributionPaymentAlertType, registrationPaymentAlertType]
-      }
+      alertType: contributionPaymentAlertType
     }
   })
 
@@ -130,26 +144,17 @@ const AdminSagicamPayments = async () => {
   const contributionPaymentAlertResetAt =
     paymentAlertResetByType.get(contributionPaymentAlertType) ?? defaultPaymentAlertResetAt
 
-  const registrationPaymentAlertResetAt =
-    paymentAlertResetByType.get(registrationPaymentAlertType) ?? defaultPaymentAlertResetAt
-
-  const contributionPaymentAlertSponsorCodes = sponsorContributionPayments
+  const contributionPaymentAlerts = sponsorContributionPayments
     .filter(
       payment =>
         decimalToNumber(payment.amountSent) > 0 &&
         Boolean(payment.lastSubmittedAt) &&
         payment.lastSubmittedAt! > contributionPaymentAlertResetAt
     )
-    .map(payment => payment.sponsorCode)
-
-  const registrationPaymentAlertSponsorCodes = sponsorRegistrationPayments
-    .filter(
-      payment =>
-        decimalToNumber(payment.amountSent) > 0 &&
-        Boolean(payment.lastSubmittedAt) &&
-        payment.lastSubmittedAt! > registrationPaymentAlertResetAt
-    )
-    .map(payment => payment.sponsorCode)
+    .map(payment => ({
+      sponsorCode: payment.sponsorCode,
+      submittedAt: payment.lastSubmittedAt!
+    }))
 
   const memberCountsBySponsorCode = await db.member.groupBy({
     _count: {
@@ -160,76 +165,14 @@ const AdminSagicamPayments = async () => {
       sponsorCode: 'asc'
     },
     where: {
-      memberStatus: {
-        in: [memberStatus.Vested, memberStatus.Awaiting, memberStatus.Pending]
-      }
+      memberStatus: memberStatus.Vested
     }
   })
 
-  const removedRegistrationUsedCountsBySponsorCode = await db.removedMember.groupBy({
-    _count: {
-      _all: true
-    },
-    by: ['sponsorCode', 'memberStatus'],
-    orderBy: {
-      sponsorCode: 'asc'
-    },
-    where: {
-      memberStatus: {
-        in: [memberStatus.Vested, memberStatus.Awaiting]
-      }
-    }
-  })
-
-  const deceasedRegistrationUsedCountsBySponsorCode = await db.deceasedMember.groupBy({
-    _count: {
-      _all: true
-    },
-    by: ['sponsorCode', 'memberStatus'],
-    orderBy: {
-      sponsorCode: 'asc'
-    },
-    where: {
-      memberStatus: {
-        in: [memberStatus.Vested, memberStatus.Awaiting]
-      }
-    }
-  })
-
-  const statusCountsByCode = new Map<
-    string,
-    { awaitingPublication: number; pendingMembers: number; vestedMembers: number }
-  >()
-
-  const archivedRegistrationUsedCountsByCode = new Map<string, number>()
+  const vestedMembersByCode = new Map<string, number>()
 
   memberCountsBySponsorCode.forEach(item => {
-    const currentCounts = statusCountsByCode.get(item.sponsorCode) ?? {
-      awaitingPublication: 0,
-      pendingMembers: 0,
-      vestedMembers: 0
-    }
-
-    if (item.memberStatus === memberStatus.Vested) {
-      currentCounts.vestedMembers = item._count._all
-    }
-
-    if (item.memberStatus === memberStatus.Awaiting) {
-      currentCounts.awaitingPublication = item._count._all
-    }
-
-    if (item.memberStatus === memberStatus.Pending) {
-      currentCounts.pendingMembers = item._count._all
-    }
-
-    statusCountsByCode.set(item.sponsorCode, currentCounts)
-  })
-
-  ;[...removedRegistrationUsedCountsBySponsorCode, ...deceasedRegistrationUsedCountsBySponsorCode].forEach(item => {
-    archivedRegistrationUsedCountsByCode.set(
-      item.sponsorCode,
-      (archivedRegistrationUsedCountsByCode.get(item.sponsorCode) ?? 0) + item._count._all
-    )
+    vestedMembersByCode.set(item.sponsorCode, item._count._all)
   })
 
   const sponsorCodes = Array.from(
@@ -239,9 +182,8 @@ const AdminSagicamPayments = async () => {
       ...sponsorContributionUsages.map(usage => usage.sponsorCode),
       ...contributionCreditsBySponsorCode.map(credit => credit.sponsorCode),
       ...sponsorContributionPayments.map(payment => payment.sponsorCode),
-      ...sponsorRegistrationPayments.map(payment => payment.sponsorCode),
-      ...statusCountsByCode.keys(),
-      ...archivedRegistrationUsedCountsByCode.keys()
+      ...sponsorBalanceAdjustments.map(adjustment => adjustment.sponsorCode),
+      ...vestedMembersByCode.keys()
     ])
   ).sort((firstCode, secondCode) =>
     firstCode.localeCompare(secondCode, undefined, {
@@ -264,71 +206,28 @@ const AdminSagicamPayments = async () => {
   })
 
   const sponsorsByCode = new Map(sponsors.map(sponsor => [sponsor.sponsorCode, sponsor]))
-  const owedByCode = new Map(latestContributionAssessment?.groups.map(group => [group.sponsorCode, group]) ?? [])
 
-  const totalOwedByCode = new Map(
-    contributionTotalsBySponsorCode.map(group => [group.sponsorCode, group._sum.amountOwed])
+  const contributionSummaries = await Promise.all(
+    sponsorCodes.map(sponsorCode => fetchSponsorContributionSummary(sponsorCode, { noStore: true }))
   )
 
-  const usedByCode = new Map(sponsorContributionUsages.map(usage => [usage.sponsorCode, usage.amountUsed]))
-
-  const contributionCreditByCode = new Map(
-    contributionCreditsBySponsorCode.map(credit => [credit.sponsorCode, credit._sum.amountCredited])
-  )
-
-  const receivedByCode = new Map(sponsorContributionPayments.map(payment => [payment.sponsorCode, payment]))
-  const registrationPaymentsByCode = new Map(sponsorRegistrationPayments.map(payment => [payment.sponsorCode, payment]))
+  const contributionSummaryByCode = new Map(contributionSummaries.map(summary => [summary.sponsorCode, summary]))
 
   const rows: AdminSagicamPaymentsRow[] = sponsorCodes.map(sponsorCode => {
     const sponsor = sponsorsByCode.get(sponsorCode)
-    const amountOwed = decimalToNumber(owedByCode.get(sponsorCode)?.amountOwed)
-    const contributionPayment = receivedByCode.get(sponsorCode)
-    const contributionAmountSent = decimalToNumber(contributionPayment?.amountSent)
-    const amountReceived = decimalToNumber(contributionPayment?.amountVerified)
-
-    const totalContributionUsed = Number(
-      (decimalToNumber(totalOwedByCode.get(sponsorCode)) + decimalToNumber(usedByCode.get(sponsorCode))).toFixed(2)
-    )
-
-    const registrationPayment = registrationPaymentsByCode.get(sponsorCode)
-
-    const statusCounts = statusCountsByCode.get(sponsorCode) ?? {
-      awaitingPublication: 0,
-      pendingMembers: 0,
-      vestedMembers: 0
-    }
-
-    const vestedContributionCredit = decimalToNumber(contributionCreditByCode.get(sponsorCode))
-
-    const registrationFeeOwed = statusCounts.pendingMembers * registrationFeePerAwaitingMember
-
-    const registrationAmountUsed =
-      (statusCounts.awaitingPublication +
-        statusCounts.vestedMembers +
-        (archivedRegistrationUsedCountsByCode.get(sponsorCode) ?? 0)) *
-      registrationFeePerAwaitingMember
-
-    const registrationAmountSent = decimalToNumber(registrationPayment?.amountSent)
-    const registrationReceived = decimalToNumber(registrationPayment?.amountVerified)
+    const contributionSummary = contributionSummaryByCode.get(sponsorCode)
 
     return {
-      amountOwed,
-      amountReceived,
-      awaitingPublication: statusCounts.awaitingPublication,
-      balance: Number((amountReceived + vestedContributionCredit - totalContributionUsed).toFixed(2)),
-      contributionCredit: vestedContributionCredit,
-      contributionAmountUsed: totalContributionUsed,
-      contributionAmountSent,
-      pendingMembers: statusCounts.pendingMembers,
-      registrationAmountUsed,
-      registrationBalance: Number((registrationReceived - registrationAmountUsed).toFixed(2)),
-      registrationAmountSent,
-      registrationFeeOwed,
-      registrationReceived,
+      amountOwed: contributionSummary?.amountOwed ?? 0,
+      amountReceived: contributionSummary?.amountVerified ?? 0,
+      balance: contributionSummary?.balance ?? 0,
+      contributionCredit: contributionSummary?.vestedContributionCredit ?? 0,
+      contributionAmountUsed: contributionSummary?.totalAmountUsed ?? 0,
+      contributionAmountSent: contributionSummary?.amountReceived ?? 0,
       sponsorCode,
       sponsorEmail: sponsor?.sponsorEmail ?? '',
       sponsorPhoneNumber: sponsor?.sponsorPhoneNumber ?? '',
-      vestedMembers: statusCounts.vestedMembers
+      vestedMembers: vestedMembersByCode.get(sponsorCode) ?? 0
     }
   })
 
@@ -336,14 +235,8 @@ const AdminSagicamPayments = async () => {
     (currentTotals, row) => {
       currentTotals.amountOwed += row.amountOwed
       currentTotals.amountReceived += row.amountReceived
-      currentTotals.awaitingPublication += row.awaitingPublication
       currentTotals.balance += row.balance
       currentTotals.contributionAmountSent += row.contributionAmountSent
-      currentTotals.pendingMembers += row.pendingMembers
-      currentTotals.registrationBalance += row.registrationBalance
-      currentTotals.registrationAmountSent += row.registrationAmountSent
-      currentTotals.registrationFeeOwed += row.registrationFeeOwed
-      currentTotals.registrationReceived += row.registrationReceived
       currentTotals.vestedMembers += row.vestedMembers
 
       return currentTotals
@@ -351,14 +244,8 @@ const AdminSagicamPayments = async () => {
     {
       amountOwed: 0,
       amountReceived: 0,
-      awaitingPublication: 0,
       balance: 0,
       contributionAmountSent: 0,
-      pendingMembers: 0,
-      registrationBalance: 0,
-      registrationAmountSent: 0,
-      registrationFeeOwed: 0,
-      registrationReceived: 0,
       vestedMembers: 0
     }
   )
@@ -366,9 +253,9 @@ const AdminSagicamPayments = async () => {
   return (
     <div className='space-y-6 py-8 sm:py-10'>
       <div>
-        <h1 className='text-4xl font-semibold tracking-normal'>Sagicam Payments</h1>
+        <h1 className='text-4xl font-semibold tracking-normal'>Sagicam Contributions</h1>
         <p className='text-muted-foreground mt-2 text-sm'>
-          Sponsor payment summary from the latest contribution assessment
+          Sponsor contribution summary from the latest contribution assessment
           {latestContributionAssessment
             ? ` created on ${dateFormatter.format(latestContributionAssessment.createdAt)}`
             : ''}
@@ -378,16 +265,11 @@ const AdminSagicamPayments = async () => {
 
       <ContributionAssessmentForm vestedMembersCount={vestedMembersCount} />
 
-      <div className='grid gap-4 lg:grid-cols-2'>
+      <div className='w-full'>
         <PaymentAlertCard
           title='Contribution Payment Alerts'
-          sponsorCodes={contributionPaymentAlertSponsorCodes}
+          alerts={contributionPaymentAlerts}
           action={resetContributionPaymentAlertAction}
-        />
-        <PaymentAlertCard
-          title='Registration Payment Alerts'
-          sponsorCodes={registrationPaymentAlertSponsorCodes}
-          action={resetRegistrationPaymentAlertAction}
         />
       </div>
 

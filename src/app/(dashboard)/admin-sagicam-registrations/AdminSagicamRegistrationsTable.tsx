@@ -8,9 +8,9 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import {
-  addSponsorContributionBalanceAdjustmentAction,
-  resetSponsorContributionPaymentAction,
-  verifySponsorContributionPaymentAction
+  addSponsorRegistrationBalanceAdjustmentAction,
+  resetSponsorRegistrationPaymentAction,
+  verifySponsorRegistrationPaymentAction
 } from '@/utils/actions'
 
 const currencyFormatter = new Intl.NumberFormat('en-US', {
@@ -18,46 +18,51 @@ const currencyFormatter = new Intl.NumberFormat('en-US', {
   style: 'currency'
 })
 
-export type AdminSagicamPaymentsRow = {
-  amountOwed: number
-  amountReceived: number
-  balance: number
-  contributionAmountSent: number
-  contributionAmountUsed: number
-  contributionCredit: number
+export type AdminSagicamRegistrationsRow = {
+  awaitingPublication: number
+  pendingMembers: number
+  registrationAmountSent: number
+  registrationAmountUsed: number
+  registrationBalance: number
+  registrationFeeOwed: number
+  registrationReceived: number
   sponsorCode: string
   sponsorEmail: string
   sponsorPhoneNumber: string
   vestedMembers: number
 }
 
-export type AdminSagicamPaymentsTotals = Pick<
-  AdminSagicamPaymentsRow,
-  | 'amountOwed'
-  | 'amountReceived'
-  | 'balance'
-  | 'contributionAmountSent'
+export type AdminSagicamRegistrationsTotals = Pick<
+  AdminSagicamRegistrationsRow,
+  | 'awaitingPublication'
+  | 'pendingMembers'
+  | 'registrationAmountSent'
+  | 'registrationBalance'
+  | 'registrationFeeOwed'
+  | 'registrationReceived'
   | 'vestedMembers'
 >
 
-type SortKey = keyof AdminSagicamPaymentsRow
+type SortKey = keyof AdminSagicamRegistrationsRow
 type SortDirection = 'asc' | 'desc'
 
-type AdminSagicamPaymentsColumn = {
+type AdminSagicamRegistrationsColumn = {
   key: SortKey
   label: string
   align?: 'left' | 'right'
 }
 
-const columns: AdminSagicamPaymentsColumn[] = [
+const columns: AdminSagicamRegistrationsColumn[] = [
   { key: 'sponsorEmail', label: 'Email' },
   { key: 'sponsorPhoneNumber', label: 'Telephone' },
   { key: 'sponsorCode', label: 'Code' },
   { key: 'vestedMembers', label: 'Vested', align: 'right' },
-  { key: 'amountOwed', label: 'Contribution owed', align: 'right' },
-  { key: 'contributionAmountSent', label: 'Contribution sent', align: 'right' },
-  { key: 'amountReceived', label: 'Contribution verified', align: 'right' },
-  { key: 'balance', label: 'Contribution Balance', align: 'right' }
+  { key: 'awaitingPublication', label: 'Awaiting', align: 'right' },
+  { key: 'pendingMembers', label: 'Pending', align: 'right' },
+  { key: 'registrationFeeOwed', label: 'Registration owed', align: 'right' },
+  { key: 'registrationAmountSent', label: 'Registration sent', align: 'right' },
+  { key: 'registrationReceived', label: 'Registration verified', align: 'right' },
+  { key: 'registrationBalance', label: 'Registration balance', align: 'right' }
 ]
 
 const balanceColumnWidth = 25
@@ -70,7 +75,7 @@ const regularColumnWidth =
 const getColumnWidth = (columnKey: SortKey) => {
   if (columnKey === 'sponsorEmail' || columnKey === 'sponsorPhoneNumber') return contactColumnWidth
   if (columnKey === 'sponsorCode') return codeColumnWidth
-  if (columnKey === 'balance') return balanceColumnWidth
+  if (columnKey === 'registrationBalance') return balanceColumnWidth
 
   return regularColumnWidth
 }
@@ -83,7 +88,10 @@ const getSortIcon = (isActive: boolean, direction: SortDirection) => {
   return direction === 'asc' ? <ArrowUp className='size-3.5' /> : <ArrowDown className='size-3.5' />
 }
 
-const compareValues = (firstValue: AdminSagicamPaymentsRow[SortKey], secondValue: AdminSagicamPaymentsRow[SortKey]) => {
+const compareValues = (
+  firstValue: AdminSagicamRegistrationsRow[SortKey],
+  secondValue: AdminSagicamRegistrationsRow[SortKey]
+) => {
   if (typeof firstValue === 'number' && typeof secondValue === 'number') {
     return firstValue - secondValue
   }
@@ -131,22 +139,14 @@ const PhoneLink = ({ className = '', phoneNumber }: { className?: string; phoneN
   )
 }
 
-const ManualBalanceAdjustmentForm = ({
-  action,
-  balanceType,
-  sponsorCode
-}: {
-  action: (formData: FormData) => Promise<void>
-  balanceType: 'contribution'
-  sponsorCode: string
-}) => {
-  const inputId = `${balanceType}-balance-amount-${sponsorCode}`
+const ManualBalanceAdjustmentForm = ({ sponsorCode }: { sponsorCode: string }) => {
+  const inputId = `registration-balance-amount-${sponsorCode}`
 
   return (
-    <form action={action} className='contents'>
+    <form action={addSponsorRegistrationBalanceAdjustmentAction} className='contents'>
       <input type='hidden' name='sponsorCode' value={sponsorCode} />
       <label htmlFor={inputId} className='sr-only'>
-        Amount to manually add to {balanceType} balance
+        Amount to manually add to registration balance
       </label>
       <Input
         id={inputId}
@@ -172,13 +172,13 @@ const ManualBalanceAdjustmentForm = ({
   )
 }
 
-const ContributionPaymentControls = ({ row }: { row: AdminSagicamPaymentsRow }) => {
-  const hasSubmittedPayment = row.contributionAmountSent > 0
-  const hasPaymentValues = row.contributionAmountSent > 0 || row.amountReceived > 0 || row.contributionAmountUsed > 0
+const RegistrationPaymentControls = ({ row }: { row: AdminSagicamRegistrationsRow }) => {
+  const hasSubmittedPayment = row.registrationAmountSent > 0
+  const hasPaymentValues = row.registrationAmountSent > 0 || row.registrationReceived > 0
 
   return (
     <div className='contents'>
-      <form action={verifySponsorContributionPaymentAction} className='col-start-1 row-start-1 w-20'>
+      <form action={verifySponsorRegistrationPaymentAction} className='col-start-1 row-start-1 w-20'>
         <input type='hidden' name='sponsorCode' value={row.sponsorCode} />
         <Button
           type='submit'
@@ -191,7 +191,7 @@ const ContributionPaymentControls = ({ row }: { row: AdminSagicamPaymentsRow }) 
           Verify
         </Button>
       </form>
-      <form action={resetSponsorContributionPaymentAction} className='col-start-1 row-start-2 w-20'>
+      <form action={resetSponsorRegistrationPaymentAction} className='col-start-1 row-start-2 w-20'>
         <input type='hidden' name='sponsorCode' value={row.sponsorCode} />
         <Button
           type='submit'
@@ -208,12 +208,12 @@ const ContributionPaymentControls = ({ row }: { row: AdminSagicamPaymentsRow }) 
   )
 }
 
-const AdminSagicamPaymentsTable = ({
+const AdminSagicamRegistrationsTable = ({
   rows,
   totals
 }: {
-  rows: AdminSagicamPaymentsRow[]
-  totals: AdminSagicamPaymentsTotals
+  rows: AdminSagicamRegistrationsRow[]
+  totals: AdminSagicamRegistrationsTotals
 }) => {
   const [sortKey, setSortKey] = useState<SortKey>('sponsorCode')
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
@@ -274,7 +274,7 @@ const AdminSagicamPaymentsTable = ({
             {sortedRows.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={columns.length} className='text-muted-foreground h-24 text-center'>
-                  No Sagicam contributions found.
+                  No Sagicam registrations found.
                 </TableCell>
               </TableRow>
             ) : (
@@ -288,33 +288,33 @@ const AdminSagicamPaymentsTable = ({
                   </TableCell>
                   <TableCell>{row.sponsorCode}</TableCell>
                   <TableCell className='text-right font-semibold'>{row.vestedMembers}</TableCell>
-                  <TableCell className='text-right font-semibold'>{currencyFormatter.format(row.amountOwed)}</TableCell>
+                  <TableCell className='text-right font-semibold'>{row.awaitingPublication}</TableCell>
+                  <TableCell className='text-right font-semibold'>{row.pendingMembers}</TableCell>
+                  <TableCell className='text-right font-semibold'>
+                    {currencyFormatter.format(row.registrationFeeOwed)}
+                  </TableCell>
                   <TableCell
                     className={`text-right font-semibold ${
-                      row.contributionAmountSent > 0 ? 'text-green-700 dark:text-green-300' : ''
+                      row.registrationAmountSent > 0 ? 'text-green-700 dark:text-green-300' : ''
                     }`}
                   >
-                    {currencyFormatter.format(row.contributionAmountSent)}
+                    {currencyFormatter.format(row.registrationAmountSent)}
                   </TableCell>
                   <TableCell className='text-right font-semibold'>
-                    {currencyFormatter.format(row.amountReceived)}
+                    {currencyFormatter.format(row.registrationReceived)}
                   </TableCell>
                   <TableCell
                     className={`text-center align-middle font-semibold ${
-                      row.balance >= 0
+                      row.registrationBalance >= 0
                         ? 'bg-green-600/10 text-green-700 dark:text-green-300'
                         : 'bg-red-600/10 text-red-700 dark:text-red-300'
                     }`}
                   >
                     <div className='grid min-w-0 grid-cols-[auto_auto_minmax(0,1fr)] grid-rows-[auto_auto] items-center justify-items-center gap-x-2 gap-y-1'>
-                      <ContributionPaymentControls row={row} />
-                      <ManualBalanceAdjustmentForm
-                        action={addSponsorContributionBalanceAdjustmentAction}
-                        balanceType='contribution'
-                        sponsorCode={row.sponsorCode}
-                      />
+                      <RegistrationPaymentControls row={row} />
+                      <ManualBalanceAdjustmentForm sponsorCode={row.sponsorCode} />
                       <span className='bg-background/80 col-start-3 row-span-2 row-start-1 flex min-w-0 self-stretch justify-self-stretch items-center justify-center rounded-md border border-current/20 px-2 py-2 text-center text-2xl leading-none font-black tabular-nums'>
-                        {currencyFormatter.format(row.balance)}
+                        {currencyFormatter.format(row.registrationBalance)}
                       </span>
                     </div>
                   </TableCell>
@@ -329,14 +329,20 @@ const AdminSagicamPaymentsTable = ({
                 <TableCell />
                 <TableCell className='font-extrabold'>Total</TableCell>
                 <TableCell className='text-right font-extrabold'>{totals.vestedMembers}</TableCell>
-                <TableCell className='text-right font-extrabold'>{currencyFormatter.format(totals.amountOwed)}</TableCell>
+                <TableCell className='text-right font-extrabold'>{totals.awaitingPublication}</TableCell>
+                <TableCell className='text-right font-extrabold'>{totals.pendingMembers}</TableCell>
                 <TableCell className='text-right font-extrabold'>
-                  {currencyFormatter.format(totals.contributionAmountSent)}
+                  {currencyFormatter.format(totals.registrationFeeOwed)}
                 </TableCell>
                 <TableCell className='text-right font-extrabold'>
-                  {currencyFormatter.format(totals.amountReceived)}
+                  {currencyFormatter.format(totals.registrationAmountSent)}
                 </TableCell>
-                <TableCell className='text-right font-extrabold'>{currencyFormatter.format(totals.balance)}</TableCell>
+                <TableCell className='text-right font-extrabold'>
+                  {currencyFormatter.format(totals.registrationReceived)}
+                </TableCell>
+                <TableCell className='text-right font-extrabold'>
+                  {currencyFormatter.format(totals.registrationBalance)}
+                </TableCell>
               </TableRow>
             </TableFooter>
           )}
@@ -345,7 +351,7 @@ const AdminSagicamPaymentsTable = ({
       <div className='grid gap-3 p-3 md:hidden'>
         {sortedRows.length === 0 ? (
           <div className='text-muted-foreground rounded-md border px-4 py-10 text-center text-sm'>
-            No Sagicam contributions found.
+            No Sagicam registrations found.
           </div>
         ) : (
           sortedRows.map(row => (
@@ -364,35 +370,33 @@ const AdminSagicamPaymentsTable = ({
                 </div>
                 <div className='text-right text-xs font-semibold'>
                   <div>{row.vestedMembers} vested</div>
+                  <div>{row.awaitingPublication} awaiting</div>
+                  <div>{row.pendingMembers} pending</div>
                 </div>
               </div>
               <div className='grid gap-2 px-4 py-3'>
-                <div className='text-sm font-extrabold'>Contribution</div>
-                <MobileValue label='Owed' value={currencyFormatter.format(row.amountOwed)} />
+                <div className='text-sm font-extrabold'>Registration</div>
+                <MobileValue label='Owed' value={currencyFormatter.format(row.registrationFeeOwed)} />
                 <MobileValue
                   label='Sent'
-                  value={currencyFormatter.format(row.contributionAmountSent)}
-                  valueClassName={row.contributionAmountSent > 0 ? 'text-green-700 dark:text-green-300' : ''}
+                  value={currencyFormatter.format(row.registrationAmountSent)}
+                  valueClassName={row.registrationAmountSent > 0 ? 'text-green-700 dark:text-green-300' : ''}
                 />
-                <MobileValue label='Verified' value={currencyFormatter.format(row.amountReceived)} />
+                <MobileValue label='Verified' value={currencyFormatter.format(row.registrationReceived)} />
                 <div
                   className={`mt-1 rounded-md p-3 ${
-                    row.balance >= 0
+                    row.registrationBalance >= 0
                       ? 'bg-green-600/10 text-green-700 dark:text-green-300'
                       : 'bg-red-600/10 text-red-700 dark:text-red-300'
                   }`}
                 >
                   <div className='grid grid-cols-[auto_auto_minmax(0,1fr)] grid-rows-[auto_auto] items-center justify-items-center gap-x-3 gap-y-1'>
-                    <ContributionPaymentControls row={row} />
-                    <ManualBalanceAdjustmentForm
-                      action={addSponsorContributionBalanceAdjustmentAction}
-                      balanceType='contribution'
-                      sponsorCode={row.sponsorCode}
-                    />
+                    <RegistrationPaymentControls row={row} />
+                    <ManualBalanceAdjustmentForm sponsorCode={row.sponsorCode} />
                     <div className='bg-background/80 col-start-3 row-span-2 row-start-1 flex min-w-0 flex-col items-center justify-center self-stretch justify-self-stretch rounded-md border border-current/20 px-2 py-2 text-center'>
                       <div className='text-xs font-semibold uppercase'>Balance</div>
                       <div className='text-lg leading-none font-black tabular-nums'>
-                        {currencyFormatter.format(row.balance)}
+                        {currencyFormatter.format(row.registrationBalance)}
                       </div>
                     </div>
                   </div>
@@ -406,10 +410,12 @@ const AdminSagicamPaymentsTable = ({
             <div className='mb-2 text-base font-extrabold'>Total</div>
             <div className='grid gap-2'>
               <MobileValue label='Vested' value={totals.vestedMembers} />
-              <MobileValue label='Contribution owed' value={currencyFormatter.format(totals.amountOwed)} />
-              <MobileValue label='Contribution sent' value={currencyFormatter.format(totals.contributionAmountSent)} />
-              <MobileValue label='Contribution verified' value={currencyFormatter.format(totals.amountReceived)} />
-              <MobileValue label='Contribution balance' value={currencyFormatter.format(totals.balance)} />
+              <MobileValue label='Awaiting' value={totals.awaitingPublication} />
+              <MobileValue label='Pending' value={totals.pendingMembers} />
+              <MobileValue label='Registration owed' value={currencyFormatter.format(totals.registrationFeeOwed)} />
+              <MobileValue label='Registration sent' value={currencyFormatter.format(totals.registrationAmountSent)} />
+              <MobileValue label='Registration verified' value={currencyFormatter.format(totals.registrationReceived)} />
+              <MobileValue label='Registration balance' value={currencyFormatter.format(totals.registrationBalance)} />
             </div>
           </article>
         )}
@@ -418,4 +424,4 @@ const AdminSagicamPaymentsTable = ({
   )
 }
 
-export default AdminSagicamPaymentsTable
+export default AdminSagicamRegistrationsTable

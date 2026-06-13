@@ -6,7 +6,7 @@ import { auth } from '@clerk/nextjs/server'
 
 import { redirect } from 'next/navigation'
 
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, unstable_noStore as noStore } from 'next/cache'
 import { customAlphabet } from 'nanoid'
 
 import { id } from 'date-fns/locale'
@@ -25,6 +25,11 @@ import {
   sendLovedOneConfirmationEmail,
   sendLovedOneRemovalConfirmationEmail
 } from './email'
+import { fetchSponsorContributionSummary } from './sagicam-contribution-summary'
+import {
+  fetchSponsorRegistrationSummary,
+  registrationBalanceAdjustmentType
+} from './sagicam-registration-summary'
 import { Prisma } from '@/generated/prisma/client'
 import prisma from './db'
 
@@ -35,6 +40,8 @@ const currencyFormatter = new Intl.NumberFormat('en-US', {
   style: 'currency'
 })
 
+const contributionBalanceAdjustmentType = 'contribution'
+
 const registrationDateFormatter = new Intl.DateTimeFormat('en-US', {
   day: '2-digit',
   month: '2-digit',
@@ -44,41 +51,8 @@ const registrationDateFormatter = new Intl.DateTimeFormat('en-US', {
 const contributionCreditPerVestedMember = 30
 const contributionPaymentAlertType = 'contribution'
 const registrationPaymentAlertType = 'registration'
-const registrationFeePerEligibleMember = 40
-const registrationUsedStatuses = [memberStatus.Awaiting, memberStatus.Vested]
 
 const formatRegistrationDate = (date: Date) => registrationDateFormatter.format(date)
-
-const fetchRegistrationUsedMemberCount = async (sponsorCode: string) => {
-  const [activeMembers, removedMembers, deceasedMembers] = await Promise.all([
-    db.member.count({
-      where: {
-        memberStatus: {
-          in: registrationUsedStatuses
-        },
-        sponsorCode
-      }
-    }),
-    db.removedMember.count({
-      where: {
-        memberStatus: {
-          in: registrationUsedStatuses
-        },
-        sponsorCode
-      }
-    }),
-    db.deceasedMember.count({
-      where: {
-        memberStatus: {
-          in: registrationUsedStatuses
-        },
-        sponsorCode
-      }
-    })
-  ])
-
-  return activeMembers + removedMembers + deceasedMembers
-}
 
 const createVestedContributionCredit = async ({
   memberMatriculationNumber,
@@ -166,6 +140,7 @@ const revalidateMemberPaymentViews = () => {
   revalidatePath('/admin-count')
   revalidatePath('/admin-members')
   revalidatePath('/admin-sagicam-payments')
+  revalidatePath('/admin-sagicam-registrations')
   revalidatePath('/all-members')
   revalidatePath('/deceased-members')
   revalidatePath('/removed-members')
@@ -231,6 +206,16 @@ const getDollarAmountFromForm = (formData: FormData, fieldName: string) => {
 
   if (!Number.isFinite(amount) || amount < 0) {
     throw new Error('Enter a valid dollar amount.')
+  }
+
+  return amount
+}
+
+const getPositiveDollarAmountFromForm = (formData: FormData, fieldName: string) => {
+  const amount = getDollarAmountFromForm(formData, fieldName)
+
+  if (amount <= 0) {
+    throw new Error('Enter an amount greater than zero.')
   }
 
   return amount
@@ -415,83 +400,14 @@ export const fetchMembers = async () => {
 
 export const fetchCurrentSponsorContribution = async () => {
   const profile = await fetchProfile()
-  const latestAssessment = await fetchLatestContributionAssessment()
-  const contributionGroup = latestAssessment?.groups.find(group => group.sponsorCode === profile.sponsorCode)
-  const amountPerVestedMember = decimalToNumber(latestAssessment?.amountPerVestedMember)
-  const vestedMembersCount = contributionGroup?.vestedMembersCount ?? 0
 
-  const payment = await db.sponsorContributionPayment.findUnique({
-    where: {
-      sponsorCode: profile.sponsorCode
-    }
-  })
-
-  const totalAssessedContribution = await db.contributionAssessmentGroup.aggregate({
-    _sum: {
-      amountOwed: true
-    },
-    where: {
-      sponsorCode: profile.sponsorCode
-    }
-  })
-
-  const contributionUsage = await db.sponsorContributionUsage.findUnique({
-    where: {
-      sponsorCode: profile.sponsorCode
-    }
-  })
-
-  const contributionCredit = await db.sponsorContributionCredit.aggregate({
-    _sum: {
-      amountCredited: true
-    },
-    where: {
-      sponsorCode: profile.sponsorCode
-    }
-  })
-
-  const amountOwed = Number((amountPerVestedMember * vestedMembersCount).toFixed(2))
-  const amountReceived = decimalToNumber(payment?.amountSent)
-  const amountVerified = decimalToNumber(payment?.amountVerified)
-  const vestedContributionCredit = decimalToNumber(contributionCredit._sum.amountCredited)
-
-  const totalAmountUsed = Number(
-    (
-      decimalToNumber(totalAssessedContribution._sum.amountOwed) + decimalToNumber(contributionUsage?.amountUsed)
-    ).toFixed(2)
-  )
-
-  return {
-    amountOwed,
-    amountPerVestedMember,
-    amountReceived,
-    amountVerified,
-    balance: Number((amountVerified + vestedContributionCredit - totalAmountUsed).toFixed(2)),
-    sponsorCode: profile.sponsorCode,
-    totalAmountUsed,
-    vestedContributionCredit,
-    vestedMembersCount
-  }
+  return fetchSponsorContributionSummary(profile.sponsorCode, { noStore: true })
 }
 
 export const fetchCurrentSponsorRegistrationPayment = async () => {
   const profile = await fetchProfile()
 
-  const [payment, registrationUsedMemberCount] = await Promise.all([
-    db.sponsorRegistrationPayment.findUnique({
-      where: {
-        sponsorCode: profile.sponsorCode
-      }
-    }),
-    fetchRegistrationUsedMemberCount(profile.sponsorCode)
-  ])
-
-  return {
-    amountReceived: decimalToNumber(payment?.amountSent),
-    amountVerified: decimalToNumber(payment?.amountVerified),
-    amountUsed: registrationUsedMemberCount * registrationFeePerEligibleMember,
-    sponsorCode: profile.sponsorCode
-  }
+  return fetchSponsorRegistrationSummary(profile.sponsorCode, { noStore: true })
 }
 
 export const fetchMembersForAdmin = async () => {
@@ -652,10 +568,49 @@ export const verifySponsorContributionPaymentAction = async (formData: FormData)
     })
 
     revalidatePath('/admin-sagicam-payments')
+    revalidatePath('/admin-sagicam-registrations')
     revalidatePath('/all-members')
   } catch (error) {
     renderError(error)
   }
+}
+
+const addSponsorBalanceAdjustment = async (formData: FormData, balanceType: string): Promise<void> => {
+  await getAuthUser()
+
+  try {
+    const sponsorCode = getRequiredFormValue(formData, 'sponsorCode')
+    const amount = getPositiveDollarAmountFromForm(formData, 'balanceAmount')
+
+    await db.sponsorBalanceAdjustment.upsert({
+      create: {
+        amount,
+        balanceType,
+        sponsorCode
+      },
+      update: {
+        amount: {
+          increment: amount
+        }
+      },
+      where: {
+        sponsorCode_balanceType: {
+          balanceType,
+          sponsorCode
+        }
+      }
+    })
+
+    revalidatePath('/admin-sagicam-payments')
+    revalidatePath('/admin-sagicam-registrations')
+    revalidatePath('/all-members')
+  } catch (error) {
+    renderError(error)
+  }
+}
+
+export const addSponsorContributionBalanceAdjustmentAction = async (formData: FormData): Promise<void> => {
+  await addSponsorBalanceAdjustment(formData, contributionBalanceAdjustmentType)
 }
 
 export const resetSponsorContributionPaymentAction = async (formData: FormData): Promise<void> => {
@@ -664,16 +619,55 @@ export const resetSponsorContributionPaymentAction = async (formData: FormData):
   try {
     const sponsorCode = getRequiredFormValue(formData, 'sponsorCode')
 
-    const totalAssessedContribution = await db.contributionAssessmentGroup.aggregate({
-      _sum: {
-        amountOwed: true
-      },
-      where: {
-        sponsorCode
-      }
-    })
+    const [totalAssessedContribution, payment, contributionUsage, contributionCredit, balanceAdjustment] =
+      await Promise.all([
+        db.contributionAssessmentGroup.aggregate({
+          _sum: {
+            amountOwed: true
+          },
+          where: {
+            sponsorCode
+          }
+        }),
+        db.sponsorContributionPayment.findUnique({
+          where: {
+            sponsorCode
+          }
+        }),
+        db.sponsorContributionUsage.findUnique({
+          where: {
+            sponsorCode
+          }
+        }),
+        db.sponsorContributionCredit.aggregate({
+          _sum: {
+            amountCredited: true
+          },
+          where: {
+            sponsorCode
+          }
+        }),
+        db.sponsorBalanceAdjustment.findUnique({
+          where: {
+            sponsorCode_balanceType: {
+              balanceType: contributionBalanceAdjustmentType,
+              sponsorCode
+            }
+          }
+        })
+      ])
 
     const assessedAmount = decimalToNumber(totalAssessedContribution._sum.amountOwed)
+    const currentAmountVerified = decimalToNumber(payment?.amountVerified)
+    const currentAmountUsed = Number((assessedAmount + decimalToNumber(contributionUsage?.amountUsed)).toFixed(2))
+    const currentBalanceAdjustment = decimalToNumber(balanceAdjustment?.amount)
+    const vestedContributionCredit = decimalToNumber(contributionCredit._sum.amountCredited)
+
+    const currentBalance = Number(
+      (currentAmountVerified + vestedContributionCredit + currentBalanceAdjustment - currentAmountUsed).toFixed(2)
+    )
+
+    const preservedBalanceAdjustment = Number((currentBalance - vestedContributionCredit).toFixed(2))
 
     await db.$transaction([
       db.sponsorContributionPayment.upsert({
@@ -703,10 +697,27 @@ export const resetSponsorContributionPaymentAction = async (formData: FormData):
         where: {
           sponsorCode
         }
+      }),
+      db.sponsorBalanceAdjustment.upsert({
+        create: {
+          amount: preservedBalanceAdjustment,
+          balanceType: contributionBalanceAdjustmentType,
+          sponsorCode
+        },
+        update: {
+          amount: preservedBalanceAdjustment
+        },
+        where: {
+          sponsorCode_balanceType: {
+            balanceType: contributionBalanceAdjustmentType,
+            sponsorCode
+          }
+        }
       })
     ])
 
     revalidatePath('/admin-sagicam-payments')
+    revalidatePath('/admin-sagicam-registrations')
     revalidatePath('/all-members')
   } catch (error) {
     renderError(error)
@@ -755,6 +766,7 @@ export const saveSponsorRegistrationPaymentAction = async (
 
     revalidatePath('/admin-count')
     revalidatePath('/admin-sagicam-payments')
+    revalidatePath('/admin-sagicam-registrations')
     revalidatePath('/all-members')
 
     return {
@@ -794,10 +806,15 @@ export const verifySponsorRegistrationPaymentAction = async (formData: FormData)
     })
 
     revalidatePath('/admin-sagicam-payments')
+    revalidatePath('/admin-sagicam-registrations')
     revalidatePath('/all-members')
   } catch (error) {
     renderError(error)
   }
+}
+
+export const addSponsorRegistrationBalanceAdjustmentAction = async (formData: FormData): Promise<void> => {
+  await addSponsorBalanceAdjustment(formData, registrationBalanceAdjustmentType)
 }
 
 export const resetSponsorRegistrationPaymentAction = async (formData: FormData): Promise<void> => {
@@ -806,24 +823,46 @@ export const resetSponsorRegistrationPaymentAction = async (formData: FormData):
   try {
     const sponsorCode = getRequiredFormValue(formData, 'sponsorCode')
 
-    await db.sponsorRegistrationPayment.upsert({
-      create: {
-        amountSent: 0,
-        amountVerified: 0,
-        sponsorCode,
-        verifiedAt: null
-      },
-      update: {
-        amountSent: 0,
-        amountVerified: 0,
-        verifiedAt: null
-      },
-      where: {
-        sponsorCode
-      }
-    })
+    const registrationSummary = await fetchSponsorRegistrationSummary(sponsorCode)
+    const preservedBalanceAdjustment = Number((registrationSummary.balance + registrationSummary.amountUsed).toFixed(2))
+
+    await db.$transaction([
+      db.sponsorRegistrationPayment.upsert({
+        create: {
+          amountSent: 0,
+          amountVerified: 0,
+          sponsorCode,
+          verifiedAt: null
+        },
+        update: {
+          amountSent: 0,
+          amountVerified: 0,
+          verifiedAt: null
+        },
+        where: {
+          sponsorCode
+        }
+      }),
+      db.sponsorBalanceAdjustment.upsert({
+        create: {
+          amount: preservedBalanceAdjustment,
+          balanceType: registrationBalanceAdjustmentType,
+          sponsorCode
+        },
+        update: {
+          amount: preservedBalanceAdjustment
+        },
+        where: {
+          sponsorCode_balanceType: {
+            balanceType: registrationBalanceAdjustmentType,
+            sponsorCode
+          }
+        }
+      })
+    ])
 
     revalidatePath('/admin-sagicam-payments')
+    revalidatePath('/admin-sagicam-registrations')
     revalidatePath('/all-members')
   } catch (error) {
     renderError(error)
@@ -847,6 +886,7 @@ const resetPaymentAlert = async (alertType: string) => {
   })
 
   revalidatePath('/admin-sagicam-payments')
+  revalidatePath('/admin-sagicam-registrations')
 }
 
 export const resetContributionPaymentAlertAction = async (_formData: FormData): Promise<void> => {

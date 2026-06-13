@@ -4,6 +4,9 @@ import MembersDataTable from '@/components/shadcn-studio/blocks/datatable-member
 import { fetchCurrentSponsorContribution, fetchCurrentSponsorRegistrationPayment, fetchMembers } from '@/utils/actions'
 import { memberStatus } from '@/utils/types'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 const getMembershipSummary = (members: Awaited<ReturnType<typeof fetchMembers>>) => ({
   awaiting: members.filter(member => member.memberStatus === memberStatus.Awaiting).length,
   delinquent: members.filter(member => member.memberStatus === memberStatus.Delinquent).length,
@@ -18,6 +21,7 @@ const DataTablePreview = async () => {
     fetchCurrentSponsorContribution(),
     fetchCurrentSponsorRegistrationPayment()
   ])
+
   const membershipSummary = getMembershipSummary(members)
 
   return (

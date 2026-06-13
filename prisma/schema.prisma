@@ -139,6 +139,19 @@ model SponsorContributionCredit {
   @@index([sponsorCode])
 }
 
+model SponsorBalanceAdjustment {
+  id          String   @id @default(uuid())
+  sponsorCode String
+  balanceType String
+  amount      Decimal  @default(0) @db.Decimal(10, 2)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([sponsorCode, balanceType])
+  @@index([sponsorCode])
+  @@index([balanceType])
+}
+
 model SponsorRegistrationPayment {
   id              String    @id @default(uuid())
   sponsorCode     String    @unique

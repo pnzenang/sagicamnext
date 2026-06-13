@@ -142,8 +142,13 @@ export const pagesItems: MenuItem[] = [
       },
       {
         icon: WalletCards,
-        label: 'Sagicam Payments',
+        label: 'Sagicam Contributions',
         href: '/admin-sagicam-payments'
+      },
+      {
+        icon: WalletCards,
+        label: 'Sagicam Registrations',
+        href: '/admin-sagicam-registrations'
       }
     ]
   }

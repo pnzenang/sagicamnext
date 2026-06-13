@@ -26,6 +26,7 @@ const shouldReuseCachedPrisma =
   hasCachedModelField('SponsorContributionPayment', 'lastSubmittedAt') &&
   hasCachedModelField('SponsorRegistrationPayment', 'lastSubmittedAt') &&
   'paymentAlertReset' in (cachedPrisma as unknown as Record<string, unknown>) &&
+  'sponsorBalanceAdjustment' in (cachedPrisma as unknown as Record<string, unknown>) &&
   'sponsorContributionCredit' in (cachedPrisma as unknown as Record<string, unknown>) &&
   'sponsorContributionPayment' in (cachedPrisma as unknown as Record<string, unknown>) &&
   'sponsorContributionUsage' in (cachedPrisma as unknown as Record<string, unknown>) &&

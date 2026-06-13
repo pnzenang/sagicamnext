@@ -17,8 +17,6 @@ const monthFormatter = new Intl.DateTimeFormat('en-US', {
   month: 'long'
 })
 
-const getPaymentBalance = (amountSent: number, amountUsed: number) => Number((amountSent - amountUsed).toFixed(2))
-
 const registrationFeePerAwaitingMember = 40
 
 const sagicamPaymentUrl =
@@ -242,6 +240,7 @@ type CurrentContribution = {
   amountReceived: number
   amountVerified: number
   balance: number
+  manualBalanceAdjustment: number
   sponsorCode: string
   totalAmountUsed: number
   vestedContributionCredit: number
@@ -252,6 +251,8 @@ type CurrentRegistrationPayment = {
   amountReceived: number
   amountUsed: number
   amountVerified: number
+  balance: number
+  manualBalanceAdjustment: number
   sponsorCode: string
 }
 
@@ -273,11 +274,7 @@ const MembersDataTable = ({
   const registrationPaymentAmount = registrationPaymentMembersCount * registrationFeePerAwaitingMember
   const registrationAmountUsed = currentRegistrationPayment.amountUsed
   const contributionPaymentBalance = currentContribution.balance
-
-  const registrationPaymentBalance = getPaymentBalance(
-    currentRegistrationPayment.amountVerified,
-    registrationAmountUsed
-  )
+  const registrationPaymentBalance = currentRegistrationPayment.balance
 
   const pageSize = 100
 
@@ -499,6 +496,14 @@ const MembersDataTable = ({
                         {currencyFormatter.format(currentContribution.vestedContributionCredit)}
                       </span>
                     </div>
+                    {currentContribution.manualBalanceAdjustment > 0 ? (
+                      <div className='text-primary/80 flex items-start justify-between gap-4'>
+                        <span className='min-w-0 break-words'>Manual Balance Adjustment</span>
+                        <span className='shrink-0 text-right tabular-nums'>
+                          {currencyFormatter.format(currentContribution.manualBalanceAdjustment)}
+                        </span>
+                      </div>
+                    ) : null}
                   </div>
                   <div
                     className={cn(
@@ -543,6 +548,14 @@ const MembersDataTable = ({
                         {currencyFormatter.format(registrationAmountUsed)}
                       </span>
                     </div>
+                    {currentRegistrationPayment.manualBalanceAdjustment > 0 ? (
+                      <div className='text-primary/80 flex items-start justify-between gap-4'>
+                        <span className='min-w-0 break-words'>Manual Balance Adjustment</span>
+                        <span className='shrink-0 text-right tabular-nums'>
+                          {currencyFormatter.format(currentRegistrationPayment.manualBalanceAdjustment)}
+                        </span>
+                      </div>
+                    ) : null}
                   </div>
                   <div
                     className={cn(
