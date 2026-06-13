@@ -2,7 +2,7 @@
 
 import { useState, type ComponentType } from 'react'
 
-import { BookOpenCheck, ChevronRightIcon, Download, FileText, Scale } from 'lucide-react'
+import { BookOpenCheck, ChevronLeftIcon, ChevronRightIcon, Download, FileText, Scale } from 'lucide-react'
 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { Badge } from '@/components/ui/badge'
@@ -35,6 +35,17 @@ const FAQ = ({ tabsData }: { tabsData: FAQTab }) => {
     const nextSectionIndex = activeSectionIndex >= 0 ? (activeSectionIndex + 1) % tabsData.length : 0
 
     setActiveSection(tabsData[nextSectionIndex].value)
+  }
+
+  const goToPreviousSection = () => {
+    if (!hasSections) {
+      return
+    }
+
+    const previousSectionIndex =
+      activeSectionIndex >= 0 ? (activeSectionIndex - 1 + tabsData.length) % tabsData.length : tabsData.length - 1
+
+    setActiveSection(tabsData[previousSectionIndex].value)
   }
 
   return (
@@ -122,10 +133,21 @@ const FAQ = ({ tabsData }: { tabsData: FAQTab }) => {
                           </div>
                         </div>
 
-                        <Button onClick={goToNextSection} disabled={!hasSections} className='sm:shrink-0'>
-                          Next Section
-                          <ChevronRightIcon aria-hidden='true' />
-                        </Button>
+                        <div className='flex flex-col gap-2 sm:flex-row sm:shrink-0'>
+                          <Button
+                            onClick={goToPreviousSection}
+                            disabled={!hasSections}
+                            variant='outline'
+                            className='sm:shrink-0'
+                          >
+                            <ChevronLeftIcon aria-hidden='true' />
+                            Previous Section
+                          </Button>
+                          <Button onClick={goToNextSection} disabled={!hasSections} className='sm:shrink-0'>
+                            Next Section
+                            <ChevronRightIcon aria-hidden='true' />
+                          </Button>
+                        </div>
                       </div>
                     </div>
                     <Accordion type='single' collapsible className='w-full' defaultValue='item-1'>
