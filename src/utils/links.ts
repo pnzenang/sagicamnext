@@ -75,14 +75,14 @@ export const pagesItems: MenuItem[] = [
     href: '/new-additions'
   },
   {
-    icon: WalletMinimal,
-    label: 'Registration Payments  ',
-    href: '/registration-payments'
-  },
-  {
     icon: Table,
     label: 'Contribution Table',
     href: '/contribution-table'
+  },
+  {
+    icon: WalletMinimal,
+    label: 'Registration Payments  ',
+    href: '/registration-payments'
   },
 
   {
