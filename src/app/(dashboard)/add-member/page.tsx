@@ -34,7 +34,7 @@ const AddMember = async () => {
         <FormContainer action={createMemberAction}>
           <div className='mt-4 grid gap-4 md:grid-cols-3'>
             <FormInput type='text' name='firstName' label='Loved one Given name' />
-            <FormInput type='text' name='lastAndMiddleNames' label='Loved one last Family names' />
+            <FormInput type='text' name='lastAndMiddleNames' label='Loved one Family names' />
 
             <MaskDateInput
               type='text'

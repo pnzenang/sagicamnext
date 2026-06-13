@@ -35,7 +35,7 @@ export const pagesItems: MenuItem[] = [
 
   {
     icon: Users,
-    label: 'Loved Ones',
+    label: 'Sponsor Pages',
     children: [
       {
         icon: UserPlus,
