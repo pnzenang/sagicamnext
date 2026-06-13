@@ -85,11 +85,11 @@ export const pagesItems: MenuItem[] = [
     href: '/contribution-table'
   },
 
-  // {
-  //   icon: WalletCards,
-  //   label: 'Contributions Payments',
-  //   href: '/contributions-payments'
-  // },
+  {
+    icon: WalletCards,
+    label: 'Contributions Payments',
+    href: '/contributions-payments'
+  },
   {
     icon: Wallet,
     label: 'Sponsor Financial Position.',
