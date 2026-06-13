@@ -21,9 +21,14 @@ const alertTimeFormatter = new Intl.DateTimeFormat('en-US', {
   timeStyle: 'short'
 })
 
+const currencyFormatter = new Intl.NumberFormat('en-US', {
+  currency: 'USD',
+  style: 'currency'
+})
+
 type PaymentAlertCardProps = {
   action: (formData: FormData) => Promise<void>
-  alerts: { sponsorCode: string; submittedAt: Date }[]
+  alerts: { amount: number; sponsorCode: string; submittedAt: Date }[]
   title: string
 }
 
@@ -50,9 +55,10 @@ const PaymentAlertCard = ({ action, alerts, title }: PaymentAlertCardProps) => {
           {alerts.map(alert => (
             <div
               key={`${alert.sponsorCode}-${alert.submittedAt.toISOString()}`}
-              className='bg-background flex items-center justify-between gap-3 rounded-md border px-3 py-2 text-sm font-extrabold'
+              className='bg-background grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 rounded-md border px-3 py-2 text-sm font-extrabold'
             >
-              <span>{alert.sponsorCode}</span>
+              <span className='min-w-0 break-words'>{alert.sponsorCode}</span>
+              <span className='text-primary shrink-0 text-center tabular-nums'>{currencyFormatter.format(alert.amount)}</span>
               <span className='text-muted-foreground shrink-0 text-right text-xs font-semibold'>
                 {alertTimeFormatter.format(alert.submittedAt)}
               </span>
@@ -103,6 +109,7 @@ const AdminSagicamRegistrations = async () => {
         payment.lastSubmittedAt! > registrationPaymentAlertResetAt
     )
     .map(payment => ({
+      amount: decimalToNumber(payment.amountSent),
       sponsorCode: payment.sponsorCode,
       submittedAt: payment.lastSubmittedAt!
     }))

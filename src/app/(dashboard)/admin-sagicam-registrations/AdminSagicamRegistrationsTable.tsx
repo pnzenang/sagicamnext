@@ -313,7 +313,7 @@ const AdminSagicamRegistrationsTable = ({
                     <div className='grid min-w-0 grid-cols-[auto_auto_minmax(0,1fr)] grid-rows-[auto_auto] items-center justify-items-center gap-x-2 gap-y-1'>
                       <RegistrationPaymentControls row={row} />
                       <ManualBalanceAdjustmentForm sponsorCode={row.sponsorCode} />
-                      <span className='bg-background/80 col-start-3 row-span-2 row-start-1 flex min-w-0 self-stretch justify-self-stretch items-center justify-center rounded-md border border-current/20 px-2 py-2 text-center text-2xl leading-none font-black tabular-nums'>
+                      <span className='bg-background/80 col-start-3 row-span-2 row-start-1 flex min-w-0 self-stretch justify-self-stretch items-center justify-center rounded-md border border-current/20 px-2 py-2 text-center text-xl leading-none font-black tabular-nums'>
                         {currencyFormatter.format(row.registrationBalance)}
                       </span>
                     </div>
@@ -395,7 +395,7 @@ const AdminSagicamRegistrationsTable = ({
                     <ManualBalanceAdjustmentForm sponsorCode={row.sponsorCode} />
                     <div className='bg-background/80 col-start-3 row-span-2 row-start-1 flex min-w-0 flex-col items-center justify-center self-stretch justify-self-stretch rounded-md border border-current/20 px-2 py-2 text-center'>
                       <div className='text-xs font-semibold uppercase'>Balance</div>
-                      <div className='text-lg leading-none font-black tabular-nums'>
+                      <div className='text-base leading-none font-black tabular-nums'>
                         {currencyFormatter.format(row.registrationBalance)}
                       </div>
                     </div>
