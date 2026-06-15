@@ -7,7 +7,6 @@ import { DollarSign } from 'lucide-react'
 import { SubmitButton } from '@/components/forms/Buttons'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { cn } from '@/lib/utils'
 import { saveSponsorRegistrationPaymentAction } from '@/utils/actions'
 
 type SponsorRegistrationPaymentCardProps = {
@@ -29,12 +28,8 @@ const SponsorRegistrationPaymentCard = ({ amountExpected, amountSent }: SponsorR
   return (
     <form
       action={formAction}
-      className={cn(
-        'h-full min-w-0 rounded-md border px-3 py-3 sm:px-4',
-        cardIsComplete
-          ? 'border-green-600/20 bg-green-600/10 text-green-700 dark:text-green-300'
-          : 'border-red-600/20 bg-red-600/10 text-red-700 dark:text-red-300'
-      )}
+      aria-label={cardIsComplete ? 'Registration payment complete' : 'Registration payment pending'}
+      className='border-secondary bg-secondary text-secondary-foreground h-full min-h-56 min-w-0 rounded-md border px-3 py-3 sm:px-4'
     >
       <div className='grid gap-3'>
         <div className='grid gap-2'>
@@ -51,7 +46,7 @@ const SponsorRegistrationPaymentCard = ({ amountExpected, amountSent }: SponsorR
               min='0'
               step='0.01'
               placeholder='0.00'
-              className='bg-background pl-9 text-foreground'
+              className='bg-background text-foreground pl-9'
               required
             />
           </div>

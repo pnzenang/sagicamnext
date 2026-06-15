@@ -5,7 +5,7 @@ import type { ReactNode } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 
-import { ArrowRight, CheckCircle2, CircleDollarSign, FileText, QrCode, ShieldCheck } from 'lucide-react'
+import { ArrowRight, CircleDollarSign, FileText } from 'lucide-react'
 
 import SponsorContributionPaymentCard from '@/components/dashboard/SponsorContributionPaymentCard'
 import SponsorRegistrationPaymentCard from '@/components/dashboard/SponsorRegistrationPaymentCard'
@@ -67,64 +67,47 @@ const SummaryRow = ({ label, value }: { label: ReactNode; value: number }) => (
 const PaymentAmountCard = ({
   amount,
   description,
+  footer,
   title
 }: {
   amount: number
   description: ReactNode
+  footer?: ReactNode
   title: string
 }) => (
-  <div className='border-primary/20 bg-primary/10 text-primary flex h-full min-w-0 flex-col rounded-md border px-3 py-3 sm:px-4'>
+  <div className='border-primary/20 bg-primary/10 text-primary flex h-full min-h-32 min-w-0 flex-col rounded-md border px-3 py-3 sm:px-4'>
     <p className='text-lg font-extrabold break-words sm:text-xl'>
       {title}: {formatCurrency(amount)}
     </p>
     <p className='text-primary/80 mt-1 text-sm font-semibold break-words'>{description}</p>
+    {footer ? (
+      <div className='mt-2 text-sm font-extrabold break-words text-teal-600 dark:text-teal-300'>{footer}</div>
+    ) : null}
   </div>
 )
 
-const PaymentQrCard = ({ memoLabel }: { memoLabel: string }) => (
-  <div className='grid gap-4 md:grid-cols-[minmax(0,220px)_1fr] xl:grid-cols-1'>
-    <Link
-      href={sagicamPaymentUrl}
-      target='_blank'
-      rel='noreferrer'
-      className='border-primary/20 bg-background flex min-h-44 min-w-0 items-center justify-center rounded-md border p-3'
-    >
-      <Image
-        src={sagicamQrCodeUrl}
-        width={190}
-        height={190}
-        alt='SAGICAM payment QR code'
-        className='h-auto max-h-48 w-full max-w-48'
-      />
-    </Link>
-    <div className='border-primary/20 bg-primary/10 text-primary flex min-w-0 flex-col justify-center rounded-md border px-3 py-3 sm:px-4'>
-      <p className='flex items-center gap-2 text-lg font-extrabold break-words sm:text-xl'>
-        <QrCode className='size-5 shrink-0' aria-hidden='true' />
-        Zelle payment
-      </p>
-      <p className='text-primary/80 mt-1 text-sm font-semibold break-words'>
-        Scan or click the QR code to send your payment by Zelle. Add your sponsor code and write {memoLabel} in the memo
-        so SAGICAM can match the payment.
-      </p>
-    </div>
+const PaymentInstructionCard = () => (
+  <div className='border-primary/20 bg-primary/10 text-primary flex h-full min-h-32 min-w-0 flex-col justify-center rounded-md border px-3 py-3 sm:px-4'>
+    <p className='text-lg font-extrabold break-words sm:text-xl'>Payment instructions</p>
+    <p className='text-primary/80 mt-1 text-sm font-semibold break-words'>
+      Send the Zelle payment first, then record the exact amount here for SAGICAM verification.
+    </p>
   </div>
 )
 
-const PaymentChecklist = ({ reminders }: { reminders: string[] }) => (
-  <div className='rounded-md border p-5'>
-    <div className='mb-3 flex items-center gap-2 font-semibold'>
-      <ShieldCheck className='text-primary size-5' aria-hidden='true' />
-      Before you submit
-    </div>
-    <div className='grid gap-3'>
-      {reminders.map(reminder => (
-        <div key={reminder} className='text-muted-foreground flex items-start gap-2'>
-          <CheckCircle2 className='text-primary mt-0.5 size-4 shrink-0' aria-hidden='true' />
-          <p className='text-sm leading-6'>{reminder}</p>
-        </div>
-      ))}
-    </div>
-  </div>
+const PaymentQrCard = () => (
+  <Link
+    href={sagicamPaymentUrl}
+    className='border-primary/20 bg-background flex h-full min-h-60 min-w-0 items-center justify-center rounded-md border p-0 sm:p-1'
+  >
+    <Image
+      src={sagicamQrCodeUrl}
+      width={320}
+      height={320}
+      alt='SAGICAM payment QR code'
+      className='h-auto max-h-80 w-full max-w-80'
+    />
+  </Link>
 )
 
 const ContributionSummaryCard = ({
@@ -297,32 +280,39 @@ export const SponsorContributionPaymentSection = ({
   const amountSent = Math.max(currentContribution.amountReceived, currentContribution.amountVerified)
 
   return (
-    <div className={cn('grid gap-4 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]', className)}>
-      <div className='grid gap-4'>
-        <PaymentAmountCard
-          amount={currentContribution.amountOwed}
-          description={
-            <>
-              {currentContribution.vestedMembersCount} vested loved one(s) x{' '}
-              {formatCurrency(currentContribution.amountPerVestedMember)}
-            </>
-          }
-          title={`${currentMonthName}'s Contribution`}
-        />
-        <PaymentQrCard memoLabel='contribution payment' />
-        <PaymentChecklist
-          reminders={[
-            'Only submit this form after the Zelle contribution payment has been sent.',
-            'Use this page for monthly contributions only, not registration fees.',
-            'If you send more than the current amount due, the positive balance can be tracked for upcoming contributions.'
-          ]}
-        />
+    <section className={cn('space-y-6 py-8 sm:py-10', className)}>
+      <div>
+        <h1 className='text-xl font-semibold tracking-normal md:text-4xl'>Contribution Payment</h1>
+        <p className='text-muted-foreground mt-2 max-w-4xl text-sm leading-6 sm:text-base'>
+          Scan or click the QR code to send payment by Zelle. Add{' '}
+          <strong className='font-extrabold'>SAGICAM-{currentContribution.sponsorCode}</strong> in the memo so the
+          payment can be matched to your account, then record the amount sent.
+        </p>
       </div>
-      <div className='grid gap-4'>
-        <SponsorContributionPaymentCard amountExpected={currentContribution.amountOwed} amountSent={amountSent} />
-        <ContributionSummaryCard currentContribution={currentContribution} currentMonthName={currentMonthName} />
+
+      <div className='grid w-full grid-cols-1 items-stretch gap-4 lg:grid-cols-3'>
+        <div className='grid h-full min-w-0 auto-rows-fr gap-4'>
+          <PaymentAmountCard
+            amount={currentContribution.amountOwed}
+            description={
+              <>
+                {currentContribution.vestedMembersCount} vested loved one(s) x{' '}
+                {formatCurrency(currentContribution.amountPerVestedMember)}
+              </>
+            }
+            title={`${currentMonthName}'s Contribution`}
+          />
+          <PaymentInstructionCard />
+        </div>
+
+        <PaymentQrCard />
+
+        <div className='grid h-full min-w-0 auto-rows-fr gap-4'>
+          <SponsorContributionPaymentCard amountExpected={currentContribution.amountOwed} amountSent={amountSent} />
+          <ContributionSummaryCard currentContribution={currentContribution} currentMonthName={currentMonthName} />
+        </div>
       </div>
-    </div>
+    </section>
   )
 }
 
@@ -339,30 +329,37 @@ export const SponsorRegistrationPaymentSection = ({
   const amountSent = Math.max(currentRegistrationPayment.amountReceived, currentRegistrationPayment.amountVerified)
 
   return (
-    <div className={cn('grid gap-4 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]', className)}>
-      <div className='grid gap-4'>
-        <PaymentAmountCard
-          amount={registrationPaymentAmount}
-          description={
-            <>
-              {pendingMembersCount} pending loved one(s) x {formatCurrency(registrationFeePerPendingMember)}
-            </>
-          }
-          title='Registration Payment'
-        />
-        <PaymentQrCard memoLabel='registration payment' />
-        <PaymentChecklist
-          reminders={[
-            'Only submit this form after the Zelle registration payment has been sent.',
-            'Use this page for registration fees only, not monthly contributions.',
-            'If you are paying registration fees and contributions at the same time, submit each amount on its matching page.'
-          ]}
-        />
+    <section className={cn('space-y-6 py-8 sm:py-10', className)}>
+      <div>
+        <h1 className='text-xl font-semibold tracking-normal md:text-4xl'>Registration Payment</h1>
+        <p className='text-muted-foreground mt-2 max-w-4xl text-sm leading-6 sm:text-base'>
+          Scan or click the QR code to send payment by Zelle. Add{' '}
+          <strong className='font-extrabold'>SAGICAM-{currentRegistrationPayment.sponsorCode}</strong> in the memo so
+          the payment can be matched to your account, then record the amount sent.
+        </p>
       </div>
-      <div className='grid gap-4'>
-        <SponsorRegistrationPaymentCard amountExpected={registrationPaymentAmount} amountSent={amountSent} />
-        <RegistrationSummaryCard currentRegistrationPayment={currentRegistrationPayment} />
+
+      <div className='grid w-full grid-cols-1 items-stretch gap-4 lg:grid-cols-3'>
+        <div className='grid h-full min-w-0 auto-rows-fr gap-4'>
+          <PaymentAmountCard
+            amount={registrationPaymentAmount}
+            description={
+              <>
+                {pendingMembersCount} pending loved one(s) x {formatCurrency(registrationFeePerPendingMember)}
+              </>
+            }
+            title='Your Registration Dues'
+          />
+          <PaymentInstructionCard />
+        </div>
+
+        <PaymentQrCard />
+
+        <div className='grid h-full min-w-0 auto-rows-fr gap-4'>
+          <SponsorRegistrationPaymentCard amountExpected={registrationPaymentAmount} amountSent={amountSent} />
+          <RegistrationSummaryCard currentRegistrationPayment={currentRegistrationPayment} />
+        </div>
       </div>
-    </div>
+    </section>
   )
 }
