@@ -5,7 +5,7 @@ import type { ReactNode } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 
-import { ArrowRight, CircleDollarSign, FileText } from 'lucide-react'
+import { ArrowRight, CircleDollarSign } from 'lucide-react'
 
 import SponsorContributionPaymentCard from '@/components/dashboard/SponsorContributionPaymentCard'
 import SponsorRegistrationPaymentCard from '@/components/dashboard/SponsorRegistrationPaymentCard'
@@ -219,7 +219,7 @@ export const SponsorPaymentNavigationCards = ({
   const registrationPaymentAmount = getRegistrationPaymentAmount(pendingMembersCount)
 
   return (
-    <div className='grid w-full grid-cols-1 items-stretch gap-4 lg:grid-cols-3'>
+    <div className='grid w-full grid-cols-1 items-stretch gap-4 lg:grid-cols-2'>
       <PaymentRouteCard
         amount={currentContribution.amountOwed}
         cta='Go to contribution payment'
@@ -255,16 +255,6 @@ export const SponsorPaymentNavigationCards = ({
         href='/registration-payments'
         title='Registration Payment'
       />
-      <div className='border-primary/20 bg-background flex h-full min-w-0 flex-col rounded-md border p-4'>
-        <div className='mb-3 flex items-center gap-2 font-semibold'>
-          <FileText className='text-primary size-5' aria-hidden='true' />
-          Payments are now split
-        </div>
-        <p className='text-muted-foreground text-sm leading-6'>
-          Use the contribution page for monthly contributions and the registration page for registration fees. Send the
-          Zelle first, then submit the amount on the matching page.
-        </p>
-      </div>
     </div>
   )
 }
