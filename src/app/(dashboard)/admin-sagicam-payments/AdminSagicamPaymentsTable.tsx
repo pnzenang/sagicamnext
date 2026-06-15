@@ -112,20 +112,20 @@ const MobileValue = ({
 )
 
 const EmailLink = ({ className = '', email }: { className?: string; email: string }) => {
-  if (!email) return <span className={className}>-</span>
+  if (!email) return <span className={`text-primary ${className}`}>-</span>
 
   return (
-    <a href={`mailto:${email}`} className={`underline-offset-2 hover:underline ${className}`}>
+    <a href={`mailto:${email}`} className={`text-primary underline-offset-2 hover:underline ${className}`}>
       {email}
     </a>
   )
 }
 
 const PhoneLink = ({ className = '', phoneNumber }: { className?: string; phoneNumber: string }) => {
-  if (!phoneNumber) return <span className={className}>-</span>
+  if (!phoneNumber) return <span className={`text-primary ${className}`}>-</span>
 
   return (
-    <a href={`tel:${getPhoneHref(phoneNumber)}`} className={`underline-offset-2 hover:underline ${className}`}>
+    <a href={`tel:${getPhoneHref(phoneNumber)}`} className={`text-primary underline-offset-2 hover:underline ${className}`}>
       {phoneNumber}
     </a>
   )
@@ -355,11 +355,11 @@ const AdminSagicamPaymentsTable = ({
                   <div className='text-lg font-extrabold'>{row.sponsorCode}</div>
                   <EmailLink
                     email={row.sponsorEmail}
-                    className='text-muted-foreground block break-all text-xs font-semibold'
+                    className='block break-all text-xs font-semibold'
                   />
                   <PhoneLink
                     phoneNumber={row.sponsorPhoneNumber}
-                    className='text-muted-foreground block text-xs font-semibold'
+                    className='block text-xs font-semibold'
                   />
                 </div>
                 <div className='text-right text-xs font-semibold'>

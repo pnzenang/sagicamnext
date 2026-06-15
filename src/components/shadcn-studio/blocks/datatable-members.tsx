@@ -8,22 +8,6 @@ import * as XLSX from 'xlsx'
 
 day.extend(advancedFormat)
 
-const currencyFormatter = new Intl.NumberFormat('en-US', {
-  currency: 'USD',
-  style: 'currency'
-})
-
-const monthFormatter = new Intl.DateTimeFormat('en-US', {
-  month: 'long'
-})
-
-const registrationFeePerAwaitingMember = 40
-
-const sagicamPaymentUrl =
-  'https://enroll.zellepay.com/qr-codes?data=eyJuYW1lIjoiQUNUSVZFIFNPTElEQVJJVFkgTFREIiwiYWN0aW9uIjoicGF5bWVudCIsInRva2VuIjoiaW5mb0BzYWdpdXNhLm9yZyJ9'
-
-const sagicamQrCodeUrl = 'https://res.cloudinary.com/dp8tkb7hq/image/upload/v1778042720/sagiQrCode_jmwsbf.svg'
-
 import {
   ArrowDown,
   ArrowUp,
@@ -53,9 +37,6 @@ import {
 } from '@tanstack/react-table'
 
 import Link from 'next/link'
-import Image from 'next/image'
-
-import { id } from 'zod/v4/locales'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -78,8 +59,7 @@ import { usePagination } from '@/hooks/use-pagination'
 
 import MembershipSummaryCards from '@/components/dashboard/MembershipSummaryCards'
 import ResponsiveTableCards from '@/components/dashboard/ResponsiveTableCards'
-import SponsorContributionPaymentCard from '@/components/dashboard/SponsorContributionPaymentCard'
-import SponsorRegistrationPaymentCard from '@/components/dashboard/SponsorRegistrationPaymentCard'
+import { SponsorPaymentNavigationCards } from '@/components/dashboard/SponsorPaymentSections'
 import { TablePaginationControls } from '@/components/dashboard/TablePaginationControls'
 import { cn } from '@/lib/utils'
 import { type MemberType } from '@/utils/types'
@@ -268,13 +248,6 @@ const MembersDataTable = ({
   membershipSummary: MembershipSummary
 }) => {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
-  const currentMonthName = monthFormatter.format(new Date())
-  const monthlyContributionAmount = currentContribution.amountOwed
-  const registrationPaymentMembersCount = membershipSummary.pending
-  const registrationPaymentAmount = registrationPaymentMembersCount * registrationFeePerAwaitingMember
-  const registrationAmountUsed = currentRegistrationPayment.amountUsed
-  const contributionPaymentBalance = currentContribution.balance
-  const registrationPaymentBalance = currentRegistrationPayment.balance
 
   const pageSize = 100
 
@@ -405,182 +378,11 @@ const MembersDataTable = ({
           <span className='text-2xl font-semibold sm:text-4xl lg:text-6xl'>All Registered Loved Ones</span>
           <MembershipSummaryCards {...membershipSummary} />
           <div className='w-full pb-4'>
-            <div className='grid w-full grid-cols-1 items-stretch gap-4 md:grid-cols-2 xl:grid-cols-4'>
-              <div className='grid h-full min-w-0 auto-rows-fr gap-4'>
-                <div className='border-primary/20 bg-primary/10 text-primary flex h-full min-w-0 flex-col rounded-md border px-3 py-3 sm:px-4'>
-                  <p className='text-lg font-extrabold break-words sm:text-xl'>
-                    {currentMonthName}&apos;s Contribution: {currencyFormatter.format(monthlyContributionAmount)}
-                  </p>
-                  <p className='text-primary/80 mt-1 text-sm font-semibold break-words'>
-                    {currentContribution.vestedMembersCount} vested loved one(s) x{' '}
-                    {currencyFormatter.format(currentContribution.amountPerVestedMember)}
-                  </p>
-                </div>
-                <div className='border-primary/20 bg-primary/10 text-primary flex h-full min-w-0 flex-col rounded-md border px-3 py-3 sm:px-4'>
-                  <p className='text-lg font-extrabold break-words sm:text-xl'>
-                    Your Registration Payment is: {currencyFormatter.format(registrationPaymentAmount)}
-                  </p>
-                  <p className='text-primary/80 mt-1 text-sm font-semibold break-words'>
-                    {membershipSummary.pending} pending loved one(s) x{' '}
-                    {currencyFormatter.format(registrationFeePerAwaitingMember)}
-                  </p>
-                </div>
-              </div>
-              <div className='grid h-full min-w-0 auto-rows-fr gap-4'>
-                <Link
-                  href={sagicamPaymentUrl}
-                  className='border-primary/20 bg-background flex h-full min-h-44 min-w-0 items-center justify-center rounded-md border p-3'
-                >
-                  <Image
-                    src={sagicamQrCodeUrl}
-                    width={190}
-                    height={190}
-                    alt='SAGICAM payment QR code'
-                    className='h-auto max-h-48 w-full max-w-48'
-                  />
-                </Link>
-                <div className='border-primary/20 bg-primary/10 text-primary flex h-full min-w-0 flex-col justify-center rounded-md border px-3 py-3 sm:px-4'>
-                  <p className='text-lg font-extrabold break-words sm:text-xl'>Payment instructions</p>
-                  <p className='text-primary/80 mt-1 text-sm font-semibold break-words'>
-                    Scan or click the QR code to send your payment by Zelle. Add your sponsor code in the Zelle memo so
-                    the payment can be recognized, then fill out the Contribution sent or Registration sent form.
-                  </p>
-                </div>
-              </div>
-              <div className='grid h-full min-w-0 auto-rows-fr gap-4'>
-                <SponsorContributionPaymentCard
-                  amountExpected={monthlyContributionAmount}
-                  amountSent={Math.max(currentContribution.amountReceived, currentContribution.amountVerified)}
-                />
-                <SponsorRegistrationPaymentCard
-                  amountExpected={registrationPaymentAmount}
-                  amountSent={Math.max(
-                    currentRegistrationPayment.amountReceived,
-                    currentRegistrationPayment.amountVerified
-                  )}
-                />
-              </div>
-              <div className='grid h-full min-w-0 auto-rows-fr gap-4'>
-                <div className='border-primary/20 bg-primary/10 text-primary flex h-full min-w-0 flex-col rounded-md border px-3 py-3 sm:px-4'>
-                  <p className='text-lg font-extrabold break-words sm:text-xl'>Contribution payment summary</p>
-                  <div className='mt-2 grid gap-1.5 text-sm font-semibold'>
-                    <div className='text-primary/80 flex items-start justify-between gap-4'>
-                      <span className='min-w-0 break-words'>Amount Sent</span>
-                      <span className='shrink-0 text-right tabular-nums'>
-                        {currencyFormatter.format(currentContribution.amountReceived)}
-                      </span>
-                    </div>
-                    <div className='text-primary/80 flex items-start justify-between gap-4'>
-                      <span className='min-w-0 break-words'>Amount Verified by SAGICAM</span>
-                      <span className='shrink-0 text-right tabular-nums'>
-                        {currencyFormatter.format(currentContribution.amountVerified)}
-                      </span>
-                    </div>
-                    <div className='text-primary/80 flex items-start justify-between gap-4'>
-                      <span className='min-w-0 break-words'>
-                        Amount Used for {currentMonthName}&apos;s Contribution
-                      </span>
-                      <span className='shrink-0 text-right tabular-nums'>
-                        {currencyFormatter.format(monthlyContributionAmount)}
-                      </span>
-                    </div>
-                    <div className='text-primary/80 flex items-start justify-between gap-4'>
-                      <span className='min-w-0 break-words'>Total Amount Used for Contributions</span>
-                      <span className='shrink-0 text-right tabular-nums'>
-                        {currencyFormatter.format(currentContribution.totalAmountUsed)}
-                      </span>
-                    </div>
-                    <div className='text-primary/80 flex items-start justify-between gap-4'>
-                      <span className='min-w-0 break-words'>Vested Loved One Credit</span>
-                      <span className='shrink-0 text-right tabular-nums'>
-                        {currencyFormatter.format(currentContribution.vestedContributionCredit)}
-                      </span>
-                    </div>
-                    {currentContribution.manualBalanceAdjustment > 0 ? (
-                      <div className='text-primary/80 flex items-start justify-between gap-4'>
-                        <span className='min-w-0 break-words'>Balance Adjustment</span>
-                        <span className='shrink-0 text-right tabular-nums'>
-                          {currencyFormatter.format(currentContribution.manualBalanceAdjustment)}
-                        </span>
-                      </div>
-                    ) : null}
-                  </div>
-                  <div
-                    className={cn(
-                      'mt-2 flex items-start justify-between gap-4 text-base font-extrabold',
-                      contributionPaymentBalance >= 0
-                        ? 'text-green-700 dark:text-green-300'
-                        : 'text-red-700 dark:text-red-300'
-                    )}
-                  >
-                    <span className='min-w-0 break-words'>
-                      Balance{' '}
-                      {contributionPaymentBalance >= 0 ? (
-                        <span className='text-[10px] leading-tight font-medium'>(To be used for upcoming months)</span>
-                      ) : null}
-                    </span>
-                    <span className='shrink-0 text-right tabular-nums'>
-                      {currencyFormatter.format(contributionPaymentBalance)}
-                    </span>
-                  </div>
-                  <p className='text-primary/70 mt-auto pt-4 text-[10px] leading-tight font-medium break-words'>
-                    All amounts will be verified by SAGICAM and reversed if not accurate.
-                  </p>
-                </div>
-                <div className='border-primary/20 bg-primary/10 text-primary flex h-full min-w-0 flex-col rounded-md border px-3 py-3 sm:px-4'>
-                  <p className='text-lg font-extrabold break-words sm:text-xl'>Registration payment summary</p>
-                  <div className='mt-2 grid gap-1.5 text-sm font-semibold'>
-                    <div className='text-primary/80 flex items-start justify-between gap-4'>
-                      <span className='min-w-0 break-words'>Amount Sent</span>
-                      <span className='shrink-0 text-right tabular-nums'>
-                        {currencyFormatter.format(currentRegistrationPayment.amountReceived)}
-                      </span>
-                    </div>
-                    <div className='text-primary/80 flex items-start justify-between gap-4'>
-                      <span className='min-w-0 break-words'>Amount Verified by SAGICAM</span>
-                      <span className='shrink-0 text-right tabular-nums'>
-                        {currencyFormatter.format(currentRegistrationPayment.amountVerified)}
-                      </span>
-                    </div>
-                    <div className='text-primary/80 flex items-start justify-between gap-4'>
-                      <span className='min-w-0 break-words'>Used for Registration</span>
-                      <span className='shrink-0 text-right tabular-nums'>
-                        {currencyFormatter.format(registrationAmountUsed)}
-                      </span>
-                    </div>
-                    {currentRegistrationPayment.manualBalanceAdjustment > 0 ? (
-                      <div className='text-primary/80 flex items-start justify-between gap-4'>
-                        <span className='min-w-0 break-words'>Balance Adjustment</span>
-                        <span className='shrink-0 text-right tabular-nums'>
-                          {currencyFormatter.format(currentRegistrationPayment.manualBalanceAdjustment)}
-                        </span>
-                      </div>
-                    ) : null}
-                  </div>
-                  <div
-                    className={cn(
-                      'mt-2 flex items-start justify-between gap-4 text-base font-extrabold',
-                      registrationPaymentBalance >= 0
-                        ? 'text-green-700 dark:text-green-300'
-                        : 'text-red-700 dark:text-red-300'
-                    )}
-                  >
-                    <span className='min-w-0 break-words'>
-                      Balance{' '}
-                      {registrationPaymentBalance >= 0 ? (
-                        <span className='text-[10px] leading-tight font-medium'>(To be used for upcoming months)</span>
-                      ) : null}
-                    </span>
-                    <span className='shrink-0 text-right tabular-nums'>
-                      {currencyFormatter.format(registrationPaymentBalance)}
-                    </span>
-                  </div>
-                  <p className='text-primary/70 mt-auto pt-4 text-[10px] leading-tight font-medium break-words'>
-                    All amounts will be verified by SAGICAM and reversed if not accurate.
-                  </p>
-                </div>
-              </div>
-            </div>
+            <SponsorPaymentNavigationCards
+              currentContribution={currentContribution}
+              currentRegistrationPayment={currentRegistrationPayment}
+              pendingMembersCount={membershipSummary.pending}
+            />
           </div>
         </div>
         <div className='flex items-start justify-between gap-6 px-4 pt-4 pb-2 max-sm:flex-col sm:px-6'>
@@ -632,7 +434,7 @@ const MembersDataTable = ({
               </Select>
             </div>
             <Button
-              className='bg-primary/10 text-primary hover:bg-primary/20 focus-visible:ring-primary/20 max-sm:flex-1 max-sm:justify-center dark:focus-visible:ring-primary/40'
+              className='bg-primary/10 text-primary hover:bg-primary/20 focus-visible:ring-primary/20 dark:focus-visible:ring-primary/40 max-sm:flex-1 max-sm:justify-center'
               onClick={exportFilteredPageToExcel}
             >
               <FileSpreadsheetIcon />
@@ -640,7 +442,7 @@ const MembersDataTable = ({
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button className='bg-primary/10 text-primary hover:bg-primary/20 focus-visible:ring-primary/20 max-sm:flex-1 max-sm:justify-center dark:focus-visible:ring-primary/40'>
+                <Button className='bg-primary/10 text-primary hover:bg-primary/20 focus-visible:ring-primary/20 dark:focus-visible:ring-primary/40 max-sm:flex-1 max-sm:justify-center'>
                   <UploadIcon />
                   Export
                 </Button>

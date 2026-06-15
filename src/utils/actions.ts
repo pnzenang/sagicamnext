@@ -214,12 +214,18 @@ const syncVestedContributionCredit = async ({
   }
 }
 
+const revalidateSponsorPaymentPages = () => {
+  revalidatePath('/contributions-payments')
+  revalidatePath('/registration-payments')
+}
+
 const revalidateMemberPaymentViews = () => {
   revalidatePath('/admin-count')
   revalidatePath('/admin-members')
   revalidatePath('/admin-sagicam-payments')
   revalidatePath('/admin-sagicam-registrations')
   revalidatePath('/all-members')
+  revalidateSponsorPaymentPages()
   revalidatePath('/deceased-members')
   revalidatePath('/removed-members')
 }
@@ -563,6 +569,7 @@ export const createContributionAssessmentAction = async (
     revalidatePath('/admin-count')
     revalidatePath('/admin-sagicam-payments')
     revalidatePath('/all-members')
+    revalidateSponsorPaymentPages()
 
     return {
       message: `Distributed ${currencyFormatter.format(totalAmount)} across ${vestedMembers.length} vested loved ones. Each vested loved one is ${currencyFormatter.format(amountPerVestedMember)}.`
@@ -615,6 +622,7 @@ export const saveSponsorContributionPaymentAction = async (
     revalidatePath('/admin-count')
     revalidatePath('/admin-sagicam-payments')
     revalidatePath('/all-members')
+    revalidateSponsorPaymentPages()
 
     return {
       message: `Added amount sent: ${currencyFormatter.format(amountSent)}. Total sent: ${currencyFormatter.format(decimalToNumber(payment.amountSent))}.`
@@ -655,6 +663,7 @@ export const verifySponsorContributionPaymentAction = async (formData: FormData)
     revalidatePath('/admin-sagicam-payments')
     revalidatePath('/admin-sagicam-registrations')
     revalidatePath('/all-members')
+    revalidateSponsorPaymentPages()
   } catch (error) {
     renderError(error)
   }
@@ -689,6 +698,7 @@ const addSponsorBalanceAdjustment = async (formData: FormData, balanceType: stri
     revalidatePath('/admin-sagicam-payments')
     revalidatePath('/admin-sagicam-registrations')
     revalidatePath('/all-members')
+    revalidateSponsorPaymentPages()
   } catch (error) {
     renderError(error)
   }
@@ -726,6 +736,7 @@ export const resetSponsorContributionPaymentAction = async (formData: FormData):
     revalidatePath('/admin-sagicam-payments')
     revalidatePath('/admin-sagicam-registrations')
     revalidatePath('/all-members')
+    revalidateSponsorPaymentPages()
   } catch (error) {
     renderError(error)
   }
@@ -775,6 +786,7 @@ export const saveSponsorRegistrationPaymentAction = async (
     revalidatePath('/admin-sagicam-payments')
     revalidatePath('/admin-sagicam-registrations')
     revalidatePath('/all-members')
+    revalidateSponsorPaymentPages()
 
     return {
       message: `Added registration amount sent: ${currencyFormatter.format(amountSent)}. Total sent: ${currencyFormatter.format(decimalToNumber(payment.amountSent))}.`
@@ -822,6 +834,7 @@ export const verifySponsorRegistrationPaymentAction = async (formData: FormData)
     revalidatePath('/admin-sagicam-payments')
     revalidatePath('/admin-sagicam-registrations')
     revalidatePath('/all-members')
+    revalidateSponsorPaymentPages()
   } catch (error) {
     renderError(error)
   }
@@ -878,6 +891,7 @@ export const resetSponsorRegistrationPaymentAction = async (formData: FormData):
     revalidatePath('/admin-sagicam-payments')
     revalidatePath('/admin-sagicam-registrations')
     revalidatePath('/all-members')
+    revalidateSponsorPaymentPages()
   } catch (error) {
     renderError(error)
   }
@@ -995,8 +1009,11 @@ export const resetContributionCalculationAction = async (): Promise<{ message: s
     revalidatePath('/admin-members')
     revalidatePath('/admin-sagicam-payments')
     revalidatePath('/all-members')
+    revalidateSponsorPaymentPages()
 
-    return { message: 'Latest contribution calculation reset successfully. Contribution sent and verified were cleared.' }
+    return {
+      message: 'Latest contribution calculation reset successfully. Contribution sent and verified were cleared.'
+    }
   } catch (error) {
     return renderError(error)
   }

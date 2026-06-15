@@ -58,14 +58,14 @@ export const pagesItems: MenuItem[] = [
         href: '/removed-members'
       },
       {
-        icon: Cross,
-        label: 'All Deceased Loved Ones',
-        href: '/deceased-members'
-      },
-      {
         icon: Megaphone,
         label: 'Death Announcement',
         href: '/death-announcement'
+      },
+      {
+        icon: Cross,
+        label: 'All Deceased Loved Ones',
+        href: '/deceased-members'
       }
     ]
   },
