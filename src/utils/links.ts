@@ -44,6 +44,17 @@ export const pagesItems: MenuItem[] = [
     href: '/all-members'
   },
   {
+    icon: WalletMinimal,
+    label: 'Registration Payments  ',
+    href: '/registration-payments'
+  },
+
+  {
+    icon: WalletCards,
+    label: 'Contributions Payments',
+    href: '/contributions-payments'
+  },
+  {
     icon: UserMinus,
     label: 'Remove Member',
     href: '/remove-member'
@@ -72,17 +83,6 @@ export const pagesItems: MenuItem[] = [
     icon: Table,
     label: 'Contribution Table',
     href: '/contribution-table'
-  },
-  {
-    icon: WalletMinimal,
-    label: 'Registration Payments  ',
-    href: '/registration-payments'
-  },
-
-  {
-    icon: WalletCards,
-    label: 'Contributions Payments',
-    href: '/contributions-payments'
   },
   {
     icon: Wallet,

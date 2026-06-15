@@ -177,6 +177,22 @@ model SponsorRegistrationPayment {
   @@index([lastSubmittedAt])
 }
 
+model SponsorPaymentLedgerEntry {
+  id          String   @id @default(uuid())
+  sponsorCode String
+  paymentType String
+  eventType   String
+  amount      Decimal  @db.Decimal(10, 2)
+  note        String?
+  createdBy   String?
+  createdAt   DateTime @default(now())
+
+  @@index([sponsorCode])
+  @@index([paymentType])
+  @@index([eventType])
+  @@index([createdAt])
+}
+
 model PaymentAlertReset {
   id        String   @id @default(uuid())
   alertType String   @unique

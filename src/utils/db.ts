@@ -12,8 +12,9 @@ const adapter = new PrismaPg({
 
 const cachedPrisma = globalForPrisma.prisma
 
-const cachedModels = (cachedPrisma as unknown as { _runtimeDataModel?: { models?: Record<string, { fields?: { name: string }[] }> } })
-  ?._runtimeDataModel?.models
+const cachedModels = (
+  cachedPrisma as unknown as { _runtimeDataModel?: { models?: Record<string, { fields?: { name: string }[] }> } }
+)?._runtimeDataModel?.models
 
 const hasCachedModelField = (modelName: string, fieldName: string) =>
   Boolean(cachedModels?.[modelName]?.fields?.some(field => field.name === fieldName))
@@ -30,6 +31,7 @@ const shouldReuseCachedPrisma =
   'sponsorContributionCredit' in (cachedPrisma as unknown as Record<string, unknown>) &&
   'sponsorContributionPayment' in (cachedPrisma as unknown as Record<string, unknown>) &&
   'sponsorContributionUsage' in (cachedPrisma as unknown as Record<string, unknown>) &&
+  'sponsorPaymentLedgerEntry' in (cachedPrisma as unknown as Record<string, unknown>) &&
   'sponsorRegistrationPayment' in (cachedPrisma as unknown as Record<string, unknown>) &&
   'sponsorRegistrationUsage' in (cachedPrisma as unknown as Record<string, unknown>)
 

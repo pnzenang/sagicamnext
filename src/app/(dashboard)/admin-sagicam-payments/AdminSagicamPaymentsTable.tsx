@@ -33,11 +33,7 @@ export type AdminSagicamPaymentsRow = {
 
 export type AdminSagicamPaymentsTotals = Pick<
   AdminSagicamPaymentsRow,
-  | 'amountOwed'
-  | 'amountReceived'
-  | 'balance'
-  | 'contributionAmountSent'
-  | 'vestedMembers'
+  'amountOwed' | 'amountReceived' | 'balance' | 'contributionAmountSent' | 'vestedMembers'
 >
 
 type SortKey = keyof AdminSagicamPaymentsRow
@@ -64,8 +60,7 @@ const balanceColumnWidth = 25
 const contactColumnWidth = 12
 const codeColumnWidth = 8
 
-const regularColumnWidth =
-  (100 - balanceColumnWidth - contactColumnWidth * 2 - codeColumnWidth) / (columns.length - 4)
+const regularColumnWidth = (100 - balanceColumnWidth - contactColumnWidth * 2 - codeColumnWidth) / (columns.length - 4)
 
 const getColumnWidth = (columnKey: SortKey) => {
   if (columnKey === 'sponsorEmail' || columnKey === 'sponsorPhoneNumber') return contactColumnWidth
@@ -125,7 +120,10 @@ const PhoneLink = ({ className = '', phoneNumber }: { className?: string; phoneN
   if (!phoneNumber) return <span className={`text-primary ${className}`}>-</span>
 
   return (
-    <a href={`tel:${getPhoneHref(phoneNumber)}`} className={`text-primary underline-offset-2 hover:underline ${className}`}>
+    <a
+      href={`tel:${getPhoneHref(phoneNumber)}`}
+      className={`text-primary underline-offset-2 hover:underline ${className}`}
+    >
       {phoneNumber}
     </a>
   )
@@ -156,7 +154,7 @@ const ManualBalanceAdjustmentForm = ({
         min='0.01'
         step='0.01'
         placeholder='0.00'
-        className='col-start-2 row-start-1 h-7 w-20 bg-background px-1.5 text-center text-[11px] text-foreground placeholder:text-muted-foreground'
+        className='bg-background text-foreground placeholder:text-muted-foreground col-start-2 row-start-1 h-7 w-20 px-1.5 text-center text-[11px]'
         required
       />
       <Button
@@ -173,7 +171,7 @@ const ManualBalanceAdjustmentForm = ({
 }
 
 const ContributionPaymentControls = ({ row }: { row: AdminSagicamPaymentsRow }) => {
-  const hasSubmittedPayment = row.contributionAmountSent > 0
+  const hasSubmittedPayment = row.contributionAmountSent > row.amountReceived
   const hasPaymentValues = row.contributionAmountSent > 0 || row.amountReceived > 0 || row.contributionAmountUsed > 0
 
   return (
@@ -247,14 +245,14 @@ const AdminSagicamPaymentsTable = ({
             ))}
           </colgroup>
           <TableHeader>
-            <TableRow className='h-16 bg-primary hover:bg-primary'>
+            <TableRow className='bg-primary hover:bg-primary h-16'>
               {columns.map(column => {
                 const isActive = sortKey === column.key
 
                 return (
                   <TableHead
                     key={column.key}
-                    className='h-16 text-primary-foreground'
+                    className='text-primary-foreground h-16'
                     aria-sort={isActive ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
                   >
                     <button
@@ -313,7 +311,7 @@ const AdminSagicamPaymentsTable = ({
                         balanceType='contribution'
                         sponsorCode={row.sponsorCode}
                       />
-                      <span className='bg-background/80 col-start-3 row-span-2 row-start-1 flex min-w-0 self-stretch justify-self-stretch items-center justify-center rounded-md border border-current/20 px-2 py-2 text-center text-xl leading-none font-black tabular-nums'>
+                      <span className='bg-background/80 col-start-3 row-span-2 row-start-1 flex min-w-0 items-center justify-center self-stretch justify-self-stretch rounded-md border border-current/20 px-2 py-2 text-center text-xl leading-none font-black tabular-nums'>
                         {currencyFormatter.format(row.balance)}
                       </span>
                     </div>
@@ -329,7 +327,9 @@ const AdminSagicamPaymentsTable = ({
                 <TableCell />
                 <TableCell className='font-extrabold'>Total</TableCell>
                 <TableCell className='text-right font-extrabold'>{totals.vestedMembers}</TableCell>
-                <TableCell className='text-right font-extrabold'>{currencyFormatter.format(totals.amountOwed)}</TableCell>
+                <TableCell className='text-right font-extrabold'>
+                  {currencyFormatter.format(totals.amountOwed)}
+                </TableCell>
                 <TableCell className='text-right font-extrabold'>
                   {currencyFormatter.format(totals.contributionAmountSent)}
                 </TableCell>
@@ -353,14 +353,8 @@ const AdminSagicamPaymentsTable = ({
               <div className='flex items-start justify-between gap-4 border-b px-4 py-3'>
                 <div>
                   <div className='text-lg font-extrabold'>{row.sponsorCode}</div>
-                  <EmailLink
-                    email={row.sponsorEmail}
-                    className='block break-all text-xs font-semibold'
-                  />
-                  <PhoneLink
-                    phoneNumber={row.sponsorPhoneNumber}
-                    className='block text-xs font-semibold'
-                  />
+                  <EmailLink email={row.sponsorEmail} className='block text-xs font-semibold break-all' />
+                  <PhoneLink phoneNumber={row.sponsorPhoneNumber} className='block text-xs font-semibold' />
                 </div>
                 <div className='text-right text-xs font-semibold'>
                   <div>{row.vestedMembers} vested</div>

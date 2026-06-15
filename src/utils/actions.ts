@@ -31,6 +31,7 @@ import {
   registrationBalanceAdjustmentType,
   registrationFeePerEligibleMember
 } from './sagicam-registration-summary'
+import { sponsorPaymentLedgerEventTypes, sponsorPaymentTypes } from './sagicam-payment-ledger'
 import { Prisma } from '@/generated/prisma/client'
 import prisma from './db'
 
@@ -516,7 +517,7 @@ export const createContributionAssessmentAction = async (
   prevState: any,
   formData: FormData
 ): Promise<{ message: string }> => {
-  await getAuthUser()
+  const user = await getAuthUser()
 
   try {
     const rawAmount = String(formData.get('totalAmount') ?? '')
@@ -550,19 +551,34 @@ export const createContributionAssessmentAction = async (
 
     const amountPerVestedMember = Number((totalAmount / vestedMembers.length).toFixed(2))
 
-    await db.contributionAssessment.create({
-      data: {
-        amountPerVestedMember,
-        totalAmount,
-        totalVestedMembers: vestedMembers.length,
-        groups: {
-          create: Array.from(vestedMembersByCode.entries()).map(([sponsorCode, vestedMembersCount]) => ({
-            amountOwed: Number((amountPerVestedMember * vestedMembersCount).toFixed(2)),
-            sponsorCode,
-            vestedMembersCount
-          }))
+    const groupEntries = Array.from(vestedMembersByCode.entries()).map(([sponsorCode, vestedMembersCount]) => ({
+      amountOwed: Number((amountPerVestedMember * vestedMembersCount).toFixed(2)),
+      sponsorCode,
+      vestedMembersCount
+    }))
+
+    await db.$transaction(async tx => {
+      await tx.contributionAssessment.create({
+        data: {
+          amountPerVestedMember,
+          totalAmount,
+          totalVestedMembers: vestedMembers.length,
+          groups: {
+            create: groupEntries
+          }
         }
-      }
+      })
+
+      await tx.sponsorPaymentLedgerEntry.createMany({
+        data: groupEntries.map(group => ({
+          amount: group.amountOwed,
+          createdBy: user.id,
+          eventType: sponsorPaymentLedgerEventTypes.dueOffset,
+          note: `Contribution due created for ${group.vestedMembersCount} vested loved one(s).`,
+          paymentType: sponsorPaymentTypes.contribution,
+          sponsorCode: group.sponsorCode
+        }))
+      })
     })
 
     revalidatePath('/admin-members')
@@ -602,21 +618,36 @@ export const saveSponsorContributionPaymentAction = async (
     const amountSent = getDollarAmountFromForm(formData, 'amountSent')
     const submittedAt = new Date()
 
-    const payment = await db.sponsorContributionPayment.upsert({
-      create: {
-        amountSent,
-        lastSubmittedAt: submittedAt,
-        sponsorCode: profile.sponsorCode
-      },
-      update: {
-        amountSent: {
-          increment: amountSent
+    const payment = await db.$transaction(async tx => {
+      const payment = await tx.sponsorContributionPayment.upsert({
+        create: {
+          amountSent,
+          lastSubmittedAt: submittedAt,
+          sponsorCode: profile.sponsorCode
         },
-        lastSubmittedAt: submittedAt
-      },
-      where: {
-        sponsorCode: profile.sponsorCode
-      }
+        update: {
+          amountSent: {
+            increment: amountSent
+          },
+          lastSubmittedAt: submittedAt
+        },
+        where: {
+          sponsorCode: profile.sponsorCode
+        }
+      })
+
+      await tx.sponsorPaymentLedgerEntry.create({
+        data: {
+          amount: amountSent,
+          createdBy: user.id,
+          eventType: sponsorPaymentLedgerEventTypes.submitted,
+          note: 'Contribution payment submitted by sponsor.',
+          paymentType: sponsorPaymentTypes.contribution,
+          sponsorCode: profile.sponsorCode
+        }
+      })
+
+      return payment
     })
 
     revalidatePath('/admin-count')
@@ -633,7 +664,7 @@ export const saveSponsorContributionPaymentAction = async (
 }
 
 export const verifySponsorContributionPaymentAction = async (formData: FormData): Promise<void> => {
-  await getAuthUser()
+  const user = await getAuthUser()
 
   try {
     const sponsorCode = getRequiredFormValue(formData, 'sponsorCode')
@@ -649,15 +680,34 @@ export const verifySponsorContributionPaymentAction = async (formData: FormData)
     }
 
     const amountSent = decimalToNumber(payment.amountSent)
+    const amountVerified = decimalToNumber(payment.amountVerified)
+    const amountToVerify = Number((amountSent - amountVerified).toFixed(2))
 
-    await db.sponsorContributionPayment.update({
-      data: {
-        amountVerified: amountSent,
-        verifiedAt: new Date()
-      },
-      where: {
-        sponsorCode
-      }
+    if (amountToVerify <= 0) {
+      throw new Error('No new contribution amount sent to verify.')
+    }
+
+    await db.$transaction(async tx => {
+      await tx.sponsorContributionPayment.update({
+        data: {
+          amountVerified: amountSent,
+          verifiedAt: new Date()
+        },
+        where: {
+          sponsorCode
+        }
+      })
+
+      await tx.sponsorPaymentLedgerEntry.create({
+        data: {
+          amount: amountToVerify,
+          createdBy: user.id,
+          eventType: sponsorPaymentLedgerEventTypes.verified,
+          note: 'Contribution payment verified by SAGICAM.',
+          paymentType: sponsorPaymentTypes.contribution,
+          sponsorCode
+        }
+      })
     })
 
     revalidatePath('/admin-sagicam-payments')
@@ -670,29 +720,42 @@ export const verifySponsorContributionPaymentAction = async (formData: FormData)
 }
 
 const addSponsorBalanceAdjustment = async (formData: FormData, balanceType: string): Promise<void> => {
-  await getAuthUser()
+  const user = await getAuthUser()
 
   try {
     const sponsorCode = getRequiredFormValue(formData, 'sponsorCode')
     const amount = getPositiveDollarAmountFromForm(formData, 'balanceAmount')
 
-    await db.sponsorBalanceAdjustment.upsert({
-      create: {
-        amount,
-        balanceType,
-        sponsorCode
-      },
-      update: {
-        amount: {
-          increment: amount
-        }
-      },
-      where: {
-        sponsorCode_balanceType: {
+    await db.$transaction(async tx => {
+      await tx.sponsorBalanceAdjustment.upsert({
+        create: {
+          amount,
           balanceType,
           sponsorCode
+        },
+        update: {
+          amount: {
+            increment: amount
+          }
+        },
+        where: {
+          sponsorCode_balanceType: {
+            balanceType,
+            sponsorCode
+          }
         }
-      }
+      })
+
+      await tx.sponsorPaymentLedgerEntry.create({
+        data: {
+          amount,
+          createdBy: user.id,
+          eventType: sponsorPaymentLedgerEventTypes.manualAdjustment,
+          note: `${balanceType} balance manually adjusted by SAGICAM.`,
+          paymentType: balanceType,
+          sponsorCode
+        }
+      })
     })
 
     revalidatePath('/admin-sagicam-payments')
@@ -709,28 +772,47 @@ export const addSponsorContributionBalanceAdjustmentAction = async (formData: Fo
 }
 
 export const resetSponsorContributionPaymentAction = async (formData: FormData): Promise<void> => {
-  await getAuthUser()
+  const user = await getAuthUser()
 
   try {
     const sponsorCode = getRequiredFormValue(formData, 'sponsorCode')
 
-    await db.sponsorContributionPayment.upsert({
-      create: {
-        amountSent: 0,
-        amountVerified: 0,
-        lastSubmittedAt: null,
-        sponsorCode,
-        verifiedAt: null
-      },
-      update: {
-        amountSent: 0,
-        amountVerified: 0,
-        lastSubmittedAt: null,
-        verifiedAt: null
-      },
+    const currentPayment = await db.sponsorContributionPayment.findUnique({
       where: {
         sponsorCode
       }
+    })
+
+    await db.$transaction(async tx => {
+      await tx.sponsorContributionPayment.upsert({
+        create: {
+          amountSent: 0,
+          amountVerified: 0,
+          lastSubmittedAt: null,
+          sponsorCode,
+          verifiedAt: null
+        },
+        update: {
+          amountSent: 0,
+          amountVerified: 0,
+          lastSubmittedAt: null,
+          verifiedAt: null
+        },
+        where: {
+          sponsorCode
+        }
+      })
+
+      await tx.sponsorPaymentLedgerEntry.create({
+        data: {
+          amount: 0,
+          createdBy: user.id,
+          eventType: sponsorPaymentLedgerEventTypes.reset,
+          note: `Contribution payment totals reset. Cleared sent ${currencyFormatter.format(decimalToNumber(currentPayment?.amountSent))} and verified ${currencyFormatter.format(decimalToNumber(currentPayment?.amountVerified))}.`,
+          paymentType: sponsorPaymentTypes.contribution,
+          sponsorCode
+        }
+      })
     })
 
     revalidatePath('/admin-sagicam-payments')
@@ -765,21 +847,36 @@ export const saveSponsorRegistrationPaymentAction = async (
     const amountSent = getDollarAmountFromForm(formData, 'registrationAmountSent')
     const submittedAt = new Date()
 
-    const payment = await db.sponsorRegistrationPayment.upsert({
-      create: {
-        amountSent,
-        lastSubmittedAt: submittedAt,
-        sponsorCode: profile.sponsorCode
-      },
-      update: {
-        amountSent: {
-          increment: amountSent
+    const payment = await db.$transaction(async tx => {
+      const payment = await tx.sponsorRegistrationPayment.upsert({
+        create: {
+          amountSent,
+          lastSubmittedAt: submittedAt,
+          sponsorCode: profile.sponsorCode
         },
-        lastSubmittedAt: submittedAt
-      },
-      where: {
-        sponsorCode: profile.sponsorCode
-      }
+        update: {
+          amountSent: {
+            increment: amountSent
+          },
+          lastSubmittedAt: submittedAt
+        },
+        where: {
+          sponsorCode: profile.sponsorCode
+        }
+      })
+
+      await tx.sponsorPaymentLedgerEntry.create({
+        data: {
+          amount: amountSent,
+          createdBy: user.id,
+          eventType: sponsorPaymentLedgerEventTypes.submitted,
+          note: 'Registration payment submitted by sponsor.',
+          paymentType: sponsorPaymentTypes.registration,
+          sponsorCode: profile.sponsorCode
+        }
+      })
+
+      return payment
     })
 
     revalidatePath('/admin-count')
@@ -797,7 +894,7 @@ export const saveSponsorRegistrationPaymentAction = async (
 }
 
 export const verifySponsorRegistrationPaymentAction = async (formData: FormData): Promise<void> => {
-  await getAuthUser()
+  const user = await getAuthUser()
 
   try {
     const sponsorCode = getRequiredFormValue(formData, 'sponsorCode')
@@ -818,17 +915,30 @@ export const verifySponsorRegistrationPaymentAction = async (formData: FormData)
       throw new Error('No registration amount sent to verify.')
     }
 
-    await db.sponsorRegistrationPayment.update({
-      data: {
-        amountSent: 0,
-        amountVerified: {
-          increment: amountSent
+    await db.$transaction(async tx => {
+      await tx.sponsorRegistrationPayment.update({
+        data: {
+          amountSent: 0,
+          amountVerified: {
+            increment: amountSent
+          },
+          verifiedAt: new Date()
         },
-        verifiedAt: new Date()
-      },
-      where: {
-        sponsorCode
-      }
+        where: {
+          sponsorCode
+        }
+      })
+
+      await tx.sponsorPaymentLedgerEntry.create({
+        data: {
+          amount: amountSent,
+          createdBy: user.id,
+          eventType: sponsorPaymentLedgerEventTypes.verified,
+          note: 'Registration payment verified by SAGICAM.',
+          paymentType: sponsorPaymentTypes.registration,
+          sponsorCode
+        }
+      })
     })
 
     revalidatePath('/admin-sagicam-payments')
@@ -845,13 +955,19 @@ export const addSponsorRegistrationBalanceAdjustmentAction = async (formData: Fo
 }
 
 export const resetSponsorRegistrationPaymentAction = async (formData: FormData): Promise<void> => {
-  await getAuthUser()
+  const user = await getAuthUser()
 
   try {
     const sponsorCode = getRequiredFormValue(formData, 'sponsorCode')
 
     const registrationSummary = await fetchSponsorRegistrationSummary(sponsorCode)
     const preservedBalanceAdjustment = Number((registrationSummary.balance + registrationSummary.amountUsed).toFixed(2))
+
+    const currentPayment = await db.sponsorRegistrationPayment.findUnique({
+      where: {
+        sponsorCode
+      }
+    })
 
     await db.$transaction([
       db.sponsorRegistrationPayment.upsert({
@@ -884,6 +1000,16 @@ export const resetSponsorRegistrationPaymentAction = async (formData: FormData):
             balanceType: registrationBalanceAdjustmentType,
             sponsorCode
           }
+        }
+      }),
+      db.sponsorPaymentLedgerEntry.create({
+        data: {
+          amount: 0,
+          createdBy: user.id,
+          eventType: sponsorPaymentLedgerEventTypes.reset,
+          note: `Registration payment totals reset. Cleared sent ${currencyFormatter.format(decimalToNumber(currentPayment?.amountSent))} and verified ${currencyFormatter.format(decimalToNumber(currentPayment?.amountVerified))}.`,
+          paymentType: sponsorPaymentTypes.registration,
+          sponsorCode
         }
       })
     ])
@@ -926,7 +1052,7 @@ export const resetRegistrationPaymentAlertAction = async (_formData: FormData): 
 }
 
 export const resetContributionCalculationAction = async (): Promise<{ message: string }> => {
-  await getAuthUser()
+  const user = await getAuthUser()
 
   try {
     const latestAssessment = await fetchLatestContributionAssessment()
@@ -966,6 +1092,15 @@ export const resetContributionCalculationAction = async (): Promise<{ message: s
       }
     })
 
+    const resetLedgerEntries = contributionSummaries.map(summary => ({
+      amount: latestGroupAmountByCode.get(summary.sponsorCode) ?? 0,
+      createdBy: user.id,
+      eventType: sponsorPaymentLedgerEventTypes.reset,
+      note: 'Contribution calculation reset. The prior due entry remains in history for audit tracking.',
+      paymentType: sponsorPaymentTypes.contribution,
+      sponsorCode: summary.sponsorCode
+    }))
+
     await db.$transaction([
       db.sponsorContributionPayment.updateMany({
         data: {
@@ -998,6 +1133,13 @@ export const resetContributionCalculationAction = async (): Promise<{ message: s
           }
         })
       ),
+      ...(resetLedgerEntries.length > 0
+        ? [
+            db.sponsorPaymentLedgerEntry.createMany({
+              data: resetLedgerEntries
+            })
+          ]
+        : []),
       db.contributionAssessment.delete({
         where: {
           id: latestAssessment.id

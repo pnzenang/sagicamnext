@@ -11,6 +11,7 @@ import SponsorContributionPaymentCard from '@/components/dashboard/SponsorContri
 import SponsorRegistrationPaymentCard from '@/components/dashboard/SponsorRegistrationPaymentCard'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import type { SponsorPaymentLedgerEntry } from '@/utils/sagicam-payment-ledger'
 
 export type CurrentContributionPayment = {
   amountOwed: number
@@ -45,6 +46,11 @@ const monthFormatter = new Intl.DateTimeFormat('en-US', {
   month: 'long'
 })
 
+const dateTimeFormatter = new Intl.DateTimeFormat('en-US', {
+  dateStyle: 'medium',
+  timeStyle: 'short'
+})
+
 const sagicamPaymentUrl =
   'https://enroll.zellepay.com/qr-codes?data=eyJuYW1lIjoiQUNUSVZFIFNPTElEQVJJVFkgTFREIiwiYWN0aW9uIjoicGF5bWVudCIsInRva2VuIjoiaW5mb0BzYWdpdXNhLm9yZyJ9'
 
@@ -53,6 +59,14 @@ const sagicamQrCodeUrl = 'https://res.cloudinary.com/dp8tkb7hq/image/upload/v177
 const getCurrentMonthName = () => monthFormatter.format(new Date())
 
 const formatCurrency = (amount: number) => currencyFormatter.format(amount)
+
+const ledgerEventLabels: Record<string, string> = {
+  due_offset: 'Contribution due offset',
+  manual_adjustment: 'Manual adjustment',
+  reset: 'Reset',
+  submitted: 'Payment submitted',
+  verified: 'Payment verified'
+}
 
 export const getRegistrationPaymentAmount = (pendingMembersCount: number) =>
   pendingMembersCount * registrationFeePerPendingMember
@@ -83,15 +97,6 @@ const PaymentAmountCard = ({
     {footer ? (
       <div className='mt-2 text-sm font-extrabold break-words text-teal-600 dark:text-teal-300'>{footer}</div>
     ) : null}
-  </div>
-)
-
-const PaymentInstructionCard = () => (
-  <div className='border-primary/20 bg-primary/10 text-primary flex h-full min-h-32 min-w-0 flex-col justify-center rounded-md border px-3 py-3 sm:px-4'>
-    <p className='text-lg font-extrabold break-words sm:text-xl'>Payment instructions</p>
-    <p className='text-primary/80 mt-1 text-sm font-semibold break-words'>
-      Send the Zelle payment first, then record the exact amount here for SAGICAM verification.
-    </p>
   </div>
 )
 
@@ -155,6 +160,40 @@ const RegistrationSummaryCard = ({
     <p className='text-primary/70 mt-auto pt-4 text-[10px] leading-tight font-medium break-words'>
       All amounts will be verified by SAGICAM and reversed if not accurate.
     </p>
+  </div>
+)
+
+const PaymentLedgerHistoryCard = ({ entries }: { entries: SponsorPaymentLedgerEntry[] }) => (
+  <div className='border-primary/20 bg-background rounded-md border'>
+    <div className='border-b px-4 py-3'>
+      <p className='text-lg font-extrabold'>Payment history</p>
+      <p className='text-muted-foreground mt-1 text-sm'>
+        Permanent record of submitted payments, verified payments, due offsets, adjustments, and resets.
+      </p>
+    </div>
+
+    {entries.length === 0 ? (
+      <div className='text-muted-foreground px-4 py-8 text-center text-sm'>
+        No payment history has been recorded yet. New submissions and verifications will appear here.
+      </div>
+    ) : (
+      <div className='divide-y'>
+        {entries.map(entry => (
+          <div key={entry.id} className='grid gap-2 px-4 py-3 sm:grid-cols-[1fr_auto] sm:items-start'>
+            <div className='min-w-0'>
+              <p className='font-extrabold'>{ledgerEventLabels[entry.eventType] ?? entry.eventType}</p>
+              <p className='text-muted-foreground text-xs font-semibold'>
+                {dateTimeFormatter.format(new Date(entry.createdAt))}
+              </p>
+              {entry.note ? <p className='text-muted-foreground mt-1 text-sm leading-6'>{entry.note}</p> : null}
+            </div>
+            <div className='text-primary text-left text-lg font-black tabular-nums sm:text-right'>
+              {formatCurrency(entry.amount)}
+            </div>
+          </div>
+        ))}
+      </div>
+    )}
   </div>
 )
 
@@ -261,10 +300,12 @@ export const SponsorPaymentNavigationCards = ({
 
 export const SponsorContributionPaymentSection = ({
   className,
-  currentContribution
+  currentContribution,
+  ledgerEntries
 }: {
   className?: string
   currentContribution: CurrentContributionPayment
+  ledgerEntries: SponsorPaymentLedgerEntry[]
 }) => {
   const currentMonthName = getCurrentMonthName()
   const amountSent = Math.max(currentContribution.amountReceived, currentContribution.amountVerified)
@@ -292,7 +333,6 @@ export const SponsorContributionPaymentSection = ({
             }
             title={`${currentMonthName}'s Contribution`}
           />
-          <PaymentInstructionCard />
         </div>
 
         <PaymentQrCard />
@@ -302,6 +342,8 @@ export const SponsorContributionPaymentSection = ({
           <ContributionSummaryCard currentContribution={currentContribution} currentMonthName={currentMonthName} />
         </div>
       </div>
+
+      <PaymentLedgerHistoryCard entries={ledgerEntries} />
     </section>
   )
 }
@@ -309,10 +351,12 @@ export const SponsorContributionPaymentSection = ({
 export const SponsorRegistrationPaymentSection = ({
   className,
   currentRegistrationPayment,
+  ledgerEntries,
   pendingMembersCount
 }: {
   className?: string
   currentRegistrationPayment: CurrentRegistrationPayment
+  ledgerEntries: SponsorPaymentLedgerEntry[]
   pendingMembersCount: number
 }) => {
   const registrationPaymentAmount = getRegistrationPaymentAmount(pendingMembersCount)
@@ -340,7 +384,6 @@ export const SponsorRegistrationPaymentSection = ({
             }
             title='Your Registration Dues'
           />
-          <PaymentInstructionCard />
         </div>
 
         <PaymentQrCard />
@@ -350,6 +393,8 @@ export const SponsorRegistrationPaymentSection = ({
           <RegistrationSummaryCard currentRegistrationPayment={currentRegistrationPayment} />
         </div>
       </div>
+
+      <PaymentLedgerHistoryCard entries={ledgerEntries} />
     </section>
   )
 }
