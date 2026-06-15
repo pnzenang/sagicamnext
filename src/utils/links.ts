@@ -34,40 +34,34 @@ export const pagesItems: MenuItem[] = [
   },
 
   {
+    icon: UserPlus,
+    label: 'Add Loved One',
+    href: '/add-member'
+  },
+  {
     icon: Users,
-    label: 'Sponsor Pages',
-    children: [
-      {
-        icon: UserPlus,
-        label: 'Add Loved One',
-        href: '/add-member'
-      },
-      {
-        icon: Users,
-        label: 'All Loved Ones',
-        href: '/all-members'
-      },
-      {
-        icon: UserMinus,
-        label: 'Remove Member',
-        href: '/remove-member'
-      },
-      {
-        icon: Trash2,
-        label: 'All Removed Loved Ones',
-        href: '/removed-members'
-      },
-      {
-        icon: Megaphone,
-        label: 'Death Announcement',
-        href: '/death-announcement'
-      },
-      {
-        icon: Cross,
-        label: 'All Deceased Loved Ones',
-        href: '/deceased-members'
-      }
-    ]
+    label: 'All Loved Ones',
+    href: '/all-members'
+  },
+  {
+    icon: UserMinus,
+    label: 'Remove Member',
+    href: '/remove-member'
+  },
+  {
+    icon: Trash2,
+    label: 'All Removed Loved Ones',
+    href: '/removed-members'
+  },
+  {
+    icon: Megaphone,
+    label: 'Death Announcement',
+    href: '/death-announcement'
+  },
+  {
+    icon: Cross,
+    label: 'All Deceased Loved Ones',
+    href: '/deceased-members'
   },
   {
     icon: List,
