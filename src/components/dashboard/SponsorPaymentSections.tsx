@@ -19,9 +19,16 @@ export type CurrentContributionPayment = {
   amountReceived: number
   amountVerified: number
   balance: number
+  contributionDueMonths: {
+    amount: number
+    dueDate: string
+  }[]
+  dueDate: string | null
+  lastSubmittedAt: string | null
   manualBalanceAdjustment: number
   sponsorCode: string
   totalAmountUsed: number
+  verifiedAt: string | null
   vestedContributionCredit: number
   vestedMembersCount: number
 }
@@ -31,8 +38,18 @@ export type CurrentRegistrationPayment = {
   amountUsed: number
   amountVerified: number
   balance: number
+  balanceDues: number
+  lastSubmittedAt: string | null
   manualBalanceAdjustment: number
+  pendingMemberAddedAt: string | null
+  pendingMemberDueDays: {
+    addedAt: string
+    amount: number
+    memberNames: string[]
+  }[]
+  pendingMemberNames: string[]
   sponsorCode: string
+  verifiedAt: string | null
 }
 
 export const registrationFeePerPendingMember = 40
@@ -44,6 +61,15 @@ const currencyFormatter = new Intl.NumberFormat('en-US', {
 
 const monthFormatter = new Intl.DateTimeFormat('en-US', {
   month: 'long'
+})
+
+const monthYearFormatter = new Intl.DateTimeFormat('en-US', {
+  month: 'long',
+  year: 'numeric'
+})
+
+const dateFormatter = new Intl.DateTimeFormat('en-US', {
+  dateStyle: 'medium'
 })
 
 const dateTimeFormatter = new Intl.DateTimeFormat('en-US', {
@@ -58,15 +84,18 @@ const sagicamQrCodeUrl = 'https://res.cloudinary.com/dp8tkb7hq/image/upload/v177
 
 const getCurrentMonthName = () => monthFormatter.format(new Date())
 
+const formatDate = (date: string) => dateFormatter.format(new Date(date))
+
+const formatDateTime = (date: string) => dateTimeFormatter.format(new Date(date))
+
 const formatCurrency = (amount: number) => currencyFormatter.format(amount)
 
-const ledgerEventLabels: Record<string, string> = {
-  due_offset: 'Contribution due offset',
-  manual_adjustment: 'Manual adjustment',
-  reset: 'Reset',
-  submitted: 'Payment submitted',
-  verified: 'Payment verified'
-}
+const roundCurrencyAmount = (amount: number) => Number(amount.toFixed(2))
+
+const paymentLedgerHistoryEventTypes = {
+  submitted: 'submitted',
+  verified: 'verified'
+} as const
 
 export const getRegistrationPaymentAmount = (pendingMembersCount: number) =>
   pendingMembersCount * registrationFeePerPendingMember
@@ -163,42 +192,359 @@ const RegistrationSummaryCard = ({
   </div>
 )
 
-const PaymentLedgerHistoryCard = ({ entries }: { entries: SponsorPaymentLedgerEntry[] }) => (
+type PaymentLedgerHistoryCardProps = {
+  summaryColumns: PaymentSummaryRow[][]
+}
+
+type PaymentDateGroup = {
+  amount: number
+  id: string
+  meta: string
+  names?: string[]
+}
+
+type PaymentSummaryRow = {
+  entries?: {
+    amount: number
+    id: string
+    meta: string
+  }[]
+  dateGroups?: PaymentDateGroup[]
+  id: string
+  label: string
+  meta?: string
+  names?: string[]
+  value: number
+}
+
+const PaymentSummaryCard = ({ row }: { row: PaymentSummaryRow }) => {
+  const hasEntries = row.entries && row.entries.length > 0
+
+  return (
+    <div className='border-primary/20 bg-primary/10 text-primary rounded-md border px-3 py-3'>
+      <div className='flex items-start justify-between gap-3'>
+        <div className='min-w-0'>
+          <p className='text-sm font-extrabold tracking-normal break-words uppercase sm:text-base'>{row.label}</p>
+          {row.names && row.names.length > 0 ? (
+            <div className='mt-1 grid gap-0.5 text-xs leading-snug font-extrabold'>
+              {row.names.map((name, index) => (
+                <p key={`${name}-${index}`} className='break-words'>
+                  {name}
+                </p>
+              ))}
+            </div>
+          ) : null}
+          {row.dateGroups && row.dateGroups.length > 0 ? (
+            <div className='mt-2 grid gap-2 text-xs leading-snug'>
+              {row.dateGroups.map(group => (
+                <div key={group.id} className='min-w-0'>
+                  <p className='text-primary/80 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 font-semibold'>
+                    <span className='shrink-0 text-xs font-semibold tabular-nums'>{formatCurrency(group.amount)}</span>
+                    <span className='text-xs'>for</span>
+                    <span className='min-w-0 text-xs break-words'>{group.meta}</span>
+                  </p>
+                  {group.names && group.names.length > 0 ? (
+                    <div className='mt-0.5 grid gap-0.5 font-extrabold'>
+                      {group.names.map((name, index) => (
+                        <p key={`${group.id}-${name}-${index}`} className='break-words'>
+                          {name}
+                        </p>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          ) : null}
+          {row.meta ? <p className='text-primary/80 mt-1 text-xs leading-snug font-semibold'>{row.meta}</p> : null}
+        </div>
+        <p className='shrink-0 text-right text-sm font-extrabold tabular-nums sm:text-base'>
+          {formatCurrency(row.value)}
+        </p>
+      </div>
+
+      {hasEntries ? (
+        <div className='mt-3 grid gap-2'>
+          {row.entries?.map(entry => (
+            <div key={entry.id} className='flex items-start justify-between gap-3'>
+              <p className='text-primary/80 min-w-0 text-xs leading-snug font-semibold'>{entry.meta}</p>
+              <p className='shrink-0 text-right text-xs font-semibold tabular-nums'>{formatCurrency(entry.amount)}</p>
+            </div>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
+const getVerifiedPaymentGroupsLinkedToSubmittedPayments = (
+  submittedEntries: SponsorPaymentLedgerEntry[],
+  amountVerified: number
+): PaymentDateGroup[] => {
+  let remainingVerifiedAmount = roundCurrencyAmount(amountVerified)
+  const verifiedGroupsByDay = new Map<string, number>()
+
+  const sortedSubmittedEntries = [...submittedEntries].sort(
+    (firstEntry, secondEntry) => new Date(firstEntry.createdAt).getTime() - new Date(secondEntry.createdAt).getTime()
+  )
+
+  sortedSubmittedEntries.forEach(entry => {
+    if (remainingVerifiedAmount <= 0) {
+      return
+    }
+
+    const dayKey = entry.createdAt.slice(0, 10)
+    const linkedAmount = roundCurrencyAmount(Math.min(entry.amount, remainingVerifiedAmount))
+
+    remainingVerifiedAmount = roundCurrencyAmount(remainingVerifiedAmount - linkedAmount)
+    verifiedGroupsByDay.set(dayKey, roundCurrencyAmount((verifiedGroupsByDay.get(dayKey) ?? 0) + linkedAmount))
+  })
+
+  return Array.from(verifiedGroupsByDay.entries())
+    .sort(([firstDay], [secondDay]) => secondDay.localeCompare(firstDay))
+    .map(([dayKey, amount]) => ({
+      amount,
+      id: `amount-verified-linked-${dayKey}`,
+      meta: `Payment submitted ${formatDate(`${dayKey}T12:00:00.000Z`)}`
+    }))
+}
+
+const PaymentLedgerHistoryCard = ({ summaryColumns }: PaymentLedgerHistoryCardProps) => (
   <div className='border-primary/20 bg-background max-w-full min-w-0 overflow-hidden rounded-md border'>
     <div className='border-b px-4 py-3'>
       <p className='text-lg font-extrabold'>Payment history</p>
       <p className='text-muted-foreground mt-1 text-sm'>
-        Permanent record of submitted payments, verified payments, due offsets, adjustments, and resets.
+        Dues, amount sent, and SAGICAM verified totals are shown in the cards below.
       </p>
     </div>
 
-    {entries.length === 0 ? (
-      <div className='text-muted-foreground px-4 py-8 text-center text-sm'>
-        No payment history has been recorded yet. New submissions and verifications will appear here.
-      </div>
-    ) : (
-      <div className='divide-y'>
-        {entries.map(entry => (
-          <div
-            key={entry.id}
-            className='grid grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] items-start gap-2 px-4 py-3 sm:grid-cols-[1fr_auto]'
-          >
-            <div className='min-w-0'>
-              <p className='font-extrabold'>{ledgerEventLabels[entry.eventType] ?? entry.eventType}</p>
-              <p className='text-muted-foreground text-xs font-semibold'>
-                {dateTimeFormatter.format(new Date(entry.createdAt))}
-              </p>
-              {entry.note ? <p className='text-muted-foreground mt-1 text-sm leading-6'>{entry.note}</p> : null}
-            </div>
-            <div className='text-primary min-w-0 justify-self-end text-right text-lg font-black break-words tabular-nums'>
-              {formatCurrency(entry.amount)}
-            </div>
-          </div>
-        ))}
-      </div>
-    )}
+    <div className='grid gap-3 p-3 sm:grid-cols-3 sm:p-4'>
+      {summaryColumns.map(column => (
+        <div key={column.map(row => row.id).join('-')} className='grid h-fit gap-3'>
+          {column.map(row => (
+            <PaymentSummaryCard key={row.id} row={row} />
+          ))}
+        </div>
+      ))}
+    </div>
   </div>
 )
+
+const buildAmountSentSummaryRow = ({
+  amountSentDate,
+  amountSentValue,
+  submittedPaymentLedgerEntries
+}: {
+  amountSentDate?: string | null
+  amountSentValue: number
+  submittedPaymentLedgerEntries: SponsorPaymentLedgerEntry[]
+}): PaymentSummaryRow => {
+  const submittedPaymentEntries = submittedPaymentLedgerEntries.map(entry => ({
+    amount: entry.amount,
+    id: entry.id,
+    meta: `Payment submitted ${formatDateTime(entry.createdAt)}`
+  }))
+
+  const amountSentSummaryEntries =
+    submittedPaymentEntries.length > 0
+      ? submittedPaymentEntries
+      : amountSentValue > 0 && amountSentDate
+        ? [
+            {
+              amount: amountSentValue,
+              id: `amount-sent-${amountSentDate}`,
+              meta: `Payment submitted ${formatDateTime(amountSentDate)}`
+            }
+          ]
+        : []
+
+  return {
+    entries: amountSentSummaryEntries,
+    id: 'amount-sent',
+    label: 'Amount Sent',
+    meta:
+      amountSentSummaryEntries.length > 0 || !amountSentDate
+        ? undefined
+        : `Payment submitted ${formatDateTime(amountSentDate)}`,
+    value: roundCurrencyAmount(amountSentSummaryEntries.reduce((total, entry) => total + entry.amount, 0))
+  }
+}
+
+const buildAmountVerifiedSummaryRow = ({
+  amountVerifiedDate,
+  amountVerifiedValue,
+  submittedPaymentLedgerEntries,
+  verifiedAt
+}: {
+  amountVerifiedDate?: string | null
+  amountVerifiedValue: number
+  submittedPaymentLedgerEntries: SponsorPaymentLedgerEntry[]
+  verifiedAt?: string | null
+}): PaymentSummaryRow => {
+  const verifiedPaymentDateGroups = getVerifiedPaymentGroupsLinkedToSubmittedPayments(
+    submittedPaymentLedgerEntries,
+    amountVerifiedValue
+  )
+
+  const linkedVerifiedPaymentTotal = roundCurrencyAmount(
+    verifiedPaymentDateGroups.reduce((total, group) => total + group.amount, 0)
+  )
+
+  const legacyVerifiedAmount = roundCurrencyAmount(amountVerifiedValue - linkedVerifiedPaymentTotal)
+
+  const legacyVerifiedDateGroup =
+    legacyVerifiedAmount > 0 && verifiedAt
+      ? {
+          amount: legacyVerifiedAmount,
+          id: `amount-verified-legacy-${verifiedAt}`,
+          meta: `Payment verified ${formatDate(verifiedAt)}`
+        }
+      : null
+
+  const amountVerifiedDateGroups =
+    verifiedPaymentDateGroups.length > 0 || legacyVerifiedDateGroup
+      ? [...verifiedPaymentDateGroups, ...(legacyVerifiedDateGroup ? [legacyVerifiedDateGroup] : [])]
+      : amountVerifiedValue > 0 && amountVerifiedDate
+        ? [
+            {
+              amount: amountVerifiedValue,
+              id: `amount-verified-${amountVerifiedDate}`,
+              meta: `Payment verified ${formatDate(amountVerifiedDate)}`
+            }
+          ]
+        : []
+
+  return {
+    dateGroups: amountVerifiedDateGroups,
+    id: 'amount-verified',
+    label: 'Amount Verified by SAGICAM',
+    meta:
+      amountVerifiedDateGroups.length > 0 || !amountVerifiedDate
+        ? undefined
+        : `Payment verified ${formatDateTime(amountVerifiedDate)}`,
+    value: amountVerifiedValue
+  }
+}
+
+const buildContributionHistorySummaryColumns = (
+  currentContribution: CurrentContributionPayment,
+  ledgerEntries: SponsorPaymentLedgerEntry[]
+): PaymentSummaryRow[][] => {
+  const latestSubmittedPayment = ledgerEntries.find(
+    entry => entry.eventType === paymentLedgerHistoryEventTypes.submitted
+  )
+
+  const latestVerifiedPayment = ledgerEntries.find(entry => entry.eventType === paymentLedgerHistoryEventTypes.verified)
+  const amountSentDate = latestSubmittedPayment?.createdAt ?? currentContribution.lastSubmittedAt
+  const amountVerifiedDate = latestVerifiedPayment?.createdAt ?? currentContribution.verifiedAt
+
+  const submittedPaymentLedgerEntries = ledgerEntries.filter(
+    entry => entry.eventType === paymentLedgerHistoryEventTypes.submitted
+  )
+
+  const contributionDueDateGroups = currentContribution.contributionDueMonths.map(month => ({
+    amount: month.amount,
+    id: month.dueDate,
+    meta: `${monthYearFormatter.format(new Date(month.dueDate))} contribution due ${formatDate(month.dueDate)}`
+  }))
+
+  const contributionDueSummaryValue = roundCurrencyAmount(
+    contributionDueDateGroups.reduce((total, group) => total + group.amount, 0)
+  )
+
+  const dueSummaryRows: PaymentSummaryRow[] = [
+    {
+      dateGroups: contributionDueDateGroups.length > 0 ? contributionDueDateGroups : undefined,
+      id: 'contribution-due',
+      label: 'Contribution Due',
+      meta:
+        contributionDueDateGroups.length > 0
+          ? undefined
+          : currentContribution.dueDate
+            ? `Due ${formatDate(currentContribution.dueDate)}`
+            : undefined,
+      value: contributionDueDateGroups.length > 0 ? contributionDueSummaryValue : currentContribution.amountOwed
+    }
+  ]
+
+  return [
+    dueSummaryRows,
+    [
+      buildAmountSentSummaryRow({
+        amountSentDate,
+        amountSentValue: currentContribution.amountReceived,
+        submittedPaymentLedgerEntries
+      })
+    ],
+    [
+      buildAmountVerifiedSummaryRow({
+        amountVerifiedDate,
+        amountVerifiedValue: currentContribution.amountVerified,
+        submittedPaymentLedgerEntries,
+        verifiedAt: currentContribution.verifiedAt
+      })
+    ]
+  ]
+}
+
+const buildRegistrationHistorySummaryColumns = (
+  currentRegistrationPayment: CurrentRegistrationPayment,
+  ledgerEntries: SponsorPaymentLedgerEntry[]
+): PaymentSummaryRow[][] => {
+  const latestSubmittedPayment = ledgerEntries.find(
+    entry => entry.eventType === paymentLedgerHistoryEventTypes.submitted
+  )
+
+  const latestVerifiedPayment = ledgerEntries.find(entry => entry.eventType === paymentLedgerHistoryEventTypes.verified)
+  const amountSentDate = latestSubmittedPayment?.createdAt ?? currentRegistrationPayment.lastSubmittedAt
+  const amountVerifiedDate = latestVerifiedPayment?.createdAt ?? currentRegistrationPayment.verifiedAt
+
+  const submittedPaymentLedgerEntries = ledgerEntries.filter(
+    entry => entry.eventType === paymentLedgerHistoryEventTypes.submitted
+  )
+
+  const dueSummaryRows =
+    currentRegistrationPayment.pendingMemberDueDays.length > 0
+      ? [
+          {
+            dateGroups: currentRegistrationPayment.pendingMemberDueDays.map(day => ({
+              amount: day.amount,
+              id: day.addedAt,
+              meta: `Member(s) added ${formatDate(day.addedAt)}`,
+              names: day.memberNames
+            })),
+            id: 'registration-due',
+            label: 'Registrations Fee',
+            value: currentRegistrationPayment.balanceDues
+          }
+        ]
+      : [
+          {
+            id: 'registration-due',
+            label: 'Registrations Fee',
+            value: currentRegistrationPayment.balanceDues
+          }
+        ]
+
+  return [
+    dueSummaryRows,
+    [
+      buildAmountSentSummaryRow({
+        amountSentDate,
+        amountSentValue: currentRegistrationPayment.amountReceived,
+        submittedPaymentLedgerEntries
+      })
+    ],
+    [
+      buildAmountVerifiedSummaryRow({
+        amountVerifiedDate,
+        amountVerifiedValue: currentRegistrationPayment.amountVerified,
+        submittedPaymentLedgerEntries,
+        verifiedAt: currentRegistrationPayment.verifiedAt
+      })
+    ]
+  ]
+}
 
 const PaymentBalanceRow = ({ balance }: { balance: number }) => (
   <div
@@ -312,6 +658,7 @@ export const SponsorContributionPaymentSection = ({
 }) => {
   const currentMonthName = getCurrentMonthName()
   const amountSent = Math.max(currentContribution.amountReceived, currentContribution.amountVerified)
+  const historySummaryColumns = buildContributionHistorySummaryColumns(currentContribution, ledgerEntries)
 
   return (
     <section className={cn('max-w-full min-w-0 space-y-6 py-4 sm:py-10', className)}>
@@ -346,7 +693,7 @@ export const SponsorContributionPaymentSection = ({
         </div>
       </div>
 
-      <PaymentLedgerHistoryCard entries={ledgerEntries} />
+      <PaymentLedgerHistoryCard summaryColumns={historySummaryColumns} />
     </section>
   )
 }
@@ -364,6 +711,7 @@ export const SponsorRegistrationPaymentSection = ({
 }) => {
   const registrationPaymentAmount = getRegistrationPaymentAmount(pendingMembersCount)
   const amountSent = Math.max(currentRegistrationPayment.amountReceived, currentRegistrationPayment.amountVerified)
+  const historySummaryColumns = buildRegistrationHistorySummaryColumns(currentRegistrationPayment, ledgerEntries)
 
   return (
     <section className={cn('max-w-full min-w-0 space-y-6 py-4 sm:py-10', className)}>
@@ -397,7 +745,7 @@ export const SponsorRegistrationPaymentSection = ({
         </div>
       </div>
 
-      <PaymentLedgerHistoryCard entries={ledgerEntries} />
+      <PaymentLedgerHistoryCard summaryColumns={historySummaryColumns} />
     </section>
   )
 }

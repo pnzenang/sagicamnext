@@ -14,9 +14,16 @@ export type SponsorContributionSummary = {
   amountReceived: number
   amountVerified: number
   balance: number
+  contributionDueMonths: {
+    amount: number
+    dueDate: string
+  }[]
+  dueDate: string | null
+  lastSubmittedAt: string | null
   manualBalanceAdjustment: number
   sponsorCode: string
   totalAmountUsed: number
+  verifiedAt: string | null
   vestedContributionCredit: number
   vestedMembersCount: number
 }
@@ -46,16 +53,20 @@ export const fetchSponsorContributionSummary = async (
   const amountPerVestedMember = decimalToNumber(latestAssessment?.amountPerVestedMember)
   const vestedMembersCount = contributionGroup?.vestedMembersCount ?? 0
 
-  const [payment, totalAssessedContribution, contributionUsage, contributionCredit, balanceAdjustment] =
+  const [payment, contributionAssessmentGroups, contributionUsage, contributionCredit, balanceAdjustment] =
     await Promise.all([
       db.sponsorContributionPayment.findUnique({
         where: {
           sponsorCode
         }
       }),
-      db.contributionAssessmentGroup.aggregate({
-        _sum: {
-          amountOwed: true
+      db.contributionAssessmentGroup.findMany({
+        include: {
+          assessment: {
+            select: {
+              createdAt: true
+            }
+          }
         },
         where: {
           sponsorCode
@@ -90,11 +101,41 @@ export const fetchSponsorContributionSummary = async (
   const manualBalanceAdjustment = decimalToNumber(balanceAdjustment?.amount)
   const vestedContributionCredit = decimalToNumber(contributionCredit._sum.amountCredited)
 
-  const totalAmountUsed = Number(
-    (
-      decimalToNumber(totalAssessedContribution._sum.amountOwed) + decimalToNumber(contributionUsage?.amountUsed)
-    ).toFixed(2)
+  const totalAssessedContribution = contributionAssessmentGroups.reduce(
+    (total, group) => Number((total + decimalToNumber(group.amountOwed)).toFixed(2)),
+    0
   )
+
+  const totalAmountUsed = Number(
+    (totalAssessedContribution + decimalToNumber(contributionUsage?.amountUsed)).toFixed(2)
+  )
+
+  const contributionDueMonthsByDate = contributionAssessmentGroups.reduce((groups, group) => {
+    const dueDate = group.assessment.createdAt
+    const dueDateKey = dueDate.toISOString().slice(0, 7)
+    const currentGroup = groups.get(dueDateKey)
+
+    groups.set(dueDateKey, {
+      amount: Number(((currentGroup?.amount ?? 0) + decimalToNumber(group.amountOwed)).toFixed(2)),
+      dueDate: currentGroup?.dueDate ?? dueDate.toISOString()
+    })
+
+    return groups
+  }, new Map<string, { amount: number; dueDate: string }>())
+
+  const contributionDueMonths = Array.from(contributionDueMonthsByDate.values()).sort(
+    (firstMonth, secondMonth) => new Date(secondMonth.dueDate).getTime() - new Date(firstMonth.dueDate).getTime()
+  )
+
+  const fallbackContributionDueMonths =
+    contributionDueMonths.length > 0 || amountOwed <= 0 || !latestAssessment?.createdAt
+      ? contributionDueMonths
+      : [
+          {
+            amount: amountOwed,
+            dueDate: latestAssessment.createdAt.toISOString()
+          }
+        ]
 
   return {
     amountOwed,
@@ -102,9 +143,13 @@ export const fetchSponsorContributionSummary = async (
     amountReceived,
     amountVerified,
     balance: Number((amountVerified + vestedContributionCredit + manualBalanceAdjustment - totalAmountUsed).toFixed(2)),
+    contributionDueMonths: fallbackContributionDueMonths,
+    dueDate: latestAssessment?.createdAt.toISOString() ?? null,
+    lastSubmittedAt: payment?.lastSubmittedAt?.toISOString() ?? null,
     manualBalanceAdjustment,
     sponsorCode,
     totalAmountUsed,
+    verifiedAt: payment?.verifiedAt?.toISOString() ?? null,
     vestedContributionCredit,
     vestedMembersCount
   }

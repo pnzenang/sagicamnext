@@ -59,7 +59,11 @@ import { usePagination } from '@/hooks/use-pagination'
 
 import MembershipSummaryCards from '@/components/dashboard/MembershipSummaryCards'
 import ResponsiveTableCards from '@/components/dashboard/ResponsiveTableCards'
-import { SponsorPaymentNavigationCards } from '@/components/dashboard/SponsorPaymentSections'
+import {
+  SponsorPaymentNavigationCards,
+  type CurrentContributionPayment,
+  type CurrentRegistrationPayment
+} from '@/components/dashboard/SponsorPaymentSections'
 import { TablePaginationControls } from '@/components/dashboard/TablePaginationControls'
 import { cn } from '@/lib/utils'
 import { type MemberType } from '@/utils/types'
@@ -214,35 +218,13 @@ type MembershipSummary = {
   vested: number
 }
 
-type CurrentContribution = {
-  amountOwed: number
-  amountPerVestedMember: number
-  amountReceived: number
-  amountVerified: number
-  balance: number
-  manualBalanceAdjustment: number
-  sponsorCode: string
-  totalAmountUsed: number
-  vestedContributionCredit: number
-  vestedMembersCount: number
-}
-
-type CurrentRegistrationPayment = {
-  amountReceived: number
-  amountUsed: number
-  amountVerified: number
-  balance: number
-  manualBalanceAdjustment: number
-  sponsorCode: string
-}
-
 const MembersDataTable = ({
   currentContribution,
   currentRegistrationPayment,
   data,
   membershipSummary
 }: {
-  currentContribution: CurrentContribution
+  currentContribution: CurrentContributionPayment
   currentRegistrationPayment: CurrentRegistrationPayment
   data: MemberType[]
   membershipSummary: MembershipSummary
@@ -385,36 +367,43 @@ const MembersDataTable = ({
             />
           </div>
         </div>
-        <div className='flex items-start justify-between gap-6 px-4 pt-4 pb-2 max-sm:flex-col sm:px-6'>
-          <div className='min-w-0'>
+        <div className='flex flex-col items-start gap-3 px-4 pt-4 pb-2 sm:px-6 md:flex-row md:items-center md:justify-between md:gap-6'>
+          <div className='min-w-0 md:shrink-0'>
             <p
-              className='text-primary text-sm font-extrabold whitespace-normal sm:whitespace-nowrap'
+              className='text-primary text-sm font-extrabold whitespace-normal md:whitespace-nowrap'
               aria-live='polite'
             >
               <span>{table.getRowCount().toString()} Member(s) Found</span>
             </p>
           </div>
 
-          <div className='flex max-w-full min-w-0 flex-col items-end gap-4 overflow-hidden max-sm:w-full max-sm:items-start'>
+          <div className='flex w-full max-w-full min-w-0 flex-wrap items-center justify-start gap-2 overflow-hidden md:w-auto md:flex-nowrap md:justify-end'>
+            <Button
+              className='bg-primary/10 text-primary hover:bg-primary/20 focus-visible:ring-primary/20 dark:focus-visible:ring-primary/40 shrink-0 max-md:flex-1 max-md:justify-center'
+              onClick={exportFilteredPageToExcel}
+            >
+              <FileSpreadsheetIcon />
+              Export Page
+            </Button>
             <TablePaginationControls
               table={table}
               pages={pages}
               showLeftEllipsis={showLeftEllipsis}
               showRightEllipsis={showRightEllipsis}
-              className='mx-0 w-full justify-start sm:justify-end'
+              className='mx-0 w-auto justify-start md:justify-end'
             />
           </div>
         </div>
-        <div className='flex min-w-0 items-start gap-4 px-3 pt-2 pb-4 max-sm:flex-col sm:items-center sm:justify-between sm:px-6 sm:pb-6'>
-          <div className='flex w-full min-w-0 flex-col justify-start gap-2 sm:flex-row sm:flex-wrap sm:items-center'>
+        <div className='flex min-w-0 flex-col items-start gap-4 px-3 pt-2 pb-4 sm:px-6 sm:pb-6 md:flex-row md:items-center md:justify-between'>
+          <div className='flex w-full min-w-0 flex-col justify-start gap-2 md:flex-1 md:flex-row md:flex-nowrap md:items-center'>
             <Filter column={table.getColumn('sponsorCode')!} />
             <Filter column={table.getColumn('lastAndMiddleNames')!} />
             <Filter column={table.getColumn('firstName')!} />
             <Filter column={table.getColumn('delegateRecommendation')!} />
             <Filter column={table.getColumn('memberStatus')!} />
           </div>
-          <div className='flex w-full min-w-0 flex-wrap items-center gap-2 sm:w-auto sm:justify-between sm:gap-4'>
-            <div className='flex min-w-0 items-center gap-2 max-sm:flex-1'>
+          <div className='flex w-full min-w-0 flex-wrap items-center gap-2 md:w-auto md:shrink-0 md:flex-nowrap md:justify-end md:gap-4'>
+            <div className='flex min-w-0 items-center gap-2 max-md:flex-1'>
               <Label htmlFor='#rowSelect' className=''>
                 Show
               </Label>
@@ -424,7 +413,7 @@ const MembersDataTable = ({
                   table.setPageSize(Number(value))
                 }}
               >
-                <SelectTrigger id='rowSelect' className='w-fit whitespace-nowrap max-sm:w-full'>
+                <SelectTrigger id='rowSelect' className='w-fit whitespace-nowrap max-md:w-full'>
                   <SelectValue placeholder='Select number of results' />
                 </SelectTrigger>
                 <SelectContent className='[&_*[role=option]]:pr-8 [&_*[role=option]]:pl-2 [&_*[role=option]>span]:right-2 [&_*[role=option]>span]:left-auto'>
@@ -436,16 +425,9 @@ const MembersDataTable = ({
                 </SelectContent>
               </Select>
             </div>
-            <Button
-              className='bg-primary/10 text-primary hover:bg-primary/20 focus-visible:ring-primary/20 dark:focus-visible:ring-primary/40 max-sm:flex-1 max-sm:justify-center'
-              onClick={exportFilteredPageToExcel}
-            >
-              <FileSpreadsheetIcon />
-              Export Page
-            </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button className='bg-primary/10 text-primary hover:bg-primary/20 focus-visible:ring-primary/20 dark:focus-visible:ring-primary/40 max-sm:flex-1 max-sm:justify-center'>
+                <Button className='bg-primary/10 text-primary hover:bg-primary/20 focus-visible:ring-primary/20 dark:focus-visible:ring-primary/40 max-md:flex-1 max-md:justify-center'>
                   <UploadIcon />
                   Export
                 </Button>
@@ -588,7 +570,7 @@ function Filter({ column }: { column: Column<any, unknown> }) {
 
   if (filterVariant === 'select') {
     return (
-      <div className='border-primary w-full space-y-2 rounded border sm:max-w-2xs'>
+      <div className='border-primary w-full min-w-0 space-y-2 rounded border md:flex-1 md:max-w-none xl:max-w-2xs'>
         {/* <Label htmlFor={`${id}-select`}>Select {columnHeader}</Label> */}
         <Select
           value={columnFilterValue?.toString() ?? 'all'}
@@ -613,7 +595,7 @@ function Filter({ column }: { column: Column<any, unknown> }) {
   }
 
   return (
-    <div className='border-primary max-w-full min-w-0 rounded border sm:max-w-2xs'>
+    <div className='border-primary w-full min-w-0 rounded border md:flex-1 md:max-w-none xl:max-w-2xs'>
       <Label htmlFor={`${id}-input`} className='sr-only'>
         {columnHeader}
       </Label>

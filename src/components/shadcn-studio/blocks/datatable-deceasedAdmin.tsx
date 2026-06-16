@@ -391,15 +391,23 @@ const DeceasedMembersDataTable = ({
             All Deceased Members (Admin){' '}
           </span>
           <DeceasedSummaryCards {...deceasedSummary} />
-          <div className='flex items-center justify-between gap-3 px-0 py-3 max-sm:flex-col sm:px-6 sm:py-4'>
+          <div className='flex flex-col items-start gap-3 px-0 py-3 sm:px-6 sm:py-4 md:flex-row md:items-center md:justify-between'>
             <p
-              className='text-sm font-extrabold whitespace-normal text-purple-400 sm:whitespace-nowrap'
+              className='text-sm font-extrabold whitespace-normal text-purple-400 md:shrink-0 md:whitespace-nowrap'
               aria-live='polite'
             >
               <span>{table.getRowCount().toString()} Deceased Member(s) Found</span>
             </p>
 
-            <div className='max-w-full min-w-0 overflow-hidden'>
+            <div className='flex w-full max-w-full min-w-0 flex-wrap items-center justify-start gap-2 overflow-hidden md:w-auto md:flex-nowrap md:justify-end'>
+              <Button
+                className='text-primary focus-visible:ring-primary/20 dark:focus-visible:ring-primary/40 shrink-0 bg-purple-500/10 hover:bg-purple-400/20 max-md:flex-1 max-md:justify-center'
+                onClick={exportCurrentPageToExcel}
+                disabled={table.getRowModel().rows.length === 0}
+              >
+                <FileSpreadsheetIcon />
+                Export Page
+              </Button>
               <TablePaginationControls
                 table={table}
                 pages={pages}
@@ -407,6 +415,7 @@ const DeceasedMembersDataTable = ({
                 showRightEllipsis={showRightEllipsis}
                 navigationClassName='text-purple-500'
                 pageButtonClassName='bg-purple-500 hover:bg-purple-400'
+                className='mx-0 w-auto justify-start md:justify-end'
               />
             </div>
           </div>
@@ -414,15 +423,15 @@ const DeceasedMembersDataTable = ({
             {/* <Filter column={table.getColumn('dateOfBirth')!} /> */}
           </div>
         </div>
-        <div className='flex min-w-0 items-start gap-4 p-3 max-sm:flex-col sm:items-center sm:justify-between sm:p-6'>
-          <div className='flex w-full flex-col justify-start gap-2 sm:flex-row sm:flex-wrap sm:items-center'>
+        <div className='flex min-w-0 flex-col items-start gap-4 p-3 sm:p-6 md:flex-row md:items-center md:justify-between'>
+          <div className='flex w-full min-w-0 flex-col justify-start gap-2 md:flex-1 md:flex-row md:flex-nowrap md:items-center'>
             <Filter column={table.getColumn('lastAndMiddleNames')!} />
             <Filter column={table.getColumn('firstName')!} />
             <Filter column={table.getColumn('sponsorCode')!} />
             <Filter column={table.getColumn('contributionStatus')!} />
           </div>
-          <div className='flex w-full min-w-0 flex-wrap items-center gap-2 sm:w-auto sm:justify-between sm:gap-4'>
-            <div className='flex items-center gap-2'>
+          <div className='flex w-full min-w-0 flex-wrap items-center gap-2 md:w-auto md:shrink-0 md:flex-nowrap md:justify-end md:gap-4'>
+            <div className='flex min-w-0 items-center gap-2 max-md:flex-1'>
               <Label htmlFor='#rowSelect' className=''>
                 Show
               </Label>
@@ -432,7 +441,7 @@ const DeceasedMembersDataTable = ({
                   table.setPageSize(Number(value))
                 }}
               >
-                <SelectTrigger id='rowSelect' className='w-fit whitespace-nowrap'>
+                <SelectTrigger id='rowSelect' className='w-fit whitespace-nowrap max-md:w-full'>
                   <SelectValue placeholder='Select number of results' />
                 </SelectTrigger>
                 <SelectContent className='[&_*[role=option]]:pr-8 [&_*[role=option]]:pl-2 [&_*[role=option]>span]:right-2 [&_*[role=option]>span]:left-auto'>
@@ -444,17 +453,9 @@ const DeceasedMembersDataTable = ({
                 </SelectContent>
               </Select>
             </div>
-            <Button
-              className='text-primary focus-visible:ring-primary/20 dark:focus-visible:ring-primary/40 bg-purple-500/10 hover:bg-purple-400/20'
-              onClick={exportCurrentPageToExcel}
-              disabled={table.getRowModel().rows.length === 0}
-            >
-              <FileSpreadsheetIcon />
-              Export Page
-            </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button className='text-primary focus-visible:ring-primary/20 dark:focus-visible:ring-primary/40 bg-purple-500/10 hover:bg-purple-400/20'>
+                <Button className='text-primary focus-visible:ring-primary/20 dark:focus-visible:ring-primary/40 bg-purple-500/10 hover:bg-purple-400/20 max-md:flex-1 max-md:justify-center'>
                   <UploadIcon />
                   Export
                 </Button>
@@ -599,7 +600,7 @@ function Filter({ column }: { column: Column<any, unknown> }) {
 
   if (filterVariant === 'select') {
     return (
-      <div className='w-full max-w-2xs space-y-2 rounded border border-purple-500'>
+      <div className='w-full min-w-0 space-y-2 rounded border border-purple-500 md:flex-1 md:max-w-none xl:max-w-2xs'>
         {/* <Label htmlFor={`${id}-select`}>Select {columnHeader}</Label> */}
         <Select
           value={columnFilterValue?.toString() ?? 'all'}
@@ -624,7 +625,7 @@ function Filter({ column }: { column: Column<any, unknown> }) {
   }
 
   return (
-    <div className='w-full max-w-2xs rounded border border-purple-500'>
+    <div className='w-full min-w-0 rounded border border-purple-500 md:flex-1 md:max-w-none xl:max-w-2xs'>
       <Label htmlFor={`${id}-input`} className='sr-only'>
         {columnHeader}
       </Label>
