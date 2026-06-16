@@ -266,14 +266,46 @@ const AdminSagicamPaymentsTable = ({
 }) => {
   const [sortKey, setSortKey] = useState<SortKey>('sponsorCode')
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
+  const [codeSearch, setCodeSearch] = useState('')
+
+  const normalizedCodeSearch = codeSearch.trim().toLowerCase()
+
+  const filteredRows = useMemo(() => {
+    if (!normalizedCodeSearch) return rows
+
+    return rows.filter(row => row.sponsorCode.toLowerCase().includes(normalizedCodeSearch))
+  }, [normalizedCodeSearch, rows])
 
   const sortedRows = useMemo(() => {
-    return [...rows].sort((firstRow, secondRow) => {
+    return [...filteredRows].sort((firstRow, secondRow) => {
       const comparison = compareValues(firstRow[sortKey], secondRow[sortKey])
 
       return sortDirection === 'asc' ? comparison : -comparison
     })
-  }, [rows, sortDirection, sortKey])
+  }, [filteredRows, sortDirection, sortKey])
+
+  const visibleTotals = useMemo<AdminSagicamPaymentsTotals>(() => {
+    if (!normalizedCodeSearch) return totals
+
+    return filteredRows.reduce(
+      (currentTotals, row) => {
+        currentTotals.amountOwed += row.amountOwed
+        currentTotals.amountReceived += row.amountReceived
+        currentTotals.balance += row.balance
+        currentTotals.contributionAmountSent += row.contributionAmountSent
+        currentTotals.vestedMembers += row.vestedMembers
+
+        return currentTotals
+      },
+      {
+        amountOwed: 0,
+        amountReceived: 0,
+        balance: 0,
+        contributionAmountSent: 0,
+        vestedMembers: 0
+      }
+    )
+  }, [filteredRows, normalizedCodeSearch, totals])
 
   const handleSort = (nextSortKey: SortKey) => {
     if (nextSortKey === sortKey) {
@@ -296,6 +328,22 @@ const AdminSagicamPaymentsTable = ({
             ))}
           </colgroup>
           <TableHeader>
+            <TableRow className='bg-background hover:bg-background'>
+              <TableHead colSpan={columns.length} className='h-auto p-3'>
+                <form role='search' onSubmit={event => event.preventDefault()} className='w-full'>
+                  <label htmlFor='contribution-sponsor-code-search' className='sr-only'>
+                    Search sponsor code
+                  </label>
+                  <Input
+                    id='contribution-sponsor-code-search'
+                    value={codeSearch}
+                    onChange={event => setCodeSearch(event.target.value)}
+                    placeholder='Search sponsor code, e.g. MLNO'
+                    className='bg-background h-10 w-full text-sm font-semibold'
+                  />
+                </form>
+              </TableHead>
+            </TableRow>
             <TableRow className='bg-primary hover:bg-primary h-16'>
               {columns.map(column => {
                 const isActive = sortKey === column.key
@@ -323,7 +371,9 @@ const AdminSagicamPaymentsTable = ({
             {sortedRows.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={columns.length} className='text-muted-foreground h-24 text-center'>
-                  No Sagicam contributions found.
+                  {normalizedCodeSearch
+                    ? `No sponsor code matching "${codeSearch.trim()}" found.`
+                    : 'No Sagicam contributions found.'}
                 </TableCell>
               </TableRow>
             ) : (
@@ -372,26 +422,42 @@ const AdminSagicamPaymentsTable = ({
                 <TableCell />
                 <TableCell />
                 <TableCell className='font-extrabold'>Total</TableCell>
-                <TableCell className='text-right font-extrabold'>{totals.vestedMembers}</TableCell>
+                <TableCell className='text-right font-extrabold'>{visibleTotals.vestedMembers}</TableCell>
                 <TableCell className='text-right font-extrabold'>
-                  {currencyFormatter.format(totals.amountOwed)}
+                  {currencyFormatter.format(visibleTotals.amountOwed)}
                 </TableCell>
                 <TableCell className='text-right font-extrabold'>
-                  {currencyFormatter.format(totals.contributionAmountSent)}
+                  {currencyFormatter.format(visibleTotals.contributionAmountSent)}
                 </TableCell>
                 <TableCell className='text-right font-extrabold'>
-                  {currencyFormatter.format(totals.amountReceived)}
+                  {currencyFormatter.format(visibleTotals.amountReceived)}
                 </TableCell>
-                <TableCell className='text-right font-extrabold'>{currencyFormatter.format(totals.balance)}</TableCell>
+                <TableCell className='text-right font-extrabold'>
+                  {currencyFormatter.format(visibleTotals.balance)}
+                </TableCell>
               </TableRow>
             </TableFooter>
           )}
         </Table>
       </div>
       <div className='grid gap-3 p-2 sm:p-3 md:hidden'>
+        <form role='search' onSubmit={event => event.preventDefault()} className='rounded-md border bg-background p-2'>
+          <label htmlFor='contribution-sponsor-code-search-mobile' className='sr-only'>
+            Search sponsor code
+          </label>
+          <Input
+            id='contribution-sponsor-code-search-mobile'
+            value={codeSearch}
+            onChange={event => setCodeSearch(event.target.value)}
+            placeholder='Search sponsor code, e.g. MLNO'
+            className='bg-background h-9 text-sm font-semibold'
+          />
+        </form>
         {sortedRows.length === 0 ? (
           <div className='text-muted-foreground rounded-md border px-3 py-8 text-center text-sm sm:px-4 sm:py-10'>
-            No Sagicam contributions found.
+            {normalizedCodeSearch
+              ? `No sponsor code matching "${codeSearch.trim()}" found.`
+              : 'No Sagicam contributions found.'}
           </div>
         ) : (
           sortedRows.map(row => (
@@ -426,13 +492,16 @@ const AdminSagicamPaymentsTable = ({
           <article className='rounded-md border bg-white px-3 py-3 text-black shadow-sm sm:px-4 dark:bg-white dark:text-black'>
             <div className='mb-2 text-base font-extrabold'>Total</div>
             <div className='grid gap-2'>
-              <MobileValue label='Vested' value={totals.vestedMembers} />
-              <MobileValue label='Contribution owed' value={currencyFormatter.format(totals.amountOwed)} />
-              <MobileValue label='Contribution sent' value={currencyFormatter.format(totals.contributionAmountSent)} />
-              <MobileValue label='Contribution verified' value={currencyFormatter.format(totals.amountReceived)} />
+              <MobileValue label='Vested' value={visibleTotals.vestedMembers} />
+              <MobileValue label='Contribution owed' value={currencyFormatter.format(visibleTotals.amountOwed)} />
+              <MobileValue
+                label='Contribution sent'
+                value={currencyFormatter.format(visibleTotals.contributionAmountSent)}
+              />
+              <MobileValue label='Contribution verified' value={currencyFormatter.format(visibleTotals.amountReceived)} />
               <div className='grid grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] items-start gap-2 border-t pt-3'>
                 <span className='text-xs font-semibold uppercase'>Contribution balance</span>
-                <BalanceCard balance={totals.balance} className='max-w-full justify-end justify-self-end' />
+                <BalanceCard balance={visibleTotals.balance} className='max-w-full justify-end justify-self-end' />
               </div>
             </div>
           </article>
