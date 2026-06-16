@@ -8,9 +8,9 @@ const Profile = async () => {
   const profile = await fetchProfile()
 
   return (
-    <section className='mt-16 flex flex-col'>
+    <section className='mt-8 flex max-w-full min-w-0 flex-col sm:mt-16'>
       <h1 className='my-8 text-2xl font-semibold capitalize sm:text-6xl'> update sponsor profile</h1>
-      <div className='border-primary bg-muted rounded-lg border p-8'>
+      <div className='border-primary bg-muted max-w-full min-w-0 overflow-hidden rounded-lg border p-4 sm:p-8'>
         <FormContainer action={updateProfileAction}>
           <div className='mt-4 grid gap-4 md:grid-cols-3'>
             <FormInput

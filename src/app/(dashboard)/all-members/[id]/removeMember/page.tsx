@@ -1,3 +1,7 @@
+import { BsSignStopFill } from 'react-icons/bs'
+
+import { TiWarning } from 'react-icons/ti'
+
 import { SubmitButton } from '@/components/forms/Buttons'
 import FormContainer from '@/components/forms/FormContainer'
 import FormInput from '@/components/forms/FormInput'
@@ -10,8 +14,6 @@ import {
   updateMemberDetailsAction
 } from '@/utils/actions'
 import { reasonForLeaving } from '@/utils/types'
-import { BsSignStopFill } from 'react-icons/bs'
-import { TiWarning } from 'react-icons/ti'
 
 const RemoveMember = async ({ params }: { params: { id: string } }) => {
   const { id } = await params
@@ -23,8 +25,9 @@ const RemoveMember = async ({ params }: { params: { id: string } }) => {
   const profile = await fetchProfile()
   const currentDay = new Date().getDate()
   const shouldShow = currentDay <= 6 || currentDay >= 25
+
   return (
-    <section className='mt-16 flex flex-col'>
+    <section className='mt-8 flex max-w-full min-w-0 flex-col sm:mt-16'>
       <div className='my flex flex-row items-center'>
         <TiWarning className='size-8 items-center text-red-500 sm:size-15' />
         <h1 className='text-3xl font-semibold text-red-600 capitalize sm:text-6xl'> loved one Removal </h1>
@@ -37,7 +40,7 @@ const RemoveMember = async ({ params }: { params: { id: string } }) => {
           </p>
         ) : null}
       </div>
-      <div className='border-destructive rounded-lg border bg-red-800/40 p-8 py-12'>
+      <div className='border-destructive max-w-full min-w-0 overflow-hidden rounded-lg border bg-red-800/40 p-4 py-8 sm:p-8 sm:py-12'>
         <FormContainer action={createRemovedMemberAction}>
           <div>
             <input type='hidden' name='id' value={id} />

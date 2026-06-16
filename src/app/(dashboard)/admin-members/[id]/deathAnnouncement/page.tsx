@@ -1,3 +1,7 @@
+import { TiWarning } from 'react-icons/ti'
+
+import { BsSignStopFill } from 'react-icons/bs'
+
 import { SubmitButton } from '@/components/forms/Buttons'
 import FormContainer from '@/components/forms/FormContainer'
 import FormInput from '@/components/forms/FormInput'
@@ -5,8 +9,7 @@ import FormSelect from '@/components/forms/FormSelect'
 import MaskDateInput from '@/components/forms/MaskDateInput'
 import { createDeceasedMemberActionAdmin, fetchProfile, fetchSingleMemberDetailsForAdmin } from '@/utils/actions'
 import { contributionStatus, delegateRecommendation, memberStatus } from '@/utils/types'
-import { TiWarning } from 'react-icons/ti'
-import { BsSignStopFill } from 'react-icons/bs'
+
 const DeathAnnouncement = async ({ params }: { params: { id: string } }) => {
   const { id } = await params
 
@@ -27,7 +30,7 @@ const DeathAnnouncement = async ({ params }: { params: { id: string } }) => {
   const profile = await fetchProfile()
 
   return (
-    <section className='mt-16 flex flex-col'>
+    <section className='mt-8 flex max-w-full min-w-0 flex-col sm:mt-16'>
       <div className='mb-5'>
         <div className='my-1 flex flex-row'>
           <TiWarning className='size-8 items-center text-purple-500 sm:size-15' />
@@ -37,7 +40,7 @@ const DeathAnnouncement = async ({ params }: { params: { id: string } }) => {
           Check your entry well before submission, the process is not reversible.
         </p>
       </div>
-      <div className='rounded-lg border border-purple-800 bg-purple-300/50 p-8'>
+      <div className='max-w-full min-w-0 overflow-hidden rounded-lg border border-purple-800 bg-purple-300/50 p-4 sm:p-8'>
         <FormContainer action={createDeceasedMemberActionAdmin}>
           <div>
             <input type='hidden' name='id' value={id} />

@@ -265,8 +265,8 @@ const AdminSagicamPayments = async () => {
   )
 
   return (
-    <div className='space-y-6 py-8 sm:py-10'>
-      <div>
+    <div className='max-w-full min-w-0 space-y-6 py-4 sm:py-10'>
+      <div className='min-w-0'>
         <h1 className='text-4xl font-semibold tracking-normal'>Sagicam Contributions</h1>
         <p className='text-muted-foreground mt-2 text-sm'>
           Sponsor contribution summary from the latest contribution assessment
@@ -279,7 +279,7 @@ const AdminSagicamPayments = async () => {
 
       <ContributionAssessmentForm vestedMembersCount={vestedMembersCount} />
 
-      <div className='w-full'>
+      <div className='max-w-full min-w-0'>
         <PaymentAlertCard
           title='Contribution Payment Alerts'
           alerts={contributionPaymentAlerts}

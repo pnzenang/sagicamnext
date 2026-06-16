@@ -56,7 +56,7 @@ const DeceasedSummaryCards = ({ completed, denied, inReview, total, underway }: 
         const Icon = card.icon
 
         return (
-          <div key={card.key} className={`rounded-lg border p-4 ${card.className}`}>
+          <div key={card.key} className={`min-w-0 rounded-lg border p-3 sm:p-4 ${card.className}`}>
             <div className='flex items-center justify-between gap-3'>
               <p className='text-xs font-semibold tracking-normal uppercase'>{card.label}</p>
               <Icon className='size-5 shrink-0' />

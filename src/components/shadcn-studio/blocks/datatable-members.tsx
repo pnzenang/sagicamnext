@@ -372,9 +372,9 @@ const MembersDataTable = ({
   })
 
   return (
-    <div className='border-primary w-full rounded border'>
-      <div className='border-b'>
-        <div className='flex flex-col gap-4 border-b p-4 sm:p-6'>
+    <div className='border-primary max-w-full min-w-0 overflow-hidden rounded border'>
+      <div className='min-w-0 border-b'>
+        <div className='flex flex-col gap-4 border-b p-3 sm:p-6'>
           <span className='text-2xl font-semibold sm:text-4xl lg:text-6xl'>All Registered Loved Ones</span>
           <MembershipSummaryCards {...membershipSummary} />
           <div className='w-full pb-4'>
@@ -386,13 +386,16 @@ const MembersDataTable = ({
           </div>
         </div>
         <div className='flex items-start justify-between gap-6 px-4 pt-4 pb-2 max-sm:flex-col sm:px-6'>
-          <div>
-            <p className='text-primary text-sm font-extrabold whitespace-nowrap' aria-live='polite'>
+          <div className='min-w-0'>
+            <p
+              className='text-primary text-sm font-extrabold whitespace-normal sm:whitespace-nowrap'
+              aria-live='polite'
+            >
               <span>{table.getRowCount().toString()} Member(s) Found</span>
             </p>
           </div>
 
-          <div className='flex flex-col items-end gap-4 max-sm:w-full max-sm:items-start'>
+          <div className='flex max-w-full min-w-0 flex-col items-end gap-4 overflow-hidden max-sm:w-full max-sm:items-start'>
             <TablePaginationControls
               table={table}
               pages={pages}
@@ -402,15 +405,15 @@ const MembersDataTable = ({
             />
           </div>
         </div>
-        <div className='flex items-start gap-4 px-4 pt-2 pb-6 max-sm:flex-col sm:items-center sm:justify-between sm:px-6'>
-          <div className='flex w-full min-w-0 flex-col justify-start gap-2 sm:w-6/7 sm:flex-row sm:items-center'>
+        <div className='flex min-w-0 items-start gap-4 px-3 pt-2 pb-4 max-sm:flex-col sm:items-center sm:justify-between sm:px-6 sm:pb-6'>
+          <div className='flex w-full min-w-0 flex-col justify-start gap-2 sm:flex-row sm:flex-wrap sm:items-center'>
             <Filter column={table.getColumn('sponsorCode')!} />
             <Filter column={table.getColumn('lastAndMiddleNames')!} />
             <Filter column={table.getColumn('firstName')!} />
             <Filter column={table.getColumn('delegateRecommendation')!} />
             <Filter column={table.getColumn('memberStatus')!} />
           </div>
-          <div className='flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-between sm:gap-4'>
+          <div className='flex w-full min-w-0 flex-wrap items-center gap-2 sm:w-auto sm:justify-between sm:gap-4'>
             <div className='flex min-w-0 items-center gap-2 max-sm:flex-1'>
               <Label htmlFor='#rowSelect' className=''>
                 Show
@@ -544,7 +547,7 @@ const MembersDataTable = ({
           }}
           getCardSubtitle={row => row.original.memberMatriculationNumber}
         />
-        <div className='flex justify-start border-t px-4 py-4 sm:justify-end sm:px-6'>
+        <div className='flex max-w-full min-w-0 justify-start overflow-hidden border-t px-2 py-4 sm:justify-end sm:px-6'>
           <TablePaginationControls
             table={table}
             pages={pages}
@@ -610,7 +613,7 @@ function Filter({ column }: { column: Column<any, unknown> }) {
   }
 
   return (
-    <div className='border-primary w-full rounded border sm:max-w-2xs'>
+    <div className='border-primary max-w-full min-w-0 rounded border sm:max-w-2xs'>
       <Label htmlFor={`${id}-input`} className='sr-only'>
         {columnHeader}
       </Label>

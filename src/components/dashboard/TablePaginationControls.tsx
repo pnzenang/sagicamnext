@@ -32,8 +32,8 @@ export function TablePaginationControls<TData>({
   const currentPage = table.getState().pagination.pageIndex + 1
 
   return (
-    <Pagination className={className}>
-      <PaginationContent className='flex-nowrap'>
+    <Pagination className={cn('max-w-full min-w-0 overflow-x-auto overflow-y-hidden', className)}>
+      <PaginationContent className='w-max flex-nowrap'>
         <PaginationItem>
           <Button
             className='disabled:pointer-events-none disabled:opacity-50'

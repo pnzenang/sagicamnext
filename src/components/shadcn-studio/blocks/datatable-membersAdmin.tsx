@@ -218,7 +218,13 @@ type MembershipSummary = {
   vested: number
 }
 
-const MembersDataTable = ({ data, membershipSummary }: { data: MemberType[]; membershipSummary: MembershipSummary }) => {
+const MembersDataTable = ({
+  data,
+  membershipSummary
+}: {
+  data: MemberType[]
+  membershipSummary: MembershipSummary
+}) => {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
 
   const pageSize = 100
@@ -311,15 +317,7 @@ const MembersDataTable = ({ data, membershipSummary }: { data: MemberType[]; mem
 
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Loved Ones')
 
-    worksheet['!cols'] = [
-      { wch: 14 },
-      { wch: 18 },
-      { wch: 24 },
-      { wch: 18 },
-      { wch: 14 },
-      { wch: 18 },
-      { wch: 18 }
-    ]
+    worksheet['!cols'] = [{ wch: 14 }, { wch: 18 }, { wch: 24 }, { wch: 18 }, { wch: 14 }, { wch: 18 }, { wch: 18 }]
 
     XLSX.writeFile(workbook, `loved-ones-filtered-export-${new Date().toISOString().split('T')[0]}.xlsx`)
   }
@@ -352,17 +350,20 @@ const MembersDataTable = ({ data, membershipSummary }: { data: MemberType[]; mem
   })
 
   return (
-    <div className='border-primary w-full rounded border'>
-      <div className='border-b'>
-        <div className='flex flex-col gap-4 border-b p-6'>
+    <div className='border-primary max-w-full min-w-0 overflow-hidden rounded border'>
+      <div className='min-w-0 border-b'>
+        <div className='flex flex-col gap-4 border-b p-3 sm:p-6'>
           <span className='text-2xl font-semibold sm:text-4xl lg:text-6xl'>All Registered Loved Ones (Admin)</span>
           <MembershipSummaryCards {...membershipSummary} />
-          <div className='flex items-center justify-between gap-3 px-6 py-4 max-sm:flex-col'>
-            <p className='text-primary text-sm font-extrabold whitespace-nowrap' aria-live='polite'>
+          <div className='flex items-center justify-between gap-3 px-0 py-3 max-sm:flex-col sm:px-6 sm:py-4'>
+            <p
+              className='text-primary text-sm font-extrabold whitespace-normal sm:whitespace-nowrap'
+              aria-live='polite'
+            >
               <span>{table.getRowCount().toString()} Member(s) Found</span>
             </p>
 
-            <div>
+            <div className='max-w-full min-w-0 overflow-hidden'>
               <TablePaginationControls
                 table={table}
                 pages={pages}
@@ -375,15 +376,15 @@ const MembersDataTable = ({ data, membershipSummary }: { data: MemberType[]; mem
             {/* <Filter column={table.getColumn('dateOfBirth')!} /> */}
           </div>
         </div>
-        <div className='flex items-start gap-4 p-6 max-sm:flex-col sm:items-center sm:justify-between'>
-          <div className='flex w-6/7 flex-col justify-start gap-2 sm:flex-row sm:items-center'>
+        <div className='flex min-w-0 items-start gap-4 p-3 max-sm:flex-col sm:items-center sm:justify-between sm:p-6'>
+          <div className='flex w-full flex-col justify-start gap-2 sm:flex-row sm:flex-wrap sm:items-center'>
             <Filter column={table.getColumn('sponsorCode')!} />
             <Filter column={table.getColumn('lastAndMiddleNames')!} />
             <Filter column={table.getColumn('firstName')!} />
             <Filter column={table.getColumn('delegateRecommendation')!} />
             <Filter column={table.getColumn('memberStatus')!} />
           </div>
-          <div className='flex items-center gap-4 sm:justify-between'>
+          <div className='flex w-full min-w-0 flex-wrap items-center gap-2 sm:w-auto sm:justify-between sm:gap-4'>
             <div className='flex items-center gap-2'>
               <Label htmlFor='#rowSelect' className=''>
                 Show
@@ -407,7 +408,7 @@ const MembersDataTable = ({ data, membershipSummary }: { data: MemberType[]; mem
               </Select>
             </div>
             <Button
-              className='bg-primary/10 text-primary hover:bg-primary/20 focus-visible:ring-primary/20 dark:focus-visible:ring-primary/40'
+              className='bg-primary/10 text-primary hover:bg-primary/20 focus-visible:ring-primary/20 dark:focus-visible:ring-primary/40 max-sm:flex-1'
               onClick={exportFilteredPageToExcel}
             >
               <FileSpreadsheetIcon />
@@ -415,7 +416,7 @@ const MembersDataTable = ({ data, membershipSummary }: { data: MemberType[]; mem
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button className='bg-primary/10 text-primary hover:bg-primary/20 focus-visible:ring-primary/20 dark:focus-visible:ring-primary/40'>
+                <Button className='bg-primary/10 text-primary hover:bg-primary/20 focus-visible:ring-primary/20 dark:focus-visible:ring-primary/40 max-sm:flex-1'>
                   <UploadIcon />
                   Export
                 </Button>
@@ -506,6 +507,7 @@ const MembersDataTable = ({ data, membershipSummary }: { data: MemberType[]; mem
         <ResponsiveTableCards
           table={table}
           emptyMessage='No Member Found, add members.'
+          keepColumnsOnMobile
           getCardTitle={row => {
             const member = row.original
 
@@ -513,7 +515,7 @@ const MembersDataTable = ({ data, membershipSummary }: { data: MemberType[]; mem
           }}
           getCardSubtitle={row => row.original.memberMatriculationNumber}
         />
-        <div className='flex justify-center border-t px-6 py-4'>
+        <div className='flex max-w-full min-w-0 justify-center overflow-hidden border-t px-2 py-4 sm:px-6'>
           <TablePaginationControls
             table={table}
             pages={pages}

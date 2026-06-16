@@ -17,9 +17,9 @@ const DataTablePreview = async () => {
   const deceasedSummary = getDeceasedSummary(deceasedMembers)
 
   return (
-    <div className='py-8 sm:py-10'>
-      <div className='max-w-9xl mx-auto px-4 sm:px-6 lg:px-8'>
-        <Card className='max-w-9xl mx-auto w-full py-0'>
+    <div className='max-w-full min-w-0 py-4 sm:py-10'>
+      <div className='max-w-9xl mx-auto max-w-full min-w-0 px-0 sm:px-6 lg:px-8'>
+        <Card className='max-w-9xl mx-auto max-w-full min-w-0 overflow-hidden py-0'>
           <DeceasedMembersDataTable data={deceasedMembers} deceasedSummary={deceasedSummary} />
         </Card>
       </div>

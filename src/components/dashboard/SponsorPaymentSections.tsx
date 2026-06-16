@@ -164,7 +164,7 @@ const RegistrationSummaryCard = ({
 )
 
 const PaymentLedgerHistoryCard = ({ entries }: { entries: SponsorPaymentLedgerEntry[] }) => (
-  <div className='border-primary/20 bg-background rounded-md border'>
+  <div className='border-primary/20 bg-background max-w-full min-w-0 overflow-hidden rounded-md border'>
     <div className='border-b px-4 py-3'>
       <p className='text-lg font-extrabold'>Payment history</p>
       <p className='text-muted-foreground mt-1 text-sm'>
@@ -179,7 +179,10 @@ const PaymentLedgerHistoryCard = ({ entries }: { entries: SponsorPaymentLedgerEn
     ) : (
       <div className='divide-y'>
         {entries.map(entry => (
-          <div key={entry.id} className='grid gap-2 px-4 py-3 sm:grid-cols-[1fr_auto] sm:items-start'>
+          <div
+            key={entry.id}
+            className='grid grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] items-start gap-2 px-4 py-3 sm:grid-cols-[1fr_auto]'
+          >
             <div className='min-w-0'>
               <p className='font-extrabold'>{ledgerEventLabels[entry.eventType] ?? entry.eventType}</p>
               <p className='text-muted-foreground text-xs font-semibold'>
@@ -187,7 +190,7 @@ const PaymentLedgerHistoryCard = ({ entries }: { entries: SponsorPaymentLedgerEn
               </p>
               {entry.note ? <p className='text-muted-foreground mt-1 text-sm leading-6'>{entry.note}</p> : null}
             </div>
-            <div className='text-primary text-left text-lg font-black tabular-nums sm:text-right'>
+            <div className='text-primary min-w-0 justify-self-end text-right text-lg font-black break-words tabular-nums'>
               {formatCurrency(entry.amount)}
             </div>
           </div>
@@ -258,7 +261,7 @@ export const SponsorPaymentNavigationCards = ({
   const registrationPaymentAmount = getRegistrationPaymentAmount(pendingMembersCount)
 
   return (
-    <div className='grid w-full grid-cols-1 items-stretch gap-4 lg:grid-cols-2'>
+    <div className='grid w-full min-w-0 grid-cols-1 items-stretch gap-4 lg:grid-cols-2'>
       <PaymentRouteCard
         amount={currentContribution.amountOwed}
         cta='Go to contribution payment'
@@ -311,7 +314,7 @@ export const SponsorContributionPaymentSection = ({
   const amountSent = Math.max(currentContribution.amountReceived, currentContribution.amountVerified)
 
   return (
-    <section className={cn('space-y-6 py-8 sm:py-10', className)}>
+    <section className={cn('max-w-full min-w-0 space-y-6 py-4 sm:py-10', className)}>
       <div>
         <h1 className='text-xl font-semibold tracking-normal md:text-4xl'>Contribution Payment</h1>
         <p className='text-muted-foreground mt-2 max-w-4xl text-sm leading-6 sm:text-base'>
@@ -321,7 +324,7 @@ export const SponsorContributionPaymentSection = ({
         </p>
       </div>
 
-      <div className='grid w-full grid-cols-1 items-stretch gap-4 lg:grid-cols-3'>
+      <div className='grid w-full min-w-0 grid-cols-1 items-stretch gap-4 lg:grid-cols-3'>
         <div className='grid h-full min-w-0 auto-rows-fr gap-4'>
           <PaymentAmountCard
             amount={currentContribution.amountOwed}
@@ -363,7 +366,7 @@ export const SponsorRegistrationPaymentSection = ({
   const amountSent = Math.max(currentRegistrationPayment.amountReceived, currentRegistrationPayment.amountVerified)
 
   return (
-    <section className={cn('space-y-6 py-8 sm:py-10', className)}>
+    <section className={cn('max-w-full min-w-0 space-y-6 py-4 sm:py-10', className)}>
       <div>
         <h1 className='text-xl font-semibold tracking-normal md:text-4xl'>Registration Payment</h1>
         <p className='text-muted-foreground mt-2 max-w-4xl text-sm leading-6 sm:text-base'>
@@ -373,7 +376,7 @@ export const SponsorRegistrationPaymentSection = ({
         </p>
       </div>
 
-      <div className='grid w-full grid-cols-1 items-stretch gap-4 lg:grid-cols-3'>
+      <div className='grid w-full min-w-0 grid-cols-1 items-stretch gap-4 lg:grid-cols-3'>
         <div className='grid h-full min-w-0 auto-rows-fr gap-4'>
           <PaymentAmountCard
             amount={registrationPaymentAmount}

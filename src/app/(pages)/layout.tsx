@@ -29,14 +29,14 @@ const navigationData: Navigation[] = [
 
 const PagesLayout = ({ children }: Readonly<{ children: ReactNode }>) => {
   return (
-    <div className='flex flex-col bg-[repeating-linear-gradient(45deg,color-mix(in_oklab,var(--border)40%,transparent)0,color-mix(in_oklab,var(--border)40%,transparent)1px,transparent_0,transparent_50%)] bg-size-[12px_12px] bg-fixed'>
+    <div className='flex min-h-dvh flex-col bg-[repeating-linear-gradient(45deg,color-mix(in_oklab,var(--border)40%,transparent)0,color-mix(in_oklab,var(--border)40%,transparent)1px,transparent_0,transparent_50%)] bg-size-[12px_12px] bg-fixed'>
       <div className='mx-auto h-full w-full max-w-350 px-4 sm:px-6 lg:px-8'>
         <div className='bg-background h-full w-full max-w-7xl border-x'>
           {/* Header Section */}
           <Header navigationData={navigationData} />
 
           {/* Main Content */}
-          <main className='flex flex-1 flex-col *:scroll-mt-16'>{children}</main>
+          <main className='flex flex-1 flex-col *:scroll-mt-20 sm:*:scroll-mt-24 lg:*:scroll-mt-28'>{children}</main>
 
           {/* Footer Section */}
           <Footer />

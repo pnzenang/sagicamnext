@@ -41,8 +41,8 @@ const PagesLayout = ({ children }: Readonly<{ children: ReactNode }>) => {
               <SidebarGroupedMenuItems data={pagesItems} />
             </SidebarContent>
           </Sidebar>
-          <div className='flex flex-1 flex-col'>
-            <header className='bg-muted sticky top-0 z-50 flex items-center justify-between gap-6 px-4 py-4 sm:px-6'>
+          <div className='flex min-w-0 flex-1 flex-col'>
+            <header className='bg-muted sticky top-0 z-50 flex items-center justify-between gap-6 px-3 py-3 sm:px-6 sm:py-4'>
               <div className='flex items-center gap-4'>
                 <SidebarTrigger className='[&_svg]:size-5!' />
                 <LogoSmall className='size-10 sm:hidden' />
@@ -53,10 +53,10 @@ const PagesLayout = ({ children }: Readonly<{ children: ReactNode }>) => {
                 <UserButton />
               </div>
             </header>
-            <main className='size-full flex-1 px-4 py-6 sm:px-6'>
-              <Card className='h-full'>
-                <CardContent className='h-full'>
-                  <main className='flex flex-1 flex-col *:scroll-mt-20'>{children}</main>
+            <main className='size-full min-w-0 flex-1 px-2 py-2 sm:px-6 sm:py-6'>
+              <Card className='h-full min-w-0 overflow-hidden py-2 sm:py-6'>
+                <CardContent className='h-full min-w-0 px-2 sm:px-6'>
+                  <main className='flex min-w-0 flex-1 flex-col *:scroll-mt-20'>{children}</main>
                 </CardContent>
               </Card>
             </main>

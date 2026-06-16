@@ -10,7 +10,7 @@ const AddMember = async () => {
   const sponsor = await fetchProfile()
 
   return (
-    <section className='mt-16 flex flex-col'>
+    <section className='mt-8 flex max-w-full min-w-0 flex-col sm:mt-16'>
       <h1 className='my-2 text-2xl font-semibold capitalize sm:text-6xl'> add loved one</h1>
       <p className='pb-4 text-sm sm:text-lg'>
         Adding the loved ones is the first step toward their registration, the waiting period is at least 30 days within
@@ -30,7 +30,7 @@ const AddMember = async () => {
         <br />
         <span className='text-primary font-bold'>Not following the steps above may delay your registration.</span>
       </p>
-      <div className='border-primary bg-muted rounded-lg border p-8'>
+      <div className='border-primary bg-muted max-w-full min-w-0 overflow-hidden rounded-lg border p-4 sm:p-8'>
         <FormContainer action={createMemberAction}>
           <div className='mt-4 grid gap-4 md:grid-cols-3'>
             <FormInput type='text' name='firstName' label='Loved one Given name' />

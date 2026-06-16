@@ -270,18 +270,21 @@ const RemovedMembersDataTable = ({ data }: { data: RemovedMemberType[] }) => {
   })
 
   return (
-    <div className='border-destructive w-full rounded border'>
-      <div className='border-b'>
-        <div className='flex flex-col gap-4 border-b p-6'>
+    <div className='border-destructive max-w-full min-w-0 overflow-hidden rounded border'>
+      <div className='min-w-0 border-b'>
+        <div className='flex flex-col gap-4 border-b p-3 sm:p-6'>
           <span className='text-2xl font-semibold text-red-500 sm:text-4xl lg:text-6xl'>
             All Removed Members (Admin)
           </span>
-          <div className='flex items-center justify-between gap-3 px-6 py-4 max-sm:flex-col'>
-            <p className='text-sm font-extrabold whitespace-nowrap text-red-500' aria-live='polite'>
+          <div className='flex items-center justify-between gap-3 px-0 py-3 max-sm:flex-col sm:px-6 sm:py-4'>
+            <p
+              className='text-sm font-extrabold whitespace-normal text-red-500 sm:whitespace-nowrap'
+              aria-live='polite'
+            >
               <span>{table.getRowCount().toString()} Member(s) removed so far this month</span>
             </p>
 
-            <div>
+            <div className='max-w-full min-w-0 overflow-hidden'>
               <TablePaginationControls
                 table={table}
                 pages={pages}
@@ -296,14 +299,14 @@ const RemovedMembersDataTable = ({ data }: { data: RemovedMemberType[] }) => {
             {/* <Filter column={table.getColumn('dateOfBirth')!} /> */}
           </div>
         </div>
-        <div className='flex items-start gap-4 p-6 max-sm:flex-col sm:items-center sm:justify-between'>
-          <div className='flex w-6/7 flex-col justify-start gap-2 sm:flex-row sm:items-center'>
+        <div className='flex min-w-0 items-start gap-4 p-3 max-sm:flex-col sm:items-center sm:justify-between sm:p-6'>
+          <div className='flex w-full flex-col justify-start gap-2 sm:flex-row sm:flex-wrap sm:items-center'>
             <Filter column={table.getColumn('lastAndMiddleNames')!} />
             <Filter column={table.getColumn('firstName')!} />
             <Filter column={table.getColumn('sponsorCode')!} />
             <Filter column={table.getColumn('reasonForLeaving')!} />
           </div>
-          <div className='flex items-center gap-4 sm:justify-between'>
+          <div className='flex w-full min-w-0 flex-wrap items-center gap-2 sm:w-auto sm:justify-between sm:gap-4'>
             <div className='flex items-center gap-2'>
               <Label htmlFor='#rowSelect' className=''>
                 Show
@@ -353,65 +356,67 @@ const RemovedMembersDataTable = ({ data }: { data: RemovedMemberType[] }) => {
         </div>
         <div className='hidden overflow-x-auto md:block'>
           <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map(headerGroup => (
-              <TableRow key={headerGroup.id} className='h-14 border-t bg-red-400 hover:bg-red-300'>
-                {headerGroup.headers.map(header => {
-                  return (
-                    <TableHead
-                      key={header.id}
-                      style={{ width: `${header.getSize()}px` }}
-                      className='font-extrabold text-white first:pl-4 last:px-4'
-                    >
-                      {header.isPlaceholder ? null : header.column.getCanSort() ? (
-                        <div
-                          className={cn(
-                            header.column.getCanSort() &&
-                              'flex h-full cursor-pointer items-center justify-start gap-1.5 select-none'
-                          )}
-                          onClick={header.column.getToggleSortingHandler()}
-                          onKeyDown={e => {
-                            if (header.column.getCanSort() && (e.key === 'Enter' || e.key === ' ')) {
-                              e.preventDefault()
-                              header.column.getToggleSortingHandler()?.(e)
-                            }
-                          }}
-                          tabIndex={header.column.getCanSort() ? 0 : undefined}
-                        >
-                          {flexRender(header.column.columnDef.header, header.getContext())}
-                          {{
-                            asc: <ArrowUp className='shrink-0 opacity-60' size={16} aria-hidden='true' />,
-                            desc: <ArrowDown className='shrink-0 opacity-60' size={16} aria-hidden='true' />
-                          }[header.column.getIsSorted() as string] ?? <ArrowUpDown className='shrink-0 opacity-60' size={16} aria-hidden='true' />}
-                        </div>
-                      ) : (
-                        flexRender(header.column.columnDef.header, header.getContext())
-                      )}
-                    </TableHead>
-                  )
-                })}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map(row => (
-                <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'} className='hover:bg-red-400/30'>
-                  {row.getVisibleCells().map(cell => (
-                    <TableCell key={cell.id} className='h-14 first:w-12.5 first:pl-4 last:w-29 last:px-4'>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
-                  ))}
+            <TableHeader>
+              {table.getHeaderGroups().map(headerGroup => (
+                <TableRow key={headerGroup.id} className='h-14 border-t bg-red-400 hover:bg-red-300'>
+                  {headerGroup.headers.map(header => {
+                    return (
+                      <TableHead
+                        key={header.id}
+                        style={{ width: `${header.getSize()}px` }}
+                        className='font-extrabold text-white first:pl-4 last:px-4'
+                      >
+                        {header.isPlaceholder ? null : header.column.getCanSort() ? (
+                          <div
+                            className={cn(
+                              header.column.getCanSort() &&
+                                'flex h-full cursor-pointer items-center justify-start gap-1.5 select-none'
+                            )}
+                            onClick={header.column.getToggleSortingHandler()}
+                            onKeyDown={e => {
+                              if (header.column.getCanSort() && (e.key === 'Enter' || e.key === ' ')) {
+                                e.preventDefault()
+                                header.column.getToggleSortingHandler()?.(e)
+                              }
+                            }}
+                            tabIndex={header.column.getCanSort() ? 0 : undefined}
+                          >
+                            {flexRender(header.column.columnDef.header, header.getContext())}
+                            {{
+                              asc: <ArrowUp className='shrink-0 opacity-60' size={16} aria-hidden='true' />,
+                              desc: <ArrowDown className='shrink-0 opacity-60' size={16} aria-hidden='true' />
+                            }[header.column.getIsSorted() as string] ?? (
+                              <ArrowUpDown className='shrink-0 opacity-60' size={16} aria-hidden='true' />
+                            )}
+                          </div>
+                        ) : (
+                          flexRender(header.column.columnDef.header, header.getContext())
+                        )}
+                      </TableHead>
+                    )
+                  })}
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={columns.length} className='h-24 text-center'>
-                  No Member Found.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {table.getRowModel().rows?.length ? (
+                table.getRowModel().rows.map(row => (
+                  <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'} className='hover:bg-red-400/30'>
+                    {row.getVisibleCells().map(cell => (
+                      <TableCell key={cell.id} className='h-14 first:w-12.5 first:pl-4 last:w-29 last:px-4'>
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={columns.length} className='h-24 text-center'>
+                    No Member Found.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
           </Table>
         </div>
         <ResponsiveTableCards
@@ -425,7 +430,7 @@ const RemovedMembersDataTable = ({ data }: { data: RemovedMemberType[] }) => {
           }}
           getCardSubtitle={row => row.original.memberMatriculationNumber}
         />
-        <div className='flex justify-center border-t px-6 py-4'>
+        <div className='flex max-w-full min-w-0 justify-center overflow-hidden border-t px-2 py-4 sm:px-6'>
           <TablePaginationControls
             table={table}
             pages={pages}

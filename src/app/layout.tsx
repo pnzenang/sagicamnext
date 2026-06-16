@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 
 import { ClerkProvider } from '@clerk/nextjs'
 import { Geist, Geist_Mono } from 'next/font/google'
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 
 import { ThemeProvider } from '@/components/theme-provider'
 import { TooltipProvider } from '@/components/ui/tooltip'
@@ -107,16 +107,22 @@ export const metadata: Metadata = {
   }
 }
 
+export const viewport: Viewport = {
+  initialScale: 1,
+  viewportFit: 'cover',
+  width: 'device-width'
+}
+
 const RootLayout = ({ children }: Readonly<{ children: ReactNode }>) => {
   return (
     <>
       <ClerkProvider>
         <html
           lang='en'
-          className={cn(geistSans.variable, geistMono.variable, 'flex min-h-full w-full scroll-smooth antialiased')}
+          className={cn(geistSans.variable, geistMono.variable, 'flex min-h-dvh w-full scroll-smooth antialiased')}
           suppressHydrationWarning
         >
-          <body className='flex min-h-full w-full flex-auto flex-col'>
+          <body className='flex min-h-dvh w-full flex-auto flex-col'>
             <ThemeProvider attribute='class' enableSystem={false} disableTransitionOnChange>
               <TooltipProvider>
                 <main>{children}</main>

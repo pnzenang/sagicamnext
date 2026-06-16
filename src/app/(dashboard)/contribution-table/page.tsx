@@ -1,10 +1,11 @@
-import { Card } from '@/components/ui/card'
 import React from 'react'
+
+import { Card } from '@/components/ui/card'
 
 const ContributionTable = () => {
   return (
-    <section>
-      <Card className='mx-auto my-2 max-w-7xl rounded-lg border bg-white p-4'>
+    <section className='max-w-full min-w-0 overflow-hidden'>
+      <Card className='mx-auto my-2 max-w-full min-w-0 overflow-hidden rounded-lg border bg-white p-3 sm:p-4'>
         <h1 className='text-muted-foreground py-1 text-sm font-bold sm:text-3xl lg:text-5xl'>CONTRIBUTION TABLE</h1>
         <h1 className='text-muted-foreground text-sm font-bold sm:text-lg'>
           In the contribution table below, you will find find your contribution amount for the present month following
@@ -13,7 +14,7 @@ const ContributionTable = () => {
       </Card>
       <iframe
         src='https://docs.google.com/spreadsheets/d/e/2PACX-1vT74FtT5PEcEtlD5lyq9rPxPzH3J5D6UcdAN9Z1qlh1dNVTs1_tZ6iisaAAVfYNt-qB4asfYUeR9SCV/pubhtml?widget=true&amp;headers=false'
-        className='mx-auto mt-5 h-160 w-full max-w-19/20 items-center rounded-lg border'
+        className='mx-auto mt-5 h-160 w-full max-w-full min-w-0 items-center rounded-lg border'
       ></iframe>
     </section>
   )

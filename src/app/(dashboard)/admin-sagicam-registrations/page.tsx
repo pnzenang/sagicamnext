@@ -292,13 +292,13 @@ const AdminSagicamRegistrations = async () => {
   )
 
   return (
-    <div className='space-y-6 py-8 sm:py-10'>
-      <div>
+    <div className='max-w-full min-w-0 space-y-6 py-4 sm:py-10'>
+      <div className='min-w-0'>
         <h1 className='text-4xl font-semibold tracking-normal'>Sagicam Registrations</h1>
         <p className='text-muted-foreground mt-2 text-sm'>Sponsor registration payment summary.</p>
       </div>
 
-      <div className='w-full'>
+      <div className='max-w-full min-w-0'>
         <PaymentAlertCard
           title='Registration Payment Alerts'
           alerts={registrationPaymentAlerts}

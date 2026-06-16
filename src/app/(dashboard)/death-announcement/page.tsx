@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 
 const DeathAnnouncementPage = () => {
   return (
-    <section className='mx-auto flex w-full max-w-4xl flex-col gap-8 py-8 sm:py-12'>
+    <section className='mx-auto flex w-full max-w-4xl min-w-0 flex-col gap-8 py-4 sm:py-12'>
       <div className='space-y-4'>
         <div className='inline-flex size-12 items-center justify-center rounded-md bg-purple-100 text-purple-600 dark:bg-purple-950/40 dark:text-purple-300'>
           <Megaphone className='size-6' aria-hidden='true' />
@@ -19,7 +19,7 @@ const DeathAnnouncementPage = () => {
         </div>
       </div>
 
-      <div className='border-border bg-muted/30 rounded-md border p-5 sm:p-6'>
+      <div className='border-border bg-muted/30 max-w-full min-w-0 overflow-hidden rounded-md border p-4 sm:p-6'>
         <ol className='space-y-4 text-sm leading-6 sm:text-base'>
           <li className='flex gap-3'>
             <span className='flex size-7 shrink-0 items-center justify-center rounded-full bg-purple-600 text-sm font-semibold text-white'>

@@ -46,7 +46,9 @@ const columns: AdminCountColumn[] = [
 
 const fixedLeftColumnCount = 3
 const fixedLeftColumnWidth = 20
-const flexibleColumnWidth = (100 - fixedLeftColumnCount * fixedLeftColumnWidth) / (columns.length - fixedLeftColumnCount)
+
+const flexibleColumnWidth =
+  (100 - fixedLeftColumnCount * fixedLeftColumnWidth) / (columns.length - fixedLeftColumnCount)
 
 const adminCountColumnWidths = columns.map((_, index) =>
   index < fixedLeftColumnCount ? fixedLeftColumnWidth : flexibleColumnWidth
@@ -70,9 +72,11 @@ const compareValues = (firstValue: AdminCountRow[SortKey], secondValue: AdminCou
 }
 
 const MobileCountValue = ({ label, value }: { label: string; value: number }) => (
-  <div className='rounded-md border px-3 py-2 text-center'>
-    <div className='text-muted-foreground text-[11px] leading-tight font-semibold uppercase'>{label}</div>
-    <div className='mt-1 text-lg leading-none font-extrabold tabular-nums'>{value}</div>
+  <div className='grid grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] items-center gap-2 rounded-md border px-3 py-2'>
+    <div className='min-w-0 text-[11px] leading-tight font-semibold break-words uppercase opacity-80'>{label}</div>
+    <div className='min-w-0 justify-self-end text-right text-lg leading-none font-extrabold break-words tabular-nums'>
+      {value}
+    </div>
   </div>
 )
 
@@ -103,17 +107,7 @@ const AdminCountTable = ({ rows, totals }: { rows: AdminCountRow[]; totals: Admi
     const worksheetRows = [
       columns.map(column => column.label),
       ...sortedRows.map(row => columns.map(column => row[column.key])),
-      [
-        'Total',
-        '',
-        '',
-        '',
-        totals.vested,
-        totals.pending,
-        totals.delinquent,
-        totals.awaiting,
-        totals.total
-      ]
+      ['Total', '', '', '', totals.vested, totals.pending, totals.delinquent, totals.awaiting, totals.total]
     ]
 
     const worksheet = XLSX.utils.aoa_to_sheet(worksheetRows)
@@ -127,7 +121,7 @@ const AdminCountTable = ({ rows, totals }: { rows: AdminCountRow[]; totals: Admi
   }
 
   return (
-    <div className='space-y-3'>
+    <div className='max-w-full min-w-0 space-y-3'>
       <div className='flex justify-end'>
         <Button type='button' size='sm' onClick={handleExport} disabled={sortedRows.length === 0}>
           <Download />
@@ -135,7 +129,7 @@ const AdminCountTable = ({ rows, totals }: { rows: AdminCountRow[]; totals: Admi
         </Button>
       </div>
 
-      <div className='border-border overflow-hidden rounded-lg border'>
+      <div className='border-border max-w-full min-w-0 overflow-hidden rounded-lg border'>
         <div className='hidden overflow-x-auto md:block'>
           <Table className='[[&_td]:wrap-break-word table-fixed [&_td]:whitespace-normal [&_th]:wrap-break-word [&_th]:whitespace-normal'>
             <colgroup>
@@ -225,32 +219,45 @@ const AdminCountTable = ({ rows, totals }: { rows: AdminCountRow[]; totals: Admi
             )}
           </Table>
         </div>
-        <div className='grid gap-3 p-3 md:hidden'>
+        <div className='grid gap-3 p-2 sm:p-3 md:hidden'>
           {sortedRows.length === 0 ? (
-            <div className='text-muted-foreground rounded-md border px-4 py-10 text-center text-sm'>No members found.</div>
+            <div className='text-muted-foreground rounded-md border px-3 py-8 text-center text-sm sm:px-4 sm:py-10'>
+              No members found.
+            </div>
           ) : (
             sortedRows.map(row => (
-              <article key={row.sponsorCode} className='bg-background rounded-md border p-4 shadow-sm'>
+              <article
+                key={row.sponsorCode}
+                className='bg-background overflow-hidden rounded-md border p-3 shadow-sm sm:p-4'
+              >
                 <div className='flex items-start justify-between gap-4'>
                   <div className='min-w-0'>
                     <div className='text-base font-extrabold break-words'>{row.sponsorName || row.sponsorCode}</div>
                     <div className='text-muted-foreground mt-1 text-xs font-semibold'>{row.sponsorCode}</div>
                   </div>
-                  <div className='text-right text-2xl leading-none font-extrabold tabular-nums'>{row.total}</div>
+                  <div className='shrink-0 text-right text-2xl leading-none font-extrabold tabular-nums'>
+                    {row.total}
+                  </div>
                 </div>
                 <div className='mt-3 grid gap-1 text-sm'>
                   {row.sponsorEmail && (
-                    <a className='text-primary break-words underline-offset-4 hover:underline' href={`mailto:${row.sponsorEmail}`}>
+                    <a
+                      className='text-primary break-words underline-offset-4 hover:underline'
+                      href={`mailto:${row.sponsorEmail}`}
+                    >
                       {row.sponsorEmail}
                     </a>
                   )}
                   {row.sponsorPhoneNumber && (
-                    <a className='text-primary break-words underline-offset-4 hover:underline' href={`tel:${row.sponsorPhoneNumber}`}>
+                    <a
+                      className='text-primary break-words underline-offset-4 hover:underline'
+                      href={`tel:${row.sponsorPhoneNumber}`}
+                    >
                       {row.sponsorPhoneNumber}
                     </a>
                   )}
                 </div>
-                <div className='mt-4 grid grid-cols-2 gap-2'>
+                <div className='mt-4 grid gap-2'>
                   <MobileCountValue label='Vested' value={row.vested} />
                   <MobileCountValue label='Pending' value={row.pending} />
                   <MobileCountValue label='Delinquent' value={row.delinquent} />
@@ -260,9 +267,9 @@ const AdminCountTable = ({ rows, totals }: { rows: AdminCountRow[]; totals: Admi
             ))
           )}
           {sortedRows.length > 0 && (
-            <article className='bg-primary text-primary-foreground rounded-md p-4 shadow-sm'>
+            <article className='bg-primary text-primary-foreground overflow-hidden rounded-md p-3 shadow-sm sm:p-4'>
               <div className='mb-3 text-base font-extrabold'>Total</div>
-              <div className='grid grid-cols-2 gap-2'>
+              <div className='grid gap-2'>
                 <MobileCountValue label='Vested' value={totals.vested} />
                 <MobileCountValue label='Pending' value={totals.pending} />
                 <MobileCountValue label='Delinquent' value={totals.delinquent} />

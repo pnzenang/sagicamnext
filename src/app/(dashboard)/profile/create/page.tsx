@@ -26,13 +26,13 @@ const CreateProfilePage = async () => {
   if (profile) redirect('/all-members')
 
   return (
-    <section className='mt-16 flex flex-col'>
+    <section className='mt-8 flex max-w-full min-w-0 flex-col sm:mt-16'>
       <h1 className='my-8 text-2xl font-semibold capitalize sm:text-6xl'> create sponsor profile</h1>
       <p className='pb-4 text-sm sm:text-lg'>
         If you already had a 4-letter code with SAGICAM, use that code so you can see your existing member, if had one
         but don&apos;t remember, please contact the admin by dialing 1(804)-214-6390
       </p>
-      <div className='border-primary bg-muted rounded-lg border p-8'>
+      <div className='border-primary bg-muted max-w-full min-w-0 overflow-hidden rounded-lg border p-4 sm:p-8'>
         <FormContainer action={createProfileAction}>
           <div className='mt-4 grid gap-4 md:grid-cols-3'>
             <FormInput type='text' name='sponsorFirstName' label='Sponsor First Name' />

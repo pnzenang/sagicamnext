@@ -18,7 +18,7 @@ const EditMemberDetailPage = async ({ params }: { params: { id: string } }) => {
   const profile = await fetchProfile()
 
   return (
-    <section className='mt-16 flex flex-col'>
+    <section className='mt-8 flex max-w-full min-w-0 flex-col sm:mt-16'>
       <div className='my-4 flex flex-col'>
         <h1 className='text-primary text-3xl font-semibold capitalize sm:text-6xl'>
           {' '}
@@ -29,7 +29,7 @@ const EditMemberDetailPage = async ({ params }: { params: { id: string } }) => {
           edit the name you need to email to info@sagiusa.org
         </p>
       </div>
-      <div className='border-primary bg-muted rounded-lg border p-8'>
+      <div className='border-primary bg-muted max-w-full min-w-0 overflow-hidden rounded-lg border p-4 sm:p-8'>
         <FormContainer action={updateMemberDetailsActionForAdmin}>
           <div>
             <input type='hidden' name='id' value={id} />

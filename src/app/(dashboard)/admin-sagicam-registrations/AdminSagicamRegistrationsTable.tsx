@@ -128,9 +128,14 @@ const MobileValue = ({
   value: string | number
   valueClassName?: string
 }) => (
-  <div className='flex items-start justify-between gap-4'>
+  <div className='grid grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] items-start gap-2'>
     <span className='text-muted-foreground min-w-0 text-xs leading-snug font-semibold uppercase'>{label}</span>
-    <span className={cn('shrink-0 text-right text-sm leading-snug font-extrabold tabular-nums', valueClassName)}>
+    <span
+      className={cn(
+        'min-w-0 justify-self-end text-right text-sm leading-snug font-extrabold break-words tabular-nums',
+        valueClassName
+      )}
+    >
       {value}
     </span>
   </div>
@@ -218,7 +223,7 @@ const RegistrationPaymentControls = ({
   const hasPaymentValues = row.registrationAmountSent > 0 || row.registrationReceived > 0
 
   return (
-    <div className={layout === 'card' ? 'grid w-56 max-w-full shrink-0 grid-cols-2 gap-2' : 'contents'}>
+    <div className={layout === 'card' ? 'grid w-full shrink-0 grid-cols-2 gap-2 sm:w-56' : 'contents'}>
       <div className={layout === 'card' ? 'grid gap-1.5' : 'contents'}>
         <form
           action={verifySponsorRegistrationPaymentAction}
@@ -288,7 +293,7 @@ const AdminSagicamRegistrationsTable = ({
   }
 
   return (
-    <div className='border-border overflow-hidden rounded-lg border'>
+    <div className='border-border max-w-full min-w-0 overflow-hidden rounded-lg border'>
       <div className='hidden overflow-x-auto md:block'>
         <Table className='[[&_td]:wrap-break-word table-fixed [&_td]:whitespace-normal [&_th]:wrap-break-word [&_th]:whitespace-normal'>
           <colgroup>
@@ -397,23 +402,23 @@ const AdminSagicamRegistrationsTable = ({
           )}
         </Table>
       </div>
-      <div className='grid gap-3 p-3 md:hidden'>
+      <div className='grid gap-3 p-2 sm:p-3 md:hidden'>
         {sortedRows.length === 0 ? (
-          <div className='text-muted-foreground rounded-md border px-4 py-10 text-center text-sm'>
+          <div className='text-muted-foreground rounded-md border px-3 py-8 text-center text-sm sm:px-4 sm:py-10'>
             No Sagicam registrations found.
           </div>
         ) : (
           sortedRows.map(row => (
-            <article key={row.sponsorCode} className='bg-background rounded-md border shadow-sm'>
-              <div className='flex items-start justify-between gap-4 border-b px-4 py-3'>
-                <div className='min-w-0'>
+            <article key={row.sponsorCode} className='bg-background overflow-hidden rounded-md border shadow-sm'>
+              <div className='flex flex-col gap-3 border-b px-3 py-3 sm:flex-row sm:items-start sm:justify-between sm:px-4'>
+                <div className='w-full min-w-0'>
                   <div className='text-lg font-extrabold'>{row.sponsorCode}</div>
                   <EmailLink email={row.sponsorEmail} className='block text-xs font-semibold break-all' />
                   <PhoneLink phoneNumber={row.sponsorPhoneNumber} className='block text-xs font-semibold' />
                 </div>
                 <RegistrationPaymentControls row={row} layout='card' />
               </div>
-              <div className='grid gap-2 px-4 py-3 text-sm'>
+              <div className='grid gap-2 px-3 py-3 text-sm sm:px-4'>
                 <div className='text-sm font-extrabold'>Registration</div>
                 <MobileValue label='Vested' value={row.vestedMembers} />
                 <MobileValue label='Awaiting' value={row.awaitingPublication} />
@@ -425,16 +430,16 @@ const AdminSagicamRegistrationsTable = ({
                   valueClassName={row.registrationAmountSent > 0 ? 'text-green-700 dark:text-green-300' : ''}
                 />
                 <MobileValue label='Verified' value={currencyFormatter.format(row.registrationReceived)} />
-                <div className='flex items-start justify-between gap-4 border-t pt-3'>
+                <div className='grid grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] items-start gap-2 border-t pt-3'>
                   <span className='text-muted-foreground text-xs font-semibold uppercase'>Registration balance</span>
-                  <BalanceCard balance={row.registrationBalance} />
+                  <BalanceCard balance={row.registrationBalance} className='max-w-full justify-end justify-self-end' />
                 </div>
               </div>
             </article>
           ))
         )}
         {sortedRows.length > 0 && (
-          <article className='rounded-md border bg-white px-4 py-3 text-black shadow-sm dark:bg-white dark:text-black'>
+          <article className='rounded-md border bg-white px-3 py-3 text-black shadow-sm sm:px-4 dark:bg-white dark:text-black'>
             <div className='mb-2 text-base font-extrabold'>Total</div>
             <div className='grid gap-2'>
               <MobileValue label='Vested' value={totals.vestedMembers} />
@@ -446,9 +451,9 @@ const AdminSagicamRegistrationsTable = ({
                 label='Registration verified'
                 value={currencyFormatter.format(totals.registrationReceived)}
               />
-              <div className='flex items-start justify-between gap-4 border-t pt-3'>
+              <div className='grid grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] items-start gap-2 border-t pt-3'>
                 <span className='text-xs font-semibold uppercase'>Registration balance</span>
-                <BalanceCard balance={totals.registrationBalance} />
+                <BalanceCard balance={totals.registrationBalance} className='max-w-full justify-end justify-self-end' />
               </div>
             </div>
           </article>

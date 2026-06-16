@@ -108,9 +108,9 @@ const AdminCount = async () => {
   statusTotals.total = totalMembers
 
   return (
-    <div className='space-y-6 py-8 sm:py-10'>
+    <div className='max-w-full min-w-0 space-y-6 py-4 sm:py-10'>
       <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
-        <div>
+        <div className='min-w-0'>
           <h1 className='text-4xl font-semibold tracking-normal'>Members by sponsor code</h1>
           <p className='text-muted-foreground mt-2 text-sm'>
             Count of loved ones grouped by sponsor code and loved ones status.

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 
 const RemoveMemberPage = () => {
   return (
-    <section className='mx-auto flex w-full max-w-4xl flex-col gap-8 py-8 sm:py-12'>
+    <section className='mx-auto flex w-full max-w-4xl min-w-0 flex-col gap-8 py-4 sm:py-12'>
       <div className='space-y-4'>
         <div className='bg-destructive/10 text-destructive inline-flex size-12 items-center justify-center rounded-md'>
           <UserMinus className='size-6' aria-hidden='true' />
@@ -13,13 +13,13 @@ const RemoveMemberPage = () => {
         <div className='space-y-3'>
           <h1 className='text-2xl font-semibold sm:text-4xl'>Remove Member</h1>
           <p className='text-muted-foreground max-w-2xl text-base leading-7 sm:text-lg'>
-            To remove a loved one, go to the All Loved Ones page, find the loved one in the table, then click the 3
-            dots on that loved one row and choose Remove Member.
+            To remove a loved one, go to the All Loved Ones page, find the loved one in the table, then click the 3 dots
+            on that loved one row and choose Remove Member.
           </p>
         </div>
       </div>
 
-      <div className='border-border bg-muted/30 rounded-md border p-5 sm:p-6'>
+      <div className='border-border bg-muted/30 max-w-full min-w-0 overflow-hidden rounded-md border p-4 sm:p-6'>
         <ol className='space-y-4 text-sm leading-6 sm:text-base'>
           <li className='flex gap-3'>
             <span className='bg-destructive text-destructive-foreground flex size-7 shrink-0 items-center justify-center rounded-full text-sm font-semibold'>
