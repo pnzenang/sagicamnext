@@ -129,6 +129,15 @@ const PaymentAmountCard = ({
   </div>
 )
 
+const PaymentInstructionsCard = () => (
+  <div className='border-primary/20 bg-primary/10 text-primary flex h-full min-w-0 flex-col justify-center rounded-md border px-3 py-3 sm:px-4'>
+    <p className='text-lg font-extrabold break-words sm:text-xl'>Payment instructions</p>
+    <p className='text-primary/80 mt-1 text-sm font-semibold break-words'>
+      Send the Zelle payment first, then record the exact amount here for SAGICAM verification.
+    </p>
+  </div>
+)
+
 const PaymentQrCard = () => (
   <Link
     href={sagicamPaymentUrl}
@@ -683,6 +692,7 @@ export const SponsorContributionPaymentSection = ({
             }
             title={`${currentMonthName}'s Contribution`}
           />
+          <PaymentInstructionsCard />
         </div>
 
         <PaymentQrCard />
@@ -735,6 +745,7 @@ export const SponsorRegistrationPaymentSection = ({
             }
             title='Your Registration Dues'
           />
+          <PaymentInstructionsCard />
         </div>
 
         <PaymentQrCard />
