@@ -7,6 +7,7 @@ import { ArrowDown, ArrowUp, ArrowUpDown, CheckCircle2, Plus, RotateCcw } from '
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { cn } from '@/lib/utils'
 import {
   addSponsorContributionBalanceAdjustmentAction,
   resetSponsorContributionPaymentAction,
@@ -89,6 +90,23 @@ const compareValues = (firstValue: AdminSagicamPaymentsRow[SortKey], secondValue
   })
 }
 
+const getBalanceCardClassName = (balance: number) =>
+  balance >= 0
+    ? 'border-green-200 bg-green-50 text-green-800 dark:border-green-800/70 dark:bg-green-950/40 dark:text-green-200'
+    : 'border-red-200 bg-red-50 text-red-800 dark:border-red-800/70 dark:bg-red-950/40 dark:text-red-200'
+
+const BalanceCard = ({ balance, className }: { balance: number; className?: string }) => (
+  <div
+    className={cn(
+      'inline-flex min-w-28 items-center justify-end rounded-md border px-3 py-2 text-base font-black tabular-nums shadow-sm',
+      getBalanceCardClassName(balance),
+      className
+    )}
+  >
+    {currencyFormatter.format(balance)}
+  </div>
+)
+
 const MobileValue = ({
   label,
   value,
@@ -100,7 +118,7 @@ const MobileValue = ({
 }) => (
   <div className='flex items-start justify-between gap-4'>
     <span className='text-muted-foreground min-w-0 text-xs leading-snug font-semibold uppercase'>{label}</span>
-    <span className={`shrink-0 text-right text-sm leading-snug font-extrabold tabular-nums ${valueClassName ?? ''}`}>
+    <span className={cn('shrink-0 text-right text-sm leading-snug font-extrabold tabular-nums', valueClassName)}>
       {value}
     </span>
   </div>
@@ -132,16 +150,18 @@ const PhoneLink = ({ className = '', phoneNumber }: { className?: string; phoneN
 const ManualBalanceAdjustmentForm = ({
   action,
   balanceType,
+  layout = 'table',
   sponsorCode
 }: {
   action: (formData: FormData) => Promise<void>
   balanceType: 'contribution'
+  layout?: 'card' | 'table'
   sponsorCode: string
 }) => {
   const inputId = `${balanceType}-balance-amount-${sponsorCode}`
 
   return (
-    <form action={action} className='contents'>
+    <form action={action} className={layout === 'card' ? 'grid gap-1.5' : 'contents'}>
       <input type='hidden' name='sponsorCode' value={sponsorCode} />
       <label htmlFor={inputId} className='sr-only'>
         Amount to manually add to {balanceType} balance
@@ -154,14 +174,20 @@ const ManualBalanceAdjustmentForm = ({
         min='0.01'
         step='0.01'
         placeholder='0.00'
-        className='bg-background text-foreground placeholder:text-muted-foreground col-start-2 row-start-1 h-7 w-20 px-1.5 text-center text-[11px]'
+        className={cn(
+          'bg-background text-foreground placeholder:text-muted-foreground text-center text-[11px]',
+          layout === 'card' ? 'h-8 px-2 text-xs' : 'col-start-2 row-start-1 h-7 w-20 px-1.5'
+        )}
         required
       />
       <Button
         type='submit'
         size='xs'
         variant='secondary'
-        className='col-start-2 row-start-2 h-7 w-20 justify-center px-2 text-[11px]'
+        className={cn(
+          'justify-center px-2 text-[11px]',
+          layout === 'card' ? 'h-8 w-full' : 'col-start-2 row-start-2 h-7 w-20'
+        )}
       >
         <Plus className='size-3' />
         Add
@@ -170,38 +196,58 @@ const ManualBalanceAdjustmentForm = ({
   )
 }
 
-const ContributionPaymentControls = ({ row }: { row: AdminSagicamPaymentsRow }) => {
+const ContributionPaymentControls = ({
+  layout = 'table',
+  row
+}: {
+  layout?: 'card' | 'table'
+  row: AdminSagicamPaymentsRow
+}) => {
   const hasSubmittedPayment = row.contributionAmountSent > row.amountReceived
   const hasPaymentValues = row.contributionAmountSent > 0 || row.amountReceived > 0 || row.contributionAmountUsed > 0
 
   return (
-    <div className='contents'>
-      <form action={verifySponsorContributionPaymentAction} className='col-start-1 row-start-1 w-20'>
-        <input type='hidden' name='sponsorCode' value={row.sponsorCode} />
-        <Button
-          type='submit'
-          size='xs'
-          variant='outline'
-          disabled={!hasSubmittedPayment}
-          className='h-7 w-full justify-center px-2 text-[11px]'
+    <div className={layout === 'card' ? 'grid w-56 max-w-full shrink-0 grid-cols-2 gap-2' : 'contents'}>
+      <div className={layout === 'card' ? 'grid gap-1.5' : 'contents'}>
+        <form
+          action={verifySponsorContributionPaymentAction}
+          className={layout === 'card' ? undefined : 'col-start-1 row-start-1 w-20'}
         >
-          <CheckCircle2 className='size-3' />
-          Verify
-        </Button>
-      </form>
-      <form action={resetSponsorContributionPaymentAction} className='col-start-1 row-start-2 w-20'>
-        <input type='hidden' name='sponsorCode' value={row.sponsorCode} />
-        <Button
-          type='submit'
-          size='xs'
-          variant='destructive'
-          disabled={!hasPaymentValues}
-          className='h-7 w-full justify-center px-2 text-[11px]'
+          <input type='hidden' name='sponsorCode' value={row.sponsorCode} />
+          <Button
+            type='submit'
+            size='xs'
+            variant='outline'
+            disabled={!hasSubmittedPayment}
+            className={cn('w-full justify-center px-2 text-[11px]', layout === 'card' ? 'h-8' : 'h-7')}
+          >
+            <CheckCircle2 className='size-3' />
+            Verify
+          </Button>
+        </form>
+        <form
+          action={resetSponsorContributionPaymentAction}
+          className={layout === 'card' ? undefined : 'col-start-1 row-start-2 w-20'}
         >
-          <RotateCcw className='size-3' />
-          Reset
-        </Button>
-      </form>
+          <input type='hidden' name='sponsorCode' value={row.sponsorCode} />
+          <Button
+            type='submit'
+            size='xs'
+            variant='destructive'
+            disabled={!hasPaymentValues}
+            className={cn('w-full justify-center px-2 text-[11px]', layout === 'card' ? 'h-8' : 'h-7')}
+          >
+            <RotateCcw className='size-3' />
+            Reset
+          </Button>
+        </form>
+      </div>
+      <ManualBalanceAdjustmentForm
+        action={addSponsorContributionBalanceAdjustmentAction}
+        balanceType='contribution'
+        layout={layout}
+        sponsorCode={row.sponsorCode}
+      />
     </div>
   )
 }
@@ -306,11 +352,6 @@ const AdminSagicamPaymentsTable = ({
                   >
                     <div className='grid min-w-0 grid-cols-[auto_auto_minmax(0,1fr)] grid-rows-[auto_auto] items-center justify-items-center gap-x-2 gap-y-1'>
                       <ContributionPaymentControls row={row} />
-                      <ManualBalanceAdjustmentForm
-                        action={addSponsorContributionBalanceAdjustmentAction}
-                        balanceType='contribution'
-                        sponsorCode={row.sponsorCode}
-                      />
                       <span className='bg-background/80 col-start-3 row-span-2 row-start-1 flex min-w-0 items-center justify-center self-stretch justify-self-stretch rounded-md border border-current/20 px-2 py-2 text-center text-xl leading-none font-black tabular-nums'>
                         {currencyFormatter.format(row.balance)}
                       </span>
@@ -351,17 +392,16 @@ const AdminSagicamPaymentsTable = ({
           sortedRows.map(row => (
             <article key={row.sponsorCode} className='bg-background rounded-md border shadow-sm'>
               <div className='flex items-start justify-between gap-4 border-b px-4 py-3'>
-                <div>
+                <div className='min-w-0'>
                   <div className='text-lg font-extrabold'>{row.sponsorCode}</div>
                   <EmailLink email={row.sponsorEmail} className='block text-xs font-semibold break-all' />
                   <PhoneLink phoneNumber={row.sponsorPhoneNumber} className='block text-xs font-semibold' />
                 </div>
-                <div className='text-right text-xs font-semibold'>
-                  <div>{row.vestedMembers} vested</div>
-                </div>
+                <ContributionPaymentControls row={row} layout='card' />
               </div>
-              <div className='grid gap-2 px-4 py-3'>
+              <div className='grid gap-2 px-4 py-3 text-sm'>
                 <div className='text-sm font-extrabold'>Contribution</div>
+                <MobileValue label='Vested' value={row.vestedMembers} />
                 <MobileValue label='Owed' value={currencyFormatter.format(row.amountOwed)} />
                 <MobileValue
                   label='Sent'
@@ -369,27 +409,9 @@ const AdminSagicamPaymentsTable = ({
                   valueClassName={row.contributionAmountSent > 0 ? 'text-green-700 dark:text-green-300' : ''}
                 />
                 <MobileValue label='Verified' value={currencyFormatter.format(row.amountReceived)} />
-                <div
-                  className={`mt-1 rounded-md p-3 ${
-                    row.balance >= 0
-                      ? 'bg-green-600/10 text-green-700 dark:text-green-300'
-                      : 'bg-red-600/10 text-red-700 dark:text-red-300'
-                  }`}
-                >
-                  <div className='grid grid-cols-[auto_auto_minmax(0,1fr)] grid-rows-[auto_auto] items-center justify-items-center gap-x-3 gap-y-1'>
-                    <ContributionPaymentControls row={row} />
-                    <ManualBalanceAdjustmentForm
-                      action={addSponsorContributionBalanceAdjustmentAction}
-                      balanceType='contribution'
-                      sponsorCode={row.sponsorCode}
-                    />
-                    <div className='bg-background/80 col-start-3 row-span-2 row-start-1 flex min-w-0 flex-col items-center justify-center self-stretch justify-self-stretch rounded-md border border-current/20 px-2 py-2 text-center'>
-                      <div className='text-xs font-semibold uppercase'>Balance</div>
-                      <div className='text-base leading-none font-black tabular-nums'>
-                        {currencyFormatter.format(row.balance)}
-                      </div>
-                    </div>
-                  </div>
+                <div className='flex items-start justify-between gap-4 border-t pt-3'>
+                  <span className='text-muted-foreground text-xs font-semibold uppercase'>Contribution Balance</span>
+                  <BalanceCard balance={row.balance} />
                 </div>
               </div>
             </article>
@@ -403,7 +425,10 @@ const AdminSagicamPaymentsTable = ({
               <MobileValue label='Contribution owed' value={currencyFormatter.format(totals.amountOwed)} />
               <MobileValue label='Contribution sent' value={currencyFormatter.format(totals.contributionAmountSent)} />
               <MobileValue label='Contribution verified' value={currencyFormatter.format(totals.amountReceived)} />
-              <MobileValue label='Contribution balance' value={currencyFormatter.format(totals.balance)} />
+              <div className='flex items-start justify-between gap-4 border-t pt-3'>
+                <span className='text-xs font-semibold uppercase'>Contribution balance</span>
+                <BalanceCard balance={totals.balance} />
+              </div>
             </div>
           </article>
         )}

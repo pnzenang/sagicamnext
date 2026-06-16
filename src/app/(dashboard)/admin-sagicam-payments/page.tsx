@@ -1,3 +1,5 @@
+import { BellRing } from 'lucide-react'
+
 import ContributionAssessmentForm from '@/components/dashboard/ContributionAssessmentForm'
 import { Button } from '@/components/ui/button'
 import { resetContributionPaymentAlertAction } from '@/utils/actions'
@@ -41,29 +43,34 @@ const PaymentAlertCard = ({ action, alerts, title }: PaymentAlertCardProps) => {
 
   return (
     <div className='border-primary/20 bg-primary/5 rounded-md border p-4'>
-      <div className='flex items-start justify-between gap-4'>
-        <div>
-          <h2 className='text-lg font-extrabold'>{title}</h2>
+      <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
+        <div className='min-w-0'>
+          <div className='flex items-center gap-2'>
+            <BellRing className='text-primary size-5 shrink-0' />
+            <h2 className='text-lg font-extrabold'>{title}</h2>
+          </div>
           <p className='text-muted-foreground mt-1 text-sm font-semibold'>
             You have {alerts.length} {paymentLabel} from the following sponsors:
           </p>
         </div>
         <form action={action}>
-          <Button type='submit' size='sm' variant='outline' disabled={alerts.length === 0}>
+          <Button type='submit' size='sm' variant='outline' disabled={alerts.length === 0} className='w-full sm:w-auto'>
             Reset
           </Button>
         </form>
       </div>
       {alerts.length > 0 ? (
-        <div className='mt-4 grid grid-cols-2 gap-2'>
+        <div className='mt-4 grid grid-cols-1 gap-2 xl:grid-cols-2'>
           {alerts.map(alert => (
             <div
               key={`${alert.sponsorCode}-${alert.submittedAt.toISOString()}`}
-              className='bg-background grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 rounded-md border px-3 py-2 text-sm font-extrabold'
+              className='bg-background grid grid-cols-[minmax(0,1fr)_auto] gap-3 rounded-md border px-3 py-2 text-sm font-extrabold sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:items-center'
             >
               <span className='min-w-0 break-words'>{alert.sponsorCode}</span>
-              <span className='text-primary shrink-0 text-center tabular-nums'>{currencyFormatter.format(alert.amount)}</span>
-              <span className='text-muted-foreground shrink-0 text-right text-xs font-semibold'>
+              <span className='text-primary shrink-0 text-right tabular-nums'>
+                {currencyFormatter.format(alert.amount)}
+              </span>
+              <span className='text-muted-foreground col-span-2 shrink-0 text-left text-xs font-semibold sm:col-span-1 sm:text-right'>
                 {alertTimeFormatter.format(alert.submittedAt)}
               </span>
             </div>

@@ -7,6 +7,7 @@ import { ArrowDown, ArrowUp, ArrowUpDown, CheckCircle2, Plus, RotateCcw } from '
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { cn } from '@/lib/utils'
 import {
   addSponsorRegistrationBalanceAdjustmentAction,
   resetSponsorRegistrationPaymentAction,
@@ -69,8 +70,7 @@ const balanceColumnWidth = 25
 const contactColumnWidth = 12
 const codeColumnWidth = 8
 
-const regularColumnWidth =
-  (100 - balanceColumnWidth - contactColumnWidth * 2 - codeColumnWidth) / (columns.length - 4)
+const regularColumnWidth = (100 - balanceColumnWidth - contactColumnWidth * 2 - codeColumnWidth) / (columns.length - 4)
 
 const getColumnWidth = (columnKey: SortKey) => {
   if (columnKey === 'sponsorEmail' || columnKey === 'sponsorPhoneNumber') return contactColumnWidth
@@ -102,6 +102,23 @@ const compareValues = (
   })
 }
 
+const getBalanceCardClassName = (balance: number) =>
+  balance >= 0
+    ? 'border-green-200 bg-green-50 text-green-800 dark:border-green-800/70 dark:bg-green-950/40 dark:text-green-200'
+    : 'border-red-200 bg-red-50 text-red-800 dark:border-red-800/70 dark:bg-red-950/40 dark:text-red-200'
+
+const BalanceCard = ({ balance, className }: { balance: number; className?: string }) => (
+  <div
+    className={cn(
+      'inline-flex min-w-28 items-center justify-end rounded-md border px-3 py-2 text-base font-black tabular-nums shadow-sm',
+      getBalanceCardClassName(balance),
+      className
+    )}
+  >
+    {currencyFormatter.format(balance)}
+  </div>
+)
+
 const MobileValue = ({
   label,
   value,
@@ -113,7 +130,7 @@ const MobileValue = ({
 }) => (
   <div className='flex items-start justify-between gap-4'>
     <span className='text-muted-foreground min-w-0 text-xs leading-snug font-semibold uppercase'>{label}</span>
-    <span className={`shrink-0 text-right text-sm leading-snug font-extrabold tabular-nums ${valueClassName ?? ''}`}>
+    <span className={cn('shrink-0 text-right text-sm leading-snug font-extrabold tabular-nums', valueClassName)}>
       {value}
     </span>
   </div>
@@ -133,17 +150,29 @@ const PhoneLink = ({ className = '', phoneNumber }: { className?: string; phoneN
   if (!phoneNumber) return <span className={`text-primary ${className}`}>-</span>
 
   return (
-    <a href={`tel:${getPhoneHref(phoneNumber)}`} className={`text-primary underline-offset-2 hover:underline ${className}`}>
+    <a
+      href={`tel:${getPhoneHref(phoneNumber)}`}
+      className={`text-primary underline-offset-2 hover:underline ${className}`}
+    >
       {phoneNumber}
     </a>
   )
 }
 
-const ManualBalanceAdjustmentForm = ({ sponsorCode }: { sponsorCode: string }) => {
+const ManualBalanceAdjustmentForm = ({
+  layout = 'table',
+  sponsorCode
+}: {
+  layout?: 'card' | 'table'
+  sponsorCode: string
+}) => {
   const inputId = `registration-balance-amount-${sponsorCode}`
 
   return (
-    <form action={addSponsorRegistrationBalanceAdjustmentAction} className='contents'>
+    <form
+      action={addSponsorRegistrationBalanceAdjustmentAction}
+      className={layout === 'card' ? 'grid gap-1.5' : 'contents'}
+    >
       <input type='hidden' name='sponsorCode' value={sponsorCode} />
       <label htmlFor={inputId} className='sr-only'>
         Amount to manually add to registration balance
@@ -156,14 +185,20 @@ const ManualBalanceAdjustmentForm = ({ sponsorCode }: { sponsorCode: string }) =
         min='0.01'
         step='0.01'
         placeholder='0.00'
-        className='col-start-2 row-start-1 h-7 w-20 bg-background px-1.5 text-center text-[11px] text-foreground placeholder:text-muted-foreground'
+        className={cn(
+          'bg-background text-foreground placeholder:text-muted-foreground text-center text-[11px]',
+          layout === 'card' ? 'h-8 px-2 text-xs' : 'col-start-2 row-start-1 h-7 w-20 px-1.5'
+        )}
         required
       />
       <Button
         type='submit'
         size='xs'
         variant='secondary'
-        className='col-start-2 row-start-2 h-7 w-20 justify-center px-2 text-[11px]'
+        className={cn(
+          'justify-center px-2 text-[11px]',
+          layout === 'card' ? 'h-8 w-full' : 'col-start-2 row-start-2 h-7 w-20'
+        )}
       >
         <Plus className='size-3' />
         Add
@@ -172,38 +207,53 @@ const ManualBalanceAdjustmentForm = ({ sponsorCode }: { sponsorCode: string }) =
   )
 }
 
-const RegistrationPaymentControls = ({ row }: { row: AdminSagicamRegistrationsRow }) => {
+const RegistrationPaymentControls = ({
+  layout = 'table',
+  row
+}: {
+  layout?: 'card' | 'table'
+  row: AdminSagicamRegistrationsRow
+}) => {
   const hasSubmittedPayment = row.registrationAmountSent > 0
   const hasPaymentValues = row.registrationAmountSent > 0 || row.registrationReceived > 0
 
   return (
-    <div className='contents'>
-      <form action={verifySponsorRegistrationPaymentAction} className='col-start-1 row-start-1 w-20'>
-        <input type='hidden' name='sponsorCode' value={row.sponsorCode} />
-        <Button
-          type='submit'
-          size='xs'
-          variant='outline'
-          disabled={!hasSubmittedPayment}
-          className='h-7 w-full justify-center px-2 text-[11px]'
+    <div className={layout === 'card' ? 'grid w-56 max-w-full shrink-0 grid-cols-2 gap-2' : 'contents'}>
+      <div className={layout === 'card' ? 'grid gap-1.5' : 'contents'}>
+        <form
+          action={verifySponsorRegistrationPaymentAction}
+          className={layout === 'card' ? undefined : 'col-start-1 row-start-1 w-20'}
         >
-          <CheckCircle2 className='size-3' />
-          Verify
-        </Button>
-      </form>
-      <form action={resetSponsorRegistrationPaymentAction} className='col-start-1 row-start-2 w-20'>
-        <input type='hidden' name='sponsorCode' value={row.sponsorCode} />
-        <Button
-          type='submit'
-          size='xs'
-          variant='destructive'
-          disabled={!hasPaymentValues}
-          className='h-7 w-full justify-center px-2 text-[11px]'
+          <input type='hidden' name='sponsorCode' value={row.sponsorCode} />
+          <Button
+            type='submit'
+            size='xs'
+            variant='outline'
+            disabled={!hasSubmittedPayment}
+            className={cn('w-full justify-center px-2 text-[11px]', layout === 'card' ? 'h-8' : 'h-7')}
+          >
+            <CheckCircle2 className='size-3' />
+            Verify
+          </Button>
+        </form>
+        <form
+          action={resetSponsorRegistrationPaymentAction}
+          className={layout === 'card' ? undefined : 'col-start-1 row-start-2 w-20'}
         >
-          <RotateCcw className='size-3' />
-          Reset
-        </Button>
-      </form>
+          <input type='hidden' name='sponsorCode' value={row.sponsorCode} />
+          <Button
+            type='submit'
+            size='xs'
+            variant='destructive'
+            disabled={!hasPaymentValues}
+            className={cn('w-full justify-center px-2 text-[11px]', layout === 'card' ? 'h-8' : 'h-7')}
+          >
+            <RotateCcw className='size-3' />
+            Reset
+          </Button>
+        </form>
+      </div>
+      <ManualBalanceAdjustmentForm layout={layout} sponsorCode={row.sponsorCode} />
     </div>
   )
 }
@@ -247,14 +297,14 @@ const AdminSagicamRegistrationsTable = ({
             ))}
           </colgroup>
           <TableHeader>
-            <TableRow className='h-16 bg-primary hover:bg-primary'>
+            <TableRow className='bg-primary hover:bg-primary h-16'>
               {columns.map(column => {
                 const isActive = sortKey === column.key
 
                 return (
                   <TableHead
                     key={column.key}
-                    className='h-16 text-primary-foreground'
+                    className='text-primary-foreground h-16'
                     aria-sort={isActive ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
                   >
                     <button
@@ -312,8 +362,7 @@ const AdminSagicamRegistrationsTable = ({
                   >
                     <div className='grid min-w-0 grid-cols-[auto_auto_minmax(0,1fr)] grid-rows-[auto_auto] items-center justify-items-center gap-x-2 gap-y-1'>
                       <RegistrationPaymentControls row={row} />
-                      <ManualBalanceAdjustmentForm sponsorCode={row.sponsorCode} />
-                      <span className='bg-background/80 col-start-3 row-span-2 row-start-1 flex min-w-0 self-stretch justify-self-stretch items-center justify-center rounded-md border border-current/20 px-2 py-2 text-center text-xl leading-none font-black tabular-nums'>
+                      <span className='bg-background/80 col-start-3 row-span-2 row-start-1 flex min-w-0 items-center justify-center self-stretch justify-self-stretch rounded-md border border-current/20 px-2 py-2 text-center text-xl leading-none font-black tabular-nums'>
                         {currencyFormatter.format(row.registrationBalance)}
                       </span>
                     </div>
@@ -357,25 +406,18 @@ const AdminSagicamRegistrationsTable = ({
           sortedRows.map(row => (
             <article key={row.sponsorCode} className='bg-background rounded-md border shadow-sm'>
               <div className='flex items-start justify-between gap-4 border-b px-4 py-3'>
-                <div>
+                <div className='min-w-0'>
                   <div className='text-lg font-extrabold'>{row.sponsorCode}</div>
-                  <EmailLink
-                    email={row.sponsorEmail}
-                    className='block break-all text-xs font-semibold'
-                  />
-                  <PhoneLink
-                    phoneNumber={row.sponsorPhoneNumber}
-                    className='block text-xs font-semibold'
-                  />
+                  <EmailLink email={row.sponsorEmail} className='block text-xs font-semibold break-all' />
+                  <PhoneLink phoneNumber={row.sponsorPhoneNumber} className='block text-xs font-semibold' />
                 </div>
-                <div className='text-right text-xs font-semibold'>
-                  <div>{row.vestedMembers} vested</div>
-                  <div>{row.awaitingPublication} awaiting</div>
-                  <div>{row.pendingMembers} pending</div>
-                </div>
+                <RegistrationPaymentControls row={row} layout='card' />
               </div>
-              <div className='grid gap-2 px-4 py-3'>
+              <div className='grid gap-2 px-4 py-3 text-sm'>
                 <div className='text-sm font-extrabold'>Registration</div>
+                <MobileValue label='Vested' value={row.vestedMembers} />
+                <MobileValue label='Awaiting' value={row.awaitingPublication} />
+                <MobileValue label='Pending' value={row.pendingMembers} />
                 <MobileValue label='Owed' value={currencyFormatter.format(row.registrationFeeOwed)} />
                 <MobileValue
                   label='Sent'
@@ -383,23 +425,9 @@ const AdminSagicamRegistrationsTable = ({
                   valueClassName={row.registrationAmountSent > 0 ? 'text-green-700 dark:text-green-300' : ''}
                 />
                 <MobileValue label='Verified' value={currencyFormatter.format(row.registrationReceived)} />
-                <div
-                  className={`mt-1 rounded-md p-3 ${
-                    row.registrationBalance >= 0
-                      ? 'bg-green-600/10 text-green-700 dark:text-green-300'
-                      : 'bg-red-600/10 text-red-700 dark:text-red-300'
-                  }`}
-                >
-                  <div className='grid grid-cols-[auto_auto_minmax(0,1fr)] grid-rows-[auto_auto] items-center justify-items-center gap-x-3 gap-y-1'>
-                    <RegistrationPaymentControls row={row} />
-                    <ManualBalanceAdjustmentForm sponsorCode={row.sponsorCode} />
-                    <div className='bg-background/80 col-start-3 row-span-2 row-start-1 flex min-w-0 flex-col items-center justify-center self-stretch justify-self-stretch rounded-md border border-current/20 px-2 py-2 text-center'>
-                      <div className='text-xs font-semibold uppercase'>Balance</div>
-                      <div className='text-base leading-none font-black tabular-nums'>
-                        {currencyFormatter.format(row.registrationBalance)}
-                      </div>
-                    </div>
-                  </div>
+                <div className='flex items-start justify-between gap-4 border-t pt-3'>
+                  <span className='text-muted-foreground text-xs font-semibold uppercase'>Registration balance</span>
+                  <BalanceCard balance={row.registrationBalance} />
                 </div>
               </div>
             </article>
@@ -414,8 +442,14 @@ const AdminSagicamRegistrationsTable = ({
               <MobileValue label='Pending' value={totals.pendingMembers} />
               <MobileValue label='Registration owed' value={currencyFormatter.format(totals.registrationFeeOwed)} />
               <MobileValue label='Registration sent' value={currencyFormatter.format(totals.registrationAmountSent)} />
-              <MobileValue label='Registration verified' value={currencyFormatter.format(totals.registrationReceived)} />
-              <MobileValue label='Registration balance' value={currencyFormatter.format(totals.registrationBalance)} />
+              <MobileValue
+                label='Registration verified'
+                value={currencyFormatter.format(totals.registrationReceived)}
+              />
+              <div className='flex items-start justify-between gap-4 border-t pt-3'>
+                <span className='text-xs font-semibold uppercase'>Registration balance</span>
+                <BalanceCard balance={totals.registrationBalance} />
+              </div>
             </div>
           </article>
         )}
