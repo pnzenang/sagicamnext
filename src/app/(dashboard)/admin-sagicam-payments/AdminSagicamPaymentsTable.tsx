@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react'
 
-import { ArrowDown, ArrowUp, ArrowUpDown, CheckCircle2, Plus, RotateCcw } from 'lucide-react'
+import { ArrowDown, ArrowUp, ArrowUpDown, CheckCircle2, RotateCcw } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -93,6 +93,9 @@ const compareValues = (firstValue: AdminSagicamPaymentsRow[SortKey], secondValue
 
 const getContributionBalanceTarget = (vestedMembers: number) => contributionCreditPerVestedMember * vestedMembers
 
+const shouldShowReplenishAccountNotice = (balance: number, vestedMembers: number) =>
+  balance > 0 && balance < getContributionBalanceTarget(vestedMembers)
+
 const getContributionBalanceStatusClassName = (balance: number, vestedMembers: number) => {
   if (balance >= getContributionBalanceTarget(vestedMembers)) {
     return 'bg-green-600/10 text-green-700 dark:text-green-300'
@@ -128,12 +131,15 @@ const BalanceCard = ({
 }) => (
   <div
     className={cn(
-      'inline-flex min-w-28 items-center justify-end rounded-md border px-3 py-2 text-base font-black tabular-nums shadow-sm',
+      'inline-flex min-w-28 flex-col items-end justify-center rounded-md border px-3 py-2 text-base font-black shadow-sm',
       getBalanceCardClassName(balance, vestedMembers),
       className
     )}
   >
-    {currencyFormatter.format(balance)}
+    <span className='tabular-nums'>{currencyFormatter.format(balance)}</span>
+    {shouldShowReplenishAccountNotice(balance, vestedMembers) ? (
+      <span className='mt-1 text-right text-[10px] leading-tight font-semibold'>(Please replenish account)</span>
+    ) : null}
   </div>
 )
 
@@ -199,16 +205,15 @@ const ManualBalanceAdjustmentForm = ({
     <form action={action} className={layout === 'card' ? 'grid gap-1.5' : 'contents'}>
       <input type='hidden' name='sponsorCode' value={sponsorCode} />
       <label htmlFor={inputId} className='sr-only'>
-        Amount to manually add to {balanceType} balance
+        Amount to manually adjust {balanceType} balance
       </label>
       <Input
         id={inputId}
         name='balanceAmount'
         type='number'
         inputMode='decimal'
-        min='0.01'
         step='0.01'
-        placeholder='0.00'
+        placeholder='+/- 0.00'
         className={cn(
           'bg-background text-foreground placeholder:text-muted-foreground text-center text-[11px]',
           layout === 'card' ? 'h-8 px-2 text-xs' : 'col-start-2 row-start-1 h-7 w-20 px-1.5'
@@ -224,8 +229,8 @@ const ManualBalanceAdjustmentForm = ({
           layout === 'card' ? 'h-8 w-full' : 'col-start-2 row-start-2 h-7 w-20'
         )}
       >
-        <Plus className='size-3' />
-        Add
+        <ArrowUpDown className='size-3' />
+        Apply
       </Button>
     </form>
   )
@@ -436,8 +441,13 @@ const AdminSagicamPaymentsTable = ({
                   >
                     <div className='grid min-w-0 grid-cols-[auto_auto_minmax(0,1fr)] grid-rows-[auto_auto] items-center justify-items-center gap-x-2 gap-y-1'>
                       <ContributionPaymentControls row={row} />
-                      <span className='bg-background/80 col-start-3 row-span-2 row-start-1 flex min-w-0 items-center justify-center self-stretch justify-self-stretch rounded-md border border-current/20 px-2 py-2 text-center text-xl leading-none font-black tabular-nums'>
-                        {currencyFormatter.format(row.balance)}
+                      <span className='bg-background/80 col-start-3 row-span-2 row-start-1 flex min-w-0 flex-col items-center justify-center self-stretch justify-self-stretch rounded-md border border-current/20 px-2 py-2 text-center text-xl leading-none font-black'>
+                        <span className='tabular-nums'>{currencyFormatter.format(row.balance)}</span>
+                        {shouldShowReplenishAccountNotice(row.balance, row.vestedMembers) ? (
+                          <span className='mt-1 text-[10px] leading-tight font-semibold'>
+                            (Please replenish account)
+                          </span>
+                        ) : null}
                       </span>
                     </div>
                   </TableCell>

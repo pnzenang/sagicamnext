@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react'
 
-import { ArrowDown, ArrowUp, ArrowUpDown, CheckCircle2, Plus, RotateCcw } from 'lucide-react'
+import { ArrowDown, ArrowUp, ArrowUpDown, CheckCircle2, RotateCcw } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -180,16 +180,15 @@ const ManualBalanceAdjustmentForm = ({
     >
       <input type='hidden' name='sponsorCode' value={sponsorCode} />
       <label htmlFor={inputId} className='sr-only'>
-        Amount to manually add to registration balance
+        Amount to manually adjust registration balance
       </label>
       <Input
         id={inputId}
         name='balanceAmount'
         type='number'
         inputMode='decimal'
-        min='0.01'
         step='0.01'
-        placeholder='0.00'
+        placeholder='+/- 0.00'
         className={cn(
           'bg-background text-foreground placeholder:text-muted-foreground text-center text-[11px]',
           layout === 'card' ? 'h-8 px-2 text-xs' : 'col-start-2 row-start-1 h-7 w-20 px-1.5'
@@ -205,8 +204,8 @@ const ManualBalanceAdjustmentForm = ({
           layout === 'card' ? 'h-8 w-full' : 'col-start-2 row-start-2 h-7 w-20'
         )}
       >
-        <Plus className='size-3' />
-        Add
+        <ArrowUpDown className='size-3' />
+        Apply
       </Button>
     </form>
   )

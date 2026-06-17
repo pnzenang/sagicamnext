@@ -306,6 +306,20 @@ const getPositiveDollarAmountFromForm = (formData: FormData, fieldName: string) 
   return amount
 }
 
+const getSignedDollarAdjustmentFromForm = (formData: FormData, fieldName: string) => {
+  const rawAmount = String(formData.get(fieldName) ?? '')
+    .replace(/[$,]/g, '')
+    .trim()
+
+  const amount = Number(rawAmount)
+
+  if (!Number.isFinite(amount) || amount === 0) {
+    throw new Error('Enter a valid non-zero dollar adjustment.')
+  }
+
+  return Number(amount.toFixed(2))
+}
+
 const fetchLatestContributionAssessment = async () => {
   return db.contributionAssessment.findFirst({
     include: {
@@ -724,7 +738,7 @@ const addSponsorBalanceAdjustment = async (formData: FormData, balanceType: stri
 
   try {
     const sponsorCode = getRequiredFormValue(formData, 'sponsorCode')
-    const amount = getPositiveDollarAmountFromForm(formData, 'balanceAmount')
+    const amount = getSignedDollarAdjustmentFromForm(formData, 'balanceAmount')
 
     await db.$transaction(async tx => {
       await tx.sponsorBalanceAdjustment.upsert({

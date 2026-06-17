@@ -96,6 +96,9 @@ const roundCurrencyAmount = (amount: number) => Number(amount.toFixed(2))
 const getContributionBalanceTarget = (vestedMembersCount: number) =>
   roundCurrencyAmount(contributionCreditPerVestedMember * vestedMembersCount)
 
+const shouldShowReplenishAccountNotice = (balance: number, vestedMembersCount: number) =>
+  balance > 0 && balance < getContributionBalanceTarget(vestedMembersCount)
+
 const getContributionBalanceTextClassName = (balance: number, vestedMembersCount: number) => {
   if (balance >= getContributionBalanceTarget(vestedMembersCount)) {
     return 'text-green-700 dark:text-green-300'
@@ -184,7 +187,7 @@ const ContributionSummaryCard = ({
       <SummaryRow label={`Amount Used for ${currentMonthName}'s Contribution`} value={currentContribution.amountOwed} />
       <SummaryRow label='Total Amount Used for Contributions' value={currentContribution.totalAmountUsed} />
       <SummaryRow label='Vested Loved One Credit' value={currentContribution.vestedContributionCredit} />
-      {currentContribution.manualBalanceAdjustment > 0 ? (
+      {currentContribution.manualBalanceAdjustment !== 0 ? (
         <SummaryRow label='Balance Adjustment' value={currentContribution.manualBalanceAdjustment} />
       ) : null}
     </div>
@@ -209,7 +212,7 @@ const RegistrationSummaryCard = ({
       <SummaryRow label='Amount Sent' value={currentRegistrationPayment.amountReceived} />
       <SummaryRow label='Amount Verified by SAGICAM' value={currentRegistrationPayment.amountVerified} />
       <SummaryRow label='Used for Registration' value={currentRegistrationPayment.amountUsed} />
-      {currentRegistrationPayment.manualBalanceAdjustment > 0 ? (
+      {currentRegistrationPayment.manualBalanceAdjustment !== 0 ? (
         <SummaryRow label='Balance Adjustment' value={currentRegistrationPayment.manualBalanceAdjustment} />
       ) : null}
     </div>
@@ -587,12 +590,21 @@ const PaymentBalanceRow = ({
         ? 'text-green-700 dark:text-green-300'
         : 'text-red-700 dark:text-red-300'
       : getContributionBalanceTextClassName(balance, contributionVestedMembersCount)
+  const showReplenishAccountNotice =
+    contributionVestedMembersCount !== undefined &&
+    shouldShowReplenishAccountNotice(balance, contributionVestedMembersCount)
+  const showUpcomingMonthsNotice =
+    !showReplenishAccountNotice &&
+    (balance > 0 || (balance === 0 && contributionVestedMembersCount === undefined))
 
   return (
     <div className={cn('mt-2 flex items-start justify-between gap-4 text-base font-extrabold', balanceClassName)}>
       <span className='min-w-0 break-words'>
         Balance{' '}
-        {balance > 0 || (balance === 0 && contributionVestedMembersCount === undefined) ? (
+        {showReplenishAccountNotice ? (
+          <span className='text-[10px] leading-tight font-medium'>(Please replenish account)</span>
+        ) : null}
+        {showUpcomingMonthsNotice ? (
           <span className='text-[10px] leading-tight font-medium'>(To be used for upcoming months)</span>
         ) : null}
       </span>
