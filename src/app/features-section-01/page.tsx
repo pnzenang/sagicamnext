@@ -26,9 +26,9 @@ const featuresList = [
     title: 'Advanced Search',
     description:
       'Find products quickly with advanced filters, sorting options, and suggestion. Save time and effortlessly locate exactly what you need with ease.',
-    cardBorderColor: 'border-amber-600/40 hover:border-amber-600 dark:border-amber-400/40 dark:hover:border-amber-400',
-    avatarTextColor: 'text-amber-600 dark:text-amber-400',
-    avatarBgColor: 'bg-amber-600/10 dark:bg-amber-400/10'
+    cardBorderColor: 'border-amber-500/40 hover:border-amber-500 dark:border-amber-500/40 dark:hover:border-amber-500',
+    avatarTextColor: 'text-amber-500 dark:text-amber-500',
+    avatarBgColor: 'bg-amber-500/10 dark:bg-amber-500/10'
   },
   {
     icon: StarIcon,

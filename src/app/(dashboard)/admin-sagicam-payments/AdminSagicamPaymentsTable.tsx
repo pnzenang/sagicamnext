@@ -99,7 +99,7 @@ const getContributionBalanceStatusClassName = (balance: number, vestedMembers: n
   }
 
   if (balance > 0) {
-    return 'bg-amber-600/10 text-amber-500 dark:text-amber-300'
+    return 'bg-amber-500/10 text-amber-500 dark:text-amber-500'
   }
 
   return 'bg-red-600/10 text-red-700 dark:text-red-300'
@@ -111,7 +111,7 @@ const getBalanceCardClassName = (balance: number, vestedMembers: number) => {
   }
 
   if (balance > 0) {
-    return 'border-amber-200 bg-amber-50 text-amber-500 dark:border-amber-800/70 dark:bg-amber-950/40 dark:text-amber-200'
+    return 'border-amber-200 bg-amber-50 text-amber-500 dark:border-amber-800/70 dark:bg-amber-950/40 dark:text-amber-500'
   }
 
   return 'border-red-200 bg-red-50 text-red-800 dark:border-red-800/70 dark:bg-red-950/40 dark:text-red-200'

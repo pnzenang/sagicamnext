@@ -43,7 +43,7 @@ const Testimonials = ({ testimonials }: { testimonials: TestimonialItem[] }) => 
           <div>
             <div className='flex items-center gap-1.5'>
               <p className='text-2xl font-semibold'>4.5</p>
-              <StarIcon className='fill-amber-600 stroke-amber-600 dark:fill-amber-400 dark:stroke-amber-400'></StarIcon>
+              <StarIcon className='fill-amber-500 stroke-amber-500 dark:fill-amber-500 dark:stroke-amber-500'></StarIcon>
             </div>
             <p className='text-muted-foreground text-sm font-medium'>Stars out of 5</p>
           </div>

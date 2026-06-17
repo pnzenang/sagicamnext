@@ -25,7 +25,7 @@ const summaryCards = [
     key: 'inReview',
     label: 'Case(s) in review',
     icon: ClipboardClock,
-    className: 'border-amber-600/20 bg-amber-600/5 text-amber-700 dark:text-amber-400'
+    className: 'border-amber-500/20 bg-amber-500/5 text-amber-500 dark:text-amber-500'
   },
   {
     key: 'denied',

@@ -102,7 +102,7 @@ const getContributionBalanceTextClassName = (balance: number, vestedMembersCount
   }
 
   if (balance > 0) {
-    return 'text-amber-500 dark:text-amber-300'
+    return 'text-amber-500 dark:text-amber-500'
   }
 
   return 'text-red-700 dark:text-red-300'
