@@ -25,6 +25,7 @@ import {
   sendLovedOneConfirmationEmail,
   sendLovedOneRemovalConfirmationEmail
 } from './email'
+import { contributionCreditPerVestedMember } from './sagicam-contribution-constants'
 import { fetchSponsorContributionSummary } from './sagicam-contribution-summary'
 import {
   fetchSponsorRegistrationSummary,
@@ -50,7 +51,6 @@ const registrationDateFormatter = new Intl.DateTimeFormat('en-US', {
   year: 'numeric'
 })
 
-const contributionCreditPerVestedMember = 30
 const contributionPaymentAlertType = 'contribution'
 const registrationPaymentAlertType = 'registration'
 

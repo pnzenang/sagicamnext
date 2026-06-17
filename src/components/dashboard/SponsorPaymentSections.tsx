@@ -11,6 +11,7 @@ import SponsorContributionPaymentCard from '@/components/dashboard/SponsorContri
 import SponsorRegistrationPaymentCard from '@/components/dashboard/SponsorRegistrationPaymentCard'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { contributionCreditPerVestedMember } from '@/utils/sagicam-contribution-constants'
 import type { SponsorPaymentLedgerEntry } from '@/utils/sagicam-payment-ledger'
 
 export type CurrentContributionPayment = {
@@ -92,6 +93,21 @@ const formatCurrency = (amount: number) => currencyFormatter.format(amount)
 
 const roundCurrencyAmount = (amount: number) => Number(amount.toFixed(2))
 
+const getContributionBalanceTarget = (vestedMembersCount: number) =>
+  roundCurrencyAmount(contributionCreditPerVestedMember * vestedMembersCount)
+
+const getContributionBalanceTextClassName = (balance: number, vestedMembersCount: number) => {
+  if (balance >= getContributionBalanceTarget(vestedMembersCount)) {
+    return 'text-green-700 dark:text-green-300'
+  }
+
+  if (balance > 0) {
+    return 'text-amber-800 dark:text-amber-300'
+  }
+
+  return 'text-red-700 dark:text-red-300'
+}
+
 const paymentLedgerHistoryEventTypes = {
   submitted: 'submitted',
   verified: 'verified'
@@ -172,7 +188,10 @@ const ContributionSummaryCard = ({
         <SummaryRow label='Balance Adjustment' value={currentContribution.manualBalanceAdjustment} />
       ) : null}
     </div>
-    <PaymentBalanceRow balance={currentContribution.balance} />
+    <PaymentBalanceRow
+      balance={currentContribution.balance}
+      contributionVestedMembersCount={currentContribution.vestedMembersCount}
+    />
     <p className='text-primary/70 mt-auto pt-4 text-[10px] leading-tight font-medium break-words'>
       All amounts will be verified by SAGICAM and reversed if not accurate.
     </p>
@@ -555,22 +574,32 @@ const buildRegistrationHistorySummaryColumns = (
   ]
 }
 
-const PaymentBalanceRow = ({ balance }: { balance: number }) => (
-  <div
-    className={cn(
-      'mt-2 flex items-start justify-between gap-4 text-base font-extrabold',
-      balance >= 0 ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'
-    )}
-  >
-    <span className='min-w-0 break-words'>
-      Balance{' '}
-      {balance >= 0 ? (
-        <span className='text-[10px] leading-tight font-medium'>(To be used for upcoming months)</span>
-      ) : null}
-    </span>
-    <span className='shrink-0 text-right tabular-nums'>{formatCurrency(balance)}</span>
-  </div>
-)
+const PaymentBalanceRow = ({
+  balance,
+  contributionVestedMembersCount
+}: {
+  balance: number
+  contributionVestedMembersCount?: number
+}) => {
+  const balanceClassName =
+    contributionVestedMembersCount === undefined
+      ? balance >= 0
+        ? 'text-green-700 dark:text-green-300'
+        : 'text-red-700 dark:text-red-300'
+      : getContributionBalanceTextClassName(balance, contributionVestedMembersCount)
+
+  return (
+    <div className={cn('mt-2 flex items-start justify-between gap-4 text-base font-extrabold', balanceClassName)}>
+      <span className='min-w-0 break-words'>
+        Balance{' '}
+        {balance > 0 || (balance === 0 && contributionVestedMembersCount === undefined) ? (
+          <span className='text-[10px] leading-tight font-medium'>(To be used for upcoming months)</span>
+        ) : null}
+      </span>
+      <span className='shrink-0 text-right tabular-nums'>{formatCurrency(balance)}</span>
+    </div>
+  )
+}
 
 const PaymentRouteCard = ({
   amount,

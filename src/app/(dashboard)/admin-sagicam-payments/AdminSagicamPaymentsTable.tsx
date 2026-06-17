@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { cn } from '@/lib/utils'
+import { contributionCreditPerVestedMember } from '@/utils/sagicam-contribution-constants'
 import {
   addSponsorContributionBalanceAdjustmentAction,
   resetSponsorContributionPaymentAction,
@@ -90,16 +91,45 @@ const compareValues = (firstValue: AdminSagicamPaymentsRow[SortKey], secondValue
   })
 }
 
-const getBalanceCardClassName = (balance: number) =>
-  balance >= 0
-    ? 'border-green-200 bg-green-50 text-green-800 dark:border-green-800/70 dark:bg-green-950/40 dark:text-green-200'
-    : 'border-red-200 bg-red-50 text-red-800 dark:border-red-800/70 dark:bg-red-950/40 dark:text-red-200'
+const getContributionBalanceTarget = (vestedMembers: number) => contributionCreditPerVestedMember * vestedMembers
 
-const BalanceCard = ({ balance, className }: { balance: number; className?: string }) => (
+const getContributionBalanceStatusClassName = (balance: number, vestedMembers: number) => {
+  if (balance >= getContributionBalanceTarget(vestedMembers)) {
+    return 'bg-green-600/10 text-green-700 dark:text-green-300'
+  }
+
+  if (balance > 0) {
+    return 'bg-amber-600/10 text-amber-800 dark:text-amber-300'
+  }
+
+  return 'bg-red-600/10 text-red-700 dark:text-red-300'
+}
+
+const getBalanceCardClassName = (balance: number, vestedMembers: number) => {
+  if (balance >= getContributionBalanceTarget(vestedMembers)) {
+    return 'border-green-200 bg-green-50 text-green-800 dark:border-green-800/70 dark:bg-green-950/40 dark:text-green-200'
+  }
+
+  if (balance > 0) {
+    return 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-800/70 dark:bg-amber-950/40 dark:text-amber-200'
+  }
+
+  return 'border-red-200 bg-red-50 text-red-800 dark:border-red-800/70 dark:bg-red-950/40 dark:text-red-200'
+}
+
+const BalanceCard = ({
+  balance,
+  className,
+  vestedMembers
+}: {
+  balance: number
+  className?: string
+  vestedMembers: number
+}) => (
   <div
     className={cn(
       'inline-flex min-w-28 items-center justify-end rounded-md border px-3 py-2 text-base font-black tabular-nums shadow-sm',
-      getBalanceCardClassName(balance),
+      getBalanceCardClassName(balance, vestedMembers),
       className
     )}
   >
@@ -399,11 +429,10 @@ const AdminSagicamPaymentsTable = ({
                     {currencyFormatter.format(row.amountReceived)}
                   </TableCell>
                   <TableCell
-                    className={`text-center align-middle font-semibold ${
-                      row.balance >= 0
-                        ? 'bg-green-600/10 text-green-700 dark:text-green-300'
-                        : 'bg-red-600/10 text-red-700 dark:text-red-300'
-                    }`}
+                    className={cn(
+                      'text-center align-middle font-semibold',
+                      getContributionBalanceStatusClassName(row.balance, row.vestedMembers)
+                    )}
                   >
                     <div className='grid min-w-0 grid-cols-[auto_auto_minmax(0,1fr)] grid-rows-[auto_auto] items-center justify-items-center gap-x-2 gap-y-1'>
                       <ContributionPaymentControls row={row} />
@@ -433,7 +462,7 @@ const AdminSagicamPaymentsTable = ({
                   {currencyFormatter.format(visibleTotals.amountReceived)}
                 </TableCell>
                 <TableCell className='text-right font-extrabold'>
-                  {currencyFormatter.format(visibleTotals.balance)}
+                  <BalanceCard balance={visibleTotals.balance} vestedMembers={visibleTotals.vestedMembers} />
                 </TableCell>
               </TableRow>
             </TableFooter>
@@ -482,7 +511,11 @@ const AdminSagicamPaymentsTable = ({
                 <MobileValue label='Verified' value={currencyFormatter.format(row.amountReceived)} />
                 <div className='grid grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] items-start gap-2 border-t pt-3'>
                   <span className='text-muted-foreground text-xs font-semibold uppercase'>Contribution Balance</span>
-                  <BalanceCard balance={row.balance} className='max-w-full justify-end justify-self-end' />
+                  <BalanceCard
+                    balance={row.balance}
+                    vestedMembers={row.vestedMembers}
+                    className='max-w-full justify-end justify-self-end'
+                  />
                 </div>
               </div>
             </article>
@@ -501,7 +534,11 @@ const AdminSagicamPaymentsTable = ({
               <MobileValue label='Contribution verified' value={currencyFormatter.format(visibleTotals.amountReceived)} />
               <div className='grid grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] items-start gap-2 border-t pt-3'>
                 <span className='text-xs font-semibold uppercase'>Contribution balance</span>
-                <BalanceCard balance={visibleTotals.balance} className='max-w-full justify-end justify-self-end' />
+                <BalanceCard
+                  balance={visibleTotals.balance}
+                  vestedMembers={visibleTotals.vestedMembers}
+                  className='max-w-full justify-end justify-self-end'
+                />
               </div>
             </div>
           </article>
