@@ -64,19 +64,13 @@ const columns: AdminSagicamRegistrationsColumn[] = [
   { key: 'registrationBalance', label: 'Registration balance', align: 'right' }
 ]
 
-const balanceColumnWidth = 25
-const contactColumnWidth = 12
-const codeColumnWidth = 8
+const balanceColumnWidth = 30
+const regularColumnWidth = (100 - balanceColumnWidth) / (columns.length - 1)
 
-const regularColumnWidth = (100 - balanceColumnWidth - contactColumnWidth - codeColumnWidth) / (columns.length - 3)
+const getColumnWidth = (columnKey: SortKey) =>
+  columnKey === 'registrationBalance' ? balanceColumnWidth : regularColumnWidth
 
-const getColumnWidth = (columnKey: SortKey) => {
-  if (columnKey === 'sponsorEmail') return contactColumnWidth
-  if (columnKey === 'sponsorCode') return codeColumnWidth
-  if (columnKey === 'registrationBalance') return balanceColumnWidth
-
-  return regularColumnWidth
-}
+const getColumnStyle = (columnKey: SortKey) => ({ width: `${getColumnWidth(columnKey)}%` })
 
 const getSortIcon = (isActive: boolean, direction: SortDirection) => {
   if (!isActive) return <ArrowUpDown className='size-3.5' />
@@ -316,7 +310,7 @@ const AdminSagicamRegistrationsTable = ({
         <Table className='[[&_td]:wrap-break-word table-fixed [&_td]:whitespace-normal [&_th]:wrap-break-word [&_th]:whitespace-normal'>
           <colgroup>
             {columns.map(column => (
-              <col key={column.key} style={{ width: `${getColumnWidth(column.key)}%` }} />
+              <col key={column.key} style={getColumnStyle(column.key)} />
             ))}
           </colgroup>
           <TableHeader>
@@ -344,6 +338,7 @@ const AdminSagicamRegistrationsTable = ({
                   <TableHead
                     key={column.key}
                     className='text-primary-foreground h-16'
+                    style={getColumnStyle(column.key)}
                     aria-sort={isActive ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
                   >
                     <button
@@ -371,24 +366,31 @@ const AdminSagicamRegistrationsTable = ({
             ) : (
               sortedRows.map(row => (
                 <TableRow key={row.sponsorCode} className='odd:bg-muted/30 even:bg-background'>
-                  <TableCell className='text-sm font-semibold'>
+                  <TableCell className='text-sm font-semibold' style={getColumnStyle('sponsorEmail')}>
                     <EmailLink email={row.sponsorEmail} className='break-all' />
                   </TableCell>
-                  <TableCell>{row.sponsorCode}</TableCell>
-                  <TableCell className='text-right font-semibold'>{row.vestedMembers}</TableCell>
-                  <TableCell className='text-right font-semibold'>{row.awaitingPublication}</TableCell>
-                  <TableCell className='text-right font-semibold'>{row.pendingMembers}</TableCell>
-                  <TableCell className='text-right font-semibold'>
+                  <TableCell style={getColumnStyle('sponsorCode')}>{row.sponsorCode}</TableCell>
+                  <TableCell className='text-right font-semibold' style={getColumnStyle('vestedMembers')}>
+                    {row.vestedMembers}
+                  </TableCell>
+                  <TableCell className='text-right font-semibold' style={getColumnStyle('awaitingPublication')}>
+                    {row.awaitingPublication}
+                  </TableCell>
+                  <TableCell className='text-right font-semibold' style={getColumnStyle('pendingMembers')}>
+                    {row.pendingMembers}
+                  </TableCell>
+                  <TableCell className='text-right font-semibold' style={getColumnStyle('registrationFeeOwed')}>
                     {currencyFormatter.format(row.registrationFeeOwed)}
                   </TableCell>
                   <TableCell
                     className={`text-right font-semibold ${
                       row.registrationAmountSent > 0 ? 'text-green-700 dark:text-green-300' : ''
                     }`}
+                    style={getColumnStyle('registrationAmountSent')}
                   >
                     {currencyFormatter.format(row.registrationAmountSent)}
                   </TableCell>
-                  <TableCell className='text-right font-semibold'>
+                  <TableCell className='text-right font-semibold' style={getColumnStyle('registrationReceived')}>
                     {currencyFormatter.format(row.registrationReceived)}
                   </TableCell>
                   <TableCell
@@ -397,6 +399,7 @@ const AdminSagicamRegistrationsTable = ({
                         ? 'bg-green-600/10 text-green-700 dark:text-green-300'
                         : 'bg-red-600/10 text-red-700 dark:text-red-300'
                     }`}
+                    style={getColumnStyle('registrationBalance')}
                   >
                     <div className='grid min-w-0 grid-cols-[auto_auto_minmax(0,1fr)] grid-rows-[auto_auto] items-center justify-items-center gap-x-2 gap-y-1'>
                       <RegistrationPaymentControls row={row} />
@@ -412,21 +415,29 @@ const AdminSagicamRegistrationsTable = ({
           {sortedRows.length > 0 && (
             <TableFooter className='bg-white text-black dark:bg-white dark:text-black'>
               <TableRow className='bg-white text-base text-black hover:bg-white dark:bg-white dark:text-black dark:hover:bg-white'>
-                <TableCell />
-                <TableCell className='font-extrabold'>Total</TableCell>
-                <TableCell className='text-right font-extrabold'>{visibleTotals.vestedMembers}</TableCell>
-                <TableCell className='text-right font-extrabold'>{visibleTotals.awaitingPublication}</TableCell>
-                <TableCell className='text-right font-extrabold'>{visibleTotals.pendingMembers}</TableCell>
-                <TableCell className='text-right font-extrabold'>
+                <TableCell style={getColumnStyle('sponsorEmail')} />
+                <TableCell className='font-extrabold' style={getColumnStyle('sponsorCode')}>
+                  Total
+                </TableCell>
+                <TableCell className='text-right font-extrabold' style={getColumnStyle('vestedMembers')}>
+                  {visibleTotals.vestedMembers}
+                </TableCell>
+                <TableCell className='text-right font-extrabold' style={getColumnStyle('awaitingPublication')}>
+                  {visibleTotals.awaitingPublication}
+                </TableCell>
+                <TableCell className='text-right font-extrabold' style={getColumnStyle('pendingMembers')}>
+                  {visibleTotals.pendingMembers}
+                </TableCell>
+                <TableCell className='text-right font-extrabold' style={getColumnStyle('registrationFeeOwed')}>
                   {currencyFormatter.format(visibleTotals.registrationFeeOwed)}
                 </TableCell>
-                <TableCell className='text-right font-extrabold'>
+                <TableCell className='text-right font-extrabold' style={getColumnStyle('registrationAmountSent')}>
                   {currencyFormatter.format(visibleTotals.registrationAmountSent)}
                 </TableCell>
-                <TableCell className='text-right font-extrabold'>
+                <TableCell className='text-right font-extrabold' style={getColumnStyle('registrationReceived')}>
                   {currencyFormatter.format(visibleTotals.registrationReceived)}
                 </TableCell>
-                <TableCell className='text-right font-extrabold'>
+                <TableCell className='text-right font-extrabold' style={getColumnStyle('registrationBalance')}>
                   {currencyFormatter.format(visibleTotals.registrationBalance)}
                 </TableCell>
               </TableRow>

@@ -54,8 +54,12 @@ const columns: AdminSagicamPaymentsColumn[] = [
   { key: 'balance', label: 'Contribution Balance', align: 'right' }
 ]
 
-const columnWidth = 100 / columns.length
-const equalColumnStyle = { width: `${columnWidth}%` }
+const balanceColumnWidth = 30
+const regularColumnWidth = (100 - balanceColumnWidth) / (columns.length - 1)
+
+const getColumnWidth = (columnKey: SortKey) => (columnKey === 'balance' ? balanceColumnWidth : regularColumnWidth)
+
+const getColumnStyle = (columnKey: SortKey) => ({ width: `${getColumnWidth(columnKey)}%` })
 
 const getSortIcon = (isActive: boolean, direction: SortDirection) => {
   if (!isActive) return <ArrowUpDown className='size-3.5' />
@@ -324,7 +328,7 @@ const AdminSagicamPaymentsTable = ({
         <Table className='[[&_td]:wrap-break-word table-fixed [&_td]:whitespace-normal [&_th]:wrap-break-word [&_th]:whitespace-normal'>
           <colgroup>
             {columns.map(column => (
-              <col key={column.key} style={{ width: `${columnWidth}%` }} />
+              <col key={column.key} style={getColumnStyle(column.key)} />
             ))}
           </colgroup>
           <TableHeader>
@@ -352,7 +356,7 @@ const AdminSagicamPaymentsTable = ({
                   <TableHead
                     key={column.key}
                     className='text-primary-foreground h-16'
-                    style={equalColumnStyle}
+                    style={getColumnStyle(column.key)}
                     aria-sort={isActive ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
                   >
                     <button
@@ -380,22 +384,22 @@ const AdminSagicamPaymentsTable = ({
             ) : (
               sortedRows.map(row => (
                 <TableRow key={row.sponsorCode} className='odd:bg-muted/30 even:bg-background'>
-                  <TableCell style={equalColumnStyle}>{row.sponsorCode}</TableCell>
-                  <TableCell className='text-right font-semibold' style={equalColumnStyle}>
+                  <TableCell style={getColumnStyle('sponsorCode')}>{row.sponsorCode}</TableCell>
+                  <TableCell className='text-right font-semibold' style={getColumnStyle('vestedMembers')}>
                     {row.vestedMembers}
                   </TableCell>
-                  <TableCell className='text-right font-semibold' style={equalColumnStyle}>
+                  <TableCell className='text-right font-semibold' style={getColumnStyle('amountOwed')}>
                     {currencyFormatter.format(row.amountOwed)}
                   </TableCell>
                   <TableCell
                     className={`text-right font-semibold ${
                       row.contributionAmountSent > 0 ? 'text-green-700 dark:text-green-300' : ''
                     }`}
-                    style={equalColumnStyle}
+                    style={getColumnStyle('contributionAmountSent')}
                   >
                     {currencyFormatter.format(row.contributionAmountSent)}
                   </TableCell>
-                  <TableCell className='text-right font-semibold' style={equalColumnStyle}>
+                  <TableCell className='text-right font-semibold' style={getColumnStyle('amountReceived')}>
                     {currencyFormatter.format(row.amountReceived)}
                   </TableCell>
                   <TableCell
@@ -403,7 +407,7 @@ const AdminSagicamPaymentsTable = ({
                       'text-center align-middle font-semibold',
                       getContributionBalanceStatusClassName(row.balance, row.vestedMembers)
                     )}
-                    style={equalColumnStyle}
+                    style={getColumnStyle('balance')}
                   >
                     <div className='grid min-w-0 grid-cols-[auto_auto_minmax(0,1fr)] grid-rows-[auto_auto] items-center justify-items-center gap-x-2 gap-y-1'>
                       <ContributionPaymentControls row={row} />
@@ -429,22 +433,22 @@ const AdminSagicamPaymentsTable = ({
           {sortedRows.length > 0 && (
             <TableFooter className='bg-white text-black dark:bg-white dark:text-black'>
               <TableRow className='bg-white text-base text-black hover:bg-white dark:bg-white dark:text-black dark:hover:bg-white'>
-                <TableCell className='font-extrabold' style={equalColumnStyle}>
+                <TableCell className='font-extrabold' style={getColumnStyle('sponsorCode')}>
                   Total
                 </TableCell>
-                <TableCell className='text-right font-extrabold' style={equalColumnStyle}>
+                <TableCell className='text-right font-extrabold' style={getColumnStyle('vestedMembers')}>
                   {visibleTotals.vestedMembers}
                 </TableCell>
-                <TableCell className='text-right font-extrabold' style={equalColumnStyle}>
+                <TableCell className='text-right font-extrabold' style={getColumnStyle('amountOwed')}>
                   {currencyFormatter.format(visibleTotals.amountOwed)}
                 </TableCell>
-                <TableCell className='text-right font-extrabold' style={equalColumnStyle}>
+                <TableCell className='text-right font-extrabold' style={getColumnStyle('contributionAmountSent')}>
                   {currencyFormatter.format(visibleTotals.contributionAmountSent)}
                 </TableCell>
-                <TableCell className='text-right font-extrabold' style={equalColumnStyle}>
+                <TableCell className='text-right font-extrabold' style={getColumnStyle('amountReceived')}>
                   {currencyFormatter.format(visibleTotals.amountReceived)}
                 </TableCell>
-                <TableCell className='text-right font-extrabold' style={equalColumnStyle}>
+                <TableCell className='text-right font-extrabold' style={getColumnStyle('balance')}>
                   <BalanceCard balance={visibleTotals.balance} vestedMembers={visibleTotals.vestedMembers} />
                 </TableCell>
               </TableRow>
