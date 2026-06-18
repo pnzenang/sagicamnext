@@ -592,28 +592,31 @@ const PaymentBalanceRow = ({
         ? 'text-green-700 dark:text-green-300'
         : 'text-red-700 dark:text-red-300'
       : getContributionBalanceTextClassName(balance, contributionVestedMembersCount)
+
   const showReplenishAccountNotice =
     contributionVestedMembersCount !== undefined &&
     shouldShowReplenishAccountNotice(balance, contributionVestedMembersCount)
+
   const showNotInGoodStandingNotice =
     contributionVestedMembersCount !== undefined && shouldShowNotInGoodStandingNotice(balance)
+
   const showUpcomingMonthsNotice =
     !showReplenishAccountNotice &&
     !showNotInGoodStandingNotice &&
     (balance > 0 || (balance === 0 && contributionVestedMembersCount === undefined))
 
   return (
-    <div className={cn('mt-2 flex items-start justify-between gap-4 text-base font-extrabold', balanceClassName)}>
+    <div className={cn('mt-2 flex items-start justify-between gap-4 text-2xl font-extrabold', balanceClassName)}>
       <span className='min-w-0 break-words'>
         Balance{' '}
         {showReplenishAccountNotice ? (
-          <span className='text-[10px] leading-tight font-medium'>(Please replenish account)</span>
+          <span className='text-[15px] leading-tight font-medium'>(Please replenish account)</span>
         ) : null}
         {showNotInGoodStandingNotice ? (
-          <span className='text-[10px] leading-tight font-medium'>(Not In Good Standing.)</span>
+          <span className='text-[15px] leading-tight font-medium'>(Not In Good Standing.)</span>
         ) : null}
         {showUpcomingMonthsNotice ? (
-          <span className='text-[10px] leading-tight font-medium'>(To be used for upcoming months)</span>
+          <span className='text-[15px] leading-tight font-medium'>(To be used for upcoming months)</span>
         ) : null}
       </span>
       <span className='shrink-0 text-right tabular-nums'>{formatCurrency(balance)}</span>
