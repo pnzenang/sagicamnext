@@ -183,7 +183,7 @@ const columns: ColumnDef<DeceasedMemberType>[] = [
 
       const styles = {
         Received_And_In_Review:
-          'bg-amber-500/10 text-amber-500 focus-visible:ring-amber-500/20 dark:bg-amber-500/10 dark:text-amber-500 dark:focus-visible:ring-amber-500/40 [a&]:hover:bg-amber-500/5 dark:[a&]:hover:bg-amber-500/5',
+          'bg-amber-600/10 text-amber-600 focus-visible:ring-amber-600/20 dark:bg-amber-600/10 dark:text-amber-600 dark:focus-visible:ring-amber-600/40 [a&]:hover:bg-amber-600/5 dark:[a&]:hover:bg-amber-600/5',
         Contribution_Denied:
           'bg-destructive/10 text-destructive focus-visible:ring-destructive/20 dark:bg-destructive/10 dark:text-destructive dark:focus-visible:ring-destructive/40 [a&]:hover:bg-destructive/5 dark:[a&]:hover:bg-destructive/5',
         Contribution_Underway:

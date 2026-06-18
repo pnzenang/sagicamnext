@@ -25,7 +25,7 @@ const summaryCards = [
     key: 'pending',
     label: 'All Pending',
     icon: Clock,
-    className: 'border-amber-500/20 bg-amber-500/5 text-amber-500 dark:text-amber-500'
+    className: 'border-amber-600/20 bg-amber-600/5 text-amber-600 dark:text-amber-600'
   },
   {
     key: 'delinquent',

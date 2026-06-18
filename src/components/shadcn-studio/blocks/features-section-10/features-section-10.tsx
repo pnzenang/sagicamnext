@@ -39,16 +39,16 @@ const Features = () => {
           </Card>
 
           {/* Card 2 */}
-          <Card className='group flex-1 border-amber-500/30 transition-all duration-500 hover:flex-2 hover:border-amber-500 hover:bg-amber-500/10 dark:border-amber-500/30 dark:hover:border-amber-500 dark:hover:bg-amber-500/10'>
+          <Card className='group flex-1 border-amber-600/30 transition-all duration-500 hover:flex-2 hover:border-amber-600 hover:bg-amber-600/10 dark:border-amber-600/30 dark:hover:border-amber-600 dark:hover:bg-amber-600/10'>
             <CardContent className='flex'>
               <div className='space-y-6'>
                 <Avatar className='size-10 shadow-sm'>
-                  <AvatarFallback className='bg-card text-amber-500 dark:text-amber-500'>
+                  <AvatarFallback className='bg-card text-amber-600 dark:text-amber-600'>
                     <SiZelle className='size-5' />
                   </AvatarFallback>
                 </Avatar>
                 <div className='space-y-2'>
-                  <CardTitle className='line-clamp-2 text-lg text-amber-500 sm:text-4xl dark:text-amber-500'>
+                  <CardTitle className='line-clamp-2 text-lg text-amber-600 sm:text-4xl dark:text-amber-600'>
                     Zelle Payment
                   </CardTitle>
                   <CardDescription className='line-clamp-2'>
@@ -58,7 +58,7 @@ const Features = () => {
                   <CardDescription className='line-clamp-2'>
                     Email Address:<span className='px-5 font-bold group-hover:text-4xl'>info@sagiusa.org</span>
                   </CardDescription>
-                  <CardTitle className='mt-8 line-clamp-2 text-lg font-semibold text-amber-500 group-hover:text-4xl dark:text-amber-500'>
+                  <CardTitle className='mt-8 line-clamp-2 text-lg font-semibold text-amber-600 group-hover:text-4xl dark:text-amber-600'>
                     CashApp
                   </CardTitle>
 

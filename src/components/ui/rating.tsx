@@ -15,7 +15,7 @@ const ratingVariants = cva('transition-colors', {
       destructive: 'text-destructive fill-current',
       outline: 'text-muted-foreground fill-transparent stroke-current',
       secondary: 'text-secondary-foreground fill-current',
-      yellow: 'fill-current text-amber-500 dark:text-amber-500'
+      yellow: 'fill-current text-amber-600 dark:text-amber-600'
     }
   },
   defaultVariants: {
@@ -96,7 +96,7 @@ function RatingItem({
       size,
       className: cn(
         'fill-muted-foreground/20 stroke-muted-foreground/10',
-        variant === 'yellow' && 'fill-amber-500/30 stroke-amber-500/10 dark:fill-amber-500/30 dark:stroke-amber-500/10'
+        variant === 'yellow' && 'fill-amber-600/30 stroke-amber-600/10 dark:fill-amber-600/30 dark:stroke-amber-600/10'
       ),
       'aria-hidden': 'true'
     })

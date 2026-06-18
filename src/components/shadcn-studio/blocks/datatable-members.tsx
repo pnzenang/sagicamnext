@@ -179,7 +179,7 @@ const columns: ColumnDef<MemberType>[] = [
         vested:
           'bg-teal-600/10 text-green-600 focus-visible:ring-green-600/20 dark:bg-green-400/10 dark:text-green-400 dark:focus-visible:ring-green-400/40 [a&]:hover:bg-green-600/5 dark:[a&]:hover:bg-green-400/5',
         pending:
-          'bg-amber-500/10 text-amber-500 focus-visible:ring-amber-500/20 dark:bg-amber-500/10 dark:text-amber-500 dark:focus-visible:ring-amber-500/40 [a&]:hover:bg-amber-500/5 dark:[a&]:hover:bg-amber-500/5',
+          'bg-amber-600/10 text-amber-600 focus-visible:ring-amber-600/20 dark:bg-amber-600/10 dark:text-amber-600 dark:focus-visible:ring-amber-600/40 [a&]:hover:bg-amber-600/5 dark:[a&]:hover:bg-amber-600/5',
         not_in_good_standing:
           'bg-red-600/10 text-red-600 focus-visible:ring-red-600/20 dark:bg-red-400/10 dark:text-red-400 dark:focus-visible:ring-red-400/40 [a&]:hover:bg-red-600/5 dark:[a&]:hover:bg-red-400/5',
         awaiting_publication:
