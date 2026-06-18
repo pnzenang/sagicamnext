@@ -96,6 +96,8 @@ const getContributionBalanceTarget = (vestedMembers: number) => contributionCred
 const shouldShowReplenishAccountNotice = (balance: number, vestedMembers: number) =>
   balance > 0 && balance < getContributionBalanceTarget(vestedMembers)
 
+const shouldShowNotInGoodStandingNotice = (balance: number) => balance < 0
+
 const getContributionBalanceStatusClassName = (balance: number, vestedMembers: number) => {
   if (balance >= getContributionBalanceTarget(vestedMembers)) {
     return 'bg-green-600/10 text-green-700 dark:text-green-300'
@@ -139,6 +141,9 @@ const BalanceCard = ({
     <span className='tabular-nums'>{currencyFormatter.format(balance)}</span>
     {shouldShowReplenishAccountNotice(balance, vestedMembers) ? (
       <span className='mt-1 text-right text-[10px] leading-tight font-semibold'>(Please replenish account)</span>
+    ) : null}
+    {shouldShowNotInGoodStandingNotice(balance) ? (
+      <span className='mt-1 text-right text-[10px] leading-tight font-semibold'>(Not In Good Standing.)</span>
     ) : null}
   </div>
 )
@@ -446,6 +451,11 @@ const AdminSagicamPaymentsTable = ({
                         {shouldShowReplenishAccountNotice(row.balance, row.vestedMembers) ? (
                           <span className='mt-1 text-[10px] leading-tight font-semibold'>
                             (Please replenish account)
+                          </span>
+                        ) : null}
+                        {shouldShowNotInGoodStandingNotice(row.balance) ? (
+                          <span className='mt-1 text-[10px] leading-tight font-semibold'>
+                            (Not In Good Standing.)
                           </span>
                         ) : null}
                       </span>

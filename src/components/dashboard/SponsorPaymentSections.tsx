@@ -99,6 +99,8 @@ const getContributionBalanceTarget = (vestedMembersCount: number) =>
 const shouldShowReplenishAccountNotice = (balance: number, vestedMembersCount: number) =>
   balance > 0 && balance < getContributionBalanceTarget(vestedMembersCount)
 
+const shouldShowNotInGoodStandingNotice = (balance: number) => balance < 0
+
 const getContributionBalanceTextClassName = (balance: number, vestedMembersCount: number) => {
   if (balance >= getContributionBalanceTarget(vestedMembersCount)) {
     return 'text-green-700 dark:text-green-300'
@@ -593,8 +595,11 @@ const PaymentBalanceRow = ({
   const showReplenishAccountNotice =
     contributionVestedMembersCount !== undefined &&
     shouldShowReplenishAccountNotice(balance, contributionVestedMembersCount)
+  const showNotInGoodStandingNotice =
+    contributionVestedMembersCount !== undefined && shouldShowNotInGoodStandingNotice(balance)
   const showUpcomingMonthsNotice =
     !showReplenishAccountNotice &&
+    !showNotInGoodStandingNotice &&
     (balance > 0 || (balance === 0 && contributionVestedMembersCount === undefined))
 
   return (
@@ -603,6 +608,9 @@ const PaymentBalanceRow = ({
         Balance{' '}
         {showReplenishAccountNotice ? (
           <span className='text-[10px] leading-tight font-medium'>(Please replenish account)</span>
+        ) : null}
+        {showNotInGoodStandingNotice ? (
+          <span className='text-[10px] leading-tight font-medium'>(Not In Good Standing.)</span>
         ) : null}
         {showUpcomingMonthsNotice ? (
           <span className='text-[10px] leading-tight font-medium'>(To be used for upcoming months)</span>
