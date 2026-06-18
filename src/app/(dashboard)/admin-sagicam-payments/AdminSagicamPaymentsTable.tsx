@@ -28,7 +28,6 @@ export type AdminSagicamPaymentsRow = {
   contributionAmountUsed: number
   contributionCredit: number
   sponsorCode: string
-  sponsorEmail: string
   vestedMembers: number
 }
 
@@ -47,7 +46,6 @@ type AdminSagicamPaymentsColumn = {
 }
 
 const columns: AdminSagicamPaymentsColumn[] = [
-  { key: 'sponsorEmail', label: 'Email' },
   { key: 'sponsorCode', label: 'Code' },
   { key: 'vestedMembers', label: 'Vested', align: 'right' },
   { key: 'amountOwed', label: 'Contribution owed', align: 'right' },
@@ -56,19 +54,7 @@ const columns: AdminSagicamPaymentsColumn[] = [
   { key: 'balance', label: 'Contribution Balance', align: 'right' }
 ]
 
-const balanceColumnWidth = 25
-const contactColumnWidth = 12
-const codeColumnWidth = 8
-
-const regularColumnWidth = (100 - balanceColumnWidth - contactColumnWidth - codeColumnWidth) / (columns.length - 3)
-
-const getColumnWidth = (columnKey: SortKey) => {
-  if (columnKey === 'sponsorEmail') return contactColumnWidth
-  if (columnKey === 'sponsorCode') return codeColumnWidth
-  if (columnKey === 'balance') return balanceColumnWidth
-
-  return regularColumnWidth
-}
+const columnWidth = 100 / columns.length
 
 const getSortIcon = (isActive: boolean, direction: SortDirection) => {
   if (!isActive) return <ArrowUpDown className='size-3.5' />
@@ -165,16 +151,6 @@ const MobileValue = ({
     </span>
   </div>
 )
-
-const EmailLink = ({ className = '', email }: { className?: string; email: string }) => {
-  if (!email) return <span className={`text-primary ${className}`}>-</span>
-
-  return (
-    <a href={`mailto:${email}`} className={`text-primary underline-offset-2 hover:underline ${className}`}>
-      {email}
-    </a>
-  )
-}
 
 const ManualBalanceAdjustmentForm = ({
   action,
@@ -347,7 +323,7 @@ const AdminSagicamPaymentsTable = ({
         <Table className='[[&_td]:wrap-break-word table-fixed [&_td]:whitespace-normal [&_th]:wrap-break-word [&_th]:whitespace-normal'>
           <colgroup>
             {columns.map(column => (
-              <col key={column.key} style={{ width: `${getColumnWidth(column.key)}%` }} />
+              <col key={column.key} style={{ width: `${columnWidth}%` }} />
             ))}
           </colgroup>
           <TableHeader>
@@ -402,9 +378,6 @@ const AdminSagicamPaymentsTable = ({
             ) : (
               sortedRows.map(row => (
                 <TableRow key={row.sponsorCode} className='odd:bg-muted/30 even:bg-background'>
-                  <TableCell className='text-sm font-semibold'>
-                    <EmailLink email={row.sponsorEmail} className='break-all' />
-                  </TableCell>
                   <TableCell>{row.sponsorCode}</TableCell>
                   <TableCell className='text-right font-semibold'>{row.vestedMembers}</TableCell>
                   <TableCell className='text-right font-semibold'>{currencyFormatter.format(row.amountOwed)}</TableCell>
@@ -448,7 +421,6 @@ const AdminSagicamPaymentsTable = ({
           {sortedRows.length > 0 && (
             <TableFooter className='bg-white text-black dark:bg-white dark:text-black'>
               <TableRow className='bg-white text-base text-black hover:bg-white dark:bg-white dark:text-black dark:hover:bg-white'>
-                <TableCell />
                 <TableCell className='font-extrabold'>Total</TableCell>
                 <TableCell className='text-right font-extrabold'>{visibleTotals.vestedMembers}</TableCell>
                 <TableCell className='text-right font-extrabold'>
@@ -493,7 +465,6 @@ const AdminSagicamPaymentsTable = ({
               <div className='flex flex-col gap-3 border-b px-3 py-3 sm:flex-row sm:items-start sm:justify-between sm:px-4'>
                 <div className='w-full min-w-0'>
                   <div className='text-lg font-extrabold'>{row.sponsorCode}</div>
-                  <EmailLink email={row.sponsorEmail} className='block text-xs font-semibold break-all' />
                 </div>
                 <ContributionPaymentControls row={row} layout='card' />
               </div>
