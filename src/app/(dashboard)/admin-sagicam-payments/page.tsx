@@ -237,8 +237,8 @@ const AdminSagicamPayments = async () => {
       contributionCredit: contributionSummary?.vestedContributionCredit ?? 0,
       contributionAmountUsed: contributionSummary?.totalAmountUsed ?? 0,
       contributionAmountSent: contributionSummary?.amountReceived ?? 0,
+      cemail: sponsor?.sponsorEmail ?? '',
       sponsorCode,
-      sponsorEmail: sponsor?.sponsorEmail ?? '',
       vestedMembers: vestedMembersByCode.get(sponsorCode) ?? 0
     }
   })
