@@ -23,12 +23,22 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
+  applicationName: 'SAGICAM',
   title: {
     template: 'SAGICAM by Active Solidarity ',
     default: 'SAGICAM by Active Solidarity'
   },
   description: 'Grow the solidarity ring as big as it can be, because together we are stronger.',
+  manifest: '/manifest.webmanifest',
   robots: 'index,follow',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'SAGICAM'
+  },
+  formatDetection: {
+    telephone: false
+  },
   keywords: [
     'sales analytics',
     'solidarity growth',
@@ -109,6 +119,7 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   initialScale: 1,
+  themeColor: '#4f46e5',
   viewportFit: 'cover',
   width: 'device-width'
 }
