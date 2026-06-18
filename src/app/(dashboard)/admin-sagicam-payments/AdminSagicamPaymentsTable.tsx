@@ -28,6 +28,7 @@ export type AdminSagicamPaymentsRow = {
   contributionAmountUsed: number
   contributionCredit: number
   sponsorCode: string
+  sponsorEmail: string
   vestedMembers: number
 }
 
@@ -46,6 +47,7 @@ type AdminSagicamPaymentsColumn = {
 }
 
 const columns: AdminSagicamPaymentsColumn[] = [
+  { key: 'sponsorEmail', label: 'Email' },
   { key: 'sponsorCode', label: 'Code' },
   { key: 'vestedMembers', label: 'Vested', align: 'right' },
   { key: 'amountOwed', label: 'Contribution owed', align: 'right' },
@@ -156,6 +158,16 @@ const MobileValue = ({
     </span>
   </div>
 )
+
+const EmailLink = ({ className = '', email }: { className?: string; email: string }) => {
+  if (!email) return <span className={`text-primary ${className}`}>-</span>
+
+  return (
+    <a href={`mailto:${email}`} className={`text-primary underline-offset-2 hover:underline ${className}`}>
+      {email}
+    </a>
+  )
+}
 
 const ManualBalanceAdjustmentForm = ({
   action,
@@ -384,6 +396,9 @@ const AdminSagicamPaymentsTable = ({
             ) : (
               sortedRows.map(row => (
                 <TableRow key={row.sponsorCode} className='odd:bg-muted/30 even:bg-background'>
+                  <TableCell className='text-sm font-semibold' style={getColumnStyle('sponsorEmail')}>
+                    <EmailLink email={row.sponsorEmail} className='break-all' />
+                  </TableCell>
                   <TableCell style={getColumnStyle('sponsorCode')}>{row.sponsorCode}</TableCell>
                   <TableCell className='text-right font-semibold' style={getColumnStyle('vestedMembers')}>
                     {row.vestedMembers}
@@ -433,6 +448,7 @@ const AdminSagicamPaymentsTable = ({
           {sortedRows.length > 0 && (
             <TableFooter className='bg-white text-black dark:bg-white dark:text-black'>
               <TableRow className='bg-white text-base text-black hover:bg-white dark:bg-white dark:text-black dark:hover:bg-white'>
+                <TableCell style={getColumnStyle('sponsorEmail')} />
                 <TableCell className='font-extrabold' style={getColumnStyle('sponsorCode')}>
                   Total
                 </TableCell>
@@ -481,6 +497,7 @@ const AdminSagicamPaymentsTable = ({
               <div className='flex flex-col gap-3 border-b px-3 py-3 sm:flex-row sm:items-start sm:justify-between sm:px-4'>
                 <div className='w-full min-w-0'>
                   <div className='text-lg font-extrabold'>{row.sponsorCode}</div>
+                  <EmailLink email={row.sponsorEmail} className='block text-xs font-semibold break-all' />
                 </div>
                 <ContributionPaymentControls row={row} layout='card' />
               </div>

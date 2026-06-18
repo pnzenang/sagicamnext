@@ -206,6 +206,20 @@ const AdminSagicamPayments = async () => {
     })
   )
 
+  const sponsors = await db.profile.findMany({
+    select: {
+      sponsorCode: true,
+      sponsorEmail: true
+    },
+    where: {
+      sponsorCode: {
+        in: sponsorCodes
+      }
+    }
+  })
+
+  const sponsorsByCode = new Map(sponsors.map(sponsor => [sponsor.sponsorCode, sponsor]))
+
   const contributionSummaries = await Promise.all(
     sponsorCodes.map(sponsorCode => fetchSponsorContributionSummary(sponsorCode, { noStore: true }))
   )
@@ -213,6 +227,7 @@ const AdminSagicamPayments = async () => {
   const contributionSummaryByCode = new Map(contributionSummaries.map(summary => [summary.sponsorCode, summary]))
 
   const rows: AdminSagicamPaymentsRow[] = sponsorCodes.map(sponsorCode => {
+    const sponsor = sponsorsByCode.get(sponsorCode)
     const contributionSummary = contributionSummaryByCode.get(sponsorCode)
 
     return {
@@ -223,6 +238,7 @@ const AdminSagicamPayments = async () => {
       contributionAmountUsed: contributionSummary?.totalAmountUsed ?? 0,
       contributionAmountSent: contributionSummary?.amountReceived ?? 0,
       sponsorCode,
+      sponsorEmail: sponsor?.sponsorEmail ?? '',
       vestedMembers: vestedMembersByCode.get(sponsorCode) ?? 0
     }
   })
