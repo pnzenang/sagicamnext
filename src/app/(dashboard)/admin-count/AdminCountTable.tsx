@@ -11,7 +11,6 @@ import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, Table
 export type AdminCountRow = {
   sponsorName: string
   sponsorEmail: string
-  sponsorPhoneNumber: string
   sponsorCode: string
   vested: number
   pending: number
@@ -35,7 +34,6 @@ type AdminCountColumn = {
 const columns: AdminCountColumn[] = [
   { key: 'sponsorName', label: 'Sponsor name', className: 'hidden md:table-cell' },
   { key: 'sponsorEmail', label: 'Sponsor email', className: 'hidden md:table-cell' },
-  { key: 'sponsorPhoneNumber', label: 'Telephone', className: 'hidden md:table-cell' },
   { key: 'sponsorCode', label: 'Code' },
   { key: 'vested', label: 'Vested', align: 'right' },
   { key: 'pending', label: 'Pending', align: 'right' },
@@ -44,7 +42,7 @@ const columns: AdminCountColumn[] = [
   { key: 'total', label: 'Total', align: 'right' }
 ]
 
-const fixedLeftColumnCount = 3
+const fixedLeftColumnCount = 2
 const fixedLeftColumnWidth = 20
 
 const flexibleColumnWidth =
@@ -107,7 +105,7 @@ const AdminCountTable = ({ rows, totals }: { rows: AdminCountRow[]; totals: Admi
     const worksheetRows = [
       columns.map(column => column.label),
       ...sortedRows.map(row => columns.map(column => row[column.key])),
-      ['Total', '', '', '', totals.vested, totals.pending, totals.delinquent, totals.awaiting, totals.total]
+      ['Total', '', '', totals.vested, totals.pending, totals.delinquent, totals.awaiting, totals.total]
     ]
 
     const worksheet = XLSX.utils.aoa_to_sheet(worksheetRows)
@@ -182,16 +180,6 @@ const AdminCountTable = ({ rows, totals }: { rows: AdminCountRow[]; totals: Admi
                         </a>
                       )}
                     </TableCell>
-                    <TableCell className='hidden md:table-cell'>
-                      {row.sponsorPhoneNumber && (
-                        <a
-                          className='text-primary underline-offset-4 hover:underline'
-                          href={`tel:${row.sponsorPhoneNumber}`}
-                        >
-                          {row.sponsorPhoneNumber}
-                        </a>
-                      )}
-                    </TableCell>
                     <TableCell>{row.sponsorCode}</TableCell>
                     <TableCell className='text-right font-semibold'>{row.vested}</TableCell>
                     <TableCell className='text-right font-semibold'>{row.pending}</TableCell>
@@ -206,7 +194,6 @@ const AdminCountTable = ({ rows, totals }: { rows: AdminCountRow[]; totals: Admi
               <TableFooter>
                 <TableRow className='text-base'>
                   <TableCell className='hidden font-extrabold md:table-cell'>Total</TableCell>
-                  <TableCell className='hidden font-extrabold md:table-cell' />
                   <TableCell className='hidden font-extrabold md:table-cell' />
                   <TableCell className='font-extrabold' />
                   <TableCell className='text-right font-extrabold'>{totals.vested}</TableCell>
@@ -246,14 +233,6 @@ const AdminCountTable = ({ rows, totals }: { rows: AdminCountRow[]; totals: Admi
                       href={`mailto:${row.sponsorEmail}`}
                     >
                       {row.sponsorEmail}
-                    </a>
-                  )}
-                  {row.sponsorPhoneNumber && (
-                    <a
-                      className='text-primary break-words underline-offset-4 hover:underline'
-                      href={`tel:${row.sponsorPhoneNumber}`}
-                    >
-                      {row.sponsorPhoneNumber}
                     </a>
                   )}
                 </div>

@@ -29,7 +29,6 @@ export type AdminSagicamPaymentsRow = {
   contributionCredit: number
   sponsorCode: string
   sponsorEmail: string
-  sponsorPhoneNumber: string
   vestedMembers: number
 }
 
@@ -49,7 +48,6 @@ type AdminSagicamPaymentsColumn = {
 
 const columns: AdminSagicamPaymentsColumn[] = [
   { key: 'sponsorEmail', label: 'Email' },
-  { key: 'sponsorPhoneNumber', label: 'Telephone' },
   { key: 'sponsorCode', label: 'Code' },
   { key: 'vestedMembers', label: 'Vested', align: 'right' },
   { key: 'amountOwed', label: 'Contribution owed', align: 'right' },
@@ -62,17 +60,15 @@ const balanceColumnWidth = 25
 const contactColumnWidth = 12
 const codeColumnWidth = 8
 
-const regularColumnWidth = (100 - balanceColumnWidth - contactColumnWidth * 2 - codeColumnWidth) / (columns.length - 4)
+const regularColumnWidth = (100 - balanceColumnWidth - contactColumnWidth - codeColumnWidth) / (columns.length - 3)
 
 const getColumnWidth = (columnKey: SortKey) => {
-  if (columnKey === 'sponsorEmail' || columnKey === 'sponsorPhoneNumber') return contactColumnWidth
+  if (columnKey === 'sponsorEmail') return contactColumnWidth
   if (columnKey === 'sponsorCode') return codeColumnWidth
   if (columnKey === 'balance') return balanceColumnWidth
 
   return regularColumnWidth
 }
-
-const getPhoneHref = (phoneNumber: string) => phoneNumber.replace(/[^\d+]/g, '')
 
 const getSortIcon = (isActive: boolean, direction: SortDirection) => {
   if (!isActive) return <ArrowUpDown className='size-3.5' />
@@ -176,19 +172,6 @@ const EmailLink = ({ className = '', email }: { className?: string; email: strin
   return (
     <a href={`mailto:${email}`} className={`text-primary underline-offset-2 hover:underline ${className}`}>
       {email}
-    </a>
-  )
-}
-
-const PhoneLink = ({ className = '', phoneNumber }: { className?: string; phoneNumber: string }) => {
-  if (!phoneNumber) return <span className={`text-primary ${className}`}>-</span>
-
-  return (
-    <a
-      href={`tel:${getPhoneHref(phoneNumber)}`}
-      className={`text-primary underline-offset-2 hover:underline ${className}`}
-    >
-      {phoneNumber}
     </a>
   )
 }
@@ -422,9 +405,6 @@ const AdminSagicamPaymentsTable = ({
                   <TableCell className='text-sm font-semibold'>
                     <EmailLink email={row.sponsorEmail} className='break-all' />
                   </TableCell>
-                  <TableCell className='text-sm font-semibold'>
-                    <PhoneLink phoneNumber={row.sponsorPhoneNumber} />
-                  </TableCell>
                   <TableCell>{row.sponsorCode}</TableCell>
                   <TableCell className='text-right font-semibold'>{row.vestedMembers}</TableCell>
                   <TableCell className='text-right font-semibold'>{currencyFormatter.format(row.amountOwed)}</TableCell>
@@ -468,7 +448,6 @@ const AdminSagicamPaymentsTable = ({
           {sortedRows.length > 0 && (
             <TableFooter className='bg-white text-black dark:bg-white dark:text-black'>
               <TableRow className='bg-white text-base text-black hover:bg-white dark:bg-white dark:text-black dark:hover:bg-white'>
-                <TableCell />
                 <TableCell />
                 <TableCell className='font-extrabold'>Total</TableCell>
                 <TableCell className='text-right font-extrabold'>{visibleTotals.vestedMembers}</TableCell>
@@ -515,7 +494,6 @@ const AdminSagicamPaymentsTable = ({
                 <div className='w-full min-w-0'>
                   <div className='text-lg font-extrabold'>{row.sponsorCode}</div>
                   <EmailLink email={row.sponsorEmail} className='block text-xs font-semibold break-all' />
-                  <PhoneLink phoneNumber={row.sponsorPhoneNumber} className='block text-xs font-semibold' />
                 </div>
                 <ContributionPaymentControls row={row} layout='card' />
               </div>

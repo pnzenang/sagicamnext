@@ -60,8 +60,7 @@ const AdminCount = async () => {
       sponsorCode: true,
       sponsorEmail: true,
       sponsorFirstName: true,
-      sponsorLastAndMiddleName: true,
-      sponsorPhoneNumber: true
+      sponsorLastAndMiddleName: true
     }
   })
 
@@ -75,7 +74,6 @@ const AdminCount = async () => {
     return {
       sponsorName,
       sponsorEmail: sponsor?.sponsorEmail ?? '',
-      sponsorPhoneNumber: sponsor?.sponsorPhoneNumber ?? '',
       sponsorCode,
       vested: counts[memberStatus.Vested],
       pending: counts[memberStatus.Pending],
