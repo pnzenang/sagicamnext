@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from 'react'
 
-import { ArrowDown, ArrowUp, ArrowUpDown, CheckCircle2, RotateCcw } from 'lucide-react'
+import { ArrowDown, ArrowUp, ArrowUpDown, CheckCircle2, Download, RotateCcw } from 'lucide-react'
+import * as XLSX from 'xlsx'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -55,6 +56,16 @@ const columns: AdminSagicamPaymentsColumn[] = [
   { key: 'amountReceived', label: 'Contribution verified', align: 'right' },
   { key: 'balance', label: 'Contribution Balance', align: 'right' }
 ]
+
+const exportColumnWidths: Partial<Record<SortKey, number>> = {
+  amountOwed: 18,
+  amountReceived: 22,
+  balance: 22,
+  cemail: 32,
+  contributionAmountSent: 20,
+  sponsorCode: 14,
+  vestedMembers: 10
+}
 
 const balanceColumnWidth = 30
 const regularColumnWidth = (100 - balanceColumnWidth) / (columns.length - 1)
@@ -334,217 +345,259 @@ const AdminSagicamPaymentsTable = ({
     setSortDirection('asc')
   }
 
-  return (
-    <div className='border-border max-w-full min-w-0 overflow-hidden rounded-lg border'>
-      <div className='hidden overflow-x-auto md:block'>
-        <Table className='[[&_td]:wrap-break-word table-fixed [&_td]:whitespace-normal [&_th]:wrap-break-word [&_th]:whitespace-normal'>
-          <colgroup>
-            {columns.map(column => (
-              <col key={column.key} style={getColumnStyle(column.key)} />
-            ))}
-          </colgroup>
-          <TableHeader>
-            <TableRow className='bg-background hover:bg-background'>
-              <TableHead colSpan={columns.length} className='h-auto p-3'>
-                <form role='search' onSubmit={event => event.preventDefault()} className='w-full'>
-                  <label htmlFor='contribution-sponsor-code-search' className='sr-only'>
-                    Search sponsor code
-                  </label>
-                  <Input
-                    id='contribution-sponsor-code-search'
-                    value={codeSearch}
-                    onChange={event => setCodeSearch(event.target.value)}
-                    placeholder='Search sponsor code, e.g. MLNO'
-                    className='bg-background h-10 w-full text-sm font-semibold'
-                  />
-                </form>
-              </TableHead>
-            </TableRow>
-            <TableRow className='bg-primary hover:bg-primary h-16'>
-              {columns.map(column => {
-                const isActive = sortKey === column.key
+  const handleExportPage = () => {
+    const totalRowByKey: Partial<Record<SortKey, string | number>> = {
+      amountOwed: visibleTotals.amountOwed,
+      amountReceived: visibleTotals.amountReceived,
+      balance: visibleTotals.balance,
+      contributionAmountSent: visibleTotals.contributionAmountSent,
+      sponsorCode: 'Total',
+      vestedMembers: visibleTotals.vestedMembers
+    }
 
-                return (
-                  <TableHead
-                    key={column.key}
-                    className='text-primary-foreground h-16'
-                    style={getColumnStyle(column.key)}
-                    aria-sort={isActive ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
-                  >
-                    <button
-                      type='button'
-                      className={`flex min-h-12 w-full items-center gap-1.5 text-left font-semibold ${column.align === 'right' ? 'justify-end text-right [&>span]:text-right' : 'justify-start'}`}
-                      onClick={() => handleSort(column.key)}
-                    >
-                      <span>{column.label}</span>
-                      {getSortIcon(isActive, sortDirection)}
-                    </button>
-                  </TableHead>
-                )
-              })}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {sortedRows.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={columns.length} className='text-muted-foreground h-24 text-center'>
-                  {normalizedCodeSearch
-                    ? `No sponsor code matching "${codeSearch.trim()}" found.`
-                    : 'No Sagicam contributions found.'}
-                </TableCell>
+    const worksheetRows = [
+      columns.map(column => column.label),
+      ...sortedRows.map(row => columns.map(column => row[column.key])),
+      columns.map(column => totalRowByKey[column.key] ?? '')
+    ]
+
+    const worksheet = XLSX.utils.aoa_to_sheet(worksheetRows)
+
+    worksheet['!cols'] = columns.map(column => ({ wch: exportColumnWidths[column.key] ?? 16 }))
+
+    const workbook = XLSX.utils.book_new()
+
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Sagicam Contributions')
+    XLSX.writeFile(workbook, `sagicam-contributions-page-${new Date().toISOString().split('T')[0]}.xlsx`)
+  }
+
+  return (
+    <div className='max-w-full min-w-0 space-y-3'>
+      <div className='flex justify-end'>
+        <Button type='button' size='sm' onClick={handleExportPage} disabled={sortedRows.length === 0}>
+          <Download />
+          Export Page
+        </Button>
+      </div>
+
+      <div className='border-border max-w-full min-w-0 overflow-hidden rounded-lg border'>
+        <div className='hidden overflow-x-auto md:block'>
+          <Table className='[[&_td]:wrap-break-word table-fixed [&_td]:whitespace-normal [&_th]:wrap-break-word [&_th]:whitespace-normal'>
+            <colgroup>
+              {columns.map(column => (
+                <col key={column.key} style={getColumnStyle(column.key)} />
+              ))}
+            </colgroup>
+            <TableHeader>
+              <TableRow className='bg-background hover:bg-background'>
+                <TableHead colSpan={columns.length} className='h-auto p-3'>
+                  <form role='search' onSubmit={event => event.preventDefault()} className='w-full'>
+                    <label htmlFor='contribution-sponsor-code-search' className='sr-only'>
+                      Search sponsor code
+                    </label>
+                    <Input
+                      id='contribution-sponsor-code-search'
+                      value={codeSearch}
+                      onChange={event => setCodeSearch(event.target.value)}
+                      placeholder='Search sponsor code, e.g. MLNO'
+                      className='bg-background h-10 w-full text-sm font-semibold'
+                    />
+                  </form>
+                </TableHead>
               </TableRow>
-            ) : (
-              sortedRows.map(row => (
-                <TableRow key={row.sponsorCode} className='odd:bg-muted/30 even:bg-background'>
-                  <TableCell className='text-sm font-semibold' style={getColumnStyle('cemail')}>
-                    <EmailLink email={row.cemail} className='break-all' />
-                  </TableCell>
-                  <TableCell style={getColumnStyle('sponsorCode')}>{row.sponsorCode}</TableCell>
-                  <TableCell className='text-right font-semibold' style={getColumnStyle('vestedMembers')}>
-                    {row.vestedMembers}
-                  </TableCell>
-                  <TableCell className='text-right font-semibold' style={getColumnStyle('amountOwed')}>
-                    {currencyFormatter.format(row.amountOwed)}
-                  </TableCell>
-                  <TableCell
-                    className={`text-right font-semibold ${
-                      row.contributionAmountSent > 0 ? 'text-green-700 dark:text-green-300' : ''
-                    }`}
-                    style={getColumnStyle('contributionAmountSent')}
-                  >
-                    {currencyFormatter.format(row.contributionAmountSent)}
-                  </TableCell>
-                  <TableCell className='text-right font-semibold' style={getColumnStyle('amountReceived')}>
-                    {currencyFormatter.format(row.amountReceived)}
-                  </TableCell>
-                  <TableCell
-                    className={cn(
-                      'text-center align-middle font-semibold',
-                      getContributionBalanceStatusClassName(row.balance, row.vestedMembers)
-                    )}
-                    style={getColumnStyle('balance')}
-                  >
-                    <div className='grid min-w-0 grid-cols-[auto_auto_minmax(0,1fr)] grid-rows-[auto_auto] items-center justify-items-center gap-x-2 gap-y-1'>
-                      <ContributionPaymentControls row={row} />
-                      <span className='bg-background/80 col-start-3 row-span-2 row-start-1 flex min-w-0 flex-col items-center justify-center self-stretch justify-self-stretch rounded-md border border-current/20 px-2 py-2 text-center text-xl leading-none font-black'>
-                        <span className='tabular-nums'>{currencyFormatter.format(row.balance)}</span>
-                        {shouldShowReplenishAccountNotice(row.balance, row.vestedMembers) ? (
-                          <span className='mt-1 text-[10px] leading-tight font-semibold'>
-                            (Please replenish account)
-                          </span>
-                        ) : null}
-                        {shouldShowNotInGoodStandingNotice(row.balance) ? (
-                          <span className='mt-1 text-[10px] leading-tight font-semibold'>
-                            (Not In Good Standing.)
-                          </span>
-                        ) : null}
-                      </span>
-                    </div>
+              <TableRow className='bg-primary hover:bg-primary h-16'>
+                {columns.map(column => {
+                  const isActive = sortKey === column.key
+
+                  return (
+                    <TableHead
+                      key={column.key}
+                      className='text-primary-foreground h-16'
+                      style={getColumnStyle(column.key)}
+                      aria-sort={isActive ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
+                    >
+                      <button
+                        type='button'
+                        className={`flex min-h-12 w-full items-center gap-1.5 text-left font-semibold ${column.align === 'right' ? 'justify-end text-right [&>span]:text-right' : 'justify-start'}`}
+                        onClick={() => handleSort(column.key)}
+                      >
+                        <span>{column.label}</span>
+                        {getSortIcon(isActive, sortDirection)}
+                      </button>
+                    </TableHead>
+                  )
+                })}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {sortedRows.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={columns.length} className='text-muted-foreground h-24 text-center'>
+                    {normalizedCodeSearch
+                      ? `No sponsor code matching "${codeSearch.trim()}" found.`
+                      : 'No Sagicam contributions found.'}
                   </TableCell>
                 </TableRow>
-              ))
+              ) : (
+                sortedRows.map(row => (
+                  <TableRow key={row.sponsorCode} className='odd:bg-muted/30 even:bg-background'>
+                    <TableCell className='text-sm font-semibold' style={getColumnStyle('cemail')}>
+                      <EmailLink email={row.cemail} className='break-all' />
+                    </TableCell>
+                    <TableCell style={getColumnStyle('sponsorCode')}>{row.sponsorCode}</TableCell>
+                    <TableCell className='text-right font-semibold' style={getColumnStyle('vestedMembers')}>
+                      {row.vestedMembers}
+                    </TableCell>
+                    <TableCell className='text-right font-semibold' style={getColumnStyle('amountOwed')}>
+                      {currencyFormatter.format(row.amountOwed)}
+                    </TableCell>
+                    <TableCell
+                      className={`text-right font-semibold ${
+                        row.contributionAmountSent > 0 ? 'text-green-700 dark:text-green-300' : ''
+                      }`}
+                      style={getColumnStyle('contributionAmountSent')}
+                    >
+                      {currencyFormatter.format(row.contributionAmountSent)}
+                    </TableCell>
+                    <TableCell className='text-right font-semibold' style={getColumnStyle('amountReceived')}>
+                      {currencyFormatter.format(row.amountReceived)}
+                    </TableCell>
+                    <TableCell
+                      className={cn(
+                        'text-center align-middle font-semibold',
+                        getContributionBalanceStatusClassName(row.balance, row.vestedMembers)
+                      )}
+                      style={getColumnStyle('balance')}
+                    >
+                      <div className='grid min-w-0 grid-cols-[auto_auto_minmax(0,1fr)] grid-rows-[auto_auto] items-center justify-items-center gap-x-2 gap-y-1'>
+                        <ContributionPaymentControls row={row} />
+                        <span className='bg-background/80 col-start-3 row-span-2 row-start-1 flex min-w-0 flex-col items-center justify-center self-stretch justify-self-stretch rounded-md border border-current/20 px-2 py-2 text-center text-xl leading-none font-black'>
+                          <span className='tabular-nums'>{currencyFormatter.format(row.balance)}</span>
+                          {shouldShowReplenishAccountNotice(row.balance, row.vestedMembers) ? (
+                            <span className='mt-1 text-[10px] leading-tight font-semibold'>
+                              (Please replenish account)
+                            </span>
+                          ) : null}
+                          {shouldShowNotInGoodStandingNotice(row.balance) ? (
+                            <span className='mt-1 text-[10px] leading-tight font-semibold'>
+                              (Not In Good Standing.)
+                            </span>
+                          ) : null}
+                        </span>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+            {sortedRows.length > 0 && (
+              <TableFooter className='bg-white text-black dark:bg-white dark:text-black'>
+                <TableRow className='bg-white text-base text-black hover:bg-white dark:bg-white dark:text-black dark:hover:bg-white'>
+                  <TableCell style={getColumnStyle('cemail')} />
+                  <TableCell className='font-extrabold' style={getColumnStyle('sponsorCode')}>
+                    Total
+                  </TableCell>
+                  <TableCell className='text-right font-extrabold' style={getColumnStyle('vestedMembers')}>
+                    {visibleTotals.vestedMembers}
+                  </TableCell>
+                  <TableCell className='text-right font-extrabold' style={getColumnStyle('amountOwed')}>
+                    {currencyFormatter.format(visibleTotals.amountOwed)}
+                  </TableCell>
+                  <TableCell className='text-right font-extrabold' style={getColumnStyle('contributionAmountSent')}>
+                    {currencyFormatter.format(visibleTotals.contributionAmountSent)}
+                  </TableCell>
+                  <TableCell className='text-right font-extrabold' style={getColumnStyle('amountReceived')}>
+                    {currencyFormatter.format(visibleTotals.amountReceived)}
+                  </TableCell>
+                  <TableCell className='text-right font-extrabold' style={getColumnStyle('balance')}>
+                    <BalanceCard balance={visibleTotals.balance} vestedMembers={visibleTotals.vestedMembers} />
+                  </TableCell>
+                </TableRow>
+              </TableFooter>
             )}
-          </TableBody>
-          {sortedRows.length > 0 && (
-            <TableFooter className='bg-white text-black dark:bg-white dark:text-black'>
-              <TableRow className='bg-white text-base text-black hover:bg-white dark:bg-white dark:text-black dark:hover:bg-white'>
-                <TableCell style={getColumnStyle('cemail')} />
-                <TableCell className='font-extrabold' style={getColumnStyle('sponsorCode')}>
-                  Total
-                </TableCell>
-                <TableCell className='text-right font-extrabold' style={getColumnStyle('vestedMembers')}>
-                  {visibleTotals.vestedMembers}
-                </TableCell>
-                <TableCell className='text-right font-extrabold' style={getColumnStyle('amountOwed')}>
-                  {currencyFormatter.format(visibleTotals.amountOwed)}
-                </TableCell>
-                <TableCell className='text-right font-extrabold' style={getColumnStyle('contributionAmountSent')}>
-                  {currencyFormatter.format(visibleTotals.contributionAmountSent)}
-                </TableCell>
-                <TableCell className='text-right font-extrabold' style={getColumnStyle('amountReceived')}>
-                  {currencyFormatter.format(visibleTotals.amountReceived)}
-                </TableCell>
-                <TableCell className='text-right font-extrabold' style={getColumnStyle('balance')}>
-                  <BalanceCard balance={visibleTotals.balance} vestedMembers={visibleTotals.vestedMembers} />
-                </TableCell>
-              </TableRow>
-            </TableFooter>
-          )}
-        </Table>
-      </div>
-      <div className='grid gap-3 p-2 sm:p-3 md:hidden'>
-        <form role='search' onSubmit={event => event.preventDefault()} className='rounded-md border bg-background p-2'>
-          <label htmlFor='contribution-sponsor-code-search-mobile' className='sr-only'>
-            Search sponsor code
-          </label>
-          <Input
-            id='contribution-sponsor-code-search-mobile'
-            value={codeSearch}
-            onChange={event => setCodeSearch(event.target.value)}
-            placeholder='Search sponsor code, e.g. MLNO'
-            className='bg-background h-9 text-sm font-semibold'
-          />
-        </form>
-        {sortedRows.length === 0 ? (
-          <div className='text-muted-foreground rounded-md border px-3 py-8 text-center text-sm sm:px-4 sm:py-10'>
-            {normalizedCodeSearch
-              ? `No sponsor code matching "${codeSearch.trim()}" found.`
-              : 'No Sagicam contributions found.'}
-          </div>
-        ) : (
-          sortedRows.map(row => (
-            <article key={row.sponsorCode} className='bg-background overflow-hidden rounded-md border shadow-sm'>
-              <div className='flex flex-col gap-3 border-b px-3 py-3 sm:flex-row sm:items-start sm:justify-between sm:px-4'>
-                <div className='w-full min-w-0'>
-                  <div className='text-lg font-extrabold'>{row.sponsorCode}</div>
-                  <EmailLink email={row.cemail} className='block text-xs font-semibold break-all' />
+          </Table>
+        </div>
+        <div className='grid gap-3 p-2 sm:p-3 md:hidden'>
+          <form
+            role='search'
+            onSubmit={event => event.preventDefault()}
+            className='bg-background rounded-md border p-2'
+          >
+            <label htmlFor='contribution-sponsor-code-search-mobile' className='sr-only'>
+              Search sponsor code
+            </label>
+            <Input
+              id='contribution-sponsor-code-search-mobile'
+              value={codeSearch}
+              onChange={event => setCodeSearch(event.target.value)}
+              placeholder='Search sponsor code, e.g. MLNO'
+              className='bg-background h-9 text-sm font-semibold'
+            />
+          </form>
+          {sortedRows.length === 0 ? (
+            <div className='text-muted-foreground rounded-md border px-3 py-8 text-center text-sm sm:px-4 sm:py-10'>
+              {normalizedCodeSearch
+                ? `No sponsor code matching "${codeSearch.trim()}" found.`
+                : 'No Sagicam contributions found.'}
+            </div>
+          ) : (
+            sortedRows.map(row => (
+              <article key={row.sponsorCode} className='bg-background overflow-hidden rounded-md border shadow-sm'>
+                <div className='flex flex-col gap-3 border-b px-3 py-3 sm:flex-row sm:items-start sm:justify-between sm:px-4'>
+                  <div className='w-full min-w-0'>
+                    <div className='text-lg font-extrabold'>{row.sponsorCode}</div>
+                    <EmailLink email={row.cemail} className='block text-xs font-semibold break-all' />
+                  </div>
+                  <ContributionPaymentControls row={row} layout='card' />
                 </div>
-                <ContributionPaymentControls row={row} layout='card' />
-              </div>
-              <div className='grid gap-2 px-3 py-3 text-sm sm:px-4'>
-                <div className='text-sm font-extrabold'>Contribution</div>
-                <MobileValue label='Vested' value={row.vestedMembers} />
-                <MobileValue label='Owed' value={currencyFormatter.format(row.amountOwed)} />
+                <div className='grid gap-2 px-3 py-3 text-sm sm:px-4'>
+                  <div className='text-sm font-extrabold'>Contribution</div>
+                  <MobileValue label='Vested' value={row.vestedMembers} />
+                  <MobileValue label='Owed' value={currencyFormatter.format(row.amountOwed)} />
+                  <MobileValue
+                    label='Sent'
+                    value={currencyFormatter.format(row.contributionAmountSent)}
+                    valueClassName={row.contributionAmountSent > 0 ? 'text-green-700 dark:text-green-300' : ''}
+                  />
+                  <MobileValue label='Verified' value={currencyFormatter.format(row.amountReceived)} />
+                  <div className='grid grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] items-start gap-2 border-t pt-3'>
+                    <span className='text-muted-foreground text-xs font-semibold uppercase'>Contribution Balance</span>
+                    <BalanceCard
+                      balance={row.balance}
+                      vestedMembers={row.vestedMembers}
+                      className='max-w-full justify-end justify-self-end'
+                    />
+                  </div>
+                </div>
+              </article>
+            ))
+          )}
+          {sortedRows.length > 0 && (
+            <article className='rounded-md border bg-white px-3 py-3 text-black shadow-sm sm:px-4 dark:bg-white dark:text-black'>
+              <div className='mb-2 text-base font-extrabold'>Total</div>
+              <div className='grid gap-2'>
+                <MobileValue label='Vested' value={visibleTotals.vestedMembers} />
+                <MobileValue label='Contribution owed' value={currencyFormatter.format(visibleTotals.amountOwed)} />
                 <MobileValue
-                  label='Sent'
-                  value={currencyFormatter.format(row.contributionAmountSent)}
-                  valueClassName={row.contributionAmountSent > 0 ? 'text-green-700 dark:text-green-300' : ''}
+                  label='Contribution sent'
+                  value={currencyFormatter.format(visibleTotals.contributionAmountSent)}
                 />
-                <MobileValue label='Verified' value={currencyFormatter.format(row.amountReceived)} />
+                <MobileValue
+                  label='Contribution verified'
+                  value={currencyFormatter.format(visibleTotals.amountReceived)}
+                />
                 <div className='grid grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] items-start gap-2 border-t pt-3'>
-                  <span className='text-muted-foreground text-xs font-semibold uppercase'>Contribution Balance</span>
+                  <span className='text-xs font-semibold uppercase'>Contribution balance</span>
                   <BalanceCard
-                    balance={row.balance}
-                    vestedMembers={row.vestedMembers}
+                    balance={visibleTotals.balance}
+                    vestedMembers={visibleTotals.vestedMembers}
                     className='max-w-full justify-end justify-self-end'
                   />
                 </div>
               </div>
             </article>
-          ))
-        )}
-        {sortedRows.length > 0 && (
-          <article className='rounded-md border bg-white px-3 py-3 text-black shadow-sm sm:px-4 dark:bg-white dark:text-black'>
-            <div className='mb-2 text-base font-extrabold'>Total</div>
-            <div className='grid gap-2'>
-              <MobileValue label='Vested' value={visibleTotals.vestedMembers} />
-              <MobileValue label='Contribution owed' value={currencyFormatter.format(visibleTotals.amountOwed)} />
-              <MobileValue
-                label='Contribution sent'
-                value={currencyFormatter.format(visibleTotals.contributionAmountSent)}
-              />
-              <MobileValue label='Contribution verified' value={currencyFormatter.format(visibleTotals.amountReceived)} />
-              <div className='grid grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] items-start gap-2 border-t pt-3'>
-                <span className='text-xs font-semibold uppercase'>Contribution balance</span>
-                <BalanceCard
-                  balance={visibleTotals.balance}
-                  vestedMembers={visibleTotals.vestedMembers}
-                  className='max-w-full justify-end justify-self-end'
-                />
-              </div>
-            </div>
-          </article>
-        )}
+          )}
+        </div>
       </div>
     </div>
   )

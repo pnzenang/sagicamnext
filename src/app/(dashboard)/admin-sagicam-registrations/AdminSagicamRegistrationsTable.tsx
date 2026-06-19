@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from 'react'
 
-import { ArrowDown, ArrowUp, ArrowUpDown, CheckCircle2, RotateCcw } from 'lucide-react'
+import { ArrowDown, ArrowUp, ArrowUpDown, CheckCircle2, Download, RotateCcw } from 'lucide-react'
+import * as XLSX from 'xlsx'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -63,6 +64,18 @@ const columns: AdminSagicamRegistrationsColumn[] = [
   { key: 'registrationReceived', label: 'Registration verified', align: 'right' },
   { key: 'registrationBalance', label: 'Registration balance', align: 'right' }
 ]
+
+const exportColumnWidths: Partial<Record<SortKey, number>> = {
+  awaitingPublication: 12,
+  pendingMembers: 12,
+  registrationAmountSent: 20,
+  registrationBalance: 22,
+  registrationFeeOwed: 20,
+  registrationReceived: 22,
+  sponsorCode: 14,
+  sponsorEmail: 32,
+  vestedMembers: 10
+}
 
 const balanceColumnWidth = 30
 const regularColumnWidth = (100 - balanceColumnWidth) / (columns.length - 1)
@@ -304,225 +317,269 @@ const AdminSagicamRegistrationsTable = ({
     setSortDirection('asc')
   }
 
-  return (
-    <div className='border-border max-w-full min-w-0 overflow-hidden rounded-lg border'>
-      <div className='hidden overflow-x-auto md:block'>
-        <Table className='[[&_td]:wrap-break-word table-fixed [&_td]:whitespace-normal [&_th]:wrap-break-word [&_th]:whitespace-normal'>
-          <colgroup>
-            {columns.map(column => (
-              <col key={column.key} style={getColumnStyle(column.key)} />
-            ))}
-          </colgroup>
-          <TableHeader>
-            <TableRow className='bg-background hover:bg-background'>
-              <TableHead colSpan={columns.length} className='h-auto p-3'>
-                <form role='search' onSubmit={event => event.preventDefault()} className='w-full'>
-                  <label htmlFor='registration-sponsor-code-search' className='sr-only'>
-                    Search sponsor code
-                  </label>
-                  <Input
-                    id='registration-sponsor-code-search'
-                    value={codeSearch}
-                    onChange={event => setCodeSearch(event.target.value)}
-                    placeholder='Search sponsor code, e.g. MLNO'
-                    className='bg-background h-10 w-full text-sm font-semibold'
-                  />
-                </form>
-              </TableHead>
-            </TableRow>
-            <TableRow className='bg-primary hover:bg-primary h-16'>
-              {columns.map(column => {
-                const isActive = sortKey === column.key
+  const handleExportPage = () => {
+    const totalRowByKey: Partial<Record<SortKey, string | number>> = {
+      awaitingPublication: visibleTotals.awaitingPublication,
+      pendingMembers: visibleTotals.pendingMembers,
+      registrationAmountSent: visibleTotals.registrationAmountSent,
+      registrationBalance: visibleTotals.registrationBalance,
+      registrationFeeOwed: visibleTotals.registrationFeeOwed,
+      registrationReceived: visibleTotals.registrationReceived,
+      sponsorCode: 'Total',
+      vestedMembers: visibleTotals.vestedMembers
+    }
 
-                return (
-                  <TableHead
-                    key={column.key}
-                    className='text-primary-foreground h-16'
-                    style={getColumnStyle(column.key)}
-                    aria-sort={isActive ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
-                  >
-                    <button
-                      type='button'
-                      className={`flex min-h-12 w-full items-center gap-1.5 text-left font-semibold ${column.align === 'right' ? 'justify-end text-right [&>span]:text-right' : 'justify-start'}`}
-                      onClick={() => handleSort(column.key)}
-                    >
-                      <span>{column.label}</span>
-                      {getSortIcon(isActive, sortDirection)}
-                    </button>
-                  </TableHead>
-                )
-              })}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {sortedRows.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={columns.length} className='text-muted-foreground h-24 text-center'>
-                  {normalizedCodeSearch
-                    ? `No sponsor code matching "${codeSearch.trim()}" found.`
-                    : 'No Sagicam registrations found.'}
-                </TableCell>
+    const worksheetRows = [
+      columns.map(column => column.label),
+      ...sortedRows.map(row => columns.map(column => row[column.key])),
+      columns.map(column => totalRowByKey[column.key] ?? '')
+    ]
+
+    const worksheet = XLSX.utils.aoa_to_sheet(worksheetRows)
+
+    worksheet['!cols'] = columns.map(column => ({ wch: exportColumnWidths[column.key] ?? 16 }))
+
+    const workbook = XLSX.utils.book_new()
+
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Sagicam Registrations')
+    XLSX.writeFile(workbook, `sagicam-registrations-page-${new Date().toISOString().split('T')[0]}.xlsx`)
+  }
+
+  return (
+    <div className='max-w-full min-w-0 space-y-3'>
+      <div className='flex justify-end'>
+        <Button type='button' size='sm' onClick={handleExportPage} disabled={sortedRows.length === 0}>
+          <Download />
+          Export Page
+        </Button>
+      </div>
+
+      <div className='border-border max-w-full min-w-0 overflow-hidden rounded-lg border'>
+        <div className='hidden overflow-x-auto md:block'>
+          <Table className='[[&_td]:wrap-break-word table-fixed [&_td]:whitespace-normal [&_th]:wrap-break-word [&_th]:whitespace-normal'>
+            <colgroup>
+              {columns.map(column => (
+                <col key={column.key} style={getColumnStyle(column.key)} />
+              ))}
+            </colgroup>
+            <TableHeader>
+              <TableRow className='bg-background hover:bg-background'>
+                <TableHead colSpan={columns.length} className='h-auto p-3'>
+                  <form role='search' onSubmit={event => event.preventDefault()} className='w-full'>
+                    <label htmlFor='registration-sponsor-code-search' className='sr-only'>
+                      Search sponsor code
+                    </label>
+                    <Input
+                      id='registration-sponsor-code-search'
+                      value={codeSearch}
+                      onChange={event => setCodeSearch(event.target.value)}
+                      placeholder='Search sponsor code, e.g. MLNO'
+                      className='bg-background h-10 w-full text-sm font-semibold'
+                    />
+                  </form>
+                </TableHead>
               </TableRow>
-            ) : (
-              sortedRows.map(row => (
-                <TableRow key={row.sponsorCode} className='odd:bg-muted/30 even:bg-background'>
-                  <TableCell className='text-sm font-semibold' style={getColumnStyle('sponsorEmail')}>
-                    <EmailLink email={row.sponsorEmail} className='break-all' />
-                  </TableCell>
-                  <TableCell style={getColumnStyle('sponsorCode')}>{row.sponsorCode}</TableCell>
-                  <TableCell className='text-right font-semibold' style={getColumnStyle('vestedMembers')}>
-                    {row.vestedMembers}
-                  </TableCell>
-                  <TableCell className='text-right font-semibold' style={getColumnStyle('awaitingPublication')}>
-                    {row.awaitingPublication}
-                  </TableCell>
-                  <TableCell className='text-right font-semibold' style={getColumnStyle('pendingMembers')}>
-                    {row.pendingMembers}
-                  </TableCell>
-                  <TableCell className='text-right font-semibold' style={getColumnStyle('registrationFeeOwed')}>
-                    {currencyFormatter.format(row.registrationFeeOwed)}
-                  </TableCell>
-                  <TableCell
-                    className={`text-right font-semibold ${
-                      row.registrationAmountSent > 0 ? 'text-green-700 dark:text-green-300' : ''
-                    }`}
-                    style={getColumnStyle('registrationAmountSent')}
-                  >
-                    {currencyFormatter.format(row.registrationAmountSent)}
-                  </TableCell>
-                  <TableCell className='text-right font-semibold' style={getColumnStyle('registrationReceived')}>
-                    {currencyFormatter.format(row.registrationReceived)}
-                  </TableCell>
-                  <TableCell
-                    className={`text-center align-middle font-semibold ${
-                      row.registrationBalance >= 0
-                        ? 'bg-green-600/10 text-green-700 dark:text-green-300'
-                        : 'bg-red-600/10 text-red-700 dark:text-red-300'
-                    }`}
-                    style={getColumnStyle('registrationBalance')}
-                  >
-                    <div className='grid min-w-0 grid-cols-[auto_auto_minmax(0,1fr)] grid-rows-[auto_auto] items-center justify-items-center gap-x-2 gap-y-1'>
-                      <RegistrationPaymentControls row={row} />
-                      <span className='bg-background/80 col-start-3 row-span-2 row-start-1 flex min-w-0 items-center justify-center self-stretch justify-self-stretch rounded-md border border-current/20 px-2 py-2 text-center text-xl leading-none font-black tabular-nums'>
-                        {currencyFormatter.format(row.registrationBalance)}
-                      </span>
-                    </div>
+              <TableRow className='bg-primary hover:bg-primary h-16'>
+                {columns.map(column => {
+                  const isActive = sortKey === column.key
+
+                  return (
+                    <TableHead
+                      key={column.key}
+                      className='text-primary-foreground h-16'
+                      style={getColumnStyle(column.key)}
+                      aria-sort={isActive ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
+                    >
+                      <button
+                        type='button'
+                        className={`flex min-h-12 w-full items-center gap-1.5 text-left font-semibold ${column.align === 'right' ? 'justify-end text-right [&>span]:text-right' : 'justify-start'}`}
+                        onClick={() => handleSort(column.key)}
+                      >
+                        <span>{column.label}</span>
+                        {getSortIcon(isActive, sortDirection)}
+                      </button>
+                    </TableHead>
+                  )
+                })}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {sortedRows.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={columns.length} className='text-muted-foreground h-24 text-center'>
+                    {normalizedCodeSearch
+                      ? `No sponsor code matching "${codeSearch.trim()}" found.`
+                      : 'No Sagicam registrations found.'}
                   </TableCell>
                 </TableRow>
-              ))
+              ) : (
+                sortedRows.map(row => (
+                  <TableRow key={row.sponsorCode} className='odd:bg-muted/30 even:bg-background'>
+                    <TableCell className='text-sm font-semibold' style={getColumnStyle('sponsorEmail')}>
+                      <EmailLink email={row.sponsorEmail} className='break-all' />
+                    </TableCell>
+                    <TableCell style={getColumnStyle('sponsorCode')}>{row.sponsorCode}</TableCell>
+                    <TableCell className='text-right font-semibold' style={getColumnStyle('vestedMembers')}>
+                      {row.vestedMembers}
+                    </TableCell>
+                    <TableCell className='text-right font-semibold' style={getColumnStyle('awaitingPublication')}>
+                      {row.awaitingPublication}
+                    </TableCell>
+                    <TableCell className='text-right font-semibold' style={getColumnStyle('pendingMembers')}>
+                      {row.pendingMembers}
+                    </TableCell>
+                    <TableCell className='text-right font-semibold' style={getColumnStyle('registrationFeeOwed')}>
+                      {currencyFormatter.format(row.registrationFeeOwed)}
+                    </TableCell>
+                    <TableCell
+                      className={`text-right font-semibold ${
+                        row.registrationAmountSent > 0 ? 'text-green-700 dark:text-green-300' : ''
+                      }`}
+                      style={getColumnStyle('registrationAmountSent')}
+                    >
+                      {currencyFormatter.format(row.registrationAmountSent)}
+                    </TableCell>
+                    <TableCell className='text-right font-semibold' style={getColumnStyle('registrationReceived')}>
+                      {currencyFormatter.format(row.registrationReceived)}
+                    </TableCell>
+                    <TableCell
+                      className={`text-center align-middle font-semibold ${
+                        row.registrationBalance >= 0
+                          ? 'bg-green-600/10 text-green-700 dark:text-green-300'
+                          : 'bg-red-600/10 text-red-700 dark:text-red-300'
+                      }`}
+                      style={getColumnStyle('registrationBalance')}
+                    >
+                      <div className='grid min-w-0 grid-cols-[auto_auto_minmax(0,1fr)] grid-rows-[auto_auto] items-center justify-items-center gap-x-2 gap-y-1'>
+                        <RegistrationPaymentControls row={row} />
+                        <span className='bg-background/80 col-start-3 row-span-2 row-start-1 flex min-w-0 items-center justify-center self-stretch justify-self-stretch rounded-md border border-current/20 px-2 py-2 text-center text-xl leading-none font-black tabular-nums'>
+                          {currencyFormatter.format(row.registrationBalance)}
+                        </span>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+            {sortedRows.length > 0 && (
+              <TableFooter className='bg-white text-black dark:bg-white dark:text-black'>
+                <TableRow className='bg-white text-base text-black hover:bg-white dark:bg-white dark:text-black dark:hover:bg-white'>
+                  <TableCell style={getColumnStyle('sponsorEmail')} />
+                  <TableCell className='font-extrabold' style={getColumnStyle('sponsorCode')}>
+                    Total
+                  </TableCell>
+                  <TableCell className='text-right font-extrabold' style={getColumnStyle('vestedMembers')}>
+                    {visibleTotals.vestedMembers}
+                  </TableCell>
+                  <TableCell className='text-right font-extrabold' style={getColumnStyle('awaitingPublication')}>
+                    {visibleTotals.awaitingPublication}
+                  </TableCell>
+                  <TableCell className='text-right font-extrabold' style={getColumnStyle('pendingMembers')}>
+                    {visibleTotals.pendingMembers}
+                  </TableCell>
+                  <TableCell className='text-right font-extrabold' style={getColumnStyle('registrationFeeOwed')}>
+                    {currencyFormatter.format(visibleTotals.registrationFeeOwed)}
+                  </TableCell>
+                  <TableCell className='text-right font-extrabold' style={getColumnStyle('registrationAmountSent')}>
+                    {currencyFormatter.format(visibleTotals.registrationAmountSent)}
+                  </TableCell>
+                  <TableCell className='text-right font-extrabold' style={getColumnStyle('registrationReceived')}>
+                    {currencyFormatter.format(visibleTotals.registrationReceived)}
+                  </TableCell>
+                  <TableCell className='text-right font-extrabold' style={getColumnStyle('registrationBalance')}>
+                    {currencyFormatter.format(visibleTotals.registrationBalance)}
+                  </TableCell>
+                </TableRow>
+              </TableFooter>
             )}
-          </TableBody>
-          {sortedRows.length > 0 && (
-            <TableFooter className='bg-white text-black dark:bg-white dark:text-black'>
-              <TableRow className='bg-white text-base text-black hover:bg-white dark:bg-white dark:text-black dark:hover:bg-white'>
-                <TableCell style={getColumnStyle('sponsorEmail')} />
-                <TableCell className='font-extrabold' style={getColumnStyle('sponsorCode')}>
-                  Total
-                </TableCell>
-                <TableCell className='text-right font-extrabold' style={getColumnStyle('vestedMembers')}>
-                  {visibleTotals.vestedMembers}
-                </TableCell>
-                <TableCell className='text-right font-extrabold' style={getColumnStyle('awaitingPublication')}>
-                  {visibleTotals.awaitingPublication}
-                </TableCell>
-                <TableCell className='text-right font-extrabold' style={getColumnStyle('pendingMembers')}>
-                  {visibleTotals.pendingMembers}
-                </TableCell>
-                <TableCell className='text-right font-extrabold' style={getColumnStyle('registrationFeeOwed')}>
-                  {currencyFormatter.format(visibleTotals.registrationFeeOwed)}
-                </TableCell>
-                <TableCell className='text-right font-extrabold' style={getColumnStyle('registrationAmountSent')}>
-                  {currencyFormatter.format(visibleTotals.registrationAmountSent)}
-                </TableCell>
-                <TableCell className='text-right font-extrabold' style={getColumnStyle('registrationReceived')}>
-                  {currencyFormatter.format(visibleTotals.registrationReceived)}
-                </TableCell>
-                <TableCell className='text-right font-extrabold' style={getColumnStyle('registrationBalance')}>
-                  {currencyFormatter.format(visibleTotals.registrationBalance)}
-                </TableCell>
-              </TableRow>
-            </TableFooter>
-          )}
-        </Table>
-      </div>
-      <div className='grid gap-3 p-2 sm:p-3 md:hidden'>
-        <form role='search' onSubmit={event => event.preventDefault()} className='rounded-md border bg-background p-2'>
-          <label htmlFor='registration-sponsor-code-search-mobile' className='sr-only'>
-            Search sponsor code
-          </label>
-          <Input
-            id='registration-sponsor-code-search-mobile'
-            value={codeSearch}
-            onChange={event => setCodeSearch(event.target.value)}
-            placeholder='Search sponsor code, e.g. MLNO'
-            className='bg-background h-9 text-sm font-semibold'
-          />
-        </form>
-        {sortedRows.length === 0 ? (
-          <div className='text-muted-foreground rounded-md border px-3 py-8 text-center text-sm sm:px-4 sm:py-10'>
-            {normalizedCodeSearch
-              ? `No sponsor code matching "${codeSearch.trim()}" found.`
-              : 'No Sagicam registrations found.'}
-          </div>
-        ) : (
-          sortedRows.map(row => (
-            <article key={row.sponsorCode} className='bg-background overflow-hidden rounded-md border shadow-sm'>
-              <div className='flex flex-col gap-3 border-b px-3 py-3 sm:flex-row sm:items-start sm:justify-between sm:px-4'>
-                <div className='w-full min-w-0'>
-                  <div className='text-lg font-extrabold'>{row.sponsorCode}</div>
-                  <EmailLink email={row.sponsorEmail} className='block text-xs font-semibold break-all' />
+          </Table>
+        </div>
+        <div className='grid gap-3 p-2 sm:p-3 md:hidden'>
+          <form
+            role='search'
+            onSubmit={event => event.preventDefault()}
+            className='bg-background rounded-md border p-2'
+          >
+            <label htmlFor='registration-sponsor-code-search-mobile' className='sr-only'>
+              Search sponsor code
+            </label>
+            <Input
+              id='registration-sponsor-code-search-mobile'
+              value={codeSearch}
+              onChange={event => setCodeSearch(event.target.value)}
+              placeholder='Search sponsor code, e.g. MLNO'
+              className='bg-background h-9 text-sm font-semibold'
+            />
+          </form>
+          {sortedRows.length === 0 ? (
+            <div className='text-muted-foreground rounded-md border px-3 py-8 text-center text-sm sm:px-4 sm:py-10'>
+              {normalizedCodeSearch
+                ? `No sponsor code matching "${codeSearch.trim()}" found.`
+                : 'No Sagicam registrations found.'}
+            </div>
+          ) : (
+            sortedRows.map(row => (
+              <article key={row.sponsorCode} className='bg-background overflow-hidden rounded-md border shadow-sm'>
+                <div className='flex flex-col gap-3 border-b px-3 py-3 sm:flex-row sm:items-start sm:justify-between sm:px-4'>
+                  <div className='w-full min-w-0'>
+                    <div className='text-lg font-extrabold'>{row.sponsorCode}</div>
+                    <EmailLink email={row.sponsorEmail} className='block text-xs font-semibold break-all' />
+                  </div>
+                  <RegistrationPaymentControls row={row} layout='card' />
                 </div>
-                <RegistrationPaymentControls row={row} layout='card' />
-              </div>
-              <div className='grid gap-2 px-3 py-3 text-sm sm:px-4'>
-                <div className='text-sm font-extrabold'>Registration</div>
-                <MobileValue label='Vested' value={row.vestedMembers} />
-                <MobileValue label='Awaiting' value={row.awaitingPublication} />
-                <MobileValue label='Pending' value={row.pendingMembers} />
-                <MobileValue label='Owed' value={currencyFormatter.format(row.registrationFeeOwed)} />
+                <div className='grid gap-2 px-3 py-3 text-sm sm:px-4'>
+                  <div className='text-sm font-extrabold'>Registration</div>
+                  <MobileValue label='Vested' value={row.vestedMembers} />
+                  <MobileValue label='Awaiting' value={row.awaitingPublication} />
+                  <MobileValue label='Pending' value={row.pendingMembers} />
+                  <MobileValue label='Owed' value={currencyFormatter.format(row.registrationFeeOwed)} />
+                  <MobileValue
+                    label='Sent'
+                    value={currencyFormatter.format(row.registrationAmountSent)}
+                    valueClassName={row.registrationAmountSent > 0 ? 'text-green-700 dark:text-green-300' : ''}
+                  />
+                  <MobileValue label='Verified' value={currencyFormatter.format(row.registrationReceived)} />
+                  <div className='grid grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] items-start gap-2 border-t pt-3'>
+                    <span className='text-muted-foreground text-xs font-semibold uppercase'>Registration balance</span>
+                    <BalanceCard
+                      balance={row.registrationBalance}
+                      className='max-w-full justify-end justify-self-end'
+                    />
+                  </div>
+                </div>
+              </article>
+            ))
+          )}
+          {sortedRows.length > 0 && (
+            <article className='rounded-md border bg-white px-3 py-3 text-black shadow-sm sm:px-4 dark:bg-white dark:text-black'>
+              <div className='mb-2 text-base font-extrabold'>Total</div>
+              <div className='grid gap-2'>
+                <MobileValue label='Vested' value={visibleTotals.vestedMembers} />
+                <MobileValue label='Awaiting' value={visibleTotals.awaitingPublication} />
+                <MobileValue label='Pending' value={visibleTotals.pendingMembers} />
                 <MobileValue
-                  label='Sent'
-                  value={currencyFormatter.format(row.registrationAmountSent)}
-                  valueClassName={row.registrationAmountSent > 0 ? 'text-green-700 dark:text-green-300' : ''}
+                  label='Registration owed'
+                  value={currencyFormatter.format(visibleTotals.registrationFeeOwed)}
                 />
-                <MobileValue label='Verified' value={currencyFormatter.format(row.registrationReceived)} />
+                <MobileValue
+                  label='Registration sent'
+                  value={currencyFormatter.format(visibleTotals.registrationAmountSent)}
+                />
+                <MobileValue
+                  label='Registration verified'
+                  value={currencyFormatter.format(visibleTotals.registrationReceived)}
+                />
                 <div className='grid grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] items-start gap-2 border-t pt-3'>
-                  <span className='text-muted-foreground text-xs font-semibold uppercase'>Registration balance</span>
-                  <BalanceCard balance={row.registrationBalance} className='max-w-full justify-end justify-self-end' />
+                  <span className='text-xs font-semibold uppercase'>Registration balance</span>
+                  <BalanceCard
+                    balance={visibleTotals.registrationBalance}
+                    className='max-w-full justify-end justify-self-end'
+                  />
                 </div>
               </div>
             </article>
-          ))
-        )}
-        {sortedRows.length > 0 && (
-          <article className='rounded-md border bg-white px-3 py-3 text-black shadow-sm sm:px-4 dark:bg-white dark:text-black'>
-            <div className='mb-2 text-base font-extrabold'>Total</div>
-            <div className='grid gap-2'>
-              <MobileValue label='Vested' value={visibleTotals.vestedMembers} />
-              <MobileValue label='Awaiting' value={visibleTotals.awaitingPublication} />
-              <MobileValue label='Pending' value={visibleTotals.pendingMembers} />
-              <MobileValue
-                label='Registration owed'
-                value={currencyFormatter.format(visibleTotals.registrationFeeOwed)}
-              />
-              <MobileValue
-                label='Registration sent'
-                value={currencyFormatter.format(visibleTotals.registrationAmountSent)}
-              />
-              <MobileValue
-                label='Registration verified'
-                value={currencyFormatter.format(visibleTotals.registrationReceived)}
-              />
-              <div className='grid grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] items-start gap-2 border-t pt-3'>
-                <span className='text-xs font-semibold uppercase'>Registration balance</span>
-                <BalanceCard
-                  balance={visibleTotals.registrationBalance}
-                  className='max-w-full justify-end justify-self-end'
-                />
-              </div>
-            </div>
-          </article>
-        )}
+          )}
+        </div>
       </div>
     </div>
   )
