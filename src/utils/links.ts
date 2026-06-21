@@ -85,11 +85,11 @@ export const pagesItems: MenuItem[] = [
     label: 'Contribution Table',
     href: '/contribution-table'
   },
-  {
-    icon: Wallet,
-    label: 'Sponsor Financial Position.',
-    href: '/contributions-recap'
-  },
+  // {
+  //   icon: Wallet,
+  //   label: 'Sponsor Financial Position.',
+  //   href: '/contributions-recap'
+  // },
 
   {
     icon: FileStack,
