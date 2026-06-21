@@ -95,7 +95,9 @@ export const fetchSponsorContributionSummary = async (
       })
     ])
 
-  const amountOwed = Number((amountPerVestedMember * vestedMembersCount).toFixed(2))
+  const amountOwed = contributionGroup
+    ? decimalToNumber(contributionGroup.amountOwed)
+    : Number((amountPerVestedMember * vestedMembersCount).toFixed(2))
   const amountReceived = decimalToNumber(payment?.amountSent)
   const amountVerified = decimalToNumber(payment?.amountVerified)
   const manualBalanceAdjustment = decimalToNumber(balanceAdjustment?.amount)
