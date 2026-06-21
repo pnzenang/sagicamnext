@@ -616,7 +616,7 @@ const PaymentBalanceRow = ({
     shouldShowReplenishAccountNotice(balance, contributionVestedMembersCount)
 
   const balanceLabel = showReplenishAccountNotice
-    ? 'Low Reserve(Please Replenish Account)'
+    ? 'Low Reserve(please replenish account)'
     : getReserveOrDeficitLabel(balance, reserveLabel)
 
   const showNotInGoodStandingNotice = shouldShowNotInGoodStandingNotice(balance)
