@@ -15,6 +15,7 @@ import {
   WalletCards,
   WalletMinimal,
   CreditCard,
+  History,
   List,
   Table
 } from 'lucide-react'
@@ -143,6 +144,11 @@ export const pagesItems: MenuItem[] = [
         icon: WalletCards,
         label: 'Sagicam Registrations',
         href: '/admin-sagicam-registrations'
+      },
+      {
+        icon: History,
+        label: 'Payment History',
+        href: '/admin-payment-history'
       }
     ]
   }

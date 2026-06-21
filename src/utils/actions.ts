@@ -216,6 +216,7 @@ const syncVestedContributionCredit = async ({
 }
 
 const revalidateSponsorPaymentPages = () => {
+  revalidatePath('/admin-payment-history')
   revalidatePath('/contributions-payments')
   revalidatePath('/registration-payments')
 }
