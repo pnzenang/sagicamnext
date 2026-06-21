@@ -55,7 +55,7 @@ const columns: AdminSagicamPaymentsColumn[] = [
   { key: 'amountOwed', label: 'Contribution owed', align: 'right' },
   { key: 'contributionAmountSent', label: 'Contribution sent', align: 'right' },
   { key: 'amountReceived', label: 'Contribution verified', align: 'right' },
-  { key: 'balance', label: 'Contribution Reserve / Deficit', align: 'right' }
+  { key: 'balance', label: 'Reserve / Deficit', align: 'right' }
 ]
 
 const exportColumnWidths: Partial<Record<SortKey, number>> = {
@@ -94,7 +94,7 @@ const compareValues = (firstValue: AdminSagicamPaymentsRow[SortKey], secondValue
 
 const getContributionBalanceTarget = (vestedMembers: number) => contributionCreditPerVestedMember * vestedMembers
 
-const getContributionReserveLabel = (balance: number) => (balance < 0 ? 'Deficit' : 'Contribution Reserve')
+const getContributionReserveLabel = (balance: number) => (balance < 0 ? 'Deficit' : 'Reserve')
 
 const shouldShowReplenishAccountNotice = (balance: number, vestedMembers: number) =>
   balance > 0 && balance < getContributionBalanceTarget(vestedMembers)

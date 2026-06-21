@@ -198,7 +198,7 @@ const ContributionSummaryCard = ({
     <PaymentBalanceRow
       balance={currentContribution.balance}
       contributionVestedMembersCount={currentContribution.vestedMembersCount}
-      reserveLabel='Contribution Reserve'
+      reserveLabel='Reserve'
     />
     <p className='text-primary/70 mt-auto pt-4 text-[10px] leading-tight font-medium break-words'>
       All amounts will be verified by SAGICAM and reversed if not accurate.
