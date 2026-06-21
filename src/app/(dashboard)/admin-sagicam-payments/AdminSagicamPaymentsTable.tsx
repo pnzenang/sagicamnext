@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils'
 import { contributionCreditPerVestedMember } from '@/utils/sagicam-contribution-constants'
 import {
   addSponsorContributionBalanceAdjustmentAction,
+  adjustSponsorContributionAmountSentAction,
   resetSponsorContributionPaymentAction,
   verifySponsorContributionPaymentAction
 } from '@/utils/actions'
@@ -177,6 +178,53 @@ const EmailLink = ({ className = '', email }: { className?: string; email: strin
     <a href={`mailto:${email}`} className={`text-primary underline-offset-2 hover:underline ${className}`}>
       {email}
     </a>
+  )
+}
+
+const SentAmountAdjustmentForm = ({
+  layout = 'table',
+  sponsorCode
+}: {
+  layout?: 'card' | 'table'
+  sponsorCode: string
+}) => {
+  const inputId = `contribution-sent-adjustment-${sponsorCode}`
+
+  return (
+    <form
+      action={adjustSponsorContributionAmountSentAction}
+      className={cn('mt-2 grid gap-1.5', layout === 'card' ? 'grid-cols-[minmax(0,1fr)_auto] items-center' : '')}
+    >
+      <input type='hidden' name='sponsorCode' value={sponsorCode} />
+      <label htmlFor={inputId} className='sr-only'>
+        Amount to adjust contribution sent
+      </label>
+      <Input
+        id={inputId}
+        name='amountSentAdjustment'
+        type='number'
+        inputMode='decimal'
+        step='0.01'
+        placeholder='+/- 0.00'
+        className={cn(
+          'bg-background text-foreground placeholder:text-muted-foreground text-center text-[11px]',
+          layout === 'card' ? 'h-8 px-2 text-xs' : 'ml-auto h-7 w-24 px-1.5'
+        )}
+        required
+      />
+      <Button
+        type='submit'
+        size='xs'
+        variant='secondary'
+        className={cn(
+          'justify-center px-2 text-[11px]',
+          layout === 'card' ? 'h-8 w-20' : 'ml-auto h-7 w-24'
+        )}
+      >
+        <ArrowUpDown className='size-3' />
+        Apply
+      </Button>
+    </form>
   )
 }
 
@@ -458,6 +506,7 @@ const AdminSagicamPaymentsTable = ({
                       style={getColumnStyle('contributionAmountSent')}
                     >
                       {currencyFormatter.format(row.contributionAmountSent)}
+                      <SentAmountAdjustmentForm sponsorCode={row.sponsorCode} />
                     </TableCell>
                     <TableCell className='text-right font-semibold' style={getColumnStyle('amountReceived')}>
                       {currencyFormatter.format(row.amountReceived)}
@@ -559,6 +608,7 @@ const AdminSagicamPaymentsTable = ({
                     value={currencyFormatter.format(row.contributionAmountSent)}
                     valueClassName={row.contributionAmountSent > 0 ? 'text-green-700 dark:text-green-300' : ''}
                   />
+                  <SentAmountAdjustmentForm sponsorCode={row.sponsorCode} layout='card' />
                   <MobileValue label='Verified' value={currencyFormatter.format(row.amountReceived)} />
                   <div className='grid grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] items-start gap-2 border-t pt-3'>
                     <span className='text-muted-foreground text-xs font-semibold uppercase'>Contribution Balance</span>

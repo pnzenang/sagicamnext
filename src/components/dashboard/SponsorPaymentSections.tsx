@@ -310,6 +310,11 @@ const PaymentSummaryCard = ({ row }: { row: PaymentSummaryRow }) => {
   )
 }
 
+const getSubmittedPaymentEntryMeta = (entry: SponsorPaymentLedgerEntry) =>
+  entry.note?.toLowerCase().includes('amount sent manually adjusted')
+    ? `Amount sent adjusted ${formatDateTime(entry.createdAt)}`
+    : `Payment submitted ${formatDateTime(entry.createdAt)}`
+
 const getVerifiedPaymentGroupsLinkedToSubmittedPayments = (
   submittedEntries: SponsorPaymentLedgerEntry[],
   amountVerified: number
@@ -317,9 +322,11 @@ const getVerifiedPaymentGroupsLinkedToSubmittedPayments = (
   let remainingVerifiedAmount = roundCurrencyAmount(amountVerified)
   const verifiedGroupsByDay = new Map<string, number>()
 
-  const sortedSubmittedEntries = [...submittedEntries].sort(
-    (firstEntry, secondEntry) => new Date(firstEntry.createdAt).getTime() - new Date(secondEntry.createdAt).getTime()
-  )
+  const sortedSubmittedEntries = submittedEntries
+    .filter(entry => entry.amount > 0)
+    .sort(
+      (firstEntry, secondEntry) => new Date(firstEntry.createdAt).getTime() - new Date(secondEntry.createdAt).getTime()
+    )
 
   sortedSubmittedEntries.forEach(entry => {
     if (remainingVerifiedAmount <= 0) {
@@ -375,7 +382,7 @@ const buildAmountSentSummaryRow = ({
   const submittedPaymentEntries = submittedPaymentLedgerEntries.map(entry => ({
     amount: entry.amount,
     id: entry.id,
-    meta: `Payment submitted ${formatDateTime(entry.createdAt)}`
+    meta: getSubmittedPaymentEntryMeta(entry)
   }))
 
   const amountSentSummaryEntries =

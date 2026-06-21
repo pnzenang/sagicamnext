@@ -733,6 +733,69 @@ export const verifySponsorContributionPaymentAction = async (formData: FormData)
   }
 }
 
+export const adjustSponsorContributionAmountSentAction = async (formData: FormData): Promise<void> => {
+  const user = await getAuthUser()
+
+  try {
+    const sponsorCode = getRequiredFormValue(formData, 'sponsorCode')
+    const amountAdjustment = getSignedDollarAdjustmentFromForm(formData, 'amountSentAdjustment')
+
+    const currentPayment = await db.sponsorContributionPayment.findUnique({
+      where: {
+        sponsorCode
+      }
+    })
+
+    const currentAmountSent = decimalToNumber(currentPayment?.amountSent)
+    const currentAmountVerified = decimalToNumber(currentPayment?.amountVerified)
+    const nextAmountSent = Number((currentAmountSent + amountAdjustment).toFixed(2))
+
+    if (nextAmountSent < 0) {
+      throw new Error('Contribution amount sent cannot be below zero.')
+    }
+
+    if (nextAmountSent < currentAmountVerified) {
+      throw new Error('Contribution amount sent cannot be less than the verified amount.')
+    }
+
+    await db.$transaction(async tx => {
+      await tx.sponsorContributionPayment.upsert({
+        create: {
+          amountSent: nextAmountSent,
+          amountVerified: 0,
+          lastSubmittedAt: null,
+          sponsorCode,
+          verifiedAt: null
+        },
+        update: {
+          amountSent: nextAmountSent
+        },
+        where: {
+          sponsorCode
+        }
+      })
+
+      await tx.sponsorPaymentLedgerEntry.create({
+        data: {
+          amount: amountAdjustment,
+          createdBy: user.id,
+          eventType: sponsorPaymentLedgerEventTypes.submitted,
+          note: 'Contribution amount sent manually adjusted by SAGICAM.',
+          paymentType: sponsorPaymentTypes.contribution,
+          sponsorCode
+        }
+      })
+    })
+
+    revalidatePath('/admin-count')
+    revalidatePath('/admin-sagicam-payments')
+    revalidatePath('/all-members')
+    revalidateSponsorPaymentPages()
+  } catch (error) {
+    renderError(error)
+  }
+}
+
 const addSponsorBalanceAdjustment = async (formData: FormData, balanceType: string): Promise<void> => {
   const user = await getAuthUser()
 
