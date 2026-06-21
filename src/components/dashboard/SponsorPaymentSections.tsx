@@ -604,8 +604,6 @@ const PaymentBalanceRow = ({
   contributionVestedMembersCount?: number
   reserveLabel: string
 }) => {
-  const balanceLabel = getReserveOrDeficitLabel(balance, reserveLabel)
-
   const balanceClassName =
     contributionVestedMembersCount === undefined
       ? balance >= 0
@@ -617,6 +615,10 @@ const PaymentBalanceRow = ({
     contributionVestedMembersCount !== undefined &&
     shouldShowReplenishAccountNotice(balance, contributionVestedMembersCount)
 
+  const balanceLabel = showReplenishAccountNotice
+    ? 'Low Reserve(Please Replenish Account)'
+    : getReserveOrDeficitLabel(balance, reserveLabel)
+
   const showNotInGoodStandingNotice = shouldShowNotInGoodStandingNotice(balance)
 
   const showUpcomingMonthsNotice =
@@ -627,10 +629,7 @@ const PaymentBalanceRow = ({
   return (
     <div className={cn('mt-2 flex items-start justify-between gap-4 text-2xl font-extrabold', balanceClassName)}>
       <span className='min-w-0 break-words'>
-        {balanceLabel}{' '}
-        {showReplenishAccountNotice ? (
-          <span className='text-[15px] leading-tight font-medium'>(Please replenish account)</span>
-        ) : null}
+        {balanceLabel}
         {showNotInGoodStandingNotice ? (
           <span className='text-[15px] leading-tight font-medium'>(Not In Good Standing)</span>
         ) : null}
