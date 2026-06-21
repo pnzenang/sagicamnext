@@ -203,7 +203,7 @@ const AdminPaymentHistoryTable = ({
 
   const { pages, showLeftEllipsis, showRightEllipsis } = usePagination({
     currentPage: effectiveCurrentPage,
-    paginationItemsToDisplay: 5,
+    paginationItemsToDisplay: 3,
     totalPages
   })
 
