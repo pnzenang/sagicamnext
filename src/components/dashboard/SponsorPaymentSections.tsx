@@ -101,6 +101,8 @@ const shouldShowReplenishAccountNotice = (balance: number, vestedMembersCount: n
 
 const shouldShowNotInGoodStandingNotice = (balance: number) => balance < 0
 
+const getReserveOrDeficitLabel = (balance: number, reserveLabel: string) => (balance < 0 ? 'Deficit' : reserveLabel)
+
 const getContributionBalanceTextClassName = (balance: number, vestedMembersCount: number) => {
   if (balance >= getContributionBalanceTarget(vestedMembersCount)) {
     return 'text-green-700 dark:text-green-300'
@@ -190,12 +192,13 @@ const ContributionSummaryCard = ({
       <SummaryRow label='Total Amount Used for Contributions' value={currentContribution.totalAmountUsed} />
       <SummaryRow label='Vested Loved One Credit' value={currentContribution.vestedContributionCredit} />
       {currentContribution.manualBalanceAdjustment !== 0 ? (
-        <SummaryRow label='Balance Adjustment' value={currentContribution.manualBalanceAdjustment} />
+        <SummaryRow label='Reserve / Deficit Adjustment' value={currentContribution.manualBalanceAdjustment} />
       ) : null}
     </div>
     <PaymentBalanceRow
       balance={currentContribution.balance}
       contributionVestedMembersCount={currentContribution.vestedMembersCount}
+      reserveLabel='Contribution Reserve'
     />
     <p className='text-primary/70 mt-auto pt-4 text-[10px] leading-tight font-medium break-words'>
       All amounts will be verified by SAGICAM and reversed if not accurate.
@@ -215,10 +218,10 @@ const RegistrationSummaryCard = ({
       <SummaryRow label='Amount Verified by SAGICAM' value={currentRegistrationPayment.amountVerified} />
       <SummaryRow label='Used for Registration' value={currentRegistrationPayment.amountUsed} />
       {currentRegistrationPayment.manualBalanceAdjustment !== 0 ? (
-        <SummaryRow label='Balance Adjustment' value={currentRegistrationPayment.manualBalanceAdjustment} />
+        <SummaryRow label='Reserve / Deficit Adjustment' value={currentRegistrationPayment.manualBalanceAdjustment} />
       ) : null}
     </div>
-    <PaymentBalanceRow balance={currentRegistrationPayment.balance} />
+    <PaymentBalanceRow balance={currentRegistrationPayment.balance} reserveLabel='Registration Reserve' />
     <p className='text-primary/70 mt-auto pt-4 text-[10px] leading-tight font-medium break-words'>
       All amounts will be verified by SAGICAM and reversed if not accurate.
     </p>
@@ -594,11 +597,15 @@ const buildRegistrationHistorySummaryColumns = (
 
 const PaymentBalanceRow = ({
   balance,
-  contributionVestedMembersCount
+  contributionVestedMembersCount,
+  reserveLabel
 }: {
   balance: number
   contributionVestedMembersCount?: number
+  reserveLabel: string
 }) => {
+  const balanceLabel = getReserveOrDeficitLabel(balance, reserveLabel)
+
   const balanceClassName =
     contributionVestedMembersCount === undefined
       ? balance >= 0
@@ -621,7 +628,7 @@ const PaymentBalanceRow = ({
   return (
     <div className={cn('mt-2 flex items-start justify-between gap-4 text-2xl font-extrabold', balanceClassName)}>
       <span className='min-w-0 break-words'>
-        Balance{' '}
+        {balanceLabel}{' '}
         {showReplenishAccountNotice ? (
           <span className='text-[15px] leading-tight font-medium'>(Please replenish account)</span>
         ) : null}

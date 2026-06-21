@@ -63,7 +63,7 @@ const columns: AdminSagicamRegistrationsColumn[] = [
   { key: 'registrationFeeOwed', label: 'Registration owed', align: 'right' },
   { key: 'registrationAmountSent', label: 'Registration sent', align: 'right' },
   { key: 'registrationReceived', label: 'Registration verified', align: 'right' },
-  { key: 'registrationBalance', label: 'Registration balance', align: 'right' }
+  { key: 'registrationBalance', label: 'Registration Reserve / Deficit', align: 'right' }
 ]
 
 const exportColumnWidths: Partial<Record<SortKey, number>> = {
@@ -111,15 +111,20 @@ const getBalanceCardClassName = (balance: number) =>
     ? 'border-green-200 bg-green-50 text-green-800 dark:border-green-800/70 dark:bg-green-950/40 dark:text-green-200'
     : 'border-red-200 bg-red-50 text-red-800 dark:border-red-800/70 dark:bg-red-950/40 dark:text-red-200'
 
+const getRegistrationReserveLabel = (balance: number) => (balance < 0 ? 'Deficit' : 'Registration Reserve')
+
 const BalanceCard = ({ balance, className }: { balance: number; className?: string }) => (
   <div
     className={cn(
-      'inline-flex min-w-28 items-center justify-end rounded-md border px-3 py-2 text-base font-black tabular-nums shadow-sm',
+      'inline-flex min-w-28 flex-col items-end justify-center rounded-md border px-3 py-2 text-base font-black shadow-sm',
       getBalanceCardClassName(balance),
       className
     )}
   >
-    {currencyFormatter.format(balance)}
+    <span className='mb-1 text-[10px] leading-tight font-extrabold uppercase'>
+      {getRegistrationReserveLabel(balance)}
+    </span>
+    <span className='tabular-nums'>{currencyFormatter.format(balance)}</span>
   </div>
 )
 
@@ -190,10 +195,7 @@ const SentAmountAdjustmentForm = ({
         type='submit'
         size='xs'
         variant='secondary'
-        className={cn(
-          'justify-center px-2 text-[11px]',
-          layout === 'card' ? 'h-8 w-20' : 'ml-auto h-7 w-24'
-        )}
+        className={cn('justify-center px-2 text-[11px]', layout === 'card' ? 'h-8 w-20' : 'ml-auto h-7 w-24')}
       >
         <ArrowUpDown className='size-3' />
         Apply
@@ -501,8 +503,11 @@ const AdminSagicamRegistrationsTable = ({
                     >
                       <div className='grid min-w-0 grid-cols-[auto_auto_minmax(0,1fr)] grid-rows-[auto_auto] items-center justify-items-center gap-x-2 gap-y-1'>
                         <RegistrationPaymentControls row={row} />
-                        <span className='bg-background/80 col-start-3 row-span-2 row-start-1 flex min-w-0 items-center justify-center self-stretch justify-self-stretch rounded-md border border-current/20 px-2 py-2 text-center text-xl leading-none font-black tabular-nums'>
-                          {currencyFormatter.format(row.registrationBalance)}
+                        <span className='bg-background/80 col-start-3 row-span-2 row-start-1 flex min-w-0 flex-col items-center justify-center self-stretch justify-self-stretch rounded-md border border-current/20 px-2 py-2 text-center text-xl leading-none font-black'>
+                          <span className='mb-1 text-[10px] leading-tight font-extrabold uppercase'>
+                            {getRegistrationReserveLabel(row.registrationBalance)}
+                          </span>
+                          <span className='tabular-nums'>{currencyFormatter.format(row.registrationBalance)}</span>
                         </span>
                       </div>
                     </TableCell>
@@ -536,7 +541,7 @@ const AdminSagicamRegistrationsTable = ({
                     {currencyFormatter.format(visibleTotals.registrationReceived)}
                   </TableCell>
                   <TableCell className='text-right font-extrabold' style={getColumnStyle('registrationBalance')}>
-                    {currencyFormatter.format(visibleTotals.registrationBalance)}
+                    <BalanceCard balance={visibleTotals.registrationBalance} />
                   </TableCell>
                 </TableRow>
               </TableFooter>
@@ -590,7 +595,9 @@ const AdminSagicamRegistrationsTable = ({
                   <SentAmountAdjustmentForm sponsorCode={row.sponsorCode} layout='card' />
                   <MobileValue label='Verified' value={currencyFormatter.format(row.registrationReceived)} />
                   <div className='grid grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] items-start gap-2 border-t pt-3'>
-                    <span className='text-muted-foreground text-xs font-semibold uppercase'>Registration balance</span>
+                    <span className='text-muted-foreground text-xs font-semibold uppercase'>
+                      {getRegistrationReserveLabel(row.registrationBalance)}
+                    </span>
                     <BalanceCard
                       balance={row.registrationBalance}
                       className='max-w-full justify-end justify-self-end'
@@ -620,7 +627,9 @@ const AdminSagicamRegistrationsTable = ({
                   value={currencyFormatter.format(visibleTotals.registrationReceived)}
                 />
                 <div className='grid grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] items-start gap-2 border-t pt-3'>
-                  <span className='text-xs font-semibold uppercase'>Registration balance</span>
+                  <span className='text-xs font-semibold uppercase'>
+                    {getRegistrationReserveLabel(visibleTotals.registrationBalance)}
+                  </span>
                   <BalanceCard
                     balance={visibleTotals.registrationBalance}
                     className='max-w-full justify-end justify-self-end'

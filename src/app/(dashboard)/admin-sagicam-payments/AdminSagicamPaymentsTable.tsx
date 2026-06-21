@@ -55,7 +55,7 @@ const columns: AdminSagicamPaymentsColumn[] = [
   { key: 'amountOwed', label: 'Contribution owed', align: 'right' },
   { key: 'contributionAmountSent', label: 'Contribution sent', align: 'right' },
   { key: 'amountReceived', label: 'Contribution verified', align: 'right' },
-  { key: 'balance', label: 'Contribution Balance', align: 'right' }
+  { key: 'balance', label: 'Contribution Reserve / Deficit', align: 'right' }
 ]
 
 const exportColumnWidths: Partial<Record<SortKey, number>> = {
@@ -93,6 +93,8 @@ const compareValues = (firstValue: AdminSagicamPaymentsRow[SortKey], secondValue
 }
 
 const getContributionBalanceTarget = (vestedMembers: number) => contributionCreditPerVestedMember * vestedMembers
+
+const getContributionReserveLabel = (balance: number) => (balance < 0 ? 'Deficit' : 'Contribution Reserve')
 
 const shouldShowReplenishAccountNotice = (balance: number, vestedMembers: number) =>
   balance > 0 && balance < getContributionBalanceTarget(vestedMembers)
@@ -139,6 +141,9 @@ const BalanceCard = ({
       className
     )}
   >
+    <span className='mb-1 text-[10px] leading-tight font-extrabold uppercase'>
+      {getContributionReserveLabel(balance)}
+    </span>
     <span className='tabular-nums'>{currencyFormatter.format(balance)}</span>
     {shouldShowReplenishAccountNotice(balance, vestedMembers) ? (
       <span className='mt-1 text-right text-[10px] leading-tight font-semibold'>(Please replenish account)</span>
@@ -193,7 +198,7 @@ const SentAmountAdjustmentForm = ({
   return (
     <form
       action={adjustSponsorContributionAmountSentAction}
-      className={cn('mt-2 grid gap-1.5', layout === 'card' ? 'grid-cols-[minmax(0,1fr)_auto] items-center' : '')}
+      className={cn('grid gap-1.5', layout === 'card' ? 'grid-cols-[minmax(0,1fr)_auto] items-center' : '')}
     >
       <input type='hidden' name='sponsorCode' value={sponsorCode} />
       <label htmlFor={inputId} className='sr-only'>
@@ -216,10 +221,7 @@ const SentAmountAdjustmentForm = ({
         type='submit'
         size='xs'
         variant='secondary'
-        className={cn(
-          'justify-center px-2 text-[11px]',
-          layout === 'card' ? 'h-8 w-20' : 'ml-auto h-7 w-24'
-        )}
+        className={cn('justify-center px-2 text-[11px]', layout === 'card' ? 'h-8 w-20' : 'ml-auto h-7 w-24')}
       >
         <ArrowUpDown className='size-3' />
         Apply
@@ -505,8 +507,10 @@ const AdminSagicamPaymentsTable = ({
                       }`}
                       style={getColumnStyle('contributionAmountSent')}
                     >
-                      {currencyFormatter.format(row.contributionAmountSent)}
-                      <SentAmountAdjustmentForm sponsorCode={row.sponsorCode} />
+                      <div className='flex flex-col items-end gap-2'>
+                        <SentAmountAdjustmentForm sponsorCode={row.sponsorCode} />
+                        <span>{currencyFormatter.format(row.contributionAmountSent)}</span>
+                      </div>
                     </TableCell>
                     <TableCell className='text-right font-semibold' style={getColumnStyle('amountReceived')}>
                       {currencyFormatter.format(row.amountReceived)}
@@ -521,6 +525,9 @@ const AdminSagicamPaymentsTable = ({
                       <div className='grid min-w-0 grid-cols-[auto_auto_minmax(0,1fr)] grid-rows-[auto_auto] items-center justify-items-center gap-x-2 gap-y-1'>
                         <ContributionPaymentControls row={row} />
                         <span className='bg-background/80 col-start-3 row-span-2 row-start-1 flex min-w-0 flex-col items-center justify-center self-stretch justify-self-stretch rounded-md border border-current/20 px-2 py-2 text-center text-xl leading-none font-black'>
+                          <span className='mb-1 text-[10px] leading-tight font-extrabold uppercase'>
+                            {getContributionReserveLabel(row.balance)}
+                          </span>
                           <span className='tabular-nums'>{currencyFormatter.format(row.balance)}</span>
                           {shouldShowReplenishAccountNotice(row.balance, row.vestedMembers) ? (
                             <span className='mt-1 text-[10px] leading-tight font-semibold'>
@@ -603,15 +610,17 @@ const AdminSagicamPaymentsTable = ({
                   <div className='text-sm font-extrabold'>Contribution</div>
                   <MobileValue label='Vested' value={row.vestedMembers} />
                   <MobileValue label='Owed' value={currencyFormatter.format(row.amountOwed)} />
+                  <SentAmountAdjustmentForm sponsorCode={row.sponsorCode} layout='card' />
                   <MobileValue
                     label='Sent'
                     value={currencyFormatter.format(row.contributionAmountSent)}
                     valueClassName={row.contributionAmountSent > 0 ? 'text-green-700 dark:text-green-300' : ''}
                   />
-                  <SentAmountAdjustmentForm sponsorCode={row.sponsorCode} layout='card' />
                   <MobileValue label='Verified' value={currencyFormatter.format(row.amountReceived)} />
                   <div className='grid grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] items-start gap-2 border-t pt-3'>
-                    <span className='text-muted-foreground text-xs font-semibold uppercase'>Contribution Balance</span>
+                    <span className='text-muted-foreground text-xs font-semibold uppercase'>
+                      {getContributionReserveLabel(row.balance)}
+                    </span>
                     <BalanceCard
                       balance={row.balance}
                       vestedMembers={row.vestedMembers}
@@ -637,7 +646,9 @@ const AdminSagicamPaymentsTable = ({
                   value={currencyFormatter.format(visibleTotals.amountReceived)}
                 />
                 <div className='grid grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] items-start gap-2 border-t pt-3'>
-                  <span className='text-xs font-semibold uppercase'>Contribution balance</span>
+                  <span className='text-xs font-semibold uppercase'>
+                    {getContributionReserveLabel(visibleTotals.balance)}
+                  </span>
                   <BalanceCard
                     balance={visibleTotals.balance}
                     vestedMembers={visibleTotals.vestedMembers}
