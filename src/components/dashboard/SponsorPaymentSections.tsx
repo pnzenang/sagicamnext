@@ -617,8 +617,7 @@ const PaymentBalanceRow = ({
     contributionVestedMembersCount !== undefined &&
     shouldShowReplenishAccountNotice(balance, contributionVestedMembersCount)
 
-  const showNotInGoodStandingNotice =
-    contributionVestedMembersCount !== undefined && shouldShowNotInGoodStandingNotice(balance)
+  const showNotInGoodStandingNotice = shouldShowNotInGoodStandingNotice(balance)
 
   const showUpcomingMonthsNotice =
     !showReplenishAccountNotice &&
@@ -633,7 +632,7 @@ const PaymentBalanceRow = ({
           <span className='text-[15px] leading-tight font-medium'>(Please replenish account)</span>
         ) : null}
         {showNotInGoodStandingNotice ? (
-          <span className='text-[15px] leading-tight font-medium'>(Not In Good Standing.)</span>
+          <span className='text-[15px] leading-tight font-medium'>(Not In Good Standing)</span>
         ) : null}
         {showUpcomingMonthsNotice ? (
           <span className='text-[15px] leading-tight font-medium'>(To be used for upcoming months)</span>

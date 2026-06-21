@@ -149,7 +149,7 @@ const BalanceCard = ({
       <span className='mt-1 text-right text-[10px] leading-tight font-semibold'>(Please replenish account)</span>
     ) : null}
     {shouldShowNotInGoodStandingNotice(balance) ? (
-      <span className='mt-1 text-right text-[10px] leading-tight font-semibold'>(Not In Good Standing.)</span>
+      <span className='mt-1 text-right text-[10px] leading-tight font-semibold'>(Not In Good Standing)</span>
     ) : null}
   </div>
 )
@@ -535,9 +535,7 @@ const AdminSagicamPaymentsTable = ({
                             </span>
                           ) : null}
                           {shouldShowNotInGoodStandingNotice(row.balance) ? (
-                            <span className='mt-1 text-[10px] leading-tight font-semibold'>
-                              (Not In Good Standing.)
-                            </span>
+                            <span className='mt-1 text-[10px] leading-tight font-semibold'>(Not In Good Standing)</span>
                           ) : null}
                         </span>
                       </div>
