@@ -147,7 +147,7 @@ export const pagesItems: MenuItem[] = [
       },
       {
         icon: History,
-        label: 'Payment History',
+        label: 'Transaction History',
         href: '/admin-payment-history'
       }
     ]

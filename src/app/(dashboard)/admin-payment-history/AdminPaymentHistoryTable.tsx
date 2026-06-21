@@ -316,8 +316,8 @@ const AdminPaymentHistoryTable = ({
 
     const workbook = XLSX.utils.book_new()
 
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Payment History')
-    XLSX.writeFile(workbook, `sagicam-payment-history-${new Date().toISOString().split('T')[0]}.xlsx`)
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Transaction History')
+    XLSX.writeFile(workbook, `sagicam-transaction-history-${new Date().toISOString().split('T')[0]}.xlsx`)
   }
 
   return (
@@ -332,7 +332,7 @@ const AdminPaymentHistoryTable = ({
       <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
         <form role='search' onSubmit={event => event.preventDefault()} className='min-w-0 flex-1'>
           <label htmlFor='payment-history-search' className='sr-only'>
-            Search payment history
+            Search transaction history
           </label>
           <Input
             id='payment-history-search'
@@ -386,8 +386,8 @@ const AdminPaymentHistoryTable = ({
                 <TableRow>
                   <TableCell colSpan={columns.length} className='text-muted-foreground h-24 text-center'>
                     {normalizedSearch
-                      ? `No payment history matching "${search.trim()}" found.`
-                      : 'No payment history found.'}
+                      ? `No transaction history matching "${search.trim()}" found.`
+                      : 'No transaction history found.'}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -464,7 +464,9 @@ const AdminPaymentHistoryTable = ({
         <div className='grid gap-3 p-2 sm:p-3 xl:hidden'>
           {sortedRows.length === 0 ? (
             <div className='text-muted-foreground rounded-md border px-3 py-8 text-center text-sm sm:px-4 sm:py-10'>
-              {normalizedSearch ? `No payment history matching "${search.trim()}" found.` : 'No payment history found.'}
+              {normalizedSearch
+                ? `No transaction history matching "${search.trim()}" found.`
+                : 'No transaction history found.'}
             </div>
           ) : (
             paginatedRows.map(row => (

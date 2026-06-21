@@ -125,7 +125,7 @@ const AdminPaymentHistory = async () => {
     <div className='max-w-full min-w-0 space-y-6 py-4 sm:py-10'>
       <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
         <div className='min-w-0'>
-          <h1 className='text-4xl font-semibold tracking-normal'>Payment history</h1>
+          <h1 className='text-4xl font-semibold tracking-normal'>Transaction history</h1>
           <p className='text-muted-foreground mt-2 text-sm'>
             All sponsor payment transactions with submitted, adjusted, and SAGICAM verified amounts separated by column.
           </p>
