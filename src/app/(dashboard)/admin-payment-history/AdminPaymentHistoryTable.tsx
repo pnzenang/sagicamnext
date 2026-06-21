@@ -2,12 +2,15 @@
 
 import { useMemo, useState } from 'react'
 
-import { ArrowDown, ArrowUp, ArrowUpDown, Download } from 'lucide-react'
+import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeftIcon, ChevronRightIcon, Download } from 'lucide-react'
 import * as XLSX from 'xlsx'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem } from '@/components/ui/pagination'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { usePagination } from '@/hooks/use-pagination'
 import { cn } from '@/lib/utils'
 
 const currencyFormatter = new Intl.NumberFormat('en-US', {
@@ -58,6 +61,8 @@ const columns: AdminPaymentHistoryColumn[] = [
   { key: 'amountVerified', label: 'Amount verified', align: 'right' },
   { key: 'note', label: 'Note' }
 ]
+
+const pageSizeOptions = [10, 25, 50, 100]
 
 const exportColumnWidths: Partial<Record<SortKey, number>> = {
   amountAdjusted: 18,
@@ -156,6 +161,8 @@ const AdminPaymentHistoryTable = ({
   const [sortKey, setSortKey] = useState<SortKey>('createdAt')
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
   const [search, setSearch] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState(25)
 
   const normalizedSearch = search.trim().toLowerCase()
 
@@ -187,6 +194,19 @@ const AdminPaymentHistoryTable = ({
     })
   }, [filteredRows, sortDirection, sortKey])
 
+  const totalPages = Math.max(1, Math.ceil(sortedRows.length / pageSize))
+  const effectiveCurrentPage = Math.min(currentPage, totalPages)
+  const pageStartIndex = (effectiveCurrentPage - 1) * pageSize
+  const pageEndIndex = Math.min(pageStartIndex + pageSize, sortedRows.length)
+  const paginatedRows = sortedRows.slice(pageStartIndex, pageEndIndex)
+  const showingStart = sortedRows.length > 0 ? pageStartIndex + 1 : 0
+
+  const { pages, showLeftEllipsis, showRightEllipsis } = usePagination({
+    currentPage: effectiveCurrentPage,
+    paginationItemsToDisplay: 5,
+    totalPages
+  })
+
   const visibleTotals = useMemo<AdminPaymentHistoryTotals>(() => {
     if (!normalizedSearch) return totals
 
@@ -211,12 +231,28 @@ const AdminPaymentHistoryTable = ({
   const handleSort = (nextSortKey: SortKey) => {
     if (nextSortKey === sortKey) {
       setSortDirection(currentDirection => (currentDirection === 'asc' ? 'desc' : 'asc'))
+      setCurrentPage(1)
 
       return
     }
 
     setSortKey(nextSortKey)
     setSortDirection(nextSortKey === 'createdAt' ? 'desc' : 'asc')
+    setCurrentPage(1)
+  }
+
+  const handleSearchChange = (nextSearch: string) => {
+    setSearch(nextSearch)
+    setCurrentPage(1)
+  }
+
+  const handlePageSizeChange = (nextPageSize: string) => {
+    setPageSize(Number(nextPageSize))
+    setCurrentPage(1)
+  }
+
+  const handlePageChange = (nextPage: number) => {
+    setCurrentPage(Math.min(Math.max(nextPage, 1), totalPages))
   }
 
   const handleExport = () => {
@@ -301,12 +337,12 @@ const AdminPaymentHistoryTable = ({
           <Input
             id='payment-history-search'
             value={search}
-            onChange={event => setSearch(event.target.value)}
+            onChange={event => handleSearchChange(event.target.value)}
             placeholder='Search sponsor, code, type, action, or note'
             className='bg-background h-10 w-full text-sm font-semibold'
           />
         </form>
-        <Button type='button' size='sm' onClick={handleExport} disabled={sortedRows.length === 0}>
+        <Button type='button' size='sm' className='h-10' onClick={handleExport} disabled={sortedRows.length === 0}>
           <Download />
           Export
         </Button>
@@ -355,7 +391,7 @@ const AdminPaymentHistoryTable = ({
                   </TableCell>
                 </TableRow>
               ) : (
-                sortedRows.map(row => (
+                paginatedRows.map(row => (
                   <TableRow key={row.id} className='odd:bg-muted/30 even:bg-background'>
                     <TableCell className='text-xs font-semibold' style={getColumnStyle('createdAt')}>
                       {row.createdAtLabel}
@@ -431,7 +467,7 @@ const AdminPaymentHistoryTable = ({
               {normalizedSearch ? `No payment history matching "${search.trim()}" found.` : 'No payment history found.'}
             </div>
           ) : (
-            sortedRows.map(row => (
+            paginatedRows.map(row => (
               <article key={row.id} className='bg-background overflow-hidden rounded-md border shadow-sm'>
                 <div className='flex flex-col gap-2 border-b px-3 py-3 sm:flex-row sm:items-start sm:justify-between sm:px-4'>
                   <div className='min-w-0'>
@@ -480,6 +516,94 @@ const AdminPaymentHistoryTable = ({
             ))
           )}
         </div>
+
+        {sortedRows.length > 0 ? (
+          <div className='bg-background flex flex-col gap-3 border-t px-3 py-3 lg:flex-row lg:items-center lg:justify-between'>
+            <p className='text-muted-foreground text-sm font-semibold'>
+              Showing {showingStart}-{pageEndIndex} of {sortedRows.length} transaction(s)
+            </p>
+            <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end'>
+              <div className='flex items-center gap-2'>
+                <span className='text-muted-foreground text-sm font-semibold whitespace-nowrap'>Rows per page</span>
+                <Select value={pageSize.toString()} onValueChange={handlePageSizeChange}>
+                  <SelectTrigger className='bg-background h-9 w-24'>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {pageSizeOptions.map(option => (
+                      <SelectItem key={option} value={option.toString()}>
+                        {option}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <Pagination className='mx-0 w-auto justify-start sm:justify-end'>
+                <PaginationContent className='w-max flex-nowrap'>
+                  <PaginationItem>
+                    <Button
+                      type='button'
+                      variant='ghost'
+                      onClick={() => handlePageChange(effectiveCurrentPage - 1)}
+                      disabled={effectiveCurrentPage === 1}
+                      className='disabled:pointer-events-none disabled:opacity-50'
+                      aria-label='Go to previous page'
+                    >
+                      <ChevronLeftIcon className='size-4' />
+                      <span className='hidden sm:inline'>Previous</span>
+                    </Button>
+                  </PaginationItem>
+
+                  {showLeftEllipsis ? (
+                    <PaginationItem>
+                      <PaginationEllipsis />
+                    </PaginationItem>
+                  ) : null}
+
+                  {pages.map(page => {
+                    const isActive = page === effectiveCurrentPage
+
+                    return (
+                      <PaginationItem key={page}>
+                        <Button
+                          type='button'
+                          size='icon'
+                          variant={isActive ? 'default' : 'outline'}
+                          onClick={() => handlePageChange(page)}
+                          aria-current={isActive ? 'page' : undefined}
+                          aria-label={`Go to page ${page}`}
+                        >
+                          {page}
+                        </Button>
+                      </PaginationItem>
+                    )
+                  })}
+
+                  {showRightEllipsis ? (
+                    <PaginationItem>
+                      <PaginationEllipsis />
+                    </PaginationItem>
+                  ) : null}
+
+                  <PaginationItem>
+                    <Button
+                      type='button'
+                      variant='ghost'
+                      onClick={() => handlePageChange(effectiveCurrentPage + 1)}
+                      disabled={effectiveCurrentPage === totalPages}
+                      className='disabled:pointer-events-none disabled:opacity-50'
+                      aria-label='Go to next page'
+                    >
+                      <span className='hidden sm:inline'>Next</span>
+                      <ChevronRightIcon className='size-4' />
+                    </Button>
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          </div>
+        ) : null}
       </div>
     </div>
   )
