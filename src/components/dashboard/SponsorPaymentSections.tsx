@@ -269,24 +269,30 @@ const PaymentSummaryCard = ({ row }: { row: PaymentSummaryRow }) => {
           ) : null}
           {row.dateGroups && row.dateGroups.length > 0 ? (
             <div className='mt-2 grid gap-2 text-xs leading-snug'>
-              {row.dateGroups.map(group => (
-                <div key={group.id} className='min-w-0'>
-                  <p className='text-primary/80 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 font-semibold'>
-                    <span className='shrink-0 text-xs font-semibold tabular-nums'>{formatCurrency(group.amount)}</span>
-                    <span className='text-xs'>for</span>
-                    <span className='min-w-0 text-xs break-words'>{group.meta}</span>
-                  </p>
-                  {group.names && group.names.length > 0 ? (
-                    <div className='mt-0.5 grid gap-0.5 font-extrabold'>
-                      {group.names.map((name, index) => (
-                        <p key={`${group.id}-${name}-${index}`} className='break-words'>
-                          {name}
-                        </p>
-                      ))}
-                    </div>
-                  ) : null}
-                </div>
-              ))}
+              {row.dateGroups.map(group => {
+                const showFor = !group.meta.startsWith('Verified on:')
+
+                return (
+                  <div key={group.id} className='min-w-0'>
+                    <p className='text-primary/80 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 font-semibold'>
+                      <span className='shrink-0 text-xs font-semibold tabular-nums'>
+                        {formatCurrency(group.amount)}
+                      </span>
+                      {showFor ? <span className='text-xs'>for</span> : null}
+                      <span className='min-w-0 text-xs break-words'>{group.meta}</span>
+                    </p>
+                    {group.names && group.names.length > 0 ? (
+                      <div className='mt-0.5 grid gap-0.5 font-extrabold'>
+                        {group.names.map((name, index) => (
+                          <p key={`${group.id}-${name}-${index}`} className='break-words'>
+                            {name}
+                          </p>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                )
+              })}
             </div>
           ) : null}
           {row.meta ? <p className='text-primary/80 mt-1 text-xs leading-snug font-semibold'>{row.meta}</p> : null}
