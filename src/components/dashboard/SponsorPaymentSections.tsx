@@ -312,7 +312,7 @@ const PaymentSummaryCard = ({ row }: { row: PaymentSummaryRow }) => {
 
 const getSubmittedPaymentEntryMeta = (entry: SponsorPaymentLedgerEntry) =>
   entry.note?.toLowerCase().includes('amount sent manually adjusted')
-    ? `Amount sent adjusted ${formatDateTime(entry.createdAt)}`
+    ? `Found by SAGICAM on: ${formatDateTime(entry.createdAt)}`
     : `Payment submitted ${formatDateTime(entry.createdAt)}`
 
 const getVerifiedPaymentGroupsLinkedToSubmittedPayments = (
@@ -345,7 +345,7 @@ const getVerifiedPaymentGroupsLinkedToSubmittedPayments = (
     .map(([dayKey, amount]) => ({
       amount,
       id: `amount-verified-linked-${dayKey}`,
-      meta: `Payment submitted ${formatDate(`${dayKey}T12:00:00.000Z`)}`
+      meta: `Verified on: ${formatDate(`${dayKey}T12:00:00.000Z`)}`
     }))
 }
 
@@ -437,7 +437,7 @@ const buildAmountVerifiedSummaryRow = ({
       ? {
           amount: legacyVerifiedAmount,
           id: `amount-verified-legacy-${verifiedAt}`,
-          meta: `Payment verified ${formatDate(verifiedAt)}`
+          meta: `Verified on: ${formatDate(verifiedAt)}`
         }
       : null
 
@@ -449,7 +449,7 @@ const buildAmountVerifiedSummaryRow = ({
             {
               amount: amountVerifiedValue,
               id: `amount-verified-${amountVerifiedDate}`,
-              meta: `Payment verified ${formatDate(amountVerifiedDate)}`
+              meta: `Verified on: ${formatDate(amountVerifiedDate)}`
             }
           ]
         : []
@@ -461,7 +461,7 @@ const buildAmountVerifiedSummaryRow = ({
     meta:
       amountVerifiedDateGroups.length > 0 || !amountVerifiedDate
         ? undefined
-        : `Payment verified ${formatDateTime(amountVerifiedDate)}`,
+        : `Verified on: ${formatDateTime(amountVerifiedDate)}`,
     value: amountVerifiedValue
   }
 }
