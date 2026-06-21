@@ -2,11 +2,15 @@
 
 import { useMemo, useState } from 'react'
 
-import { ArrowDown, ArrowUp, ArrowUpDown, Download } from 'lucide-react'
+import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeftIcon, ChevronRightIcon, Download } from 'lucide-react'
 import * as XLSX from 'xlsx'
 
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem } from '@/components/ui/pagination'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { usePagination } from '@/hooks/use-pagination'
 
 export type AdminCountRow = {
   sponsorName: string
@@ -41,6 +45,8 @@ const columns: AdminCountColumn[] = [
   { key: 'awaiting', label: 'Awaiting', align: 'right' },
   { key: 'total', label: 'Total', align: 'right' }
 ]
+
+const pageSizeOptions = [10, 25, 50, 100]
 
 const fixedLeftColumnCount = 2
 const fixedLeftColumnWidth = 20
@@ -81,31 +87,105 @@ const MobileCountValue = ({ label, value }: { label: string; value: number }) =>
 const AdminCountTable = ({ rows, totals }: { rows: AdminCountRow[]; totals: AdminCountTotals }) => {
   const [sortKey, setSortKey] = useState<SortKey>('sponsorName')
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
+  const [search, setSearch] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState(25)
+
+  const normalizedSearch = search.trim().toLowerCase()
+
+  const filteredRows = useMemo(() => {
+    if (!normalizedSearch) return rows
+
+    return rows.filter(row =>
+      [row.sponsorName, row.sponsorEmail, row.sponsorCode].join(' ').toLowerCase().includes(normalizedSearch)
+    )
+  }, [normalizedSearch, rows])
 
   const sortedRows = useMemo(() => {
-    return [...rows].sort((firstRow, secondRow) => {
+    return [...filteredRows].sort((firstRow, secondRow) => {
       const comparison = compareValues(firstRow[sortKey], secondRow[sortKey])
 
       return sortDirection === 'asc' ? comparison : -comparison
     })
-  }, [rows, sortDirection, sortKey])
+  }, [filteredRows, sortDirection, sortKey])
+
+  const totalPages = Math.max(1, Math.ceil(sortedRows.length / pageSize))
+  const effectiveCurrentPage = Math.min(currentPage, totalPages)
+  const pageStartIndex = (effectiveCurrentPage - 1) * pageSize
+  const pageEndIndex = Math.min(pageStartIndex + pageSize, sortedRows.length)
+  const paginatedRows = sortedRows.slice(pageStartIndex, pageEndIndex)
+  const showingStart = sortedRows.length > 0 ? pageStartIndex + 1 : 0
+
+  const { pages, showLeftEllipsis, showRightEllipsis } = usePagination({
+    currentPage: effectiveCurrentPage,
+    paginationItemsToDisplay: 3,
+    totalPages
+  })
+
+  const visibleTotals = useMemo<AdminCountTotals>(() => {
+    if (!normalizedSearch) return totals
+
+    return filteredRows.reduce(
+      (currentTotals, row) => {
+        currentTotals.vested += row.vested
+        currentTotals.pending += row.pending
+        currentTotals.delinquent += row.delinquent
+        currentTotals.awaiting += row.awaiting
+        currentTotals.total += row.total
+
+        return currentTotals
+      },
+      {
+        awaiting: 0,
+        delinquent: 0,
+        pending: 0,
+        total: 0,
+        vested: 0
+      }
+    )
+  }, [filteredRows, normalizedSearch, totals])
 
   const handleSort = (nextSortKey: SortKey) => {
     if (nextSortKey === sortKey) {
       setSortDirection(currentDirection => (currentDirection === 'asc' ? 'desc' : 'asc'))
+      setCurrentPage(1)
 
       return
     }
 
     setSortKey(nextSortKey)
     setSortDirection('asc')
+    setCurrentPage(1)
+  }
+
+  const handleSearchChange = (nextSearch: string) => {
+    setSearch(nextSearch)
+    setCurrentPage(1)
+  }
+
+  const handlePageSizeChange = (nextPageSize: string) => {
+    setPageSize(Number(nextPageSize))
+    setCurrentPage(1)
+  }
+
+  const handlePageChange = (nextPage: number) => {
+    setCurrentPage(Math.min(Math.max(nextPage, 1), totalPages))
   }
 
   const handleExport = () => {
     const worksheetRows = [
       columns.map(column => column.label),
       ...sortedRows.map(row => columns.map(column => row[column.key])),
-      ['Total', '', '', totals.vested, totals.pending, totals.delinquent, totals.awaiting, totals.total]
+      [
+        'Total',
+        '',
+        '',
+        visibleTotals.vested,
+        visibleTotals.pending,
+        visibleTotals.delinquent,
+        visibleTotals.awaiting,
+        visibleTotals.total
+      ]
     ]
 
     const worksheet = XLSX.utils.aoa_to_sheet(worksheetRows)
@@ -120,8 +200,20 @@ const AdminCountTable = ({ rows, totals }: { rows: AdminCountRow[]; totals: Admi
 
   return (
     <div className='max-w-full min-w-0 space-y-3'>
-      <div className='flex justify-end'>
-        <Button type='button' size='sm' onClick={handleExport} disabled={sortedRows.length === 0}>
+      <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+        <form role='search' onSubmit={event => event.preventDefault()} className='min-w-0 flex-1'>
+          <label htmlFor='admin-count-search' className='sr-only'>
+            Search admin count
+          </label>
+          <Input
+            id='admin-count-search'
+            value={search}
+            onChange={event => handleSearchChange(event.target.value)}
+            placeholder='Search sponsor name, email, or code'
+            className='bg-background h-10 w-full text-sm font-semibold'
+          />
+        </form>
+        <Button type='button' size='sm' className='h-10' onClick={handleExport} disabled={sortedRows.length === 0}>
           <Download />
           Export
         </Button>
@@ -163,11 +255,11 @@ const AdminCountTable = ({ rows, totals }: { rows: AdminCountRow[]; totals: Admi
               {sortedRows.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={adminCountColumnWidths.length} className='text-muted-foreground h-24 text-center'>
-                    No members found.
+                    {normalizedSearch ? `No sponsor matching "${search.trim()}" found.` : 'No members found.'}
                   </TableCell>
                 </TableRow>
               ) : (
-                sortedRows.map(row => (
+                paginatedRows.map(row => (
                   <TableRow key={row.sponsorCode} className='odd:bg-muted/30 even:bg-background'>
                     <TableCell className='hidden font-medium md:table-cell'>{row.sponsorName}</TableCell>
                     <TableCell className='hidden md:table-cell'>
@@ -196,11 +288,11 @@ const AdminCountTable = ({ rows, totals }: { rows: AdminCountRow[]; totals: Admi
                   <TableCell className='hidden font-extrabold md:table-cell'>Total</TableCell>
                   <TableCell className='hidden font-extrabold md:table-cell' />
                   <TableCell className='font-extrabold' />
-                  <TableCell className='text-right font-extrabold'>{totals.vested}</TableCell>
-                  <TableCell className='text-right font-extrabold'>{totals.pending}</TableCell>
-                  <TableCell className='text-right font-extrabold'>{totals.delinquent}</TableCell>
-                  <TableCell className='text-right font-extrabold'>{totals.awaiting}</TableCell>
-                  <TableCell className='text-right text-lg font-extrabold'>{totals.total}</TableCell>
+                  <TableCell className='text-right font-extrabold'>{visibleTotals.vested}</TableCell>
+                  <TableCell className='text-right font-extrabold'>{visibleTotals.pending}</TableCell>
+                  <TableCell className='text-right font-extrabold'>{visibleTotals.delinquent}</TableCell>
+                  <TableCell className='text-right font-extrabold'>{visibleTotals.awaiting}</TableCell>
+                  <TableCell className='text-right text-lg font-extrabold'>{visibleTotals.total}</TableCell>
                 </TableRow>
               </TableFooter>
             )}
@@ -209,10 +301,10 @@ const AdminCountTable = ({ rows, totals }: { rows: AdminCountRow[]; totals: Admi
         <div className='grid gap-3 p-2 sm:p-3 md:hidden'>
           {sortedRows.length === 0 ? (
             <div className='text-muted-foreground rounded-md border px-3 py-8 text-center text-sm sm:px-4 sm:py-10'>
-              No members found.
+              {normalizedSearch ? `No sponsor matching "${search.trim()}" found.` : 'No members found.'}
             </div>
           ) : (
-            sortedRows.map(row => (
+            paginatedRows.map(row => (
               <article
                 key={row.sponsorCode}
                 className='bg-background overflow-hidden rounded-md border p-3 shadow-sm sm:p-4'
@@ -249,18 +341,106 @@ const AdminCountTable = ({ rows, totals }: { rows: AdminCountRow[]; totals: Admi
             <article className='bg-primary text-primary-foreground overflow-hidden rounded-md p-3 shadow-sm sm:p-4'>
               <div className='mb-3 text-base font-extrabold'>Total</div>
               <div className='grid gap-2'>
-                <MobileCountValue label='Vested' value={totals.vested} />
-                <MobileCountValue label='Pending' value={totals.pending} />
-                <MobileCountValue label='Delinquent' value={totals.delinquent} />
-                <MobileCountValue label='Awaiting' value={totals.awaiting} />
+                <MobileCountValue label='Vested' value={visibleTotals.vested} />
+                <MobileCountValue label='Pending' value={visibleTotals.pending} />
+                <MobileCountValue label='Delinquent' value={visibleTotals.delinquent} />
+                <MobileCountValue label='Awaiting' value={visibleTotals.awaiting} />
               </div>
               <div className='mt-3 flex items-center justify-between rounded-md bg-white px-3 py-2 text-black'>
                 <span className='text-xs font-semibold uppercase'>All members</span>
-                <span className='text-xl font-extrabold tabular-nums'>{totals.total}</span>
+                <span className='text-xl font-extrabold tabular-nums'>{visibleTotals.total}</span>
               </div>
             </article>
           )}
         </div>
+
+        {sortedRows.length > 0 ? (
+          <div className='bg-background flex flex-col gap-3 border-t px-3 py-3 lg:flex-row lg:items-center lg:justify-between'>
+            <p className='text-muted-foreground text-sm font-semibold'>
+              Showing {showingStart}-{pageEndIndex} of {sortedRows.length} sponsor(s)
+            </p>
+            <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end'>
+              <div className='flex items-center gap-2'>
+                <span className='text-muted-foreground text-sm font-semibold whitespace-nowrap'>Rows per page</span>
+                <Select value={pageSize.toString()} onValueChange={handlePageSizeChange}>
+                  <SelectTrigger className='bg-background h-9 w-24'>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {pageSizeOptions.map(option => (
+                      <SelectItem key={option} value={option.toString()}>
+                        {option}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <Pagination className='mx-0 w-auto justify-start sm:justify-end'>
+                <PaginationContent className='w-max flex-nowrap'>
+                  <PaginationItem>
+                    <Button
+                      type='button'
+                      variant='ghost'
+                      onClick={() => handlePageChange(effectiveCurrentPage - 1)}
+                      disabled={effectiveCurrentPage === 1}
+                      className='disabled:pointer-events-none disabled:opacity-50'
+                      aria-label='Go to previous page'
+                    >
+                      <ChevronLeftIcon className='size-4' />
+                      <span className='hidden sm:inline'>Previous</span>
+                    </Button>
+                  </PaginationItem>
+
+                  {showLeftEllipsis ? (
+                    <PaginationItem>
+                      <PaginationEllipsis />
+                    </PaginationItem>
+                  ) : null}
+
+                  {pages.map(page => {
+                    const isActive = page === effectiveCurrentPage
+
+                    return (
+                      <PaginationItem key={page}>
+                        <Button
+                          type='button'
+                          size='icon'
+                          variant={isActive ? 'default' : 'outline'}
+                          onClick={() => handlePageChange(page)}
+                          aria-current={isActive ? 'page' : undefined}
+                          aria-label={`Go to page ${page}`}
+                        >
+                          {page}
+                        </Button>
+                      </PaginationItem>
+                    )
+                  })}
+
+                  {showRightEllipsis ? (
+                    <PaginationItem>
+                      <PaginationEllipsis />
+                    </PaginationItem>
+                  ) : null}
+
+                  <PaginationItem>
+                    <Button
+                      type='button'
+                      variant='ghost'
+                      onClick={() => handlePageChange(effectiveCurrentPage + 1)}
+                      disabled={effectiveCurrentPage === totalPages}
+                      className='disabled:pointer-events-none disabled:opacity-50'
+                      aria-label='Go to next page'
+                    >
+                      <span className='hidden sm:inline'>Next</span>
+                      <ChevronRightIcon className='size-4' />
+                    </Button>
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          </div>
+        ) : null}
       </div>
     </div>
   )
