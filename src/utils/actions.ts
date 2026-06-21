@@ -1027,6 +1027,65 @@ export const verifySponsorRegistrationPaymentAction = async (formData: FormData)
   }
 }
 
+export const adjustSponsorRegistrationAmountSentAction = async (formData: FormData): Promise<void> => {
+  const user = await getAuthUser()
+
+  try {
+    const sponsorCode = getRequiredFormValue(formData, 'sponsorCode')
+    const amountAdjustment = getSignedDollarAdjustmentFromForm(formData, 'registrationAmountSentAdjustment')
+
+    const currentPayment = await db.sponsorRegistrationPayment.findUnique({
+      where: {
+        sponsorCode
+      }
+    })
+
+    const currentAmountSent = decimalToNumber(currentPayment?.amountSent)
+    const nextAmountSent = Number((currentAmountSent + amountAdjustment).toFixed(2))
+
+    if (nextAmountSent < 0) {
+      throw new Error('Registration amount sent cannot be below zero.')
+    }
+
+    await db.$transaction(async tx => {
+      await tx.sponsorRegistrationPayment.upsert({
+        create: {
+          amountSent: nextAmountSent,
+          amountVerified: 0,
+          lastSubmittedAt: null,
+          sponsorCode,
+          verifiedAt: null
+        },
+        update: {
+          amountSent: nextAmountSent
+        },
+        where: {
+          sponsorCode
+        }
+      })
+
+      await tx.sponsorPaymentLedgerEntry.create({
+        data: {
+          amount: amountAdjustment,
+          createdBy: user.id,
+          eventType: sponsorPaymentLedgerEventTypes.submitted,
+          note: 'Registration amount sent manually adjusted by SAGICAM.',
+          paymentType: sponsorPaymentTypes.registration,
+          sponsorCode
+        }
+      })
+    })
+
+    revalidatePath('/admin-count')
+    revalidatePath('/admin-sagicam-payments')
+    revalidatePath('/admin-sagicam-registrations')
+    revalidatePath('/all-members')
+    revalidateSponsorPaymentPages()
+  } catch (error) {
+    renderError(error)
+  }
+}
+
 export const addSponsorRegistrationBalanceAdjustmentAction = async (formData: FormData): Promise<void> => {
   await addSponsorBalanceAdjustment(formData, registrationBalanceAdjustmentType)
 }

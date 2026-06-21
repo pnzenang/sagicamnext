@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, Table
 import { cn } from '@/lib/utils'
 import {
   addSponsorRegistrationBalanceAdjustmentAction,
+  adjustSponsorRegistrationAmountSentAction,
   resetSponsorRegistrationPaymentAction,
   verifySponsorRegistrationPaymentAction
 } from '@/utils/actions'
@@ -151,6 +152,53 @@ const EmailLink = ({ className = '', email }: { className?: string; email: strin
     <a href={`mailto:${email}`} className={`text-primary underline-offset-2 hover:underline ${className}`}>
       {email}
     </a>
+  )
+}
+
+const SentAmountAdjustmentForm = ({
+  layout = 'table',
+  sponsorCode
+}: {
+  layout?: 'card' | 'table'
+  sponsorCode: string
+}) => {
+  const inputId = `registration-sent-adjustment-${sponsorCode}`
+
+  return (
+    <form
+      action={adjustSponsorRegistrationAmountSentAction}
+      className={cn('mt-2 grid gap-1.5', layout === 'card' ? 'grid-cols-[minmax(0,1fr)_auto] items-center' : '')}
+    >
+      <input type='hidden' name='sponsorCode' value={sponsorCode} />
+      <label htmlFor={inputId} className='sr-only'>
+        Amount to adjust registration sent
+      </label>
+      <Input
+        id={inputId}
+        name='registrationAmountSentAdjustment'
+        type='number'
+        inputMode='decimal'
+        step='0.01'
+        placeholder='+/- 0.00'
+        className={cn(
+          'bg-background text-foreground placeholder:text-muted-foreground text-center text-[11px]',
+          layout === 'card' ? 'h-8 px-2 text-xs' : 'ml-auto h-7 w-24 px-1.5'
+        )}
+        required
+      />
+      <Button
+        type='submit'
+        size='xs'
+        variant='secondary'
+        className={cn(
+          'justify-center px-2 text-[11px]',
+          layout === 'card' ? 'h-8 w-20' : 'ml-auto h-7 w-24'
+        )}
+      >
+        <ArrowUpDown className='size-3' />
+        Apply
+      </Button>
+    </form>
   )
 }
 
@@ -438,6 +486,7 @@ const AdminSagicamRegistrationsTable = ({
                       style={getColumnStyle('registrationAmountSent')}
                     >
                       {currencyFormatter.format(row.registrationAmountSent)}
+                      <SentAmountAdjustmentForm sponsorCode={row.sponsorCode} />
                     </TableCell>
                     <TableCell className='text-right font-semibold' style={getColumnStyle('registrationReceived')}>
                       {currencyFormatter.format(row.registrationReceived)}
@@ -538,6 +587,7 @@ const AdminSagicamRegistrationsTable = ({
                     value={currencyFormatter.format(row.registrationAmountSent)}
                     valueClassName={row.registrationAmountSent > 0 ? 'text-green-700 dark:text-green-300' : ''}
                   />
+                  <SentAmountAdjustmentForm sponsorCode={row.sponsorCode} layout='card' />
                   <MobileValue label='Verified' value={currencyFormatter.format(row.registrationReceived)} />
                   <div className='grid grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] items-start gap-2 border-t pt-3'>
                     <span className='text-muted-foreground text-xs font-semibold uppercase'>Registration balance</span>
