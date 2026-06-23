@@ -113,7 +113,7 @@ const getBalanceCardClassName = (balance: number) =>
 
 const getRegistrationReserveLabel = (balance: number) => (balance < 0 ? 'Deficit' : 'Registration Reserve')
 
-const shouldShowNotInGoodStandingNotice = (balance: number) => balance < 0
+const shouldShowAwaitingPaymentNotice = (balance: number) => balance < 0
 
 const BalanceCard = ({ balance, className }: { balance: number; className?: string }) => (
   <div
@@ -127,8 +127,8 @@ const BalanceCard = ({ balance, className }: { balance: number; className?: stri
       {getRegistrationReserveLabel(balance)}
     </span>
     <span className='tabular-nums'>{currencyFormatter.format(balance)}</span>
-    {shouldShowNotInGoodStandingNotice(balance) ? (
-      <span className='mt-1 text-right text-[10px] leading-tight font-semibold'>(Not In Good Standing)</span>
+    {shouldShowAwaitingPaymentNotice(balance) ? (
+      <span className='mt-1 text-right text-[10px] leading-tight font-semibold'>(awaiting payment)</span>
     ) : null}
   </div>
 )
@@ -513,8 +513,8 @@ const AdminSagicamRegistrationsTable = ({
                             {getRegistrationReserveLabel(row.registrationBalance)}
                           </span>
                           <span className='tabular-nums'>{currencyFormatter.format(row.registrationBalance)}</span>
-                          {shouldShowNotInGoodStandingNotice(row.registrationBalance) ? (
-                            <span className='mt-1 text-[10px] leading-tight font-semibold'>(Not In Good Standing)</span>
+                          {shouldShowAwaitingPaymentNotice(row.registrationBalance) ? (
+                            <span className='mt-1 text-[10px] leading-tight font-semibold'>(awaiting payment)</span>
                           ) : null}
                         </span>
                       </div>
