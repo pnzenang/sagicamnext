@@ -400,14 +400,6 @@ const DeceasedMembersDataTable = ({
             </p>
 
             <div className='flex w-full max-w-full min-w-0 flex-wrap items-center justify-start gap-2 overflow-hidden md:w-auto md:flex-nowrap md:justify-end'>
-              <Button
-                className='text-primary focus-visible:ring-primary/20 dark:focus-visible:ring-primary/40 shrink-0 bg-purple-500/10 hover:bg-purple-400/20 max-md:flex-1 max-md:justify-center'
-                onClick={exportCurrentPageToExcel}
-                disabled={table.getRowModel().rows.length === 0}
-              >
-                <FileSpreadsheetIcon />
-                Export Page
-              </Button>
               <TablePaginationControls
                 table={table}
                 pages={pages}
@@ -417,6 +409,37 @@ const DeceasedMembersDataTable = ({
                 pageButtonClassName='bg-purple-500 hover:bg-purple-400'
                 className='mx-0 w-auto justify-start md:justify-end'
               />
+              <Button
+                className='text-primary focus-visible:ring-primary/20 dark:focus-visible:ring-primary/40 shrink-0 bg-purple-500/10 hover:bg-purple-400/20 max-md:flex-1 max-md:justify-center'
+                onClick={exportCurrentPageToExcel}
+                disabled={table.getRowModel().rows.length === 0}
+              >
+                <FileSpreadsheetIcon />
+                Export Page
+              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button className='text-primary focus-visible:ring-primary/20 dark:focus-visible:ring-primary/40 bg-purple-500/10 hover:bg-purple-400/20 max-md:flex-1 max-md:justify-center'>
+                    <UploadIcon />
+                    Export All
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align='end'>
+                  <DropdownMenuItem onClick={exportToCSV}>
+                    <FileTextIcon className='mr-2 size-4' />
+                    Export as CSV
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={exportToExcel}>
+                    <FileSpreadsheetIcon className='mr-2 size-4' />
+                    Export as Excel
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={exportToJSON}>
+                    <FileTextIcon className='mr-2 size-4' />
+                    Export as JSON
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
           <div className='grid grid-cols-1 gap-6 max-md:*:last:col-span-full sm:grid-cols-2 md:grid-cols-3'>
@@ -453,29 +476,6 @@ const DeceasedMembersDataTable = ({
                 </SelectContent>
               </Select>
             </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button className='text-primary focus-visible:ring-primary/20 dark:focus-visible:ring-primary/40 bg-purple-500/10 hover:bg-purple-400/20 max-md:flex-1 max-md:justify-center'>
-                  <UploadIcon />
-                  Export
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align='end'>
-                <DropdownMenuItem onClick={exportToCSV}>
-                  <FileTextIcon className='mr-2 size-4' />
-                  Export as CSV
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={exportToExcel}>
-                  <FileSpreadsheetIcon className='mr-2 size-4' />
-                  Export as Excel
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={exportToJSON}>
-                  <FileTextIcon className='mr-2 size-4' />
-                  Export as JSON
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
         </div>
         <div className='hidden overflow-x-auto md:block'>

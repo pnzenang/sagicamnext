@@ -364,13 +364,6 @@ const MembersDataTable = ({
             </p>
 
             <div className='flex w-full max-w-full min-w-0 flex-wrap items-center justify-start gap-2 overflow-hidden md:w-auto md:flex-nowrap md:justify-end'>
-              <Button
-                className='bg-primary/10 text-primary hover:bg-primary/20 focus-visible:ring-primary/20 dark:focus-visible:ring-primary/40 shrink-0 max-md:flex-1 max-md:justify-center'
-                onClick={exportFilteredPageToExcel}
-              >
-                <FileSpreadsheetIcon />
-                Export Page
-              </Button>
               <TablePaginationControls
                 table={table}
                 pages={pages}
@@ -378,6 +371,36 @@ const MembersDataTable = ({
                 showRightEllipsis={showRightEllipsis}
                 className='mx-0 w-auto justify-start md:justify-end'
               />
+              <Button
+                className='bg-primary/10 text-primary hover:bg-primary/20 focus-visible:ring-primary/20 dark:focus-visible:ring-primary/40 shrink-0 max-md:flex-1 max-md:justify-center'
+                onClick={exportFilteredPageToExcel}
+              >
+                <FileSpreadsheetIcon />
+                Export Page
+              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button className='bg-primary/10 text-primary hover:bg-primary/20 focus-visible:ring-primary/20 dark:focus-visible:ring-primary/40 max-md:flex-1 max-md:justify-center'>
+                    <UploadIcon />
+                    Export All
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align='end'>
+                  <DropdownMenuItem onClick={exportToCSV}>
+                    <FileTextIcon className='mr-2 size-4' />
+                    Export as CSV
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={exportToExcel}>
+                    <FileSpreadsheetIcon className='mr-2 size-4' />
+                    Export as Excel
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={exportToJSON}>
+                    <FileTextIcon className='mr-2 size-4' />
+                    Export as JSON
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
           <div className='grid grid-cols-1 gap-6 max-md:*:last:col-span-full sm:grid-cols-2 md:grid-cols-3'>
@@ -415,29 +438,6 @@ const MembersDataTable = ({
                 </SelectContent>
               </Select>
             </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button className='bg-primary/10 text-primary hover:bg-primary/20 focus-visible:ring-primary/20 dark:focus-visible:ring-primary/40 max-md:flex-1 max-md:justify-center'>
-                  <UploadIcon />
-                  Export
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align='end'>
-                <DropdownMenuItem onClick={exportToCSV}>
-                  <FileTextIcon className='mr-2 size-4' />
-                  Export as CSV
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={exportToExcel}>
-                  <FileSpreadsheetIcon className='mr-2 size-4' />
-                  Export as Excel
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={exportToJSON}>
-                  <FileTextIcon className='mr-2 size-4' />
-                  Export as JSON
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
         </div>
         <div className='hidden overflow-x-auto md:block'>
