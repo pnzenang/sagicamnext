@@ -750,13 +750,11 @@ export const adjustSponsorContributionAmountSentAction = async (formData: FormDa
     const currentAmountSent = decimalToNumber(currentPayment?.amountSent)
     const currentAmountVerified = decimalToNumber(currentPayment?.amountVerified)
     const nextAmountSent = Number((currentAmountSent + amountAdjustment).toFixed(2))
+    const nextAmountVerified = Math.min(currentAmountVerified, nextAmountSent)
+    const verifiedAmountAdjustment = Number((nextAmountVerified - currentAmountVerified).toFixed(2))
 
     if (nextAmountSent < 0) {
       throw new Error('Contribution amount sent cannot be below zero.')
-    }
-
-    if (nextAmountSent < currentAmountVerified) {
-      throw new Error('Contribution amount sent cannot be less than the verified amount.')
     }
 
     await db.$transaction(async tx => {
@@ -769,7 +767,9 @@ export const adjustSponsorContributionAmountSentAction = async (formData: FormDa
           verifiedAt: null
         },
         update: {
-          amountSent: nextAmountSent
+          amountSent: nextAmountSent,
+          amountVerified: nextAmountVerified,
+          verifiedAt: nextAmountVerified > 0 ? currentPayment?.verifiedAt : null
         },
         where: {
           sponsorCode
@@ -786,6 +786,19 @@ export const adjustSponsorContributionAmountSentAction = async (formData: FormDa
           sponsorCode
         }
       })
+
+      if (verifiedAmountAdjustment !== 0) {
+        await tx.sponsorPaymentLedgerEntry.create({
+          data: {
+            amount: verifiedAmountAdjustment,
+            createdBy: user.id,
+            eventType: sponsorPaymentLedgerEventTypes.verified,
+            note: 'Contribution verified amount adjusted by SAGICAM to match sent correction.',
+            paymentType: sponsorPaymentTypes.contribution,
+            sponsorCode
+          }
+        })
+      }
     })
 
     revalidatePath('/admin-count')
