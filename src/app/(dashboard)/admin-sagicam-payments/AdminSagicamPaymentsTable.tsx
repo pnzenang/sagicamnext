@@ -513,8 +513,8 @@ const AdminSagicamPaymentsTable = ({
                       }`}
                       style={getColumnStyle('contributionAmountSent')}
                     >
-                      <div className='flex flex-wrap items-center justify-end gap-x-2 gap-y-1'>
-                        <span>{currencyFormatter.format(row.contributionAmountSent)}</span>
+                      <div className='grid grid-cols-[minmax(5.75rem,1fr)_auto] items-center justify-items-end gap-2'>
+                        <span className='tabular-nums'>{currencyFormatter.format(row.contributionAmountSent)}</span>
                         <SentAmountAdjustmentForm sponsorCode={row.sponsorCode} />
                       </div>
                     </TableCell>
