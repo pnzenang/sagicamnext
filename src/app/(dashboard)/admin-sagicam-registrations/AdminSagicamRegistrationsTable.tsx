@@ -177,10 +177,7 @@ const SentAmountAdjustmentForm = ({
   return (
     <form
       action={adjustSponsorRegistrationAmountSentAction}
-      className={cn(
-        'grid items-center gap-1.5',
-        layout === 'card' ? 'grid-cols-[minmax(0,1fr)_auto]' : 'grid-cols-[5rem_auto]'
-      )}
+      className={cn('grid gap-1.5', layout === 'card' ? '' : 'w-20 justify-items-end')}
     >
       <input type='hidden' name='sponsorCode' value={sponsorCode} />
       <label htmlFor={inputId} className='sr-only'>
@@ -203,7 +200,7 @@ const SentAmountAdjustmentForm = ({
         type='submit'
         size='xs'
         variant='secondary'
-        className={cn('justify-center px-2 text-[11px]', layout === 'card' ? 'h-8 w-20' : 'h-7 w-16')}
+        className={cn('justify-center px-2 text-[11px]', layout === 'card' ? 'h-8 w-full' : 'h-7 w-20')}
       >
         <ArrowUpDown className='size-3' />
         Apply
