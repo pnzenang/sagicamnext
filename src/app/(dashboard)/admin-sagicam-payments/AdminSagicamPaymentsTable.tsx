@@ -201,7 +201,10 @@ const SentAmountAdjustmentForm = ({
   return (
     <form
       action={adjustSponsorContributionAmountSentAction}
-      className={cn('grid gap-1.5', layout === 'card' ? 'grid-cols-[minmax(0,1fr)_auto] items-center' : '')}
+      className={cn(
+        'grid items-center gap-1.5',
+        layout === 'card' ? 'grid-cols-[minmax(0,1fr)_auto]' : 'grid-cols-[5rem_auto]'
+      )}
     >
       <input type='hidden' name='sponsorCode' value={sponsorCode} />
       <label htmlFor={inputId} className='sr-only'>
@@ -216,7 +219,7 @@ const SentAmountAdjustmentForm = ({
         placeholder='+/- 0.00'
         className={cn(
           'bg-background text-foreground placeholder:text-muted-foreground text-center text-[11px]',
-          layout === 'card' ? 'h-8 px-2 text-xs' : 'ml-auto h-7 w-24 px-1.5'
+          layout === 'card' ? 'h-8 px-2 text-xs' : 'h-7 w-20 px-1.5'
         )}
         required
       />
@@ -224,7 +227,7 @@ const SentAmountAdjustmentForm = ({
         type='submit'
         size='xs'
         variant='secondary'
-        className={cn('justify-center px-2 text-[11px]', layout === 'card' ? 'h-8 w-20' : 'ml-auto h-7 w-24')}
+        className={cn('justify-center px-2 text-[11px]', layout === 'card' ? 'h-8 w-20' : 'h-7 w-16')}
       >
         <ArrowUpDown className='size-3' />
         Apply
@@ -510,9 +513,9 @@ const AdminSagicamPaymentsTable = ({
                       }`}
                       style={getColumnStyle('contributionAmountSent')}
                     >
-                      <div className='flex flex-col items-end gap-2'>
-                        <SentAmountAdjustmentForm sponsorCode={row.sponsorCode} />
+                      <div className='flex flex-wrap items-center justify-end gap-x-2 gap-y-1'>
                         <span>{currencyFormatter.format(row.contributionAmountSent)}</span>
+                        <SentAmountAdjustmentForm sponsorCode={row.sponsorCode} />
                       </div>
                     </TableCell>
                     <TableCell className='text-right font-semibold' style={getColumnStyle('amountReceived')}>
