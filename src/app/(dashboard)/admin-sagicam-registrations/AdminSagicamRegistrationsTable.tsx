@@ -63,7 +63,7 @@ const columns: AdminSagicamRegistrationsColumn[] = [
   { key: 'registrationFeeOwed', label: 'Registration owed', align: 'right' },
   { key: 'registrationAmountSent', label: 'Registration sent', align: 'right' },
   { key: 'registrationReceived', label: 'Registration verified', align: 'right' },
-  { key: 'registrationBalance', label: 'Registration Reserve / Deficit', align: 'right' }
+  { key: 'registrationBalance', label: 'Registration Reserve / REGISTATION FEES', align: 'right' }
 ]
 
 const exportColumnWidths: Partial<Record<SortKey, number>> = {
@@ -111,7 +111,7 @@ const getBalanceCardClassName = (balance: number) =>
     ? 'border-green-200 bg-green-50 text-green-800 dark:border-green-800/70 dark:bg-green-950/40 dark:text-green-200'
     : 'border-red-200 bg-red-50 text-red-800 dark:border-red-800/70 dark:bg-red-950/40 dark:text-red-200'
 
-const getRegistrationReserveLabel = (balance: number) => (balance < 0 ? 'Deficit' : 'Registration Reserve')
+const getRegistrationReserveLabel = (balance: number) => (balance < 0 ? 'REGISTATION FEES' : 'Registration Reserve')
 
 const shouldShowAwaitingPaymentNotice = (balance: number) => balance < 0
 

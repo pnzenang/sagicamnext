@@ -855,6 +855,16 @@ export const resetSponsorContributionPaymentAction = async (formData: FormData):
   try {
     const sponsorCode = getRequiredFormValue(formData, 'sponsorCode')
 
+    const contributionSummary = await fetchSponsorContributionSummary(sponsorCode)
+
+    const preservedBalanceAdjustment = Number(
+      (
+        contributionSummary.balance +
+        contributionSummary.totalAmountUsed -
+        contributionSummary.vestedContributionCredit
+      ).toFixed(2)
+    )
+
     const currentPayment = await db.sponsorContributionPayment.findUnique({
       where: {
         sponsorCode
@@ -878,6 +888,23 @@ export const resetSponsorContributionPaymentAction = async (formData: FormData):
         },
         where: {
           sponsorCode
+        }
+      })
+
+      await tx.sponsorBalanceAdjustment.upsert({
+        create: {
+          amount: preservedBalanceAdjustment,
+          balanceType: contributionBalanceAdjustmentType,
+          sponsorCode
+        },
+        update: {
+          amount: preservedBalanceAdjustment
+        },
+        where: {
+          sponsorCode_balanceType: {
+            balanceType: contributionBalanceAdjustmentType,
+            sponsorCode
+          }
         }
       })
 
