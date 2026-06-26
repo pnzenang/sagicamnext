@@ -13,7 +13,7 @@ const getCurrentDayOfMonth = (date = new Date()) => {
   return Number(formattedDay)
 }
 
-export const isAfterContributionDeficitStatusDeadline = (date = new Date()) => getCurrentDayOfMonth(date) > 25
+export const isAfterContributionDeficitStatusDeadline = (date = new Date()) => getCurrentDayOfMonth(date) > 7
 
 export const enforceContributionDeficitMemberStatuses = async (sponsorCodes?: string[]) => {
   if (!isAfterContributionDeficitStatusDeadline()) {
