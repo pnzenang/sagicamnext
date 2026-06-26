@@ -3,7 +3,6 @@ import { BellRing } from 'lucide-react'
 import ContributionAssessmentForm from '@/components/dashboard/ContributionAssessmentForm'
 import { Button } from '@/components/ui/button'
 import { resetContributionPaymentAlertAction } from '@/utils/actions'
-import { enforceContributionDeficitMemberStatuses } from '@/utils/contribution-deficit-status'
 import {
   contributionBalanceAdjustmentType,
   fetchSponsorContributionSummary
@@ -87,8 +86,6 @@ const PaymentAlertCard = ({ action, alerts, title }: PaymentAlertCardProps) => {
 }
 
 const AdminSagicamPayments = async () => {
-  await enforceContributionDeficitMemberStatuses()
-
   const vestedMembersCount = await db.member.count({
     where: {
       memberStatus: memberStatus.Vested

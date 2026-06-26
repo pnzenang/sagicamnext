@@ -2,7 +2,6 @@ import { BellRing } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { resetRegistrationPaymentAlertAction } from '@/utils/actions'
-import { enforceContributionDeficitMemberStatuses } from '@/utils/contribution-deficit-status'
 import {
   fetchSponsorRegistrationSummary,
   registrationBalanceAdjustmentType,
@@ -83,8 +82,6 @@ const PaymentAlertCard = ({ action, alerts, title }: PaymentAlertCardProps) => {
 }
 
 const AdminSagicamRegistrations = async () => {
-  await enforceContributionDeficitMemberStatuses()
-
   const sponsorRegistrationPayments = await db.sponsorRegistrationPayment.findMany({
     orderBy: {
       sponsorCode: 'asc'
