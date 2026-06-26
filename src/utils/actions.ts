@@ -211,6 +211,10 @@ const syncVestedContributionCredit = async ({
     return
   }
 
+  if (previousStatus === memberStatus.Vested && nextStatus === memberStatus.Delinquent) {
+    return
+  }
+
   if (previousStatus === memberStatus.Vested && nextStatus !== memberStatus.Vested) {
     await removeVestedContributionCredit(previousMatriculationNumber)
   }
@@ -495,6 +499,7 @@ export const createMemberAction = async (provState: any, formData: FormData): Pr
 
 export const fetchMembers = async () => {
   const user = await getAuthUser()
+
   const profile = await db.profile.findUnique({
     select: {
       sponsorCode: true

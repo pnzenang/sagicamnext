@@ -57,9 +57,9 @@ export const enforceContributionDeficitMemberStatuses = async (sponsorCodes?: st
     }
   }
 
-  const affectedMembers = await db.member.findMany({
-    select: {
-      memberMatriculationNumber: true
+  const updateResult = await db.member.updateMany({
+    data: {
+      memberStatus: memberStatus.Delinquent
     },
     where: {
       memberStatus: memberStatus.Vested,
@@ -68,36 +68,6 @@ export const enforceContributionDeficitMemberStatuses = async (sponsorCodes?: st
       }
     }
   })
-
-  if (affectedMembers.length === 0) {
-    return {
-      affectedSponsorCodes: deficitSponsorCodes,
-      updatedMembersCount: 0
-    }
-  }
-
-  const affectedMatriculationNumbers = affectedMembers.map(member => member.memberMatriculationNumber)
-
-  const [updateResult] = await db.$transaction([
-    db.member.updateMany({
-      data: {
-        memberStatus: memberStatus.Delinquent
-      },
-      where: {
-        memberStatus: memberStatus.Vested,
-        sponsorCode: {
-          in: deficitSponsorCodes
-        }
-      }
-    }),
-    db.sponsorContributionCredit.deleteMany({
-      where: {
-        memberMatriculationNumber: {
-          in: affectedMatriculationNumbers
-        }
-      }
-    })
-  ])
 
   return {
     affectedSponsorCodes: deficitSponsorCodes,
