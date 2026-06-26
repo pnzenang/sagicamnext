@@ -26,6 +26,7 @@ import {
   sendLovedOneRemovalConfirmationEmail
 } from './email'
 import { contributionCreditPerVestedMember } from './sagicam-contribution-constants'
+import { enforceContributionDeficitMemberStatuses } from './contribution-deficit-status'
 import { fetchSponsorContributionSummary } from './sagicam-contribution-summary'
 import {
   fetchSponsorRegistrationSummary,
@@ -494,6 +495,18 @@ export const createMemberAction = async (provState: any, formData: FormData): Pr
 
 export const fetchMembers = async () => {
   const user = await getAuthUser()
+  const profile = await db.profile.findUnique({
+    select: {
+      sponsorCode: true
+    },
+    where: {
+      clerkId: user.id
+    }
+  })
+
+  if (!profile) redirect('/profile/create')
+
+  await enforceContributionDeficitMemberStatuses([profile.sponsorCode])
 
   const members = await db.member.findMany({
     where: {
@@ -508,6 +521,8 @@ export const fetchMembers = async () => {
 export const fetchCurrentSponsorContribution = async () => {
   const profile = await fetchProfile()
 
+  await enforceContributionDeficitMemberStatuses([profile.sponsorCode])
+
   return fetchSponsorContributionSummary(profile.sponsorCode, { noStore: true })
 }
 
@@ -519,6 +534,8 @@ export const fetchCurrentSponsorRegistrationPayment = async () => {
 
 export const fetchMembersForAdmin = async () => {
   const user = await getAuthUser()
+
+  await enforceContributionDeficitMemberStatuses()
 
   const members = await db.member.findMany({
     // where: {},

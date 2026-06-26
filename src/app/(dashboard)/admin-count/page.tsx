@@ -1,4 +1,5 @@
 import MembershipSummaryCards from '@/components/dashboard/MembershipSummaryCards'
+import { enforceContributionDeficitMemberStatuses } from '@/utils/contribution-deficit-status'
 import db from '@/utils/db'
 import { memberStatus } from '@/utils/types'
 import AdminCountTable, { type AdminCountRow } from './AdminCountTable'
@@ -24,6 +25,8 @@ const getStatusCountTotal = (counts: SponsorStatusCounts) =>
   statusColumns.reduce((total, column) => total + counts[column.key], 0)
 
 const AdminCount = async () => {
+  await enforceContributionDeficitMemberStatuses()
+
   const memberCountsBySponsorCode = await db.member.groupBy({
     by: ['sponsorCode', 'memberStatus'],
     where: {
