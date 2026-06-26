@@ -98,7 +98,7 @@ const getContributionBalanceTarget = (vestedMembers: number) => contributionCred
 const getContributionReserveLabel = (balance: number, vestedMembers: number) => {
   if (balance < 0) return 'Deficit'
 
-  if (shouldShowReplenishAccountNotice(balance, vestedMembers)) return 'LOW RESERVE(Please Replenish)'
+  if (shouldShowReplenishAccountNotice(balance, vestedMembers)) return 'LOW RESERVE(please replenish)'
 
   return 'Reserve'
 }
