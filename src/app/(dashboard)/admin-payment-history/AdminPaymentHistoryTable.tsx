@@ -11,6 +11,7 @@ import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem } fro
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { usePagination } from '@/hooks/use-pagination'
+import { usePersistentState } from '@/hooks/use-persistent-state'
 import { cn } from '@/lib/utils'
 
 const currencyFormatter = new Intl.NumberFormat('en-US', {
@@ -160,7 +161,7 @@ const AdminPaymentHistoryTable = ({
 }) => {
   const [sortKey, setSortKey] = useState<SortKey>('createdAt')
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = usePersistentState('sagicam:admin-payment-history:search', '')
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(25)
 

@@ -58,6 +58,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 
 import { usePagination } from '@/hooks/use-pagination'
+import { usePersistentState } from '@/hooks/use-persistent-state'
 
 import MembershipSummaryCards from '@/components/dashboard/MembershipSummaryCards'
 import ResponsiveTableCards from '@/components/dashboard/ResponsiveTableCards'
@@ -225,7 +226,10 @@ const MembersDataTable = ({
   data: MemberType[]
   membershipSummary: MembershipSummary
 }) => {
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
+  const [columnFilters, setColumnFilters] = usePersistentState<ColumnFiltersState>(
+    'sagicam:admin-members:column-filters',
+    []
+  )
 
   const pageSize = 100
 

@@ -11,6 +11,7 @@ import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem } fro
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { usePagination } from '@/hooks/use-pagination'
+import { usePersistentState } from '@/hooks/use-persistent-state'
 
 export type AdminCountRow = {
   sponsorName: string
@@ -87,7 +88,7 @@ const MobileCountValue = ({ label, value }: { label: string; value: number }) =>
 const AdminCountTable = ({ rows, totals }: { rows: AdminCountRow[]; totals: AdminCountTotals }) => {
   const [sortKey, setSortKey] = useState<SortKey>('sponsorName')
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = usePersistentState('sagicam:admin-count:search', '')
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(25)
 

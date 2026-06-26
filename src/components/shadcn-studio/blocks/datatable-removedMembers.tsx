@@ -58,6 +58,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 
 import { usePagination } from '@/hooks/use-pagination'
+import { usePersistentState } from '@/hooks/use-persistent-state'
 
 import { cn } from '@/lib/utils'
 import ResponsiveTableCards from '@/components/dashboard/ResponsiveTableCards'
@@ -168,7 +169,10 @@ const columns: ColumnDef<RemovedMemberType>[] = [
 ]
 
 const RemovedMembersDataTable = ({ data }: { data: RemovedMemberType[] }) => {
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
+  const [columnFilters, setColumnFilters] = usePersistentState<ColumnFiltersState>(
+    'sagicam:removed-members:column-filters',
+    []
+  )
 
   const pageSize = 100
 

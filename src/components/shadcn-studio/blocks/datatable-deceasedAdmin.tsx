@@ -83,6 +83,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 
 import { usePagination } from '@/hooks/use-pagination'
+import { usePersistentState } from '@/hooks/use-persistent-state'
 
 import DeceasedSummaryCards, { type DeceasedSummary } from '@/components/dashboard/DeceasedSummaryCards'
 import ResponsiveTableCards from '@/components/dashboard/ResponsiveTableCards'
@@ -246,7 +247,10 @@ const DeceasedMembersDataTable = ({
   data: DeceasedMemberType[]
   deceasedSummary: DeceasedSummary
 }) => {
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
+  const [columnFilters, setColumnFilters] = usePersistentState<ColumnFiltersState>(
+    'sagicam:admin-deceased:column-filters',
+    []
+  )
 
   const pageSize = 100
 

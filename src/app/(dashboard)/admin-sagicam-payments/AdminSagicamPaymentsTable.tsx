@@ -8,6 +8,7 @@ import * as XLSX from 'xlsx'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { usePersistentState } from '@/hooks/use-persistent-state'
 import { cn } from '@/lib/utils'
 import { contributionCreditPerVestedMember } from '@/utils/sagicam-contribution-constants'
 import {
@@ -346,7 +347,7 @@ const AdminSagicamPaymentsTable = ({
 }) => {
   const [sortKey, setSortKey] = useState<SortKey>('sponsorCode')
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
-  const [codeSearch, setCodeSearch] = useState('')
+  const [codeSearch, setCodeSearch] = usePersistentState('sagicam:admin-sagicam-payments:code-search', '')
 
   const normalizedCodeSearch = codeSearch.trim().toLowerCase()
 
