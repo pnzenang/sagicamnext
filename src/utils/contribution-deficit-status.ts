@@ -90,7 +90,9 @@ export const enforceContributionDeficitMemberStatuses = async (sponsorCodes?: st
           await db.member.groupBy({
             by: ['sponsorCode'],
             where: {
-              memberStatus: memberStatus.Vested
+              memberStatus: {
+                in: [memberStatus.Vested, memberStatus.Delinquent]
+              }
             }
           })
         ).map(group => group.sponsorCode)
@@ -106,31 +108,76 @@ export const enforceContributionDeficitMemberStatuses = async (sponsorCodes?: st
     candidateSponsorCodes.map(sponsorCode => fetchSponsorContributionSummary(sponsorCode, { noStore: true }))
   )
 
-  const deficitSponsorCodes = contributionSummaries
-    .filter(summary => summary.balance < 0 && isAfterContributionDeficitStatusDeadline(getContributionDeficitOccurredAt(summary)))
-    .map(summary => summary.sponsorCode)
+  const deficitStatusGroups = contributionSummaries.reduce(
+    (groups, summary) => {
+      if (summary.balance >= 0) return groups
 
-  if (deficitSponsorCodes.length === 0) {
+      const isAfterDeadline = isAfterContributionDeficitStatusDeadline(getContributionDeficitOccurredAt(summary))
+
+      if (isAfterDeadline) {
+        groups.afterDeadlineSponsorCodes.push(summary.sponsorCode)
+      } else {
+        groups.inGracePeriodSponsorCodes.push(summary.sponsorCode)
+      }
+
+      return groups
+    },
+    {
+      afterDeadlineSponsorCodes: [] as string[],
+      inGracePeriodSponsorCodes: [] as string[]
+    }
+  )
+
+  if (
+    deficitStatusGroups.afterDeadlineSponsorCodes.length === 0 &&
+    deficitStatusGroups.inGracePeriodSponsorCodes.length === 0
+  ) {
     return {
       affectedSponsorCodes: [],
       updatedMembersCount: 0
     }
   }
 
-  const updateResult = await db.member.updateMany({
-    data: {
-      memberStatus: memberStatus.Delinquent
-    },
-    where: {
-      memberStatus: memberStatus.Vested,
-      sponsorCode: {
-        in: deficitSponsorCodes
-      }
-    }
-  })
+  const statusUpdates = [
+    ...(deficitStatusGroups.afterDeadlineSponsorCodes.length > 0
+      ? [
+          db.member.updateMany({
+            data: {
+              memberStatus: memberStatus.Delinquent
+            },
+            where: {
+              memberStatus: memberStatus.Vested,
+              sponsorCode: {
+                in: deficitStatusGroups.afterDeadlineSponsorCodes
+              }
+            }
+          })
+        ]
+      : []),
+    ...(deficitStatusGroups.inGracePeriodSponsorCodes.length > 0
+      ? [
+          db.member.updateMany({
+            data: {
+              memberStatus: memberStatus.Vested
+            },
+            where: {
+              memberStatus: memberStatus.Delinquent,
+              sponsorCode: {
+                in: deficitStatusGroups.inGracePeriodSponsorCodes
+              }
+            }
+          })
+        ]
+      : [])
+  ]
+
+  const updateResults = await db.$transaction(statusUpdates)
 
   return {
-    affectedSponsorCodes: deficitSponsorCodes,
-    updatedMembersCount: updateResult.count
+    affectedSponsorCodes: [
+      ...deficitStatusGroups.afterDeadlineSponsorCodes,
+      ...deficitStatusGroups.inGracePeriodSponsorCodes
+    ],
+    updatedMembersCount: updateResults.reduce((total, result) => total + result.count, 0)
   }
 }
