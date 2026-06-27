@@ -2044,6 +2044,24 @@ const openMemberTransferRequestStatuses: MemberTransferRequestStatus[] = [
   'receiving_sponsor_approved'
 ]
 
+const getTransferredMemberMatriculationNumber = ({
+  initiatingSponsorCode,
+  memberMatriculationNumber,
+  receivingSponsorCode
+}: {
+  initiatingSponsorCode: string
+  memberMatriculationNumber: string
+  receivingSponsorCode: string
+}) => {
+  const initiatingPrefix = `SC${initiatingSponsorCode}`
+
+  if (!memberMatriculationNumber.startsWith(initiatingPrefix)) {
+    throw new Error('This loved one matriculation number does not match the initiating sponsor code.')
+  }
+
+  return `SC${receivingSponsorCode}${memberMatriculationNumber.slice(initiatingPrefix.length)}`
+}
+
 export const fetchMemberTransferPageAction = async () => {
   noStore()
 
@@ -2384,10 +2402,17 @@ export const reviewAdminMemberTransferRequestAction = async (
       throw new Error('This loved one no longer belongs to the initiating sponsor.')
     }
 
+    const nextMemberMatriculationNumber = getTransferredMemberMatriculationNumber({
+      initiatingSponsorCode: request.initiatingSponsorCode,
+      memberMatriculationNumber: request.member.memberMatriculationNumber,
+      receivingSponsorCode: receivingSponsor.sponsorCode
+    })
+
     await db.$transaction([
       db.member.update({
         data: {
           clerkId: receivingSponsor.clerkId,
+          memberMatriculationNumber: nextMemberMatriculationNumber,
           sponsorCode: receivingSponsor.sponsorCode
         },
         where: {
@@ -2398,6 +2423,7 @@ export const reviewAdminMemberTransferRequestAction = async (
         data: {
           adminReviewedAt: new Date(),
           adminReviewedBy: user.id,
+          memberMatriculationNumber: nextMemberMatriculationNumber,
           rejectionReason: null,
           status
         },
