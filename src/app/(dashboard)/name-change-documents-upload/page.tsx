@@ -5,6 +5,7 @@ import { SubmitButton } from '@/components/forms/Buttons'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -228,6 +229,15 @@ const MemberNameChangeCard = ({ member }: { member: NameChangeMember }) => (
               </option>
             ))}
           </select>
+        </div>
+        <div className='flex items-start gap-2 rounded-md border bg-muted/30 p-3'>
+          <Checkbox id={`${member.id}-typo-confirmation`} name='typoCorrectionConfirmation' value='on' />
+          <div className='grid gap-1'>
+            <Label htmlFor={`${member.id}-typo-confirmation`} className='text-sm leading-snug'>
+              I confirm this is only a typo correction and not a legal name change or a different person.
+            </Label>
+            <p className='text-muted-foreground text-xs'>Required when reason is Typo or correction.</p>
+          </div>
         </div>
         <div className='grid gap-1.5'>
           <Label htmlFor={`${member.id}-document`}>Official name change document</Label>

@@ -1696,6 +1696,14 @@ export const submitNameChangeRequestAction = async (
       throw new Error('Select a valid name change reason.')
     }
 
+    const typoCorrectionConfirmed = formData.get('typoCorrectionConfirmation') === 'on'
+
+    if (reason === 'typo_or_error' && !typoCorrectionConfirmed) {
+      throw new Error(
+        'Please confirm this is only a typo correction and not a legal name change or a different person.'
+      )
+    }
+
     const member = await db.member.findUnique({
       select: {
         clerkId: true,
