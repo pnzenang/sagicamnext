@@ -283,6 +283,43 @@ const DeceasedMembersDataTable = ({
     XLSX.writeFile(workbook, `payments-export-${new Date().toISOString().split('T')[0]}.xlsx`)
   }
 
+  const exportCurrentPageToExcel = () => {
+    const dataToExport = table.getRowModel().rows.map(row => {
+      const deceasedMember = row.original
+
+      return {
+        Code: deceasedMember.sponsorCode,
+        Matriculation: deceasedMember.memberMatriculationNumber,
+        'Last Names': deceasedMember.lastAndMiddleNames,
+        'First Name': deceasedMember.firstName,
+        'Place of Death': deceasedMember.placeOfDeath,
+        'Registration Date': day(deceasedMember.registrationDate).format('MMM D, YYYY'),
+        'Date of Death': day(deceasedMember.dateOfDeath).format('MMM D, YYYY'),
+        'Date Announced': day(deceasedMember.createdAt).format('MMM D, YYYY'),
+        'Contribution Status': deceasedMember.contributionStatus
+      }
+    })
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport)
+    const workbook = XLSX.utils.book_new()
+
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Deceased Members')
+
+    worksheet['!cols'] = [
+      { wch: 14 },
+      { wch: 18 },
+      { wch: 24 },
+      { wch: 18 },
+      { wch: 24 },
+      { wch: 18 },
+      { wch: 18 },
+      { wch: 18 },
+      { wch: 28 }
+    ]
+
+    XLSX.writeFile(workbook, `deceased-members-page-export-${new Date().toISOString().split('T')[0]}.xlsx`)
+  }
+
   const exportToJSON = () => {
     const selectedRows = table.getSelectedRowModel().rows
 
@@ -326,7 +363,7 @@ const DeceasedMembersDataTable = ({
               <span>{table.getRowCount().toString()} Deceased Loved One(s) Found</span>
             </p>
 
-            <div className='max-w-full min-w-0 overflow-hidden'>
+            <div className='flex w-full max-w-full min-w-0 flex-wrap items-center justify-start gap-2 overflow-hidden sm:w-auto sm:flex-nowrap sm:justify-end'>
               <TablePaginationControls
                 table={table}
                 pages={pages}
@@ -334,7 +371,39 @@ const DeceasedMembersDataTable = ({
                 showRightEllipsis={showRightEllipsis}
                 navigationClassName='text-purple-500'
                 pageButtonClassName='bg-purple-500 hover:bg-purple-400'
+                className='mx-0 w-auto justify-start sm:justify-end'
               />
+              <Button
+                className='text-primary focus-visible:ring-primary/20 dark:focus-visible:ring-primary/40 shrink-0 bg-purple-500/10 hover:bg-purple-400/20 max-md:flex-1 max-md:justify-center'
+                onClick={exportCurrentPageToExcel}
+                disabled={table.getRowModel().rows.length === 0}
+              >
+                <FileSpreadsheetIcon />
+                Export Page
+              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button className='text-primary focus-visible:ring-primary/20 dark:focus-visible:ring-primary/40 bg-purple-500/10 hover:bg-purple-400/20 max-md:flex-1 max-md:justify-center'>
+                    <UploadIcon />
+                    Export All
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align='end'>
+                  <DropdownMenuItem onClick={exportToCSV}>
+                    <FileTextIcon className='mr-2 size-4' />
+                    Export as CSV
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={exportToExcel}>
+                    <FileSpreadsheetIcon className='mr-2 size-4' />
+                    Export as Excel
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={exportToJSON}>
+                    <FileTextIcon className='mr-2 size-4' />
+                    Export as JSON
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
           <div className='grid grid-cols-1 gap-6 max-md:*:last:col-span-full sm:grid-cols-2 md:grid-cols-3'>
@@ -371,29 +440,6 @@ const DeceasedMembersDataTable = ({
                 </SelectContent>
               </Select>
             </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button className='text-primary focus-visible:ring-primary/20 dark:focus-visible:ring-primary/40 bg-purple-500/10 hover:bg-purple-400/20 max-md:flex-1 max-md:justify-center'>
-                  <UploadIcon />
-                  Export
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align='end'>
-                <DropdownMenuItem onClick={exportToCSV}>
-                  <FileTextIcon className='mr-2 size-4' />
-                  Export as CSV
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={exportToExcel}>
-                  <FileSpreadsheetIcon className='mr-2 size-4' />
-                  Export as Excel
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={exportToJSON}>
-                  <FileTextIcon className='mr-2 size-4' />
-                  Export as JSON
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
         </div>
         <div className='hidden overflow-x-auto md:block'>
