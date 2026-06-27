@@ -122,6 +122,11 @@ export const pagesItems: MenuItem[] = [
         href: '/admin-members'
       },
       {
+        icon: FileCheck,
+        label: 'Admin Name Changes',
+        href: '/admin-name-changes'
+      },
+      {
         icon: UserCog,
         label: 'Admin Removed',
         href: '/admin-removed'

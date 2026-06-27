@@ -292,6 +292,7 @@ const revalidateDeathDocumentationViews = () => {
 
 const revalidateNameChangeDocumentationViews = () => {
   revalidatePath('/admin-members')
+  revalidatePath('/admin-name-changes')
   revalidatePath('/all-members')
   revalidatePath('/name-change-documents-upload')
 }
@@ -1641,7 +1642,6 @@ export const updateMemberDetailsActionForAdmin = async (prevState: any, formData
 
 export const fetchNameChangeDocumentationPageAction = async () => {
   const user = await getAuthUser()
-  const isAdminUser = user.id === process.env.ADMIN_USER_ID
 
   const members = await db.member.findMany({
     orderBy: [{ sponsorCode: 'asc' }, { lastAndMiddleNames: 'asc' }, { firstName: 'asc' }],
@@ -1653,7 +1653,7 @@ export const fetchNameChangeDocumentationPageAction = async () => {
       memberMatriculationNumber: true,
       sponsorCode: true
     },
-    where: isAdminUser ? {} : { clerkId: user.id }
+    where: { clerkId: user.id }
   })
 
   const requests = await db.nameChangeRequest
@@ -1668,7 +1668,7 @@ export const fetchNameChangeDocumentationPageAction = async () => {
         }
       },
       orderBy: { createdAt: 'desc' },
-      where: isAdminUser ? {} : { clerkId: user.id }
+      where: { clerkId: user.id }
     })
     .catch(error => {
       console.error('Unable to load name change requests', error)
@@ -1676,7 +1676,30 @@ export const fetchNameChangeDocumentationPageAction = async () => {
       return []
     })
 
-  return { isAdminUser, members, requests }
+  return { members, requests }
+}
+
+export const fetchAdminNameChangeRequestsAction = async () => {
+  await assertAdminUser()
+
+  return db.nameChangeRequest
+    .findMany({
+      include: {
+        member: {
+          select: {
+            firstName: true,
+            lastAndMiddleNames: true,
+            memberMatriculationNumber: true
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    })
+    .catch(error => {
+      console.error('Unable to load admin name change requests', error)
+
+      return []
+    })
 }
 
 export const submitNameChangeRequestAction = async (

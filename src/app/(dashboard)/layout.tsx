@@ -18,7 +18,6 @@ import {
   SidebarTrigger,
   Sidebar
 } from '@/components/ui/sidebar'
-import { pagesItems } from '@/utils/links'
 
 const PagesLayout = ({ children }: Readonly<{ children: ReactNode }>) => {
   return (
@@ -38,7 +37,7 @@ const PagesLayout = ({ children }: Readonly<{ children: ReactNode }>) => {
               </SidebarMenu>
             </SidebarHeader>
             <SidebarContent>
-              <SidebarGroupedMenuItems data={pagesItems} />
+              <SidebarGroupedMenuItems />
             </SidebarContent>
           </Sidebar>
           <div className='flex min-w-0 flex-1 flex-col'>

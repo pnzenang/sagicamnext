@@ -17,7 +17,9 @@ import {
   SidebarMenuSubItem
 } from '../ui/sidebar'
 import { pagesItems } from '@/utils/links'
-import type { MenuItem } from '@/utils/types'
+import type { MenuItem, MenuSubItem } from '@/utils/types'
+
+type SidebarBadgeMap = Record<string, string | undefined>
 
 const activeMenuButtonClassName =
   'data-[active=true]:bg-primary data-[active=true]:text-primary-foreground data-[active=true]:hover:bg-primary data-[active=true]:hover:text-primary-foreground data-[active=true]:focus:bg-primary data-[active=true]:focus:text-primary-foreground'
@@ -37,16 +39,22 @@ const MenuBadge = ({ value }: { value?: string }) =>
 const SidebarGroupedMenuItemsClient = ({
   groupLabel,
   isAdminUser,
-  nameChangeBadge
+  menuBadges
 }: {
   groupLabel?: string
   isAdminUser: boolean
-  nameChangeBadge?: string
+  menuBadges?: SidebarBadgeMap
 }) => {
   const pathname = usePathname()
 
-  const getMenuBadge = (item: MenuItem) =>
-    item.href === '/name-change-documents-upload' ? nameChangeBadge : item.badge
+  const getLinkBadge = (item: MenuItem | MenuSubItem) =>
+    'href' in item && item.href ? menuBadges?.[item.href] ?? item.badge : item.badge
+
+  const getParentBadge = (item: MenuItem) => {
+    if (!item.children) return getLinkBadge(item)
+
+    return item.children.map(child => getLinkBadge(child)).find(Boolean) ?? item.badge
+  }
 
   return (
     <SidebarGroup className='pt-16'>
@@ -70,7 +78,7 @@ const SidebarGroupedMenuItemsClient = ({
                       >
                         <item.icon />
                         <span className='truncate capitalize'>{item.label}</span>
-                        <MenuBadge value={getMenuBadge(item)} />
+                        <MenuBadge value={getParentBadge(item)} />
                         <ChevronRightIcon className='ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90' />
                       </SidebarMenuButton>
                     </CollapsibleTrigger>
@@ -89,7 +97,7 @@ const SidebarGroupedMenuItemsClient = ({
                                 <Link href={child.href}>
                                   {child.icon && <child.icon />}
                                   <span className='truncate capitalize'>{child.label}</span>
-                                  <MenuBadge value={child.badge} />
+                                  <MenuBadge value={getLinkBadge(child)} />
                                 </Link>
                               </SidebarMenuSubButton>
                             </SidebarMenuSubItem>
@@ -115,7 +123,7 @@ const SidebarGroupedMenuItemsClient = ({
                   <Link href={item.href}>
                     <item.icon />
                     <span className='truncate capitalize'>{item.label}</span>
-                    <MenuBadge value={item.badge} />
+                    <MenuBadge value={getLinkBadge(item)} />
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
