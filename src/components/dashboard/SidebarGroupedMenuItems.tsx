@@ -2,7 +2,6 @@ import { auth } from '@clerk/nextjs/server'
 
 import SidebarGroupedMenuItemsClient from './SidebarGroupedMenuItemsClient'
 import type { MenuItem } from '@/utils/types'
-import db from '@/utils/db'
 
 const getMenuItemWithNameChangeBadge = (item: MenuItem, pendingNameChangeRequestCount: number): MenuItem => {
   if (item.href === '/name-change-documents-upload' && pendingNameChangeRequestCount > 0) {
@@ -19,6 +18,8 @@ const fetchPendingNameChangeRequestCount = async (isAdminUser: boolean) => {
   if (!isAdminUser) return 0
 
   try {
+    const { default: db } = await import('@/utils/db')
+
     return await db.nameChangeRequest.count({
       where: {
         status: 'submitted'
