@@ -216,7 +216,7 @@ const DeceasedMemberDocumentationCard = ({
         </div>
       </CardHeader>
       <CardContent className='px-4 py-4 sm:px-6'>
-        <div className='grid gap-4 lg:grid-cols-2'>
+        <div className='grid w-full min-w-0 gap-4 lg:grid-cols-2 2xl:grid-cols-4'>
           {deceasedMemberDocumentTypes.map(documentType => (
             <DocumentationSlot
               key={documentType}
@@ -238,7 +238,7 @@ const DeathDocumentationsPage = async () => {
   const uploadedDocuments = deceasedMembers.reduce((total, deceasedMember) => total + getUploadedDocumentCount(deceasedMember), 0)
 
   return (
-    <section className='mx-auto grid w-full max-w-7xl gap-5 px-0 py-4 sm:px-6 sm:py-8'>
+    <section className='grid w-full max-w-full min-w-0 gap-5 overflow-hidden px-0 py-4 sm:px-6 sm:py-8 lg:px-8'>
       <div className='flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between'>
         <div>
           <h1 className='text-2xl font-extrabold tracking-normal sm:text-3xl'>Death Documentations</h1>
