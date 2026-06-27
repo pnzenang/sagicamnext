@@ -3,34 +3,29 @@ import { PrismaPg } from '@prisma/adapter-pg'
 import { PrismaClient } from '../generated/prisma/client'
 
 const globalForPrisma = global as unknown as {
-  prisma: PrismaClient
+  prisma?: PrismaClient
 }
 
-const adapter = new PrismaPg({
-  connectionString: process.env.DATABASE_URL
-})
+const getCachedModels = (client: PrismaClient) =>
+  (client as unknown as { _runtimeDataModel?: { models?: Record<string, { fields?: { name: string }[] }> } })
+    ?._runtimeDataModel?.models
 
-const cachedPrisma = globalForPrisma.prisma
+const hasCachedModelField = (client: PrismaClient, modelName: string, fieldName: string) =>
+  Boolean(getCachedModels(client)?.[modelName]?.fields?.some(field => field.name === fieldName))
 
-const cachedModels = (
-  cachedPrisma as unknown as { _runtimeDataModel?: { models?: Record<string, { fields?: { name: string }[] }> } }
-)?._runtimeDataModel?.models
-
-const hasCachedModelField = (modelName: string, fieldName: string) =>
-  Boolean(cachedModels?.[modelName]?.fields?.some(field => field.name === fieldName))
-
-const shouldReuseCachedPrisma =
-  cachedPrisma &&
+const shouldReuseCachedPrisma = (cachedPrisma?: PrismaClient) =>
+  Boolean(
+    cachedPrisma &&
   'contributionAssessment' in (cachedPrisma as unknown as Record<string, unknown>) &&
   'deceasedMemberDocument' in (cachedPrisma as unknown as Record<string, unknown>) &&
   'nameChangeRequest' in (cachedPrisma as unknown as Record<string, unknown>) &&
-  hasCachedModelField('DeceasedMemberDocument', 'cloudinaryPublicId') &&
-  hasCachedModelField('NameChangeRequest', 'cloudinaryPublicId') &&
-  hasCachedModelField('RemovedMember', 'memberStatus') &&
-  hasCachedModelField('DeceasedMember', 'memberStatus') &&
-  hasCachedModelField('PaymentAlertReset', 'sponsorCode') &&
-  hasCachedModelField('SponsorContributionPayment', 'lastSubmittedAt') &&
-  hasCachedModelField('SponsorRegistrationPayment', 'lastSubmittedAt') &&
+  hasCachedModelField(cachedPrisma, 'DeceasedMemberDocument', 'cloudinaryPublicId') &&
+  hasCachedModelField(cachedPrisma, 'NameChangeRequest', 'cloudinaryPublicId') &&
+  hasCachedModelField(cachedPrisma, 'RemovedMember', 'memberStatus') &&
+  hasCachedModelField(cachedPrisma, 'DeceasedMember', 'memberStatus') &&
+  hasCachedModelField(cachedPrisma, 'PaymentAlertReset', 'sponsorCode') &&
+  hasCachedModelField(cachedPrisma, 'SponsorContributionPayment', 'lastSubmittedAt') &&
+  hasCachedModelField(cachedPrisma, 'SponsorRegistrationPayment', 'lastSubmittedAt') &&
   'paymentAlertReset' in (cachedPrisma as unknown as Record<string, unknown>) &&
   'sponsorBalanceAdjustment' in (cachedPrisma as unknown as Record<string, unknown>) &&
   'sponsorContributionCredit' in (cachedPrisma as unknown as Record<string, unknown>) &&
@@ -39,14 +34,49 @@ const shouldReuseCachedPrisma =
   'sponsorPaymentLedgerEntry' in (cachedPrisma as unknown as Record<string, unknown>) &&
   'sponsorRegistrationPayment' in (cachedPrisma as unknown as Record<string, unknown>) &&
   'sponsorRegistrationUsage' in (cachedPrisma as unknown as Record<string, unknown>)
+  )
 
-const prisma =
-  shouldReuseCachedPrisma && cachedPrisma
-    ? cachedPrisma
-    : new PrismaClient({
-        adapter
-      })
+const createPrismaClient = () => {
+  const connectionString = process.env.DATABASE_URL
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
+  if (!connectionString) {
+    throw new Error('DATABASE_URL is not configured.')
+  }
+
+  const adapter = new PrismaPg({
+    connectionString
+  })
+
+  return new PrismaClient({
+    adapter
+  })
+}
+
+const getPrismaClient = () => {
+  if (shouldReuseCachedPrisma(globalForPrisma.prisma)) {
+    return globalForPrisma.prisma!
+  }
+
+  const prisma = createPrismaClient()
+
+  if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
+
+  return prisma
+}
+
+const prisma = new Proxy({} as PrismaClient, {
+  get(_target, property) {
+    const client = getPrismaClient()
+    const value = Reflect.get(client, property, client)
+
+    return typeof value === 'function' ? value.bind(client) : value
+  },
+  has(_target, property) {
+    return property in getPrismaClient()
+  },
+  set(_target, property, value) {
+    return Reflect.set(getPrismaClient(), property, value)
+  }
+})
 
 export default prisma

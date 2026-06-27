@@ -9,21 +9,33 @@ import { createProfileAction } from '@/utils/actions'
 import MaskPhoneInput from '@/components/forms/MaskPhoneInput'
 import db from '@/utils/db'
 
+const fetchExistingProfileId = async (userId: string) => {
+  try {
+    const profile = await db.profile.findUnique({
+      where: {
+        clerkId: userId
+      },
+      select: {
+        id: true
+      }
+    })
+
+    return profile?.id ?? null
+  } catch (error) {
+    console.error('Unable to load existing sponsor profile during profile creation', error)
+
+    return null
+  }
+}
+
 const CreateProfilePage = async () => {
   const { userId } = await auth()
 
   if (!userId) redirect('/')
 
-  const profile = await db.profile.findUnique({
-    where: {
-      clerkId: userId
-    },
-    select: {
-      id: true
-    }
-  })
+  const profileId = await fetchExistingProfileId(userId)
 
-  if (profile) redirect('/all-members')
+  if (profileId) redirect('/all-members')
 
   return (
     <section className='mt-8 flex max-w-full min-w-0 flex-col sm:mt-16'>
