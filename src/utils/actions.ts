@@ -2157,6 +2157,7 @@ export const submitMemberTransferRequestAction = async (
           id: true,
           lastAndMiddleNames: true,
           memberMatriculationNumber: true,
+          memberStatus: true,
           sponsorCode: true
         },
         where: {
@@ -2180,6 +2181,10 @@ export const submitMemberTransferRequestAction = async (
 
     if (member.clerkId !== user.id) {
       throw new Error('You can only request transfers for loved ones from your own account.')
+    }
+
+    if (member.memberStatus !== memberStatus.Vested) {
+      throw new Error('Transfer is not allowed on non-vested members. Only vested members can be transferred.')
     }
 
     if (!receivingSponsor) {

@@ -17,6 +17,7 @@ type MemberTransferMemberOption = {
   id: string
   lastAndMiddleNames: string
   memberMatriculationNumber: string
+  memberStatus: string
   sponsorCode: string
 }
 
@@ -117,15 +118,18 @@ const MemberTransferRequestForm = ({
               <div className='grid max-h-72 gap-2 overflow-y-auto pr-1'>
                 {displayedMembers.map(member => {
                   const isSelected = selectedMemberId === member.id
+                  const isTransferAllowed = member.memberStatus === 'vested'
 
                   return (
                     <button
                       key={member.id}
                       type='button'
                       aria-pressed={isSelected}
+                      disabled={!isTransferAllowed}
                       onClick={() => setSelectedMemberId(member.id)}
                       className={cn(
                         'grid min-w-0 gap-1 rounded-md border bg-background/70 p-3 text-left text-sm transition-colors hover:border-primary/60 hover:bg-muted/40',
+                        !isTransferAllowed && 'cursor-not-allowed opacity-60 hover:border-border hover:bg-background/70',
                         isSelected && 'border-primary bg-primary/10'
                       )}
                     >
@@ -135,6 +139,11 @@ const MemberTransferRequestForm = ({
                       <span className='text-muted-foreground text-xs'>
                         Matriculation: {member.memberMatriculationNumber} · Present sponsor: {member.sponsorCode}
                       </span>
+                      {!isTransferAllowed ? (
+                        <span className='text-xs font-semibold text-red-700 dark:text-red-300'>
+                          Transfer is not allowed on non-vested members.
+                        </span>
+                      ) : null}
                     </button>
                   )
                 })}
