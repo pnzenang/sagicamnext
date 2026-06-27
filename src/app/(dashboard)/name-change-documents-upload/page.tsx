@@ -126,6 +126,7 @@ const NameChangeRequestCard = ({ isAdminUser, request }: { isAdminUser: boolean;
   const deleteRequest = deleteNameChangeRequestAction.bind(null, { requestId: request.id })
   const hasDocument = Boolean(request.cloudinaryPublicId && request.fileName)
   const canUploadDocumentation = !isAdminUser && request.status === 'documentation_requested'
+  const isApproved = request.status === 'approved'
 
   return (
     <div className='grid min-w-0 gap-4 rounded-md border bg-muted/20 p-4'>
@@ -148,13 +149,13 @@ const NameChangeRequestCard = ({ isAdminUser, request }: { isAdminUser: boolean;
 
       <div className='grid gap-2 text-sm sm:grid-cols-2'>
         <div className='rounded-md border bg-background/70 p-3'>
-          <p className='text-muted-foreground text-xs font-semibold'>Current name</p>
+          <p className='text-muted-foreground text-xs font-semibold'>{isApproved ? 'Previous name' : 'Current name'}</p>
           <p className='mt-1 font-extrabold break-words'>
             {request.currentFirstName} {request.currentLastAndMiddleNames}
           </p>
         </div>
         <div className='rounded-md border bg-background/70 p-3'>
-          <p className='text-muted-foreground text-xs font-semibold'>Requested name</p>
+          <p className='text-muted-foreground text-xs font-semibold'>{isApproved ? 'Name approved' : 'Requested name'}</p>
           <p className='mt-1 font-extrabold break-words'>
             {request.requestedFirstName} {request.requestedLastAndMiddleNames}
           </p>

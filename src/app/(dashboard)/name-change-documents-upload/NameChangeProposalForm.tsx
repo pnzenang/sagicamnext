@@ -102,15 +102,19 @@ const SponsorNameChangeProposalForm = ({ members }: { members: NameChangeMemberO
               ))}
             </select>
           </div>
-          <div className='rounded-md border bg-muted/30 p-3'>
-            <p className='text-muted-foreground text-xs font-semibold'>Current name</p>
-            {selectedMember ? (
+          <div className='grid gap-2 rounded-md border bg-muted/30 p-3 sm:grid-cols-2'>
+            <div className='min-w-0'>
+              <p className='text-muted-foreground text-xs font-semibold'>Current given name</p>
               <p className='mt-1 font-extrabold break-words'>
-                {selectedMember.firstName} {selectedMember.lastAndMiddleNames}
+                {selectedMember ? selectedMember.firstName : 'Select a loved one'}
               </p>
-            ) : (
-              <p className='text-muted-foreground mt-1 text-sm'>Select a loved one to see the current name.</p>
-            )}
+            </div>
+            <div className='min-w-0'>
+              <p className='text-muted-foreground text-xs font-semibold'>Current last and middle name</p>
+              <p className='mt-1 font-extrabold break-words'>
+                {selectedMember ? selectedMember.lastAndMiddleNames : 'Select a loved one'}
+              </p>
+            </div>
           </div>
           <div className='grid gap-3 sm:grid-cols-2'>
             <div className='grid gap-1.5'>
