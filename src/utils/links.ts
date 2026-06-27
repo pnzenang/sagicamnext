@@ -17,6 +17,7 @@ import {
   CreditCard,
   History,
   List,
+  ArrowLeftRight,
   Table
 } from 'lucide-react'
 
@@ -103,6 +104,11 @@ export const pagesItems: MenuItem[] = [
     href: '/name-change-documents-upload'
   },
   {
+    icon: ArrowLeftRight,
+    label: 'Member Transfer',
+    href: '/member-transfer'
+  },
+  {
     icon: CreditCard,
     label: 'Payment Instructions',
     href: '/payment-instructions'
@@ -125,6 +131,11 @@ export const pagesItems: MenuItem[] = [
         icon: FileCheck,
         label: 'Admin Name Changes',
         href: '/admin-name-changes'
+      },
+      {
+        icon: ArrowLeftRight,
+        label: 'Admin Member Transfers',
+        href: '/admin-member-transfers'
       },
       {
         icon: UserCog,
