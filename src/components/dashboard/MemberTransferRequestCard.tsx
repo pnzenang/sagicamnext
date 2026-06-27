@@ -178,12 +178,15 @@ const SponsorCancelTransferControl = ({
   const cancelRequest = cancelMemberTransferRequestAction.bind(null, { requestId: request.id })
 
   return (
-    <FormContainer action={cancelRequest} refreshOnMessage>
-      <SubmitButton
-        text='Cancel request'
-        className={cn('h-8 w-full bg-red-700 px-3 text-xs normal-case hover:bg-red-800', compact ? '' : 'sm:w-fit')}
-      />
-    </FormContainer>
+    <div className='grid gap-1.5'>
+      <FormContainer action={cancelRequest} refreshOnMessage>
+        <SubmitButton
+          text='Cancel request'
+          className={cn('h-8 w-full bg-red-700 px-3 text-xs normal-case hover:bg-red-800', compact ? '' : 'sm:w-fit')}
+        />
+      </FormContainer>
+      <p className='text-muted-foreground text-xs'>You can cancel this request until SAGICAM admin responds.</p>
+    </div>
   )
 }
 

@@ -2059,6 +2059,8 @@ const openMemberTransferRequestStatuses: MemberTransferRequestStatus[] = [
   'receiving_sponsor_approved'
 ]
 
+const cancellableMemberTransferRequestStatuses: MemberTransferRequestStatus[] = openMemberTransferRequestStatuses
+
 const CANCELLED_MEMBER_TRANSFER_CARD_VISIBILITY_MS = 5 * 60 * 1000
 
 const getVisibleMemberTransferRequestWhere = () => ({
@@ -2356,8 +2358,8 @@ export const cancelMemberTransferRequestAction = async (prevState: { requestId: 
       throw new Error('Only the receiving sponsor who requested this transfer can cancel it.')
     }
 
-    if (!openMemberTransferRequestStatuses.includes(request.status as MemberTransferRequestStatus)) {
-      throw new Error('This member transfer request can no longer be cancelled.')
+    if (!cancellableMemberTransferRequestStatuses.includes(request.status as MemberTransferRequestStatus)) {
+      throw new Error('This member transfer request can no longer be cancelled because SAGICAM admin has responded.')
     }
 
     await db.memberTransferRequest.update({
@@ -2372,7 +2374,7 @@ export const cancelMemberTransferRequestAction = async (prevState: { requestId: 
 
     revalidateMemberTransferViews()
 
-    return { message: 'Member transfer request cancelled.' }
+    return { message: 'Member transfer request cancelled before admin response.' }
   } catch (error) {
     return renderError(error)
   }
