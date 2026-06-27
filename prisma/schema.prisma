@@ -202,9 +202,13 @@ model SponsorPaymentLedgerEntry {
 }
 
 model PaymentAlertReset {
-  id        String   @id @default(uuid())
-  alertType String   @unique
-  resetAt   DateTime @default(now())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(uuid())
+  alertType   String
+  sponsorCode String   @default("__all__")
+  resetAt     DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([alertType, sponsorCode])
+  @@index([sponsorCode])
 }

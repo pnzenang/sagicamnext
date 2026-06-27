@@ -30,6 +30,7 @@ const currencyFormatter = new Intl.NumberFormat('en-US', {
 
 const decimalToNumber = (value: unknown) => Number(value ?? 0)
 const contributionPaymentAlertType = 'contribution'
+const allPaymentAlertSponsorsCode = '__all__'
 const defaultPaymentAlertResetAt = new Date(0)
 
 type PaymentAlertCardProps = {
@@ -152,17 +153,28 @@ const AdminSagicamPayments = async () => {
     }
   })
 
-  const paymentAlertResetByType = new Map(paymentAlertResets.map(reset => [reset.alertType, reset.resetAt]))
+  const paymentAlertResetByTypeAndSponsor = new Map(
+    paymentAlertResets.map(reset => [`${reset.alertType}:${reset.sponsorCode}`, reset.resetAt])
+  )
 
-  const contributionPaymentAlertResetAt =
-    paymentAlertResetByType.get(contributionPaymentAlertType) ?? defaultPaymentAlertResetAt
+  const getContributionPaymentAlertResetAt = (sponsorCode: string) => {
+    const globalResetAt =
+      paymentAlertResetByTypeAndSponsor.get(`${contributionPaymentAlertType}:${allPaymentAlertSponsorsCode}`) ??
+      defaultPaymentAlertResetAt
+
+    const sponsorResetAt =
+      paymentAlertResetByTypeAndSponsor.get(`${contributionPaymentAlertType}:${sponsorCode}`) ??
+      defaultPaymentAlertResetAt
+
+    return sponsorResetAt > globalResetAt ? sponsorResetAt : globalResetAt
+  }
 
   const contributionPaymentAlerts = sponsorContributionPayments
     .filter(
       payment =>
         decimalToNumber(payment.amountSent) > 0 &&
         Boolean(payment.lastSubmittedAt) &&
-        payment.lastSubmittedAt! > contributionPaymentAlertResetAt
+        payment.lastSubmittedAt! > getContributionPaymentAlertResetAt(payment.sponsorCode)
     )
     .map(payment => ({
       amount: decimalToNumber(payment.amountSent),

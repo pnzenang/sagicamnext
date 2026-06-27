@@ -16,6 +16,7 @@ import AdminSagicamRegistrationsTable, {
 
 const decimalToNumber = (value: unknown) => Number(value ?? 0)
 const registrationPaymentAlertType = 'registration'
+const allPaymentAlertSponsorsCode = '__all__'
 const defaultPaymentAlertResetAt = new Date(0)
 
 const alertTimeFormatter = new Intl.DateTimeFormat('en-US', {
@@ -109,17 +110,28 @@ const AdminSagicamRegistrations = async () => {
     }
   })
 
-  const paymentAlertResetByType = new Map(paymentAlertResets.map(reset => [reset.alertType, reset.resetAt]))
+  const paymentAlertResetByTypeAndSponsor = new Map(
+    paymentAlertResets.map(reset => [`${reset.alertType}:${reset.sponsorCode}`, reset.resetAt])
+  )
 
-  const registrationPaymentAlertResetAt =
-    paymentAlertResetByType.get(registrationPaymentAlertType) ?? defaultPaymentAlertResetAt
+  const getRegistrationPaymentAlertResetAt = (sponsorCode: string) => {
+    const globalResetAt =
+      paymentAlertResetByTypeAndSponsor.get(`${registrationPaymentAlertType}:${allPaymentAlertSponsorsCode}`) ??
+      defaultPaymentAlertResetAt
+
+    const sponsorResetAt =
+      paymentAlertResetByTypeAndSponsor.get(`${registrationPaymentAlertType}:${sponsorCode}`) ??
+      defaultPaymentAlertResetAt
+
+    return sponsorResetAt > globalResetAt ? sponsorResetAt : globalResetAt
+  }
 
   const registrationPaymentAlerts = sponsorRegistrationPayments
     .filter(
       payment =>
         decimalToNumber(payment.amountSent) > 0 &&
         Boolean(payment.lastSubmittedAt) &&
-        payment.lastSubmittedAt! > registrationPaymentAlertResetAt
+        payment.lastSubmittedAt! > getRegistrationPaymentAlertResetAt(payment.sponsorCode)
     )
     .map(payment => ({
       amount: decimalToNumber(payment.amountSent),

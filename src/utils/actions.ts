@@ -48,6 +48,7 @@ const registrationDateFormatter = new Intl.DateTimeFormat('en-US', {
 
 const contributionPaymentAlertType = 'contribution'
 const registrationPaymentAlertType = 'registration'
+const allPaymentAlertSponsorsCode = '__all__'
 const MEMBER_REMOVAL_RESTORE_WINDOW_MS = 48 * 60 * 60 * 1000
 const blockedDeceasedRestoreStatuses = new Set<string>([contributionStatus.underway, contributionStatus.completed])
 
@@ -220,6 +221,25 @@ const revalidateSponsorPaymentPages = () => {
   revalidatePath('/admin-payment-history')
   revalidatePath('/contributions-payments')
   revalidatePath('/registration-payments')
+}
+
+const upsertPaymentAlertReset = async (alertType: string, sponsorCode = allPaymentAlertSponsorsCode) => {
+  await db.paymentAlertReset.upsert({
+    create: {
+      alertType,
+      resetAt: new Date(),
+      sponsorCode
+    },
+    update: {
+      resetAt: new Date()
+    },
+    where: {
+      alertType_sponsorCode: {
+        alertType,
+        sponsorCode
+      }
+    }
+  })
 }
 
 const revalidateMemberPaymentViews = () => {
@@ -740,6 +760,8 @@ export const verifySponsorContributionPaymentAction = async (formData: FormData)
       })
     })
 
+    await upsertPaymentAlertReset(contributionPaymentAlertType, sponsorCode)
+
     revalidatePath('/admin-sagicam-payments')
     revalidatePath('/admin-sagicam-registrations')
     revalidatePath('/all-members')
@@ -1074,6 +1096,8 @@ export const verifySponsorRegistrationPaymentAction = async (formData: FormData)
       })
     })
 
+    await upsertPaymentAlertReset(registrationPaymentAlertType, sponsorCode)
+
     revalidatePath('/admin-sagicam-payments')
     revalidatePath('/admin-sagicam-registrations')
     revalidatePath('/all-members')
@@ -1218,18 +1242,7 @@ export const resetSponsorRegistrationPaymentAction = async (formData: FormData):
 const resetPaymentAlert = async (alertType: string) => {
   await getAuthUser()
 
-  await db.paymentAlertReset.upsert({
-    create: {
-      alertType,
-      resetAt: new Date()
-    },
-    update: {
-      resetAt: new Date()
-    },
-    where: {
-      alertType
-    }
-  })
+  await upsertPaymentAlertReset(alertType)
 
   revalidatePath('/admin-sagicam-payments')
   revalidatePath('/admin-sagicam-registrations')
