@@ -53,7 +53,7 @@ const PaymentAlertCard = ({ action, alerts, title }: PaymentAlertCardProps) => {
         </div>
         <form action={action}>
           <Button type='submit' size='sm' variant='outline' disabled={alerts.length === 0} className='w-full sm:w-auto'>
-            Reset
+            Reset all
           </Button>
         </form>
       </div>
@@ -71,6 +71,12 @@ const PaymentAlertCard = ({ action, alerts, title }: PaymentAlertCardProps) => {
               <span className='text-muted-foreground col-span-2 shrink-0 text-left text-xs font-semibold sm:col-span-1 sm:text-right'>
                 {alertTimeFormatter.format(alert.submittedAt)}
               </span>
+              <form action={action} className='col-span-2 sm:col-span-3'>
+                <input type='hidden' name='sponsorCode' value={alert.sponsorCode} />
+                <Button type='submit' size='sm' variant='outline' className='h-8 w-full text-xs sm:w-auto'>
+                  Reset this sponsor
+                </Button>
+              </form>
             </div>
           ))}
         </div>

@@ -1390,21 +1390,23 @@ export const resetSponsorRegistrationPaymentAction = async (formData: FormData):
   }
 }
 
-const resetPaymentAlert = async (alertType: string) => {
+const resetPaymentAlert = async (alertType: string, formData?: FormData) => {
   await getAuthUser()
 
-  await upsertPaymentAlertReset(alertType)
+  const sponsorCode = String(formData?.get('sponsorCode') ?? '').trim()
+
+  await upsertPaymentAlertReset(alertType, sponsorCode || allPaymentAlertSponsorsCode)
 
   revalidatePath('/admin-sagicam-payments')
   revalidatePath('/admin-sagicam-registrations')
 }
 
-export const resetContributionPaymentAlertAction = async (_formData: FormData): Promise<void> => {
-  await resetPaymentAlert(contributionPaymentAlertType)
+export const resetContributionPaymentAlertAction = async (formData: FormData): Promise<void> => {
+  await resetPaymentAlert(contributionPaymentAlertType, formData)
 }
 
-export const resetRegistrationPaymentAlertAction = async (_formData: FormData): Promise<void> => {
-  await resetPaymentAlert(registrationPaymentAlertType)
+export const resetRegistrationPaymentAlertAction = async (formData: FormData): Promise<void> => {
+  await resetPaymentAlert(registrationPaymentAlertType, formData)
 }
 
 export const resetContributionCalculationAction = async (): Promise<{ message: string }> => {
