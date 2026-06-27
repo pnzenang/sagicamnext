@@ -693,7 +693,22 @@ export const fetchMembersForAdmin = async () => {
 
   const members = await db.member.findMany({
     // where: {},
-    orderBy: { createdAt: 'desc' }
+    orderBy: { createdAt: 'desc' },
+    select: {
+      clerkId: true,
+      countryOfBirth: true,
+      createdAt: true,
+      dateOfBirth: true,
+      delegateRecommendation: true,
+      firstName: true,
+      id: true,
+      lastAndMiddleNames: true,
+      memberMatriculationNumber: true,
+      memberStatus: true,
+      nameOfBeneficiary: true,
+      sponsorCode: true,
+      updatedAt: true
+    }
   })
 
   return attachContributionAmounts(members)
@@ -2284,7 +2299,10 @@ export const reviewIncomingMemberTransferRequestAction = async (
     const status = getRequiredFormValue(formData, 'status')
     const rejectionReason = String(formData.get('rejectionReason') ?? '').trim()
 
-    if (!isMemberTransferRequestStatus(status) || !['receiving_sponsor_approved', 'receiving_sponsor_rejected'].includes(status)) {
+    if (
+      !isMemberTransferRequestStatus(status) ||
+      !['receiving_sponsor_approved', 'receiving_sponsor_rejected'].includes(status)
+    ) {
       throw new Error('Select a valid transfer decision.')
     }
 
@@ -3110,7 +3128,8 @@ export const reviewDeceasedMemberDocumentAction = async (
 
     await db.deceasedMemberDocument.update({
       data: {
-        rejectionReason: status === 'rejected' ? rejectionReason || 'Please upload a clearer or corrected document.' : null,
+        rejectionReason:
+          status === 'rejected' ? rejectionReason || 'Please upload a clearer or corrected document.' : null,
         status
       },
       where: {

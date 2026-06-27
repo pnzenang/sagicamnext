@@ -3,10 +3,7 @@ import { BellRing } from 'lucide-react'
 import ContributionAssessmentForm from '@/components/dashboard/ContributionAssessmentForm'
 import { Button } from '@/components/ui/button'
 import { resetContributionPaymentAlertAction } from '@/utils/actions'
-import {
-  contributionBalanceAdjustmentType,
-  fetchSponsorContributionSummary
-} from '@/utils/sagicam-contribution-summary'
+import { contributionBalanceAdjustmentType } from '@/utils/sagicam-contribution-summary'
 import { memberStatus } from '@/utils/types'
 import db from '@/utils/db'
 import AdminSagicamPaymentsTable, {
@@ -232,23 +229,58 @@ const AdminSagicamPayments = async () => {
 
   const sponsorsByCode = new Map(sponsors.map(sponsor => [sponsor.sponsorCode, sponsor]))
 
-  const contributionSummaries = await Promise.all(
-    sponsorCodes.map(sponsorCode => fetchSponsorContributionSummary(sponsorCode, { noStore: true }))
+  const latestContributionGroupByCode = new Map(
+    latestContributionAssessment?.groups.map(group => [group.sponsorCode, group]) ?? []
   )
 
-  const contributionSummaryByCode = new Map(contributionSummaries.map(summary => [summary.sponsorCode, summary]))
+  const contributionTotalByCode = new Map(
+    contributionTotalsBySponsorCode.map(group => [group.sponsorCode, decimalToNumber(group._sum.amountOwed)])
+  )
+
+  const contributionUsageByCode = new Map(
+    sponsorContributionUsages.map(usage => [usage.sponsorCode, decimalToNumber(usage.amountUsed)])
+  )
+
+  const contributionCreditByCode = new Map(
+    contributionCreditsBySponsorCode.map(credit => [credit.sponsorCode, decimalToNumber(credit._sum.amountCredited)])
+  )
+
+  const contributionPaymentByCode = new Map(sponsorContributionPayments.map(payment => [payment.sponsorCode, payment]))
+
+  const balanceAdjustmentByCode = new Map(
+    sponsorBalanceAdjustments.map(adjustment => [adjustment.sponsorCode, decimalToNumber(adjustment.amount)])
+  )
+
+  const amountPerVestedMember = decimalToNumber(latestContributionAssessment?.amountPerVestedMember)
 
   const rows: AdminSagicamPaymentsRow[] = sponsorCodes.map(sponsorCode => {
     const sponsor = sponsorsByCode.get(sponsorCode)
-    const contributionSummary = contributionSummaryByCode.get(sponsorCode)
+    const latestContributionGroup = latestContributionGroupByCode.get(sponsorCode)
+    const latestVestedMembersCount = latestContributionGroup?.vestedMembersCount ?? 0
+
+    const amountOwed = latestContributionGroup
+      ? decimalToNumber(latestContributionGroup.amountOwed)
+      : Number((amountPerVestedMember * latestVestedMembersCount).toFixed(2))
+
+    const contributionPayment = contributionPaymentByCode.get(sponsorCode)
+    const amountVerified = decimalToNumber(contributionPayment?.amountVerified)
+    const vestedContributionCredit = contributionCreditByCode.get(sponsorCode) ?? 0
+
+    const totalAmountUsed = Number(
+      ((contributionTotalByCode.get(sponsorCode) ?? 0) + (contributionUsageByCode.get(sponsorCode) ?? 0)).toFixed(2)
+    )
+
+    const manualBalanceAdjustment = balanceAdjustmentByCode.get(sponsorCode) ?? 0
 
     return {
-      amountOwed: contributionSummary?.amountOwed ?? 0,
-      amountReceived: contributionSummary?.amountVerified ?? 0,
-      balance: contributionSummary?.balance ?? 0,
-      contributionCredit: contributionSummary?.vestedContributionCredit ?? 0,
-      contributionAmountUsed: contributionSummary?.totalAmountUsed ?? 0,
-      contributionAmountSent: contributionSummary?.amountReceived ?? 0,
+      amountOwed,
+      amountReceived: amountVerified,
+      balance: Number(
+        (amountVerified + vestedContributionCredit + manualBalanceAdjustment - totalAmountUsed).toFixed(2)
+      ),
+      contributionCredit: vestedContributionCredit,
+      contributionAmountUsed: totalAmountUsed,
+      contributionAmountSent: decimalToNumber(contributionPayment?.amountSent),
       cemail: sponsor?.sponsorEmail ?? '',
       sponsorCode,
       vestedMembers: vestedMembersByCode.get(sponsorCode) ?? 0

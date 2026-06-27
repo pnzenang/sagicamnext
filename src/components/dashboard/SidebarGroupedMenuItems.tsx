@@ -22,43 +22,38 @@ const fetchSidebarBadges = async ({
   try {
     const { default: db } = await import('@/utils/db')
 
-    const [
-      adminPendingNameChangeCount,
-      sponsorRequiredNameChangeCount,
-      adminPendingTransferCount,
-      sponsorPendingTransferCount
-    ] = await Promise.all([
-      isAdminUser
-        ? db.nameChangeRequest.count({
-            where: {
-              status: 'submitted'
-            }
-          })
-        : Promise.resolve(0),
-      !isAdminUser
-        ? db.nameChangeRequest.count({
-            where: {
-              clerkId: userId,
-              status: 'documentation_requested'
-            }
-          })
-        : Promise.resolve(0),
-      isAdminUser
-        ? db.memberTransferRequest.count({
-            where: {
-              status: 'receiving_sponsor_approved'
-            }
-          })
-        : Promise.resolve(0),
-      !isAdminUser
-        ? db.memberTransferRequest.count({
-            where: {
-              receivingClerkId: userId,
-              status: 'receiving_sponsor_pending'
-            }
-          })
-        : Promise.resolve(0)
-    ])
+    let adminPendingNameChangeCount = 0
+    let adminPendingTransferCount = 0
+    let sponsorRequiredNameChangeCount = 0
+    let sponsorPendingTransferCount = 0
+
+    if (isAdminUser) {
+      adminPendingNameChangeCount = await db.nameChangeRequest.count({
+        where: {
+          status: 'submitted'
+        }
+      })
+
+      adminPendingTransferCount = await db.memberTransferRequest.count({
+        where: {
+          status: 'receiving_sponsor_approved'
+        }
+      })
+    } else {
+      sponsorRequiredNameChangeCount = await db.nameChangeRequest.count({
+        where: {
+          clerkId: userId,
+          status: 'documentation_requested'
+        }
+      })
+
+      sponsorPendingTransferCount = await db.memberTransferRequest.count({
+        where: {
+          receivingClerkId: userId,
+          status: 'receiving_sponsor_pending'
+        }
+      })
+    }
 
     return {
       '/admin-member-transfers': getSidebarBadge(adminPendingTransferCount),
@@ -67,7 +62,7 @@ const fetchSidebarBadges = async ({
       '/name-change-documents-upload': getSidebarBadge(sponsorRequiredNameChangeCount)
     }
   } catch (error) {
-    console.error('Unable to load sidebar badges', error)
+    console.warn('Unable to load sidebar badges', error)
 
     return {}
   }
@@ -79,13 +74,7 @@ const SidebarGroupedMenuItems = async ({ groupLabel }: { groupLabel?: string }) 
 
   const menuBadges = await fetchSidebarBadges({ isAdminUser, userId })
 
-  return (
-    <SidebarGroupedMenuItemsClient
-      groupLabel={groupLabel}
-      isAdminUser={isAdminUser}
-      menuBadges={menuBadges}
-    />
-  )
+  return <SidebarGroupedMenuItemsClient groupLabel={groupLabel} isAdminUser={isAdminUser} menuBadges={menuBadges} />
 }
 
 export default SidebarGroupedMenuItems
