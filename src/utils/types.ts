@@ -163,3 +163,22 @@ export type DeceasedMemberDocument = {
 export type DeceasedMemberWithDocuments = DeceasedMemberType & {
   documents: DeceasedMemberDocument[]
 }
+
+export const nameChangeRequestReasons = ['typo_or_error', 'legal_document'] as const
+
+export type NameChangeRequestReason = (typeof nameChangeRequestReasons)[number]
+
+export const nameChangeRequestReasonLabels: Record<NameChangeRequestReason, string> = {
+  legal_document: 'Legal document',
+  typo_or_error: 'Typo or correction'
+}
+
+export const nameChangeRequestStatuses = ['submitted', 'approved', 'rejected'] as const
+
+export type NameChangeRequestStatus = (typeof nameChangeRequestStatuses)[number]
+
+export const nameChangeRequestStatusLabels: Record<NameChangeRequestStatus, string> = {
+  approved: 'Approved',
+  rejected: 'Rejected',
+  submitted: 'Submitted'
+}

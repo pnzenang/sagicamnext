@@ -89,6 +89,40 @@ export const uploadDeathDocumentationToCloudinary = async ({
   }
 }
 
+export const uploadNameChangeDocumentationToCloudinary = async ({
+  buffer,
+  fileName,
+  requestId,
+  sponsorCode
+}: {
+  buffer: Buffer
+  fileName: string
+  requestId: string
+  sponsorCode: string
+}) => {
+  const result = await uploadBuffer(buffer, {
+    access_mode: 'authenticated',
+    filename_override: fileName,
+    folder: `sagicam/name-change-documentations/${sponsorCode}/${requestId}`,
+    invalidate: true,
+    overwrite: true,
+    public_id: 'official_name_change_document',
+    resource_type: 'auto',
+    type: 'authenticated',
+    unique_filename: false,
+    use_filename: false
+  })
+
+  return {
+    deliveryType: result.type || 'authenticated',
+    format: result.format || null,
+    publicId: result.public_id,
+    resourceType: result.resource_type,
+    secureUrl: result.secure_url || null,
+    version: result.version || null
+  }
+}
+
 export const deleteDeathDocumentationFromCloudinary = async (document?: CloudinaryStoredDocument | null) => {
   if (!document?.publicId) return
 

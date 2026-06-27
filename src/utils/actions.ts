@@ -1,5 +1,7 @@
 'use server'
 
+import { randomUUID } from 'crypto'
+
 import { auth } from '@clerk/nextjs/server'
 
 import { redirect } from 'next/navigation'
@@ -21,8 +23,12 @@ import {
   deceasedMemberDocumentStatuses,
   deceasedMemberDocumentTypes,
   memberStatus,
+  nameChangeRequestReasons,
+  nameChangeRequestStatuses,
   type DeceasedMemberDocumentStatus,
-  type DeceasedMemberDocumentType
+  type DeceasedMemberDocumentType,
+  type NameChangeRequestReason,
+  type NameChangeRequestStatus
 } from './types'
 import {
   sendDeathAnnouncementConfirmationEmail,
@@ -40,7 +46,8 @@ import { sponsorPaymentLedgerEventTypes, sponsorPaymentTypes } from './sagicam-p
 import {
   deleteDeathDocumentationFromCloudinary,
   isSameCloudinaryDocument,
-  uploadDeathDocumentationToCloudinary
+  uploadDeathDocumentationToCloudinary,
+  uploadNameChangeDocumentationToCloudinary
 } from './cloudinary'
 import { Prisma } from '@/generated/prisma/client'
 
@@ -63,7 +70,7 @@ const contributionPaymentAlertType = 'contribution'
 const registrationPaymentAlertType = 'registration'
 const allPaymentAlertSponsorsCode = '__all__'
 const MEMBER_REMOVAL_RESTORE_WINDOW_MS = 48 * 60 * 60 * 1000
-const maxDeceasedMemberDocumentFileSize = 20 * 1024 * 1024
+const maxDocumentationFileSize = 20 * 1024 * 1024
 const blockedDeceasedRestoreStatuses = new Set<string>([contributionStatus.underway, contributionStatus.completed])
 
 const allowedDeceasedMemberDocumentMimeTypes = new Set([
@@ -285,6 +292,12 @@ const revalidateDeathDocumentationViews = () => {
   revalidatePath('/deceased-members')
 }
 
+const revalidateNameChangeDocumentationViews = () => {
+  revalidatePath('/admin-members')
+  revalidatePath('/all-members')
+  revalidatePath('/name-change-documents-upload')
+}
+
 const fetchSponsorByCode = async (sponsorCode: string) => {
   const sponsor = await db.profile.findUnique({
     where: {
@@ -355,6 +368,12 @@ const isDeceasedMemberDocumentType = (value: string): value is DeceasedMemberDoc
 const isDeceasedMemberDocumentStatus = (value: string): value is DeceasedMemberDocumentStatus =>
   deceasedMemberDocumentStatuses.includes(value as DeceasedMemberDocumentStatus)
 
+const isNameChangeRequestReason = (value: string): value is NameChangeRequestReason =>
+  nameChangeRequestReasons.includes(value as NameChangeRequestReason)
+
+const isNameChangeRequestStatus = (value: string): value is NameChangeRequestStatus =>
+  nameChangeRequestStatuses.includes(value as NameChangeRequestStatus)
+
 const getFileExtension = (fileName: string) => {
   const extensionStart = fileName.lastIndexOf('.')
 
@@ -371,6 +390,24 @@ const getSafeDocumentFileName = (file: File, documentType: DeceasedMemberDocumen
   if (!fileName) return deceasedMemberDocumentLabels[documentType]
 
   return fileName.slice(0, 180)
+}
+
+const getSafeUploadedFileName = (file: File, fallbackFileName: string) => {
+  const fileName = file.name.trim()
+
+  if (!fileName) return fallbackFileName
+
+  return fileName.slice(0, 180)
+}
+
+const getUppercaseFormName = (formData: FormData, fieldName: string) => {
+  const value = getRequiredFormValue(formData, fieldName).toUpperCase()
+
+  if (value.length < 2) {
+    throw new Error(`${fieldName} should be at least 2 characters.`)
+  }
+
+  return value
 }
 
 type StoredCloudinaryDocumentFields = {
@@ -1607,6 +1644,284 @@ export const updateMemberDetailsActionForAdmin = async (prevState: any, formData
   redirect('/admin-members')
 }
 
+export const fetchNameChangeDocumentationPageAction = async () => {
+  const user = await getAuthUser()
+  const isAdminUser = user.id === process.env.ADMIN_USER_ID
+
+  const [members, requests] = await Promise.all([
+    db.member.findMany({
+      orderBy: [{ sponsorCode: 'asc' }, { lastAndMiddleNames: 'asc' }, { firstName: 'asc' }],
+      select: {
+        clerkId: true,
+        firstName: true,
+        id: true,
+        lastAndMiddleNames: true,
+        memberMatriculationNumber: true,
+        sponsorCode: true
+      },
+      where: isAdminUser ? {} : { clerkId: user.id }
+    }),
+    db.nameChangeRequest.findMany({
+      include: {
+        member: {
+          select: {
+            firstName: true,
+            lastAndMiddleNames: true,
+            memberMatriculationNumber: true
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' },
+      where: isAdminUser ? {} : { clerkId: user.id }
+    })
+  ])
+
+  return { isAdminUser, members, requests }
+}
+
+export const submitNameChangeRequestAction = async (
+  prevState: any,
+  formData: FormData
+): Promise<{ message: string }> => {
+  const user = await getAuthUser()
+
+  try {
+    const memberId = getRequiredFormValue(formData, 'memberId')
+    const requestedFirstName = getUppercaseFormName(formData, 'requestedFirstName')
+    const requestedLastAndMiddleNames = getUppercaseFormName(formData, 'requestedLastAndMiddleNames')
+    const reason = getRequiredFormValue(formData, 'reason')
+    const file = formData.get('documentFile')
+
+    if (!isNameChangeRequestReason(reason)) {
+      throw new Error('Select a valid name change reason.')
+    }
+
+    const member = await db.member.findUnique({
+      select: {
+        clerkId: true,
+        firstName: true,
+        id: true,
+        lastAndMiddleNames: true,
+        sponsorCode: true
+      },
+      where: {
+        id: memberId
+      }
+    })
+
+    if (!member) {
+      throw new Error('Loved one not found.')
+    }
+
+    const isAdminUser = user.id === process.env.ADMIN_USER_ID
+
+    if (!isAdminUser && member.clerkId !== user.id) {
+      throw new Error('You can only request name changes for loved ones from your own account.')
+    }
+
+    if (member.firstName === requestedFirstName && member.lastAndMiddleNames === requestedLastAndMiddleNames) {
+      throw new Error('Enter a new name before submitting the request.')
+    }
+
+    const pendingRequest = await db.nameChangeRequest.findFirst({
+      select: {
+        id: true
+      },
+      where: {
+        memberId: member.id,
+        status: 'submitted'
+      }
+    })
+
+    if (pendingRequest) {
+      throw new Error('This loved one already has a submitted name change request.')
+    }
+
+    const documentRequired = reason === 'legal_document'
+    const hasFile = file instanceof File && file.size > 0
+
+    if (documentRequired && !hasFile) {
+      throw new Error('Please upload the official name change document.')
+    }
+
+    if (hasFile) {
+      if (file.size > maxDocumentationFileSize) {
+        throw new Error('The file is too large. Please upload a file that is 20 MB or smaller.')
+      }
+
+      if (!isAllowedDeceasedMemberDocumentFile(file)) {
+        throw new Error('Please upload a PDF, JPG, PNG, WEBP, HEIC, or HEIF file.')
+      }
+    }
+
+    const requestId = randomUUID()
+    const safeFileName = hasFile ? getSafeUploadedFileName(file, 'Official name change document') : null
+
+    const uploadedDocument = hasFile
+      ? await uploadNameChangeDocumentationToCloudinary({
+          buffer: Buffer.from(await file.arrayBuffer()),
+          fileName: safeFileName ?? 'Official name change document',
+          requestId,
+          sponsorCode: member.sponsorCode
+        })
+      : null
+
+    try {
+      await db.nameChangeRequest.create({
+        data: {
+          id: requestId,
+          clerkId: member.clerkId,
+          cloudinaryDeliveryType: uploadedDocument?.deliveryType,
+          cloudinaryFormat: uploadedDocument?.format,
+          cloudinaryPublicId: uploadedDocument?.publicId,
+          cloudinaryResourceType: uploadedDocument?.resourceType,
+          cloudinaryVersion: uploadedDocument?.version,
+          currentFirstName: member.firstName,
+          currentLastAndMiddleNames: member.lastAndMiddleNames,
+          documentRequired,
+          fileName: safeFileName,
+          fileSize: hasFile ? file.size : null,
+          memberId: member.id,
+          mimeType: hasFile ? file.type || 'application/octet-stream' : null,
+          reason,
+          requestedFirstName,
+          requestedLastAndMiddleNames,
+          secureUrl: uploadedDocument?.secureUrl,
+          sponsorCode: member.sponsorCode
+        }
+      })
+    } catch (error) {
+      if (uploadedDocument) {
+        await deleteDeathDocumentationFromCloudinary(uploadedDocument)
+      }
+
+      throw error
+    }
+
+    revalidateNameChangeDocumentationViews()
+
+    return { message: 'Name change request submitted successfully' }
+  } catch (error) {
+    return renderError(error)
+  }
+}
+
+export const reviewNameChangeRequestAction = async (
+  prevState: any,
+  formData: FormData
+): Promise<{ message: string }> => {
+  const user = await assertAdminUser()
+
+  try {
+    const requestId = getRequiredFormValue(formData, 'requestId')
+    const status = getRequiredFormValue(formData, 'status')
+    const rejectionReason = String(formData.get('rejectionReason') ?? '').trim()
+
+    if (!isNameChangeRequestStatus(status) || status === 'submitted') {
+      throw new Error('Select a valid review decision.')
+    }
+
+    const request = await db.nameChangeRequest.findUnique({
+      where: {
+        id: requestId
+      }
+    })
+
+    if (!request) {
+      throw new Error('Name change request not found.')
+    }
+
+    if (request.status !== 'submitted') {
+      throw new Error('This name change request has already been reviewed.')
+    }
+
+    if (status === 'approved') {
+      await db.$transaction([
+        db.member.update({
+          data: {
+            firstName: request.requestedFirstName,
+            lastAndMiddleNames: request.requestedLastAndMiddleNames
+          },
+          where: {
+            id: request.memberId
+          }
+        }),
+        db.nameChangeRequest.update({
+          data: {
+            rejectionReason: null,
+            reviewedAt: new Date(),
+            reviewedBy: user.id,
+            status
+          },
+          where: {
+            id: request.id
+          }
+        })
+      ])
+    } else {
+      await db.nameChangeRequest.update({
+        data: {
+          rejectionReason: rejectionReason || 'Please submit corrected information or documentation.',
+          reviewedAt: new Date(),
+          reviewedBy: user.id,
+          status
+        },
+        where: {
+          id: request.id
+        }
+      })
+    }
+
+    revalidateMemberPaymentViews()
+    revalidateNameChangeDocumentationViews()
+
+    return { message: `Name change request ${status}` }
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      return { message: 'A loved one with these identifying details already exists.' }
+    }
+
+    return renderError(error)
+  }
+}
+
+export const deleteNameChangeRequestAction = async (prevState: { requestId: string }) => {
+  const user = await getAuthUser()
+  const { requestId } = prevState
+
+  try {
+    const request = await db.nameChangeRequest.findUnique({
+      where: {
+        id: requestId
+      }
+    })
+
+    if (!request) {
+      throw new Error('Name change request not found.')
+    }
+
+    const isAdminUser = user.id === process.env.ADMIN_USER_ID
+
+    if (!isAdminUser && request.clerkId !== user.id) {
+      throw new Error('You can only remove name change requests from your own account.')
+    }
+
+    await db.nameChangeRequest.delete({
+      where: {
+        id: request.id
+      }
+    })
+
+    await deleteStoredCloudinaryDocument(request)
+
+    revalidateNameChangeDocumentationViews()
+
+    return { message: 'Name change request removed successfully' }
+  } catch (error) {
+    return renderError(error)
+  }
+}
+
 export const createRemovedMemberAction = async (provState: any, formData: FormData): Promise<{ message: string }> => {
   const user = await getAuthUser()
 
@@ -2056,7 +2371,7 @@ export const uploadDeceasedMemberDocumentAction = async (
       throw new Error(`Please choose a file for ${deceasedMemberDocumentLabels[documentType]}.`)
     }
 
-    if (file.size > maxDeceasedMemberDocumentFileSize) {
+    if (file.size > maxDocumentationFileSize) {
       throw new Error('The file is too large. Please upload a file that is 20 MB or smaller.')
     }
 

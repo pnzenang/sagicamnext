@@ -74,7 +74,7 @@ const ReviewDocumentControls = ({ uploadedDocument }: { uploadedDocument: DeathD
       Admin review
     </div>
     <div className='grid gap-2 sm:grid-cols-[auto_minmax(0,1fr)]'>
-      <FormContainer action={reviewDeceasedMemberDocumentAction}>
+      <FormContainer action={reviewDeceasedMemberDocumentAction} refreshOnMessage>
         <input type='hidden' name='documentId' value={uploadedDocument.id} />
         <input type='hidden' name='status' value='approved' />
         <SubmitButton
@@ -82,7 +82,11 @@ const ReviewDocumentControls = ({ uploadedDocument }: { uploadedDocument: DeathD
           className='h-8 w-full bg-green-700 px-3 text-xs normal-case hover:bg-green-800 sm:w-auto'
         />
       </FormContainer>
-      <FormContainer action={reviewDeceasedMemberDocumentAction} className='grid gap-2 sm:grid-cols-[1fr_auto]'>
+      <FormContainer
+        action={reviewDeceasedMemberDocumentAction}
+        className='grid gap-2 sm:grid-cols-[1fr_auto]'
+        refreshOnMessage
+      >
         <input type='hidden' name='documentId' value={uploadedDocument.id} />
         <input type='hidden' name='status' value='rejected' />
         <Input
@@ -158,7 +162,7 @@ const DocumentationSlot = ({
               </a>
             </Button>
             {deleteDocument ? (
-              <FormContainer action={deleteDocument}>
+              <FormContainer action={deleteDocument} refreshOnMessage>
                 <SubmitButton
                   text='Remove'
                   className='h-8 bg-red-700 px-3 text-xs normal-case hover:bg-red-800'
@@ -169,7 +173,12 @@ const DocumentationSlot = ({
         </div>
       ) : null}
 
-      <FormContainer action={uploadDeceasedMemberDocumentAction} encType='multipart/form-data' className='grid gap-2'>
+      <FormContainer
+        action={uploadDeceasedMemberDocumentAction}
+        encType='multipart/form-data'
+        className='grid gap-2'
+        refreshOnMessage
+      >
         <input type='hidden' name='deceasedMemberId' value={deceasedMember.id} />
         <input type='hidden' name='documentType' value={documentType} />
         <Label htmlFor={inputId}>{uploadedDocument ? 'Replace file' : 'Choose file'}</Label>

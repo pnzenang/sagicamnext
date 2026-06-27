@@ -26,7 +26,7 @@ model Profile {
 }
 
 model Member {
-  id                        String   @id @default(uuid())
+  id                        String              @id @default(uuid())
   clerkId                   String
   firstName                 String
   lastAndMiddleNames        String
@@ -37,8 +37,9 @@ model Member {
   memberStatus              String
   nameOfBeneficiary         String
   sponsorCode               String
-  createdAt                 DateTime @default(now())
-  updatedAt                 DateTime @updatedAt
+  createdAt                 DateTime            @default(now())
+  updatedAt                 DateTime            @updatedAt
+  nameChangeRequests        NameChangeRequest[]
 
   @@unique([firstName, lastAndMiddleNames, dateOfBirth, delegateRecommendation])
 }
@@ -116,6 +117,41 @@ model DeceasedMemberDocument {
   @@index([sponsorCode])
   @@index([clerkId])
   @@index([status])
+}
+
+model NameChangeRequest {
+  id                          String    @id @default(uuid())
+  memberId                    String
+  clerkId                     String
+  sponsorCode                 String
+  currentFirstName            String
+  currentLastAndMiddleNames   String
+  requestedFirstName          String
+  requestedLastAndMiddleNames String
+  reason                      String
+  documentRequired            Boolean   @default(false)
+  fileName                    String?
+  mimeType                    String?
+  fileSize                    Int?
+  cloudinaryPublicId          String?
+  cloudinaryResourceType      String?
+  cloudinaryDeliveryType      String?
+  cloudinaryFormat            String?
+  cloudinaryVersion           Int?
+  secureUrl                   String?
+  status                      String    @default("submitted")
+  rejectionReason             String?
+  reviewedBy                  String?
+  reviewedAt                  DateTime?
+  member                      Member    @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  createdAt                   DateTime  @default(now())
+  updatedAt                   DateTime  @updatedAt
+
+  @@index([memberId])
+  @@index([clerkId])
+  @@index([sponsorCode])
+  @@index([status])
+  @@index([createdAt])
 }
 
 model ContributionAssessment {
