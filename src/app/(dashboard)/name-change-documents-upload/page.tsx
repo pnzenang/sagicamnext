@@ -214,6 +214,7 @@ const NameChangeRequestCard = ({ isAdminUser, request }: { isAdminUser: boolean;
 
 const NameChangeDocumentationPage = async () => {
   const { isAdminUser, members, requests } = await fetchNameChangeDocumentationPageAction()
+  const pendingReviewCount = isAdminUser ? requests.filter(request => request.status === 'submitted').length : 0
 
   return (
     <section className='grid w-full max-w-full min-w-0 gap-5 overflow-hidden px-0 py-4 sm:px-6 sm:py-8 lg:px-8'>
@@ -228,6 +229,27 @@ const NameChangeDocumentationPage = async () => {
           {requests.length} request{requests.length === 1 ? '' : 's'}
         </Badge>
       </div>
+
+      {pendingReviewCount > 0 ? (
+        <Card className='rounded-lg border-amber-200 bg-amber-50 py-0 dark:border-amber-900 dark:bg-amber-950/40'>
+          <CardContent className='flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between'>
+            <div className='flex min-w-0 items-start gap-3'>
+              <FilePenLine className='mt-0.5 size-5 shrink-0 text-amber-700 dark:text-amber-300' />
+              <div className='min-w-0'>
+                <p className='font-extrabold text-amber-800 dark:text-amber-200'>
+                  Name change approval pending
+                </p>
+                <p className='text-sm text-amber-700 dark:text-amber-300'>
+                  {pendingReviewCount} request{pendingReviewCount === 1 ? '' : 's'} waiting for admin review.
+                </p>
+              </div>
+            </div>
+            <Badge variant='outline' className='w-fit border-amber-300 bg-white text-amber-800 dark:bg-black/20 dark:text-amber-200'>
+              {pendingReviewCount} pending
+            </Badge>
+          </CardContent>
+        </Card>
+      ) : null}
 
       <div className='grid gap-4'>
         {members.length === 0 ? (

@@ -8,6 +8,7 @@ export type MenuSubItem = {
 }
 
 type BaseMenuItem = {
+  badge?: string
   icon: ComponentType
   label: string
 }
