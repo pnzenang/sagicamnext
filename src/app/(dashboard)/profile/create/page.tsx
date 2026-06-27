@@ -35,7 +35,7 @@ const CreateProfilePage = async () => {
 
   const profileId = await fetchExistingProfileId(userId)
 
-  if (profileId) redirect('/all-members')
+  if (profileId) redirect('/navigation-instructions')
 
   return (
     <section className='mt-8 flex max-w-full min-w-0 flex-col sm:mt-16'>
