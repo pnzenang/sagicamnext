@@ -275,21 +275,19 @@ const NameChangeDocumentationPage = async () => {
         </Badge>
       </div>
 
-      {!isAdminUser ? (
-        <div className='grid gap-4'>
-          {members.length === 0 ? (
-            <Card className='rounded-lg'>
-              <CardContent className='py-8 text-center'>
-                <Upload className='text-muted-foreground mx-auto mb-3 size-8' />
-                <p className='font-semibold'>No loved ones found.</p>
-                <p className='text-muted-foreground mt-1 text-sm'>Add a loved one before submitting a name change.</p>
-              </CardContent>
-            </Card>
-          ) : (
-            <SponsorNameChangeProposalForm members={members} />
-          )}
-        </div>
-      ) : null}
+      <div className='grid gap-4'>
+        {members.length === 0 ? (
+          <Card className='rounded-lg'>
+            <CardContent className='py-8 text-center'>
+              <Upload className='text-muted-foreground mx-auto mb-3 size-8' />
+              <p className='font-semibold'>No loved ones found.</p>
+              <p className='text-muted-foreground mt-1 text-sm'>Add a loved one before submitting a name change.</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <SponsorNameChangeProposalForm members={members} />
+        )}
+      </div>
 
       <div className='grid gap-3'>
         <div className='flex items-center gap-2'>
