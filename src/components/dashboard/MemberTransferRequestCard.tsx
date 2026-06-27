@@ -102,15 +102,15 @@ const ReleasingSponsorControls = ({
         <FormContainer action={reviewIncomingMemberTransferRequestAction} className='grid gap-2' refreshOnMessage>
           <input type='hidden' name='requestId' value={request.id} />
           <input type='hidden' name='status' value='receiving_sponsor_rejected' />
+          <SubmitButton
+            text='Reject release'
+            className='h-8 w-full bg-red-700 px-3 text-xs normal-case hover:bg-red-800'
+          />
           <Textarea
             name='rejectionReason'
             placeholder='Reason if rejected'
             defaultValue={request.rejectionReason ?? ''}
             className={cn('text-xs', compact ? 'min-h-14' : 'min-h-16')}
-          />
-          <SubmitButton
-            text='Reject release'
-            className='h-8 w-full bg-red-700 px-3 text-xs normal-case hover:bg-red-800'
           />
         </FormContainer>
       </div>
@@ -145,15 +145,15 @@ const AdminTransferControls = ({
         <FormContainer action={reviewAdminMemberTransferRequestAction} className='grid gap-2' refreshOnMessage>
           <input type='hidden' name='requestId' value={request.id} />
           <input type='hidden' name='status' value='admin_rejected' />
+          <SubmitButton
+            text='Reject transfer'
+            className='h-8 w-full bg-red-700 px-3 text-xs normal-case hover:bg-red-800'
+          />
           <Textarea
             name='rejectionReason'
             placeholder='Reason if rejected'
             defaultValue={request.rejectionReason ?? ''}
             className={cn('text-xs', compact ? 'min-h-14' : 'min-h-16')}
-          />
-          <SubmitButton
-            text='Reject transfer'
-            className='h-8 w-full bg-red-700 px-3 text-xs normal-case hover:bg-red-800'
           />
         </FormContainer>
       </div>
