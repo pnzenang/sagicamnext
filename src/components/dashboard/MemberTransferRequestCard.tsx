@@ -75,7 +75,7 @@ export const RequestStatusBadge = ({ status }: { status: string }) => (
   </Badge>
 )
 
-const ReceivingSponsorControls = ({
+const ReleasingSponsorControls = ({
   compact = false,
   request
 }: {
@@ -88,14 +88,14 @@ const ReceivingSponsorControls = ({
     <div className={cn('grid gap-2 rounded-md border bg-white/60 dark:bg-black/10', compact ? 'p-2' : 'p-3')}>
       <div className='flex items-center gap-1.5 text-xs font-semibold'>
         <ArrowLeftRight className='size-3.5' />
-        Receiving sponsor review
+        Current sponsor release review
       </div>
       <div className={cn('grid gap-2', compact ? '' : 'sm:grid-cols-2')}>
         <FormContainer action={reviewIncomingMemberTransferRequestAction} refreshOnMessage>
           <input type='hidden' name='requestId' value={request.id} />
           <input type='hidden' name='status' value='receiving_sponsor_approved' />
           <SubmitButton
-            text='Approve transfer'
+            text='Approve release'
             className='h-8 w-full bg-green-700 px-3 text-xs normal-case hover:bg-green-800'
           />
         </FormContainer>
@@ -109,7 +109,7 @@ const ReceivingSponsorControls = ({
             className={cn('text-xs', compact ? 'min-h-14' : 'min-h-16')}
           />
           <SubmitButton
-            text='Reject transfer'
+            text='Reject release'
             className='h-8 w-full bg-red-700 px-3 text-xs normal-case hover:bg-red-800'
           />
         </FormContainer>
@@ -200,13 +200,13 @@ export const MemberTransferRequestActions = ({
   const isInitiatingSponsor = currentUserClerkId === request.initiatingClerkId
   const isReceivingSponsor = currentUserClerkId === request.receivingClerkId
 
-  const hasInitiatingAction =
-    isInitiatingSponsor && ['receiving_sponsor_pending', 'receiving_sponsor_approved'].includes(request.status)
+  const hasReceivingSponsorAction =
+    isReceivingSponsor && ['receiving_sponsor_pending', 'receiving_sponsor_approved'].includes(request.status)
 
-  const hasReceivingAction = isReceivingSponsor && request.status === 'receiving_sponsor_pending'
+  const hasReleasingSponsorAction = isInitiatingSponsor && request.status === 'receiving_sponsor_pending'
   const hasAdminAction = isAdminUser && request.status === 'receiving_sponsor_approved'
 
-  if (!hasInitiatingAction && !hasReceivingAction && !hasAdminAction) {
+  if (!hasReceivingSponsorAction && !hasReleasingSponsorAction && !hasAdminAction) {
     if (!emptyLabel) return null
 
     return <span className={cn('text-muted-foreground text-xs font-semibold', className)}>{emptyLabel}</span>
@@ -214,8 +214,8 @@ export const MemberTransferRequestActions = ({
 
   return (
     <div className={cn('grid gap-2', className)}>
-      {hasInitiatingAction ? <SponsorCancelTransferControl compact={compact} request={request} /> : null}
-      {hasReceivingAction ? <ReceivingSponsorControls compact={compact} request={request} /> : null}
+      {hasReceivingSponsorAction ? <SponsorCancelTransferControl compact={compact} request={request} /> : null}
+      {hasReleasingSponsorAction ? <ReleasingSponsorControls compact={compact} request={request} /> : null}
       {hasAdminAction ? <AdminTransferControls compact={compact} request={request} /> : null}
     </div>
   )

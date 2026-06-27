@@ -2098,7 +2098,7 @@ const getTransferredMemberMatriculationNumber = ({
   const initiatingPrefix = `SC${initiatingSponsorCode}`
 
   if (!memberMatriculationNumber.startsWith(initiatingPrefix)) {
-    throw new Error('This loved one matriculation number does not match the initiating sponsor code.')
+    throw new Error('This loved one matriculation number does not match the current sponsor code.')
   }
 
   return `SC${receivingSponsorCode}${memberMatriculationNumber.slice(initiatingPrefix.length)}`
@@ -2110,7 +2110,7 @@ export const fetchMemberTransferPageAction = async () => {
   const profile = await fetchProfile()
   const visibleMemberTransferRequestWhere = getVisibleMemberTransferRequestWhere()
 
-  const [members, sponsors, requests] = await Promise.all([
+  const [members, requests] = await Promise.all([
     db.member.findMany({
       orderBy: [{ lastAndMiddleNames: 'asc' }, { firstName: 'asc' }],
       select: {
@@ -2122,17 +2122,7 @@ export const fetchMemberTransferPageAction = async () => {
         sponsorCode: true
       },
       where: {
-        clerkId: profile.clerkId
-      }
-    }),
-    db.profile.findMany({
-      orderBy: [{ sponsorCode: 'asc' }],
-      select: {
-        sponsorCode: true,
-        sponsorFirstName: true,
-        sponsorLastAndMiddleName: true
-      },
-      where: {
+        memberStatus: memberStatus.Vested,
         clerkId: {
           not: profile.clerkId
         }
@@ -2165,8 +2155,7 @@ export const fetchMemberTransferPageAction = async () => {
     members,
     nextCancelledTransferRefreshAt: getNextCancelledMemberTransferRefreshAt(requests),
     profile,
-    requests,
-    sponsors
+    requests
   }
 }
 
@@ -2201,53 +2190,48 @@ export const submitMemberTransferRequestAction = async (
 
   try {
     const memberId = getRequiredFormValue(formData, 'memberId')
-    const receivingSponsorCode = getRequiredFormValue(formData, 'receivingSponsorCode').toUpperCase()
-    const initiatingSponsor = await fetchProfile()
+    const receivingSponsor = await fetchProfile()
 
-    const [member, receivingSponsor] = await Promise.all([
-      db.member.findUnique({
-        select: {
-          clerkId: true,
-          firstName: true,
-          id: true,
-          lastAndMiddleNames: true,
-          memberMatriculationNumber: true,
-          memberStatus: true,
-          sponsorCode: true
-        },
-        where: {
-          id: memberId
-        }
-      }),
-      db.profile.findUnique({
-        select: {
-          clerkId: true,
-          sponsorCode: true
-        },
-        where: {
-          sponsorCode: receivingSponsorCode
-        }
-      })
-    ])
+    const member = await db.member.findUnique({
+      select: {
+        clerkId: true,
+        firstName: true,
+        id: true,
+        lastAndMiddleNames: true,
+        memberMatriculationNumber: true,
+        memberStatus: true,
+        sponsorCode: true
+      },
+      where: {
+        id: memberId
+      }
+    })
 
     if (!member) {
       throw new Error('Loved one not found.')
     }
 
-    if (member.clerkId !== user.id) {
-      throw new Error('You can only request transfers for loved ones from your own account.')
+    if (member.clerkId === user.id || member.sponsorCode === receivingSponsor.sponsorCode) {
+      throw new Error('This loved one is already in your sponsor group.')
     }
 
     if (member.memberStatus !== memberStatus.Vested) {
       throw new Error('Transfer is not allowed on non-vested members. Only vested members can be transferred.')
     }
 
-    if (!receivingSponsor) {
-      throw new Error('Receiving sponsor was not found.')
-    }
+    const releasingSponsor = await db.profile.findFirst({
+      select: {
+        clerkId: true,
+        sponsorCode: true
+      },
+      where: {
+        clerkId: member.clerkId,
+        sponsorCode: member.sponsorCode
+      }
+    })
 
-    if (member.sponsorCode === receivingSponsor.sponsorCode) {
-      throw new Error('Choose a different sponsor for the transfer.')
+    if (!releasingSponsor) {
+      throw new Error('Current sponsor profile was not found.')
     }
 
     const openRequest = await db.memberTransferRequest.findFirst({
@@ -2270,8 +2254,8 @@ export const submitMemberTransferRequestAction = async (
       data: {
         currentFirstName: member.firstName,
         currentLastAndMiddleNames: member.lastAndMiddleNames,
-        initiatingClerkId: user.id,
-        initiatingSponsorCode: initiatingSponsor.sponsorCode,
+        initiatingClerkId: releasingSponsor.clerkId,
+        initiatingSponsorCode: releasingSponsor.sponsorCode,
         memberId: member.id,
         memberMatriculationNumber: member.memberMatriculationNumber,
         receivingClerkId: receivingSponsor.clerkId,
@@ -2282,7 +2266,7 @@ export const submitMemberTransferRequestAction = async (
 
     revalidateMemberTransferViews()
 
-    return { message: 'Member transfer request sent to the receiving sponsor.' }
+    return { message: 'Member transfer release request sent to the current sponsor.' }
   } catch (error) {
     return renderError(error)
   }
@@ -2316,12 +2300,12 @@ export const reviewIncomingMemberTransferRequestAction = async (
       throw new Error('Member transfer request not found.')
     }
 
-    if (request.receivingClerkId !== user.id) {
-      throw new Error('Only the receiving sponsor can review this transfer request.')
+    if (request.initiatingClerkId !== user.id) {
+      throw new Error('Only the current sponsor can release this loved one.')
     }
 
     if (request.status !== 'receiving_sponsor_pending') {
-      throw new Error('This transfer request has already been reviewed by the receiving sponsor.')
+      throw new Error('This transfer request has already been reviewed by the current sponsor.')
     }
 
     await db.memberTransferRequest.update({
@@ -2330,7 +2314,7 @@ export const reviewIncomingMemberTransferRequestAction = async (
         receivingReviewedBy: user.id,
         rejectionReason:
           status === 'receiving_sponsor_rejected'
-            ? rejectionReason || 'Receiving sponsor rejected this transfer request.'
+            ? rejectionReason || 'Current sponsor rejected this transfer release request.'
             : null,
         status
       },
@@ -2344,8 +2328,8 @@ export const reviewIncomingMemberTransferRequestAction = async (
     return {
       message:
         status === 'receiving_sponsor_approved'
-          ? 'Member transfer approved and sent to SAGICAM admin.'
-          : 'Member transfer rejected.'
+          ? 'Loved one release approved and sent to SAGICAM admin.'
+          : 'Member transfer release rejected.'
     }
   } catch (error) {
     return renderError(error)
@@ -2367,8 +2351,8 @@ export const cancelMemberTransferRequestAction = async (prevState: { requestId: 
       throw new Error('Member transfer request not found.')
     }
 
-    if (request.initiatingClerkId !== user.id) {
-      throw new Error('Only the requesting sponsor can cancel this transfer request.')
+    if (request.receivingClerkId !== user.id) {
+      throw new Error('Only the receiving sponsor who requested this transfer can cancel it.')
     }
 
     if (!openMemberTransferRequestStatuses.includes(request.status as MemberTransferRequestStatus)) {
@@ -2377,7 +2361,7 @@ export const cancelMemberTransferRequestAction = async (prevState: { requestId: 
 
     await db.memberTransferRequest.update({
       data: {
-        rejectionReason: 'Requesting sponsor cancelled this transfer request.',
+        rejectionReason: 'Receiving sponsor cancelled this transfer request.',
         status: 'cancelled'
       },
       where: {
@@ -2462,7 +2446,7 @@ export const reviewAdminMemberTransferRequestAction = async (
       request.member.clerkId !== request.initiatingClerkId ||
       request.member.sponsorCode !== request.initiatingSponsorCode
     ) {
-      throw new Error('This loved one no longer belongs to the initiating sponsor.')
+      throw new Error('This loved one no longer belongs to the current sponsor.')
     }
 
     const nextMemberMatriculationNumber = getTransferredMemberMatriculationNumber({

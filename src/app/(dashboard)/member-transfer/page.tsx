@@ -9,10 +9,10 @@ import { fetchMemberTransferPageAction } from '@/utils/actions'
 import MemberTransferRequestForm from './MemberTransferRequestForm'
 
 const MemberTransferPage = async () => {
-  const { members, nextCancelledTransferRefreshAt, profile, requests, sponsors } = await fetchMemberTransferPageAction()
+  const { members, nextCancelledTransferRefreshAt, profile, requests } = await fetchMemberTransferPageAction()
 
   const incomingActionCount = requests.filter(
-    request => request.receivingClerkId === profile.clerkId && request.status === 'receiving_sponsor_pending'
+    request => request.initiatingClerkId === profile.clerkId && request.status === 'receiving_sponsor_pending'
   ).length
 
   return (
@@ -23,7 +23,7 @@ const MemberTransferPage = async () => {
         <div>
           <h1 className='text-2xl font-extrabold tracking-normal sm:text-3xl'>Member Transfer</h1>
           <p className='text-muted-foreground mt-1 text-sm'>
-            Request a loved one transfer and review transfer requests sent to your sponsor code.
+            Request a loved one release into your sponsor group and review release requests sent to your sponsor code.
           </p>
         </div>
         <Badge variant='outline' className='w-fit text-sm'>
@@ -39,11 +39,14 @@ const MemberTransferPage = async () => {
               <div className='min-w-0'>
                 <p className='font-extrabold text-blue-800 dark:text-blue-200'>Transfer approval required</p>
                 <p className='text-sm text-blue-700 dark:text-blue-300'>
-                  {incomingActionCount} request{incomingActionCount === 1 ? '' : 's'} need your approval.
+                  {incomingActionCount} release request{incomingActionCount === 1 ? '' : 's'} need your approval.
                 </p>
               </div>
             </div>
-            <Badge variant='outline' className='w-fit border-blue-300 bg-white text-blue-800 dark:bg-black/20 dark:text-blue-200'>
+            <Badge
+              variant='outline'
+              className='w-fit border-blue-300 bg-white text-blue-800 dark:bg-black/20 dark:text-blue-200'
+            >
               {incomingActionCount} required
             </Badge>
           </CardContent>
@@ -54,20 +57,14 @@ const MemberTransferPage = async () => {
         <Card className='rounded-lg'>
           <CardContent className='py-8 text-center'>
             <ArrowLeftRight className='text-muted-foreground mx-auto mb-3 size-8' />
-            <p className='font-semibold'>No loved ones available to transfer.</p>
-            <p className='text-muted-foreground mt-1 text-sm'>Your active loved ones will appear here.</p>
-          </CardContent>
-        </Card>
-      ) : sponsors.length === 0 ? (
-        <Card className='rounded-lg'>
-          <CardContent className='py-8 text-center'>
-            <ArrowLeftRight className='text-muted-foreground mx-auto mb-3 size-8' />
-            <p className='font-semibold'>No receiving sponsors found.</p>
-            <p className='text-muted-foreground mt-1 text-sm'>Another sponsor profile is required before a transfer can be requested.</p>
+            <p className='font-semibold'>No outside loved ones available to request.</p>
+            <p className='text-muted-foreground mt-1 text-sm'>
+              Vested loved ones under other sponsor codes will appear here.
+            </p>
           </CardContent>
         </Card>
       ) : (
-        <MemberTransferRequestForm members={members} sponsors={sponsors} />
+        <MemberTransferRequestForm members={members} receivingSponsorCode={profile.sponsorCode} />
       )}
 
       <div className='grid gap-3'>

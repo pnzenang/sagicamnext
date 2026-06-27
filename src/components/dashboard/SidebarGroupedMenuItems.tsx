@@ -49,7 +49,7 @@ const fetchSidebarBadges = async ({
 
       sponsorPendingTransferCount = await db.memberTransferRequest.count({
         where: {
-          receivingClerkId: userId,
+          initiatingClerkId: userId,
           status: 'receiving_sponsor_pending'
         }
       })

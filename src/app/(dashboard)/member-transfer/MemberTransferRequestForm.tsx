@@ -21,30 +21,20 @@ type MemberTransferMemberOption = {
   sponsorCode: string
 }
 
-type MemberTransferSponsorOption = {
-  sponsorCode: string
-  sponsorFirstName: string
-  sponsorLastAndMiddleName: string
-}
-
 const maxVisibleMembers = 10
 
 const getMemberNameSearchValue = (member: MemberTransferMemberOption) =>
-  `${member.firstName} ${member.lastAndMiddleNames}`.toLowerCase()
-
-const getSponsorLabel = (sponsor: MemberTransferSponsorOption) =>
-  `${sponsor.sponsorCode} - ${sponsor.sponsorFirstName} ${sponsor.sponsorLastAndMiddleName}`.trim()
+  `${member.firstName} ${member.lastAndMiddleNames} ${member.memberMatriculationNumber} ${member.sponsorCode}`.toLowerCase()
 
 const MemberTransferRequestForm = ({
   members,
-  sponsors
+  receivingSponsorCode
 }: {
   members: MemberTransferMemberOption[]
-  sponsors: MemberTransferSponsorOption[]
+  receivingSponsorCode: string
 }) => {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedMemberId, setSelectedMemberId] = useState('')
-  const [selectedSponsorCode, setSelectedSponsorCode] = useState('')
 
   const selectedMember = useMemo(
     () => members.find(member => member.id === selectedMemberId) ?? null,
@@ -81,7 +71,7 @@ const MemberTransferRequestForm = ({
           <div className='min-w-0'>
             <CardTitle className='text-lg break-words'>Request a member transfer</CardTitle>
             <p className='text-muted-foreground mt-1 text-xs'>
-              Search by loved one name, select the receiving sponsor, and send the request for approval.
+              Search for the loved one you want to bring into your sponsor group.
             </p>
           </div>
         </div>
@@ -98,7 +88,7 @@ const MemberTransferRequestForm = ({
                 type='search'
                 value={searchQuery}
                 onChange={event => handleSearchChange(event.target.value)}
-                placeholder='Search first, last, or middle name'
+                placeholder='Search name, matriculation, or sponsor code'
                 className='pl-9'
               />
             </div>
@@ -160,7 +150,7 @@ const MemberTransferRequestForm = ({
 
           <div className='bg-muted/30 grid gap-2 rounded-md border p-3 sm:grid-cols-2'>
             <div className='min-w-0'>
-              <p className='text-muted-foreground text-xs font-semibold'>Current loved one</p>
+              <p className='text-muted-foreground text-xs font-semibold'>Selected loved one</p>
               <p className='mt-1 font-extrabold break-words'>
                 {selectedMember
                   ? `${selectedMember.firstName} ${selectedMember.lastAndMiddleNames}`
@@ -171,30 +161,13 @@ const MemberTransferRequestForm = ({
               <p className='text-muted-foreground text-xs font-semibold'>Present sponsor code</p>
               <p className='mt-1 font-extrabold break-words'>{selectedMember ? selectedMember.sponsorCode : 'N/A'}</p>
             </div>
+            <div className='min-w-0'>
+              <p className='text-muted-foreground text-xs font-semibold'>Receiving sponsor code</p>
+              <p className='mt-1 font-extrabold break-words'>{receivingSponsorCode}</p>
+            </div>
           </div>
 
-          <div className='grid gap-1.5'>
-            <Label htmlFor='receiving-sponsor-code'>Receiving sponsor</Label>
-            <select
-              id='receiving-sponsor-code'
-              name='receivingSponsorCode'
-              required
-              value={selectedSponsorCode}
-              onChange={event => setSelectedSponsorCode(event.target.value)}
-              className='border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring h-10 w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50'
-            >
-              <option value='' disabled>
-                Select receiving sponsor
-              </option>
-              {sponsors.map(sponsor => (
-                <option key={sponsor.sponsorCode} value={sponsor.sponsorCode}>
-                  {getSponsorLabel(sponsor)}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <SubmitButton text='Send transfer request' className='h-9 w-full text-sm normal-case sm:w-fit' />
+          <SubmitButton text='Send release request' className='h-9 w-full text-sm normal-case sm:w-fit' />
         </FormContainer>
       </CardContent>
     </Card>

@@ -7,17 +7,10 @@ import { ArrowLeftRight, Inbox, Search, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { usePersistentState } from '@/hooks/use-persistent-state'
 import { memberTransferRequestStatusLabels, type MemberTransferRequestStatus } from '@/utils/types'
 
-import MemberTransferRequestCard, {
-  formatTransferRequestDateTime,
-  getTransferRequestMemberName,
-  MemberTransferRequestActions,
-  RequestStatusBadge,
-  type MemberTransferRequestCardData
-} from './MemberTransferRequestCard'
+import MemberTransferRequestCard, { type MemberTransferRequestCardData } from './MemberTransferRequestCard'
 
 type EmptyIcon = 'inbox' | 'transfer'
 
@@ -48,76 +41,6 @@ const EmptyStateIcon = ({ icon }: { icon: EmptyIcon }) => {
 
   return <Icon className='text-muted-foreground mx-auto mb-3 size-8' />
 }
-
-const MemberTransferRequestTable = ({
-  currentUserClerkId,
-  isAdminUser,
-  requests
-}: {
-  currentUserClerkId?: string
-  isAdminUser: boolean
-  requests: MemberTransferRequestCardData[]
-}) => (
-  <div className='bg-background hidden overflow-hidden rounded-lg border md:block'>
-    <Table className='min-w-[1120px] table-fixed [&_td]:whitespace-normal [&_th]:whitespace-normal'>
-      <TableHeader>
-        <TableRow className='bg-primary hover:bg-primary/90 h-12'>
-          <TableHead className='w-[18%] px-4 font-extrabold text-white'>Member</TableHead>
-          <TableHead className='w-[12%] px-4 font-extrabold text-white'>Matriculation</TableHead>
-          <TableHead className='w-[12%] px-4 font-extrabold text-white'>Present sponsor</TableHead>
-          <TableHead className='w-[12%] px-4 font-extrabold text-white'>Receiving sponsor</TableHead>
-          <TableHead className='w-[15%] px-4 font-extrabold text-white'>Status</TableHead>
-          <TableHead className='w-[12%] px-4 font-extrabold text-white'>Submitted</TableHead>
-          <TableHead className='w-[19%] px-4 font-extrabold text-white'>Action</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {requests.map(request => (
-          <TableRow key={request.id} className='hover:bg-primary/10'>
-            <TableCell className='px-4 py-4 align-top'>
-              <div className='flex min-w-0 items-start gap-2'>
-                <ArrowLeftRight className='text-primary mt-0.5 size-4 shrink-0' />
-                <span className='font-extrabold break-words'>{getTransferRequestMemberName(request)}</span>
-              </div>
-            </TableCell>
-            <TableCell className='px-4 py-4 align-top font-mono text-xs font-semibold break-all'>
-              {request.memberMatriculationNumber}
-            </TableCell>
-            <TableCell className='px-4 py-4 align-top text-sm font-semibold break-words'>
-              {request.initiatingSponsorCode}
-            </TableCell>
-            <TableCell className='px-4 py-4 align-top text-sm font-semibold break-words'>
-              {request.receivingSponsorCode}
-            </TableCell>
-            <TableCell className='px-4 py-4 align-top'>
-              <div className='grid gap-2'>
-                <RequestStatusBadge status={request.status} />
-                {request.rejectionReason ? (
-                  <p className='rounded-md border border-red-200 bg-red-50 px-2 py-1.5 text-xs text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300'>
-                    {request.rejectionReason}
-                  </p>
-                ) : null}
-              </div>
-            </TableCell>
-            <TableCell className='text-muted-foreground px-4 py-4 align-top text-xs font-semibold'>
-              {formatTransferRequestDateTime(request.createdAt)}
-            </TableCell>
-            <TableCell className='px-4 py-4 align-top'>
-              <MemberTransferRequestActions
-                className='min-w-0'
-                compact
-                currentUserClerkId={currentUserClerkId}
-                emptyLabel='No action needed'
-                isAdminUser={isAdminUser}
-                request={request}
-              />
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
-  </div>
-)
 
 const MemberTransferRequestList = ({
   currentUserClerkId,
@@ -209,23 +132,16 @@ const MemberTransferRequestList = ({
           </CardContent>
         </Card>
       ) : (
-        <>
-          <div className='grid gap-4 md:hidden'>
-            {filteredRequests.map(request => (
-              <MemberTransferRequestCard
-                key={request.id}
-                currentUserClerkId={currentUserClerkId}
-                isAdminUser={isAdminUser}
-                request={request}
-              />
-            ))}
-          </div>
-          <MemberTransferRequestTable
-            currentUserClerkId={currentUserClerkId}
-            isAdminUser={isAdminUser}
-            requests={filteredRequests}
-          />
-        </>
+        <div className='grid gap-4 xl:grid-cols-2 2xl:grid-cols-3'>
+          {filteredRequests.map(request => (
+            <MemberTransferRequestCard
+              key={request.id}
+              currentUserClerkId={currentUserClerkId}
+              isAdminUser={isAdminUser}
+              request={request}
+            />
+          ))}
+        </div>
       )}
     </div>
   )

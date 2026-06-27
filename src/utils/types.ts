@@ -200,7 +200,7 @@ export const memberTransferRequestStatusLabels: Record<MemberTransferRequestStat
   admin_approved: 'Admin approved',
   admin_rejected: 'Admin rejected',
   cancelled: 'Cancelled',
-  receiving_sponsor_approved: 'Receiving sponsor approved',
-  receiving_sponsor_pending: 'Receiving sponsor pending',
-  receiving_sponsor_rejected: 'Receiving sponsor rejected'
+  receiving_sponsor_approved: 'Release approved',
+  receiving_sponsor_pending: 'Release pending',
+  receiving_sponsor_rejected: 'Release rejected'
 }

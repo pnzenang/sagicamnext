@@ -18,7 +18,7 @@ const AdminMemberTransfersPage = async () => {
         <div>
           <h1 className='text-2xl font-extrabold tracking-normal sm:text-3xl'>Admin Member Transfers</h1>
           <p className='text-muted-foreground mt-1 text-sm'>
-            Complete member transfers after the receiving sponsor approves the request.
+            Complete member transfers after the current sponsor releases the loved one.
           </p>
         </div>
         <Badge variant='outline' className='w-fit text-sm'>
@@ -38,7 +38,10 @@ const AdminMemberTransfersPage = async () => {
                 </p>
               </div>
             </div>
-            <Badge variant='outline' className='w-fit border-amber-300 bg-white text-amber-800 dark:bg-black/20 dark:text-amber-200'>
+            <Badge
+              variant='outline'
+              className='w-fit border-amber-300 bg-white text-amber-800 dark:bg-black/20 dark:text-amber-200'
+            >
               {pendingAdminCount} pending
             </Badge>
           </CardContent>
@@ -51,7 +54,7 @@ const AdminMemberTransfersPage = async () => {
           <h2 className='text-lg font-extrabold'>All member transfer requests</h2>
         </div>
         <MemberTransferRequestList
-          emptyDescription='Sponsor-approved transfers will appear here.'
+          emptyDescription='Released transfers will appear here.'
           emptyIcon='transfer'
           emptyTitle='No member transfer requests found.'
           isAdminUser
