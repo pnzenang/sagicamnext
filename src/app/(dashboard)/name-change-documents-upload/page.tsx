@@ -1,10 +1,10 @@
-import { CheckCircle2, Download, FilePenLine, FileText, ShieldCheck, Upload, UserRound, XCircle } from 'lucide-react'
+import { CheckCircle2, Download, FilePenLine, FileText, ShieldCheck, Upload, XCircle } from 'lucide-react'
 
 import FormContainer from '@/components/forms/FormContainer'
 import { SubmitButton } from '@/components/forms/Buttons'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -13,7 +13,6 @@ import {
   deleteNameChangeRequestAction,
   fetchNameChangeDocumentationPageAction,
   reviewNameChangeRequestAction,
-  submitNameChangeRequestAction,
   uploadNameChangeDocumentationAction
 } from '@/utils/actions'
 import {
@@ -21,14 +20,12 @@ import {
   type NameChangeRequestStatus
 } from '@/utils/types'
 
+import SponsorNameChangeProposalForm from './NameChangeProposalForm'
+
 type NameChangePageData = Awaited<ReturnType<typeof fetchNameChangeDocumentationPageAction>>
-type NameChangeMember = NameChangePageData['members'][number]
 type NameChangeRequest = NameChangePageData['requests'][number]
 
 const documentAccept = '.pdf,.jpg,.jpeg,.png,.webp,.heic,.heif,application/pdf,image/*'
-
-const selectClassName =
-  'border-input bg-background ring-offset-background focus-visible:ring-ring h-9 rounded-md border px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-offset-2'
 
 const dateTimeFormatter = new Intl.DateTimeFormat('en-US', {
   dateStyle: 'medium',
@@ -213,50 +210,6 @@ const NameChangeRequestCard = ({ isAdminUser, request }: { isAdminUser: boolean;
     </div>
   )
 }
-
-const SponsorNameChangeProposalForm = ({ members }: { members: NameChangeMember[] }) => (
-  <Card className='rounded-lg py-0'>
-    <CardHeader className='border-b px-4 py-4'>
-      <div className='flex items-start gap-3'>
-        <UserRound className='text-primary mt-1 size-5 shrink-0' />
-        <div className='min-w-0'>
-          <CardTitle className='text-lg break-words'>Propose a name change</CardTitle>
-          <p className='text-muted-foreground mt-1 text-xs'>
-            Choose the loved one, enter the corrected name, and submit it for admin review.
-          </p>
-        </div>
-      </div>
-    </CardHeader>
-    <CardContent className='px-4 py-4'>
-      <FormContainer action={submitNameChangeRequestAction} className='grid gap-3' refreshOnMessage>
-        <div className='grid gap-1.5'>
-          <Label htmlFor='name-change-member'>Loved one</Label>
-          <select id='name-change-member' name='memberId' required className={selectClassName} defaultValue=''>
-            <option value='' disabled>
-              Select a loved one
-            </option>
-            {members.map(member => (
-              <option key={member.id} value={member.id}>
-                {member.firstName} {member.lastAndMiddleNames} - {member.memberMatriculationNumber}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className='grid gap-3 sm:grid-cols-2'>
-          <div className='grid gap-1.5'>
-            <Label htmlFor='requested-first-name'>Proposed given names</Label>
-            <Input id='requested-first-name' name='requestedFirstName' required />
-          </div>
-          <div className='grid gap-1.5'>
-            <Label htmlFor='requested-last-name'>Proposed last and middle names</Label>
-            <Input id='requested-last-name' name='requestedLastAndMiddleNames' required />
-          </div>
-        </div>
-        <SubmitButton text='Submit for admin review' className='h-9 w-full text-sm normal-case sm:w-fit' />
-      </FormContainer>
-    </CardContent>
-  </Card>
-)
 
 const NameChangeDocumentationPage = async () => {
   const { isAdminUser, members, requests } = await fetchNameChangeDocumentationPageAction()
