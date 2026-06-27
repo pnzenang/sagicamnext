@@ -63,7 +63,7 @@ const contributionPaymentAlertType = 'contribution'
 const registrationPaymentAlertType = 'registration'
 const allPaymentAlertSponsorsCode = '__all__'
 const MEMBER_REMOVAL_RESTORE_WINDOW_MS = 48 * 60 * 60 * 1000
-const maxDeceasedMemberDocumentFileSize = 10 * 1024 * 1024
+const maxDeceasedMemberDocumentFileSize = 20 * 1024 * 1024
 const blockedDeceasedRestoreStatuses = new Set<string>([contributionStatus.underway, contributionStatus.completed])
 
 const allowedDeceasedMemberDocumentMimeTypes = new Set([
@@ -2057,7 +2057,7 @@ export const uploadDeceasedMemberDocumentAction = async (
     }
 
     if (file.size > maxDeceasedMemberDocumentFileSize) {
-      throw new Error('The file is too large. Please upload a file that is 10 MB or smaller.')
+      throw new Error('The file is too large. Please upload a file that is 20 MB or smaller.')
     }
 
     if (!isAllowedDeceasedMemberDocumentFile(file)) {

@@ -42,7 +42,7 @@ const uploadBuffer = (buffer: Buffer, options: UploadApiOptions) =>
   new Promise<UploadApiResponse>((resolve, reject) => {
     const uploadStream = getCloudinary().uploader.upload_stream(options, (error, result) => {
       if (error || !result) {
-        reject(error ?? new Error('Cloudinary upload failed.'))
+        reject(new Error(error?.message ?? 'Cloudinary upload failed.'))
 
         return
       }

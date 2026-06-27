@@ -173,6 +173,7 @@ const DocumentationSlot = ({
         <input type='hidden' name='deceasedMemberId' value={deceasedMember.id} />
         <input type='hidden' name='documentType' value={documentType} />
         <Label htmlFor={inputId}>{uploadedDocument ? 'Replace file' : 'Choose file'}</Label>
+        <p className='text-muted-foreground text-xs'>PDF or image, up to 20 MB.</p>
         <Input id={inputId} name='documentFile' type='file' accept={documentAccept} required />
         <SubmitButton
           text={uploadedDocument ? 'Replace document' : 'Upload document'}
