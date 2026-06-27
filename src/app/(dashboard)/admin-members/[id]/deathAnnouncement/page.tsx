@@ -7,8 +7,8 @@ import FormContainer from '@/components/forms/FormContainer'
 import FormInput from '@/components/forms/FormInput'
 import FormSelect from '@/components/forms/FormSelect'
 import MaskDateInput from '@/components/forms/MaskDateInput'
-import { createDeceasedMemberActionAdmin, fetchProfile, fetchSingleMemberDetailsForAdmin } from '@/utils/actions'
-import { contributionStatus, delegateRecommendation, memberStatus } from '@/utils/types'
+import { createDeceasedMemberActionAdmin, fetchSingleMemberDetailsForAdmin } from '@/utils/actions'
+import { contributionStatus, memberStatus } from '@/utils/types'
 
 const DeathAnnouncement = async ({ params }: { params: { id: string } }) => {
   const { id } = await params
@@ -18,16 +18,12 @@ const DeathAnnouncement = async ({ params }: { params: { id: string } }) => {
   const {
     firstName,
     lastAndMiddleNames,
-    dateOfBirth,
     countryOfBirth,
-    clerkId,
     sponsorCode,
     nameOfBeneficiary,
     memberMatriculationNumber,
     createdAt
   } = member
-
-  const profile = await fetchProfile()
 
   return (
     <section className='mt-8 flex max-w-full min-w-0 flex-col sm:mt-16'>
@@ -37,7 +33,8 @@ const DeathAnnouncement = async ({ params }: { params: { id: string } }) => {
           <h1 className='text-2xl font-semibold text-purple-600 capitalize sm:text-6xl'> Death Announcement </h1>
         </div>
         <p className='text-xs text-purple-500 sm:text-lg'>
-          Check your entry well before submission, the process is not reversible.
+          Check your entry well before submission. If this announcement is a mistake, it can be restored from Deceased
+          Members within 48 hours while the case is still in review.
         </p>
       </div>
       <div className='max-w-full min-w-0 overflow-hidden rounded-lg border border-purple-800 bg-purple-300/50 p-4 sm:p-8'>

@@ -15,7 +15,7 @@ import {
   RemovedMemberSchema,
   validateWithZodSchema
 } from './schemas'
-import { memberStatus } from './types'
+import { contributionStatus, memberStatus } from './types'
 import {
   sendDeathAnnouncementConfirmationEmail,
   sendLovedOneConfirmationEmail,
@@ -49,6 +49,7 @@ const registrationDateFormatter = new Intl.DateTimeFormat('en-US', {
 const contributionPaymentAlertType = 'contribution'
 const registrationPaymentAlertType = 'registration'
 const MEMBER_REMOVAL_RESTORE_WINDOW_MS = 48 * 60 * 60 * 1000
+const blockedDeceasedRestoreStatuses = new Set<string>([contributionStatus.underway, contributionStatus.completed])
 
 const formatRegistrationDate = (date: Date) => registrationDateFormatter.format(date)
 
@@ -1736,37 +1737,49 @@ export const createDeceasedMemberAction = async (provState: any, formData: FormD
       }
     })
 
-    const sponsor = await fetchSponsorByCode(validatedFields.sponsorCode)
-
     if (!member) {
       throw new Error('Loved one not found.')
     }
 
+    const sponsor = await fetchSponsorByCode(member.sponsorCode)
+
     await db.deceasedMember.create({
       data: {
-        ...validatedFields,
+        clerkId: member.clerkId,
+        contributionStatus: validatedFields.contributionStatus,
+        countryOfBirth: member.countryOfBirth,
+        dateOfBirth: member.dateOfBirth,
+        dateOfDeath: validatedFields.dateOfDeath,
+        delegateRecommendation: member.delegateRecommendation,
+        firstName: member.firstName,
+        lastAndMiddleNames: member.lastAndMiddleNames,
+        memberMatriculationNumber: member.memberMatriculationNumber,
+        memberStatus: member.memberStatus,
+        nameOfBeneficiary: member.nameOfBeneficiary,
+        originalMemberCreatedAt: member.createdAt,
+        originalMemberId: member.id,
+        placeOfDeath: validatedFields.placeOfDeath,
         registrationDate: formatRegistrationDate(member.createdAt),
-        clerkId: user.id,
-        memberStatus: member.memberStatus
+        sponsorCode: member.sponsorCode
       }
     })
     await db.member.delete({
       where: {
-        id: memberId
+        id: member.id
       }
     })
 
-    await addDeceasedMemberContributionUsage(validatedFields.sponsorCode)
+    await addDeceasedMemberContributionUsage(member.sponsorCode)
 
     await sendDeathAnnouncementConfirmationEmail({
       sponsorEmail: sponsor.sponsorEmail,
       sponsorFirstName: sponsor.sponsorFirstName,
-      lovedOneFirstName: validatedFields.firstName,
-      lovedOneLastAndMiddleNames: validatedFields.lastAndMiddleNames,
+      lovedOneFirstName: member.firstName,
+      lovedOneLastAndMiddleNames: member.lastAndMiddleNames,
       dateOfDeath: validatedFields.dateOfDeath,
       placeOfDeath: validatedFields.placeOfDeath,
-      sponsorCode: validatedFields.sponsorCode,
-      memberMatriculationNumber: validatedFields.memberMatriculationNumber,
+      sponsorCode: member.sponsorCode,
+      memberMatriculationNumber: member.memberMatriculationNumber,
       contributionStatus: validatedFields.contributionStatus
     })
     revalidateMemberPaymentViews()
@@ -1781,7 +1794,7 @@ export const createDeceasedMemberActionAdmin = async (
   provState: any,
   formData: FormData
 ): Promise<{ message: string }> => {
-  const user = await getAuthUser()
+  await getAuthUser()
 
   try {
     const memberId = formData.get('id') as string
@@ -1794,37 +1807,49 @@ export const createDeceasedMemberActionAdmin = async (
       }
     })
 
-    const sponsor = await fetchSponsorByCode(validatedFields.sponsorCode)
-
     if (!member) {
       throw new Error('Loved one not found.')
     }
 
+    const sponsor = await fetchSponsorByCode(member.sponsorCode)
+
     await db.deceasedMember.create({
       data: {
-        ...validatedFields,
+        clerkId: member.clerkId,
+        contributionStatus: validatedFields.contributionStatus,
+        countryOfBirth: member.countryOfBirth,
+        dateOfBirth: member.dateOfBirth,
+        dateOfDeath: validatedFields.dateOfDeath,
+        delegateRecommendation: member.delegateRecommendation,
+        firstName: member.firstName,
+        lastAndMiddleNames: member.lastAndMiddleNames,
+        memberMatriculationNumber: member.memberMatriculationNumber,
+        memberStatus: member.memberStatus,
+        nameOfBeneficiary: member.nameOfBeneficiary,
+        originalMemberCreatedAt: member.createdAt,
+        originalMemberId: member.id,
+        placeOfDeath: validatedFields.placeOfDeath,
         registrationDate: formatRegistrationDate(member.createdAt),
-        clerkId: user.id,
-        memberStatus: member.memberStatus
+        sponsorCode: member.sponsorCode
       }
     })
     await db.member.delete({
       where: {
-        id: memberId
+        id: member.id
       }
     })
 
-    await addDeceasedMemberContributionUsage(validatedFields.sponsorCode)
+    await addDeceasedMemberContributionUsage(member.sponsorCode)
 
     await sendDeathAnnouncementConfirmationEmail({
       sponsorEmail: sponsor.sponsorEmail,
       sponsorFirstName: sponsor.sponsorFirstName,
-      lovedOneFirstName: validatedFields.firstName,
-      lovedOneLastAndMiddleNames: validatedFields.lastAndMiddleNames,
+      lovedOneFirstName: member.firstName,
+      lovedOneLastAndMiddleNames: member.lastAndMiddleNames,
       dateOfDeath: validatedFields.dateOfDeath,
       placeOfDeath: validatedFields.placeOfDeath,
-      sponsorCode: validatedFields.sponsorCode,
-      memberMatriculationNumber: validatedFields.memberMatriculationNumber,
+      sponsorCode: member.sponsorCode,
+      memberMatriculationNumber: member.memberMatriculationNumber,
       contributionStatus: validatedFields.contributionStatus
     })
     revalidateMemberPaymentViews()
@@ -1840,7 +1865,7 @@ export const fetchDeceasedMembersAction = async () => {
 
   const deceasedMember = await db.deceasedMember.findMany({
     where: {
-      // clerkId: user.id
+      clerkId: user.id
     },
     orderBy: { createdAt: 'desc' }
   })
@@ -1849,7 +1874,7 @@ export const fetchDeceasedMembersAction = async () => {
 }
 
 export const fetchDeceasedMembersActionAdmin = async () => {
-  const user = await getAuthUser()
+  await getAuthUser()
 
   const deceasedMember = await db.deceasedMember.findMany({
     where: {
@@ -1859,6 +1884,149 @@ export const fetchDeceasedMembersActionAdmin = async () => {
   })
 
   return deceasedMember
+}
+
+export const restoreDeceasedMemberAction = async (prevState: { deceasedMemberId: string }) => {
+  const user = await getAuthUser()
+  const { deceasedMemberId } = prevState
+
+  try {
+    const deceasedMember = await db.deceasedMember.findUnique({
+      where: {
+        id: deceasedMemberId
+      }
+    })
+
+    if (!deceasedMember) throw new Error('Death announcement not found.')
+
+    const isAdminUser = user.id === process.env.ADMIN_USER_ID
+
+    if (!isAdminUser && deceasedMember.clerkId !== user.id) {
+      throw new Error('You can only restore death announcements from your own account.')
+    }
+
+    if (!isWithinMemberRemovalRestoreWindow(deceasedMember.createdAt)) {
+      throw new Error(
+        'This death announcement can no longer be restored because the 48-hour reversal window has expired.'
+      )
+    }
+
+    if (blockedDeceasedRestoreStatuses.has(deceasedMember.contributionStatus)) {
+      throw new Error(
+        'This death announcement can no longer be restored because the contribution case is already underway.'
+      )
+    }
+
+    const {
+      dateOfBirth,
+      delegateRecommendation,
+      memberStatus: restoredMemberStatus,
+      originalMemberCreatedAt
+    } = deceasedMember
+
+    if (!dateOfBirth || !delegateRecommendation || !restoredMemberStatus || !originalMemberCreatedAt) {
+      throw new Error('This death announcement is missing the original details needed for restoration.')
+    }
+
+    await db.$transaction(async tx => {
+      await tx.member.create({
+        data: {
+          ...(deceasedMember.originalMemberId ? { id: deceasedMember.originalMemberId } : {}),
+          clerkId: deceasedMember.clerkId,
+          countryOfBirth: deceasedMember.countryOfBirth,
+          dateOfBirth,
+          delegateRecommendation,
+          firstName: deceasedMember.firstName,
+          lastAndMiddleNames: deceasedMember.lastAndMiddleNames,
+          memberMatriculationNumber: deceasedMember.memberMatriculationNumber,
+          memberStatus: restoredMemberStatus,
+          nameOfBeneficiary: deceasedMember.nameOfBeneficiary,
+          sponsorCode: deceasedMember.sponsorCode,
+          createdAt: originalMemberCreatedAt
+        }
+      })
+
+      await tx.deceasedMember.delete({
+        where: {
+          id: deceasedMember.id
+        }
+      })
+
+      const contributionUsage = await tx.sponsorContributionUsage.findUnique({
+        select: {
+          amountUsed: true
+        },
+        where: {
+          sponsorCode: deceasedMember.sponsorCode
+        }
+      })
+
+      if (contributionUsage) {
+        if (Number(contributionUsage.amountUsed ?? 0) <= contributionCreditPerVestedMember) {
+          await tx.sponsorContributionUsage.delete({
+            where: {
+              sponsorCode: deceasedMember.sponsorCode
+            }
+          })
+        } else {
+          await tx.sponsorContributionUsage.update({
+            data: {
+              amountUsed: {
+                decrement: contributionCreditPerVestedMember
+              }
+            },
+            where: {
+              sponsorCode: deceasedMember.sponsorCode
+            }
+          })
+        }
+      }
+
+      if (restoredMemberStatus === memberStatus.Pending) {
+        await tx.sponsorRegistrationUsage.upsert({
+          create: {
+            amountUsed: registrationFeePerEligibleMember,
+            memberMatriculationNumber: deceasedMember.memberMatriculationNumber,
+            sponsorCode: deceasedMember.sponsorCode
+          },
+          update: {
+            amountUsed: registrationFeePerEligibleMember,
+            sponsorCode: deceasedMember.sponsorCode
+          },
+          where: {
+            memberMatriculationNumber: deceasedMember.memberMatriculationNumber
+          }
+        })
+      }
+
+      if (restoredMemberStatus === memberStatus.Vested) {
+        await tx.sponsorContributionCredit.upsert({
+          create: {
+            amountCredited: contributionCreditPerVestedMember,
+            memberMatriculationNumber: deceasedMember.memberMatriculationNumber,
+            sponsorCode: deceasedMember.sponsorCode
+          },
+          update: {
+            amountCredited: contributionCreditPerVestedMember,
+            sponsorCode: deceasedMember.sponsorCode
+          },
+          where: {
+            memberMatriculationNumber: deceasedMember.memberMatriculationNumber
+          }
+        })
+      }
+    })
+
+    revalidateMemberPaymentViews()
+
+    return { message: 'Death announcement restored successfully' }
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      return { message: 'This loved one already exists in All Members and cannot be restored again.' }
+    }
+
+    return renderError(error)
+  }
 }
 
 export const deleteRemovedMemberAction = async (prevState: { removedMemberId: string }) => {

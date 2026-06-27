@@ -63,8 +63,6 @@ import {
 
 import Link from 'next/link'
 
-import { id } from 'zod/v4/locales'
-
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 
@@ -93,6 +91,7 @@ import { cn } from '@/lib/utils'
 import { type DeceasedMemberType } from '@/utils/types'
 import { deleteDeceasedMemberAction } from '@/utils/actions'
 import FormContainer from '@/components/forms/FormContainer'
+import RestoreDeceasedMemberButton from '@/components/global/RestoreDeceasedMemberButton'
 
 declare module '@tanstack/react-table' {
   interface ColumnMeta<TData extends RowData, TValue> {
@@ -230,12 +229,7 @@ const columns: ColumnDef<DeceasedMemberType>[] = [
   {
     header: 'Actions',
     accessorKey: 'id',
-    cell: ({ row: { original } }) => {
-      // Destructuring 'id' directly from the row data
-      const { id } = original
-
-      return <RowActions deceasedMemberId={id} />
-    },
+    cell: ({ row: { original } }) => <RowActions deceasedMember={original} />,
     size: 20
   }
 ]
@@ -604,7 +598,7 @@ function Filter({ column }: { column: Column<any, unknown> }) {
 
   if (filterVariant === 'select') {
     return (
-      <div className='w-full min-w-0 space-y-2 rounded border border-purple-500 md:flex-1 md:max-w-none xl:max-w-2xs'>
+      <div className='w-full min-w-0 space-y-2 rounded border border-purple-500 md:max-w-none md:flex-1 xl:max-w-2xs'>
         {/* <Label htmlFor={`${id}-select`}>Select {columnHeader}</Label> */}
         <Select
           value={columnFilterValue?.toString() ?? 'all'}
@@ -629,7 +623,7 @@ function Filter({ column }: { column: Column<any, unknown> }) {
   }
 
   return (
-    <div className='w-full min-w-0 rounded border border-purple-500 md:flex-1 md:max-w-none xl:max-w-2xs'>
+    <div className='w-full min-w-0 rounded border border-purple-500 md:max-w-none md:flex-1 xl:max-w-2xs'>
       <Label htmlFor={`${id}-input`} className='sr-only'>
         {columnHeader}
       </Label>
@@ -650,44 +644,45 @@ function Filter({ column }: { column: Column<any, unknown> }) {
   )
 }
 
-function RowActions({ deceasedMemberId }: { deceasedMemberId: string }) {
-  const deleteDeceasedMember = deleteDeceasedMemberAction.bind(null, { deceasedMemberId })
+function RowActions({ deceasedMember }: { deceasedMember: DeceasedMemberType }) {
+  const deleteDeceasedMember = deleteDeceasedMemberAction.bind(null, { deceasedMemberId: deceasedMember.id })
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <div className='flex'>
-          <Button size='icon' variant='ghost' className='rounded-full p-2' aria-label='Edit item'>
-            <Ellipsis className='size-6' aria-hidden='true' />
-          </Button>
-        </div>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align='start' className='rounded border border-purple-500'>
-        <DropdownMenuGroup>
-          <DropdownMenuItem>
-            <Link href={`/admin-deceased/${deceasedMemberId}/edit`}>
-              <span className='flex justify-center gap-3 pl-4 text-blue-500'>
-                <Pencil className='text-blue-500' />
-                Edit Case Status
-              </span>
-            </Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem>
-            <FormContainer action={deleteDeceasedMember}>
-              <Button
-                size='default'
-                variant='ghost'
-                className='text-destructive flex justify-center gap-3 rounded-full hover:bg-transparent'
-
-                // aria-label='Edit '
-              >
-                <Trash2 className='text-destructive size-4' aria-hidden='true' />
-                <p>remove deceased member</p>
-              </Button>
-            </FormContainer>
-          </DropdownMenuItem>
-        </DropdownMenuGroup>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <div className='flex items-center gap-2'>
+      <RestoreDeceasedMemberButton deceasedMember={deceasedMember} />
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <div className='flex'>
+            <Button size='icon' variant='ghost' className='rounded-full p-2' aria-label='Edit item'>
+              <Ellipsis className='size-6' aria-hidden='true' />
+            </Button>
+          </div>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align='start' className='rounded border border-purple-500'>
+          <DropdownMenuGroup>
+            <DropdownMenuItem>
+              <Link href={`/admin-deceased/${deceasedMember.id}/edit`}>
+                <span className='flex justify-center gap-3 pl-4 text-blue-500'>
+                  <Pencil className='text-blue-500' />
+                  Edit Case Status
+                </span>
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <FormContainer action={deleteDeceasedMember}>
+                <Button
+                  size='default'
+                  variant='ghost'
+                  className='text-destructive flex justify-center gap-3 rounded-full hover:bg-transparent'
+                >
+                  <Trash2 className='text-destructive size-4' aria-hidden='true' />
+                  <p>remove deceased member</p>
+                </Button>
+              </FormContainer>
+            </DropdownMenuItem>
+          </DropdownMenuGroup>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
   )
 }

@@ -65,21 +65,25 @@ model RemovedMember {
 }
 
 model DeceasedMember {
-  id                        String   @id @default(uuid())
+  id                        String    @id @default(uuid())
+  originalMemberId          String?
   clerkId                   String
   firstName                 String
   lastAndMiddleNames        String
+  dateOfBirth               String?
   countryOfBirth            String
   memberMatriculationNumber String
   registrationDate          String
   nameOfBeneficiary         String
   sponsorCode               String
+  delegateRecommendation    String?
   memberStatus              String?
   dateOfDeath               String
   placeOfDeath              String
   contributionStatus        String
-  createdAt                 DateTime @default(now())
-  updatedAt                 DateTime @updatedAt
+  originalMemberCreatedAt   DateTime?
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
 
   @@index([sponsorCode, memberStatus])
 }

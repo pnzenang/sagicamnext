@@ -86,18 +86,22 @@ export enum reasonForLeaving {
 
 export type DeceasedMemberType = {
   id: string
+  originalMemberId?: string | null
   clerkId: string
   firstName: string
   lastAndMiddleNames: string
   contributionStatus: string
   registrationDate: string
+  dateOfBirth?: string | null
   countryOfBirth: string
   memberMatriculationNumber: string
   nameOfBeneficiary?: string
+  delegateRecommendation?: string | null
   memberStatus?: string | null
   sponsorCode: string
   dateOfDeath: string
   placeOfDeath: string
+  originalMemberCreatedAt?: Date | null
   createdAt: Date
   updatedAt: Date
 }
