@@ -1,7 +1,7 @@
 import { ArrowLeftRight, Inbox } from 'lucide-react'
 
 import AutoRefreshAt from '@/components/dashboard/AutoRefreshAt'
-import MemberTransferRequestCard from '@/components/dashboard/MemberTransferRequestCard'
+import MemberTransferRequestList from '@/components/dashboard/MemberTransferRequestList'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { fetchMemberTransferPageAction } from '@/utils/actions'
@@ -75,26 +75,16 @@ const MemberTransferPage = async () => {
           <ArrowLeftRight className='text-primary size-5' />
           <h2 className='text-lg font-extrabold'>Transfer requests</h2>
         </div>
-        {requests.length === 0 ? (
-          <Card className='rounded-lg'>
-            <CardContent className='py-8 text-center'>
-              <Inbox className='text-muted-foreground mx-auto mb-3 size-8' />
-              <p className='font-semibold'>No member transfer requests found.</p>
-              <p className='text-muted-foreground mt-1 text-sm'>Submitted and incoming requests will appear here.</p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className='grid gap-4 xl:grid-cols-2 2xl:grid-cols-3'>
-            {requests.map(request => (
-              <MemberTransferRequestCard
-                key={request.id}
-                currentUserClerkId={profile.clerkId}
-                isAdminUser={false}
-                request={request}
-              />
-            ))}
-          </div>
-        )}
+        <MemberTransferRequestList
+          currentUserClerkId={profile.clerkId}
+          emptyDescription='Submitted and incoming requests will appear here.'
+          emptyIcon='inbox'
+          emptyTitle='No member transfer requests found.'
+          isAdminUser={false}
+          requests={requests}
+          searchPlaceholder='Search name, matriculation, sponsor code, or status'
+          storageKey='sagicam:member-transfer:request-search'
+        />
       </div>
     </section>
   )

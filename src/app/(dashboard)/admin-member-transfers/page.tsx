@@ -1,7 +1,7 @@
 import { ArrowLeftRight, ShieldCheck } from 'lucide-react'
 
 import AutoRefreshAt from '@/components/dashboard/AutoRefreshAt'
-import MemberTransferRequestCard from '@/components/dashboard/MemberTransferRequestCard'
+import MemberTransferRequestList from '@/components/dashboard/MemberTransferRequestList'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { fetchAdminMemberTransferPageAction } from '@/utils/actions'
@@ -50,21 +50,15 @@ const AdminMemberTransfersPage = async () => {
           <ArrowLeftRight className='text-primary size-5' />
           <h2 className='text-lg font-extrabold'>All member transfer requests</h2>
         </div>
-        {requests.length === 0 ? (
-          <Card className='rounded-lg'>
-            <CardContent className='py-8 text-center'>
-              <ArrowLeftRight className='text-muted-foreground mx-auto mb-3 size-8' />
-              <p className='font-semibold'>No member transfer requests found.</p>
-              <p className='text-muted-foreground mt-1 text-sm'>Sponsor-approved transfers will appear here.</p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className='grid gap-4 xl:grid-cols-2 2xl:grid-cols-3'>
-            {requests.map(request => (
-              <MemberTransferRequestCard key={request.id} isAdminUser request={request} />
-            ))}
-          </div>
-        )}
+        <MemberTransferRequestList
+          emptyDescription='Sponsor-approved transfers will appear here.'
+          emptyIcon='transfer'
+          emptyTitle='No member transfer requests found.'
+          isAdminUser
+          requests={requests}
+          searchPlaceholder='Search name, matriculation, sponsor code, or status'
+          storageKey='sagicam:admin-member-transfers:request-search'
+        />
       </div>
     </section>
   )

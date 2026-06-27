@@ -35,6 +35,8 @@ const getMemberNameSearchValue = (member: MemberTransferMemberOption) =>
 const getSponsorLabel = (sponsor: MemberTransferSponsorOption) =>
   `${sponsor.sponsorCode} - ${sponsor.sponsorFirstName} ${sponsor.sponsorLastAndMiddleName}`.trim()
 
+const getSponsorSearchValue = (sponsor: MemberTransferSponsorOption) => getSponsorLabel(sponsor).toLowerCase()
+
 const MemberTransferRequestForm = ({
   members,
   sponsors
@@ -44,10 +46,17 @@ const MemberTransferRequestForm = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedMemberId, setSelectedMemberId] = useState('')
+  const [sponsorSearchQuery, setSponsorSearchQuery] = useState('')
+  const [selectedSponsorCode, setSelectedSponsorCode] = useState('')
 
   const selectedMember = useMemo(
     () => members.find(member => member.id === selectedMemberId) ?? null,
     [members, selectedMemberId]
+  )
+
+  const selectedSponsor = useMemo(
+    () => sponsors.find(sponsor => sponsor.sponsorCode === selectedSponsorCode) ?? null,
+    [selectedSponsorCode, sponsors]
   )
 
   const filteredMembers = useMemo(() => {
@@ -57,6 +66,14 @@ const MemberTransferRequestForm = ({
 
     return members.filter(member => getMemberNameSearchValue(member).includes(normalizedSearch))
   }, [members, searchQuery])
+
+  const filteredSponsors = useMemo(() => {
+    const normalizedSearch = sponsorSearchQuery.trim().toLowerCase()
+
+    if (!normalizedSearch) return sponsors
+
+    return sponsors.filter(sponsor => getSponsorSearchValue(sponsor).includes(normalizedSearch))
+  }, [sponsorSearchQuery, sponsors])
 
   const displayedMembers = filteredMembers.slice(0, maxVisibleMembers)
   const hiddenMatchCount = filteredMembers.length - displayedMembers.length
@@ -69,6 +86,17 @@ const MemberTransferRequestForm = ({
 
     if (!selectedMemberStillMatches) {
       setSelectedMemberId('')
+    }
+  }
+
+  const handleSponsorSearchChange = (nextSearchQuery: string) => {
+    setSponsorSearchQuery(nextSearchQuery)
+
+    const selectedSponsorStillMatches =
+      selectedSponsor && getSponsorSearchValue(selectedSponsor).includes(nextSearchQuery.trim().toLowerCase())
+
+    if (!selectedSponsorStillMatches) {
+      setSelectedSponsorCode('')
     }
   }
 
@@ -170,23 +198,42 @@ const MemberTransferRequestForm = ({
           </div>
 
           <div className='grid gap-1.5'>
+            <Label htmlFor='receiving-sponsor-search'>Search receiving sponsors</Label>
+            <div className='relative'>
+              <Search className='text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2' />
+              <Input
+                id='receiving-sponsor-search'
+                type='search'
+                value={sponsorSearchQuery}
+                onChange={event => handleSponsorSearchChange(event.target.value)}
+                placeholder='Search sponsor name or code'
+                className='pl-9'
+              />
+            </div>
+          </div>
+
+          <div className='grid gap-1.5'>
             <Label htmlFor='receiving-sponsor-code'>Receiving sponsor</Label>
             <select
               id='receiving-sponsor-code'
               name='receivingSponsorCode'
               required
+              value={selectedSponsorCode}
+              onChange={event => setSelectedSponsorCode(event.target.value)}
               className='border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring h-10 w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50'
-              defaultValue=''
             >
               <option value='' disabled>
-                Select receiving sponsor
+                {filteredSponsors.length === 0 ? 'No matching sponsors' : 'Select receiving sponsor'}
               </option>
-              {sponsors.map(sponsor => (
+              {filteredSponsors.map(sponsor => (
                 <option key={sponsor.sponsorCode} value={sponsor.sponsorCode}>
                   {getSponsorLabel(sponsor)}
                 </option>
               ))}
             </select>
+            <p className='text-muted-foreground text-xs'>
+              {filteredSponsors.length} sponsor{filteredSponsors.length === 1 ? '' : 's'} found.
+            </p>
           </div>
 
           <SubmitButton text='Send transfer request' className='h-9 w-full text-sm normal-case sm:w-fit' />
