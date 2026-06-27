@@ -158,11 +158,11 @@ const MemberTransferRequestForm = ({
               </p>
             </div>
             <div className='min-w-0'>
-              <p className='text-muted-foreground text-xs font-semibold'>Present sponsor code</p>
+              <p className='text-muted-foreground text-xs font-semibold'>Current sponsor code</p>
               <p className='mt-1 font-extrabold break-words'>{selectedMember ? selectedMember.sponsorCode : 'N/A'}</p>
             </div>
             <div className='min-w-0'>
-              <p className='text-muted-foreground text-xs font-semibold'>Receiving sponsor code</p>
+              <p className='text-muted-foreground text-xs font-semibold'>Requesting sponsor code</p>
               <p className='mt-1 font-extrabold break-words'>{receivingSponsorCode}</p>
             </div>
           </div>

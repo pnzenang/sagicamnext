@@ -231,6 +231,8 @@ const MemberTransferRequestCard = ({
   request: MemberTransferRequestCardData
 }) => {
   const memberName = getTransferRequestMemberName(request)
+  const isRequestingSponsor = currentUserClerkId === request.receivingClerkId
+  const showRequestingSponsorCode = isAdminUser || (!!currentUserClerkId && !isRequestingSponsor)
 
   return (
     <div className='bg-muted/20 grid min-w-0 gap-4 rounded-md border p-4'>
@@ -243,6 +245,7 @@ const MemberTransferRequestCard = ({
           <div className='text-muted-foreground mt-1 grid gap-1 text-xs'>
             <span>Matriculation: {request.memberMatriculationNumber}</span>
             <span>Submitted: {formatTransferRequestDateTime(request.createdAt)}</span>
+            {showRequestingSponsorCode ? <span>Requested by sponsor code: {request.receivingSponsorCode}</span> : null}
           </div>
         </div>
         <RequestStatusBadge status={request.status} />
@@ -250,11 +253,11 @@ const MemberTransferRequestCard = ({
 
       <div className='grid gap-2 text-sm sm:grid-cols-2'>
         <div className='bg-background/70 rounded-md border p-3'>
-          <p className='text-muted-foreground text-xs font-semibold'>Present sponsor code</p>
+          <p className='text-muted-foreground text-xs font-semibold'>Current sponsor code</p>
           <p className='mt-1 font-extrabold break-words'>{request.initiatingSponsorCode}</p>
         </div>
         <div className='bg-background/70 rounded-md border p-3'>
-          <p className='text-muted-foreground text-xs font-semibold'>Receiving sponsor code</p>
+          <p className='text-muted-foreground text-xs font-semibold'>Requesting sponsor code</p>
           <p className='mt-1 font-extrabold break-words'>{request.receivingSponsorCode}</p>
         </div>
       </div>
