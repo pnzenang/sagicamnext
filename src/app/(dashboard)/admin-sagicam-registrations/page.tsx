@@ -3,7 +3,6 @@ import { BellRing } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { resetRegistrationPaymentAlertAction } from '@/utils/actions'
 import {
-  fetchSponsorRegistrationSummary,
   registrationBalanceAdjustmentType,
   registrationFeePerEligibleMember
 } from '@/utils/sagicam-registration-summary'
@@ -98,9 +97,13 @@ const AdminSagicamRegistrations = async () => {
     }
   })
 
-  const sponsorRegistrationUsages = await db.sponsorRegistrationUsage.findMany({
-    select: {
-      sponsorCode: true
+  const sponsorRegistrationUsages = await db.sponsorRegistrationUsage.groupBy({
+    _sum: {
+      amountUsed: true
+    },
+    by: ['sponsorCode'],
+    orderBy: {
+      sponsorCode: 'asc'
     }
   })
 
@@ -248,15 +251,22 @@ const AdminSagicamRegistrations = async () => {
 
   const sponsorsByCode = new Map(sponsors.map(sponsor => [sponsor.sponsorCode, sponsor]))
 
-  const registrationSummaries = await Promise.all(
-    sponsorCodes.map(sponsorCode => fetchSponsorRegistrationSummary(sponsorCode, { noStore: true }))
+  const registrationPaymentByCode = new Map(sponsorRegistrationPayments.map(payment => [payment.sponsorCode, payment]))
+
+  const registrationAmountUsedByCode = new Map(
+    sponsorRegistrationUsages.map(usage => [usage.sponsorCode, decimalToNumber(usage._sum.amountUsed)])
   )
 
-  const registrationSummaryByCode = new Map(registrationSummaries.map(summary => [summary.sponsorCode, summary]))
+  const registrationBalanceAdjustmentByCode = new Map(
+    sponsorBalanceAdjustments.map(adjustment => [adjustment.sponsorCode, decimalToNumber(adjustment.amount)])
+  )
 
   const rows: AdminSagicamRegistrationsRow[] = sponsorCodes.map(sponsorCode => {
     const sponsor = sponsorsByCode.get(sponsorCode)
-    const registrationSummary = registrationSummaryByCode.get(sponsorCode)
+    const registrationPayment = registrationPaymentByCode.get(sponsorCode)
+    const registrationAmountUsed = registrationAmountUsedByCode.get(sponsorCode) ?? 0
+    const registrationReceived = decimalToNumber(registrationPayment?.amountVerified)
+    const registrationBalanceAdjustment = registrationBalanceAdjustmentByCode.get(sponsorCode) ?? 0
 
     const statusCounts = statusCountsByCode.get(sponsorCode) ?? {
       awaitingPublication: 0,
@@ -267,11 +277,13 @@ const AdminSagicamRegistrations = async () => {
     return {
       awaitingPublication: statusCounts.awaitingPublication,
       pendingMembers: statusCounts.pendingMembers,
-      registrationAmountSent: registrationSummary?.amountReceived ?? 0,
-      registrationAmountUsed: registrationSummary?.amountUsed ?? 0,
-      registrationBalance: registrationSummary?.balance ?? 0,
+      registrationAmountSent: decimalToNumber(registrationPayment?.amountSent),
+      registrationAmountUsed,
+      registrationBalance: Number(
+        (registrationReceived + registrationBalanceAdjustment - registrationAmountUsed).toFixed(2)
+      ),
       registrationFeeOwed: statusCounts.pendingMembers * registrationFeePerEligibleMember,
-      registrationReceived: registrationSummary?.amountVerified ?? 0,
+      registrationReceived,
       sponsorCode,
       sponsorEmail: sponsor?.sponsorEmail ?? '',
       vestedMembers: statusCounts.vestedMembers
