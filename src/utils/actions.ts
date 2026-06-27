@@ -1681,9 +1681,13 @@ export const submitNameChangeRequestAction = async (
   const user = await getAuthUser()
 
   try {
-    const memberId = getRequiredFormValue(formData, 'memberId')
+    const memberId = String(formData.get('memberId') ?? '').trim()
     const requestedFirstName = getUppercaseFormName(formData, 'requestedFirstName')
     const requestedLastAndMiddleNames = getUppercaseFormName(formData, 'requestedLastAndMiddleNames')
+
+    if (!memberId) {
+      throw new Error('Select a loved one before submitting the name change.')
+    }
 
     const member = await db.member.findUnique({
       select: {

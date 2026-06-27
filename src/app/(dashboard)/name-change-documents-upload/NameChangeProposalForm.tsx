@@ -9,6 +9,7 @@ import { SubmitButton } from '@/components/forms/Buttons'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { cn } from '@/lib/utils'
 import { submitNameChangeRequestAction } from '@/utils/actions'
 
 type NameChangeMemberOption = {
@@ -19,8 +20,7 @@ type NameChangeMemberOption = {
   sponsorCode: string
 }
 
-const selectClassName =
-  'border-input bg-background ring-offset-background focus-visible:ring-ring h-9 rounded-md border px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-offset-2'
+const maxVisibleMembers = 10
 
 const getMemberSearchValue = (member: NameChangeMemberOption) =>
   `${member.firstName} ${member.lastAndMiddleNames} ${member.memberMatriculationNumber} ${member.sponsorCode}`.toLowerCase()
@@ -41,6 +41,9 @@ const SponsorNameChangeProposalForm = ({ members }: { members: NameChangeMemberO
 
     return members.filter(member => getMemberSearchValue(member).includes(normalizedSearch))
   }, [members, searchQuery])
+
+  const displayedMembers = filteredMembers.slice(0, maxVisibleMembers)
+  const hiddenMatchCount = filteredMembers.length - displayedMembers.length
 
   const handleSearchChange = (nextSearchQuery: string) => {
     setSearchQuery(nextSearchQuery)
@@ -68,6 +71,7 @@ const SponsorNameChangeProposalForm = ({ members }: { members: NameChangeMemberO
       </CardHeader>
       <CardContent className='px-4 py-4'>
         <FormContainer action={submitNameChangeRequestAction} className='grid gap-3' refreshOnMessage>
+          <input type='hidden' name='memberId' value={selectedMemberId} />
           <div className='grid gap-1.5'>
             <Label htmlFor='name-change-search'>Search loved ones</Label>
             <div className='relative'>
@@ -82,25 +86,49 @@ const SponsorNameChangeProposalForm = ({ members }: { members: NameChangeMemberO
               />
             </div>
           </div>
-          <div className='grid gap-1.5'>
-            <Label htmlFor='name-change-member'>Loved one</Label>
-            <select
-              id='name-change-member'
-              name='memberId'
-              required
-              className={selectClassName}
-              value={selectedMemberId}
-              onChange={event => setSelectedMemberId(event.target.value)}
-            >
-              <option value='' disabled>
-                {filteredMembers.length === 0 ? 'No loved ones match your search' : 'Select a loved one'}
-              </option>
-              {filteredMembers.map(member => (
-                <option key={member.id} value={member.id}>
-                  {member.firstName} {member.lastAndMiddleNames} - {member.memberMatriculationNumber}
-                </option>
-              ))}
-            </select>
+          <div className='grid gap-2'>
+            <div className='flex items-center justify-between gap-2'>
+              <p className='text-sm font-semibold'>Select loved one</p>
+              <p className='text-muted-foreground text-xs'>
+                {filteredMembers.length} match{filteredMembers.length === 1 ? '' : 'es'}
+              </p>
+            </div>
+            {filteredMembers.length === 0 ? (
+              <p className='text-muted-foreground rounded-md border bg-muted/30 p-3 text-sm'>
+                No loved ones match your search.
+              </p>
+            ) : (
+              <div className='grid max-h-72 gap-2 overflow-y-auto pr-1'>
+                {displayedMembers.map(member => {
+                  const isSelected = selectedMemberId === member.id
+
+                  return (
+                    <button
+                      key={member.id}
+                      type='button'
+                      aria-pressed={isSelected}
+                      onClick={() => setSelectedMemberId(member.id)}
+                      className={cn(
+                        'grid min-w-0 gap-1 rounded-md border bg-background/70 p-3 text-left text-sm transition-colors hover:border-primary/60 hover:bg-muted/40',
+                        isSelected && 'border-primary bg-primary/10'
+                      )}
+                    >
+                      <span className='font-extrabold break-words'>
+                        {member.firstName} {member.lastAndMiddleNames}
+                      </span>
+                      <span className='text-muted-foreground text-xs'>
+                        Matriculation: {member.memberMatriculationNumber} · Sponsor: {member.sponsorCode}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+            {hiddenMatchCount > 0 ? (
+              <p className='text-muted-foreground text-xs'>
+                Showing first {maxVisibleMembers} matches. Keep typing to narrow the search.
+              </p>
+            ) : null}
           </div>
           <div className='grid gap-2 rounded-md border bg-muted/30 p-3 sm:grid-cols-2'>
             <div className='min-w-0'>
