@@ -45,19 +45,8 @@ const RestoreDeceasedMemberButton = ({ deceasedMember }: { deceasedMember: Decea
   const memberName = `${deceasedMember.firstName} ${deceasedMember.lastAndMiddleNames}`.trim()
   const hasDetails = hasRestoreDetails(deceasedMember)
   const timeRemaining = getRestoreTimeRemaining(deceasedMember, now)
-  const isExpired = hasDetails && timeRemaining <= 0
   const isCaseLocked = lockedContributionStatuses.has(deceasedMember.contributionStatus)
   const canRestore = hasDetails && timeRemaining > 0 && !isCaseLocked
-
-  const buttonClass = canRestore
-    ? 'border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800'
-    : 'border-red-200 text-red-700 opacity-100 hover:bg-red-50 hover:text-red-800 disabled:opacity-80'
-
-  const tooltipClass = canRestore
-    ? 'border border-emerald-200 bg-emerald-50 text-emerald-800 shadow-sm [&>svg]:bg-emerald-50 [&>svg]:fill-emerald-50'
-    : isExpired || isCaseLocked
-      ? 'border border-red-200 bg-red-50 text-red-700 shadow-sm [&>svg]:bg-red-50 [&>svg]:fill-red-50'
-      : undefined
 
   useEffect(() => {
     if (!isOpen) return
@@ -89,6 +78,8 @@ const RestoreDeceasedMemberButton = ({ deceasedMember }: { deceasedMember: Decea
     if (open) setNow(Date.now())
   }
 
+  if (!canRestore) return null
+
   return (
     <TooltipProvider delayDuration={150}>
       <Tooltip open={isOpen} onOpenChange={handleOpenChange}>
@@ -99,8 +90,7 @@ const RestoreDeceasedMemberButton = ({ deceasedMember }: { deceasedMember: Decea
                 type='submit'
                 size='sm'
                 variant='outline'
-                disabled={!canRestore}
-                className={buttonClass}
+                className='border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800'
                 aria-label='Restore death announcement'
               >
                 <UserCheck className='size-4' aria-hidden='true' />
@@ -110,28 +100,13 @@ const RestoreDeceasedMemberButton = ({ deceasedMember }: { deceasedMember: Decea
           </div>
         </TooltipTrigger>
         <TooltipContent
-          className={`max-w-64 px-1 py-1 text-center leading-5 ${tooltipClass ?? ''}`}
+          className='max-w-64 border border-emerald-200 bg-emerald-50 px-1 py-1 text-center leading-5 text-emerald-800 shadow-sm [&>svg]:bg-emerald-50 [&>svg]:fill-emerald-50'
           align='end'
           side='top'
           sideOffset={6}
         >
-          {canRestore && (
-            <>
-              <p>{memberName} can be restored within 48 hours of the death announcement.</p>
-              <p className='font-semibold'>Time remaining: {formatTimeRemaining(timeRemaining)}</p>
-            </>
-          )}
-          {isExpired && <p className='font-semibold'>{memberName} cannot be restored after 48 hours have elapsed.</p>}
-          {isCaseLocked && (
-            <p className='font-semibold'>
-              {memberName} cannot be restored because the contribution case is already underway.
-            </p>
-          )}
-          {!hasDetails && (
-            <p className='font-semibold'>
-              {memberName} cannot be restored because the original restoration details are missing.
-            </p>
-          )}
+          <p>{memberName} can be restored within 48 hours of the death announcement.</p>
+          <p className='font-semibold'>Time remaining: {formatTimeRemaining(timeRemaining)}</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>

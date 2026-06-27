@@ -270,6 +270,16 @@ const getAuthUser = async () => {
   return { id: userId }
 }
 
+const assertAdminUser = async () => {
+  const user = await getAuthUser()
+
+  if (user.id !== process.env.ADMIN_USER_ID) {
+    throw new Error('You are not authorized to access this admin page.')
+  }
+
+  return user
+}
+
 const renderError = (error: unknown): { message: string } => {
   console.log(error)
 
@@ -1794,7 +1804,7 @@ export const createDeceasedMemberActionAdmin = async (
   provState: any,
   formData: FormData
 ): Promise<{ message: string }> => {
-  await getAuthUser()
+  await assertAdminUser()
 
   try {
     const memberId = formData.get('id') as string
@@ -1874,7 +1884,7 @@ export const fetchDeceasedMembersAction = async () => {
 }
 
 export const fetchDeceasedMembersActionAdmin = async () => {
-  await getAuthUser()
+  await assertAdminUser()
 
   const deceasedMember = await db.deceasedMember.findMany({
     where: {
@@ -2051,7 +2061,7 @@ export const deleteRemovedMemberAction = async (prevState: { removedMemberId: st
 export const deleteDeceasedMemberAction = async (prevState: { deceasedMemberId: string }) => {
   const { deceasedMemberId } = prevState
 
-  // await getAuthUser()
+  await assertAdminUser()
 
   try {
     await db.deceasedMember.delete({
@@ -2068,7 +2078,7 @@ export const deleteDeceasedMemberAction = async (prevState: { deceasedMemberId: 
 }
 
 export const fetchSingleDeceasedMemberDetails = async (deceasedMemberId: string) => {
-  await getAuthUser()
+  await assertAdminUser()
 
   const deceasedMember = await db.deceasedMember.findUnique({
     where: {
@@ -2084,6 +2094,8 @@ export const fetchSingleDeceasedMemberDetails = async (deceasedMemberId: string)
 }
 
 export const updateDeceasedMemberDetailsActionAdmin = async (prevState: any, formData: FormData) => {
+  await assertAdminUser()
+
   try {
     const deceasedMemberId = formData.get('id') as string
     const rawData = Object.fromEntries(formData)
