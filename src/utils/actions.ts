@@ -1767,29 +1767,53 @@ export const submitNameChangeRequestAction = async (
       : null
 
     try {
-      await db.nameChangeRequest.create({
-        data: {
-          id: requestId,
-          clerkId: member.clerkId,
-          cloudinaryDeliveryType: uploadedDocument?.deliveryType,
-          cloudinaryFormat: uploadedDocument?.format,
-          cloudinaryPublicId: uploadedDocument?.publicId,
-          cloudinaryResourceType: uploadedDocument?.resourceType,
-          cloudinaryVersion: uploadedDocument?.version,
-          currentFirstName: member.firstName,
-          currentLastAndMiddleNames: member.lastAndMiddleNames,
-          documentRequired,
-          fileName: safeFileName,
-          fileSize: hasFile ? file.size : null,
-          memberId: member.id,
-          mimeType: hasFile ? file.type || 'application/octet-stream' : null,
-          reason,
-          requestedFirstName,
-          requestedLastAndMiddleNames,
-          secureUrl: uploadedDocument?.secureUrl,
-          sponsorCode: member.sponsorCode
-        }
-      })
+      const requestData = {
+        id: requestId,
+        clerkId: member.clerkId,
+        cloudinaryDeliveryType: uploadedDocument?.deliveryType,
+        cloudinaryFormat: uploadedDocument?.format,
+        cloudinaryPublicId: uploadedDocument?.publicId,
+        cloudinaryResourceType: uploadedDocument?.resourceType,
+        cloudinaryVersion: uploadedDocument?.version,
+        currentFirstName: member.firstName,
+        currentLastAndMiddleNames: member.lastAndMiddleNames,
+        documentRequired,
+        fileName: safeFileName,
+        fileSize: hasFile ? file.size : null,
+        memberId: member.id,
+        mimeType: hasFile ? file.type || 'application/octet-stream' : null,
+        reason,
+        requestedFirstName,
+        requestedLastAndMiddleNames,
+        secureUrl: uploadedDocument?.secureUrl,
+        sponsorCode: member.sponsorCode
+      }
+
+      if (reason === 'typo_or_error') {
+        await db.$transaction([
+          db.member.update({
+            data: {
+              firstName: requestedFirstName,
+              lastAndMiddleNames: requestedLastAndMiddleNames
+            },
+            where: {
+              id: member.id
+            }
+          }),
+          db.nameChangeRequest.create({
+            data: {
+              ...requestData,
+              reviewedAt: new Date(),
+              reviewedBy: user.id,
+              status: 'approved'
+            }
+          })
+        ])
+      } else {
+        await db.nameChangeRequest.create({
+          data: requestData
+        })
+      }
     } catch (error) {
       if (uploadedDocument) {
         await deleteDeathDocumentationFromCloudinary(uploadedDocument)
@@ -1800,7 +1824,12 @@ export const submitNameChangeRequestAction = async (
 
     revalidateNameChangeDocumentationViews()
 
-    return { message: 'Name change request submitted successfully' }
+    return {
+      message:
+        reason === 'typo_or_error'
+          ? 'Loved one name corrected successfully'
+          : 'Name change request submitted successfully'
+    }
   } catch (error) {
     return renderError(error)
   }

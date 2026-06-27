@@ -213,6 +213,9 @@ const MemberNameChangeCard = ({ member }: { member: NameChangeMember }) => (
         </div>
         <div className='grid gap-1.5'>
           <Label htmlFor={`${member.id}-reason`}>Reason</Label>
+          <p className='text-muted-foreground text-xs'>
+            Typo corrections apply immediately. Legal document changes are submitted for admin review.
+          </p>
           <select
             id={`${member.id}-reason`}
             name='reason'
@@ -231,7 +234,7 @@ const MemberNameChangeCard = ({ member }: { member: NameChangeMember }) => (
           <p className='text-muted-foreground text-xs'>Required for legal document changes. PDF or image, up to 20 MB.</p>
           <Input id={`${member.id}-document`} name='documentFile' type='file' accept={documentAccept} />
         </div>
-        <SubmitButton text='Submit name change request' className='h-9 w-full text-sm normal-case' />
+        <SubmitButton text='Save name correction' className='h-9 w-full text-sm normal-case' />
       </FormContainer>
     </CardContent>
   </Card>
@@ -246,7 +249,7 @@ const NameChangeDocumentationPage = async () => {
         <div>
           <h1 className='text-2xl font-extrabold tracking-normal sm:text-3xl'>Name Change & Documentations</h1>
           <p className='text-muted-foreground mt-1 text-sm'>
-            Submit corrections and upload official name-change documentation when required.
+            Correct typos directly or submit legal name changes with official documentation for admin review.
           </p>
         </div>
         <Badge variant='outline' className='w-fit text-sm'>
