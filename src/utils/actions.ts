@@ -1643,20 +1643,21 @@ export const fetchNameChangeDocumentationPageAction = async () => {
   const user = await getAuthUser()
   const isAdminUser = user.id === process.env.ADMIN_USER_ID
 
-  const [members, requests] = await Promise.all([
-    db.member.findMany({
-      orderBy: [{ sponsorCode: 'asc' }, { lastAndMiddleNames: 'asc' }, { firstName: 'asc' }],
-      select: {
-        clerkId: true,
-        firstName: true,
-        id: true,
-        lastAndMiddleNames: true,
-        memberMatriculationNumber: true,
-        sponsorCode: true
-      },
-      where: isAdminUser ? {} : { clerkId: user.id }
-    }),
-    db.nameChangeRequest.findMany({
+  const members = await db.member.findMany({
+    orderBy: [{ sponsorCode: 'asc' }, { lastAndMiddleNames: 'asc' }, { firstName: 'asc' }],
+    select: {
+      clerkId: true,
+      firstName: true,
+      id: true,
+      lastAndMiddleNames: true,
+      memberMatriculationNumber: true,
+      sponsorCode: true
+    },
+    where: isAdminUser ? {} : { clerkId: user.id }
+  })
+
+  const requests = await db.nameChangeRequest
+    .findMany({
       include: {
         member: {
           select: {
@@ -1669,7 +1670,11 @@ export const fetchNameChangeDocumentationPageAction = async () => {
       orderBy: { createdAt: 'desc' },
       where: isAdminUser ? {} : { clerkId: user.id }
     })
-  ])
+    .catch(error => {
+      console.error('Unable to load name change requests', error)
+
+      return []
+    })
 
   return { isAdminUser, members, requests }
 }

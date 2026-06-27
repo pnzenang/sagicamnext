@@ -15,17 +15,27 @@ const getMenuItemWithNameChangeBadge = (item: MenuItem, pendingNameChangeRequest
   return item
 }
 
+const fetchPendingNameChangeRequestCount = async (isAdminUser: boolean) => {
+  if (!isAdminUser) return 0
+
+  try {
+    return await db.nameChangeRequest.count({
+      where: {
+        status: 'submitted'
+      }
+    })
+  } catch (error) {
+    console.error('Unable to load pending name change request count', error)
+
+    return 0
+  }
+}
+
 const SidebarGroupedMenuItems = async ({ data, groupLabel }: { data: MenuItem[]; groupLabel?: string }) => {
   const { userId } = await auth()
   const isAdminUser = userId === process.env.ADMIN_USER_ID
 
-  const pendingNameChangeRequestCount = isAdminUser
-    ? await db.nameChangeRequest.count({
-        where: {
-          status: 'submitted'
-        }
-      })
-    : 0
+  const pendingNameChangeRequestCount = await fetchPendingNameChangeRequestCount(isAdminUser)
 
   const menuItems = data.map(item => getMenuItemWithNameChangeBadge(item, pendingNameChangeRequestCount))
 
