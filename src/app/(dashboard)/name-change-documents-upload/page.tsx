@@ -5,7 +5,6 @@ import { SubmitButton } from '@/components/forms/Buttons'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -14,13 +13,11 @@ import {
   deleteNameChangeRequestAction,
   fetchNameChangeDocumentationPageAction,
   reviewNameChangeRequestAction,
-  submitNameChangeRequestAction
+  submitNameChangeRequestAction,
+  uploadNameChangeDocumentationAction
 } from '@/utils/actions'
 import {
-  nameChangeRequestReasonLabels,
-  nameChangeRequestReasons,
   nameChangeRequestStatusLabels,
-  type NameChangeRequestReason,
   type NameChangeRequestStatus
 } from '@/utils/types'
 
@@ -30,15 +27,15 @@ type NameChangeRequest = NameChangePageData['requests'][number]
 
 const documentAccept = '.pdf,.jpg,.jpeg,.png,.webp,.heic,.heif,application/pdf,image/*'
 
+const selectClassName =
+  'border-input bg-background ring-offset-background focus-visible:ring-ring h-9 rounded-md border px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-offset-2'
+
 const dateTimeFormatter = new Intl.DateTimeFormat('en-US', {
   dateStyle: 'medium',
   timeStyle: 'short'
 })
 
 const formatDateTime = (date: Date) => dateTimeFormatter.format(date)
-
-const getReasonLabel = (reason: string) =>
-  nameChangeRequestReasonLabels[reason as NameChangeRequestReason] ?? reason
 
 const getStatusLabel = (status: string) =>
   nameChangeRequestStatusLabels[status as NameChangeRequestStatus] ?? status
@@ -52,6 +49,10 @@ const getStatusClassName = (status: string) => {
     return 'border-red-200 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300'
   }
 
+  if (status === 'documentation_requested') {
+    return 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-300'
+  }
+
   return 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-300'
 }
 
@@ -59,6 +60,7 @@ const RequestStatusBadge = ({ status }: { status: string }) => (
   <Badge variant='outline' className={cn('shrink-0 capitalize', getStatusClassName(status))}>
     {status === 'approved' ? <CheckCircle2 /> : null}
     {status === 'rejected' ? <XCircle /> : null}
+    {status === 'documentation_requested' ? <FileText /> : null}
     {getStatusLabel(status)}
   </Badge>
 )
@@ -72,7 +74,7 @@ const AdminReviewControls = ({ request }: { request: NameChangeRequest }) => {
         <ShieldCheck className='size-3.5' />
         Admin review
       </div>
-      <div className='grid gap-2 sm:grid-cols-[auto_minmax(0,1fr)]'>
+      <div className='grid gap-2 lg:grid-cols-[auto_minmax(0,1fr)_minmax(0,1fr)]'>
         <FormContainer action={reviewNameChangeRequestAction} refreshOnMessage>
           <input type='hidden' name='requestId' value={request.id} />
           <input type='hidden' name='status' value='approved' />
@@ -81,22 +83,36 @@ const AdminReviewControls = ({ request }: { request: NameChangeRequest }) => {
             className='h-8 w-full bg-green-700 px-3 text-xs normal-case hover:bg-green-800 sm:w-auto'
           />
         </FormContainer>
+        <FormContainer action={reviewNameChangeRequestAction} className='grid gap-2' refreshOnMessage>
+          <input type='hidden' name='requestId' value={request.id} />
+          <input type='hidden' name='status' value='documentation_requested' />
+          <Textarea
+            name='rejectionReason'
+            placeholder='Documentation note for sponsor'
+            defaultValue={request.rejectionReason ?? ''}
+            className='min-h-16 text-xs'
+          />
+          <SubmitButton
+            text='Request documentation'
+            className='h-8 w-full bg-blue-700 px-3 text-xs normal-case hover:bg-blue-800'
+          />
+        </FormContainer>
         <FormContainer
           action={reviewNameChangeRequestAction}
-          className='grid gap-2 sm:grid-cols-[1fr_auto]'
+          className='grid gap-2'
           refreshOnMessage
         >
           <input type='hidden' name='requestId' value={request.id} />
           <input type='hidden' name='status' value='rejected' />
-          <Input
+          <Textarea
             name='rejectionReason'
             placeholder='Reason if rejected'
             defaultValue={request.rejectionReason ?? ''}
-            className='h-8 text-xs'
+            className='min-h-16 text-xs'
           />
           <SubmitButton
             text='Reject'
-            className='h-8 w-full bg-red-700 px-3 text-xs normal-case hover:bg-red-800 sm:w-auto'
+            className='h-8 w-full bg-red-700 px-3 text-xs normal-case hover:bg-red-800'
           />
         </FormContainer>
       </div>
@@ -104,9 +120,15 @@ const AdminReviewControls = ({ request }: { request: NameChangeRequest }) => {
   )
 }
 
+const getRequestNoteClassName = (status: string) =>
+  status === 'rejected'
+    ? 'border-red-200 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300'
+    : 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-300'
+
 const NameChangeRequestCard = ({ isAdminUser, request }: { isAdminUser: boolean; request: NameChangeRequest }) => {
   const deleteRequest = deleteNameChangeRequestAction.bind(null, { requestId: request.id })
   const hasDocument = Boolean(request.cloudinaryPublicId && request.fileName)
+  const canUploadDocumentation = !isAdminUser && request.status === 'documentation_requested'
 
   return (
     <div className='grid min-w-0 gap-4 rounded-md border bg-muted/20 p-4'>
@@ -143,11 +165,8 @@ const NameChangeRequestCard = ({ isAdminUser, request }: { isAdminUser: boolean;
       </div>
 
       <div className='grid gap-2 text-xs'>
-        <p>
-          <span className='text-muted-foreground font-semibold'>Reason:</span> {getReasonLabel(request.reason)}
-        </p>
         {request.rejectionReason ? (
-          <p className='rounded-md border border-red-200 bg-red-50 px-2 py-1.5 text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300'>
+          <p className={cn('rounded-md border px-2 py-1.5', getRequestNoteClassName(request.status))}>
             {request.rejectionReason}
           </p>
         ) : null}
@@ -162,7 +181,9 @@ const NameChangeRequestCard = ({ isAdminUser, request }: { isAdminUser: boolean;
             </a>
           </Button>
         ) : (
-          <Badge variant='secondary'>No document uploaded</Badge>
+          <Badge variant={request.documentRequired ? 'outline' : 'secondary'}>
+            {request.documentRequired ? 'Documentation requested' : 'No document uploaded'}
+          </Badge>
         )}
         {request.status !== 'approved' ? (
           <FormContainer action={deleteRequest} refreshOnMessage>
@@ -171,80 +192,67 @@ const NameChangeRequestCard = ({ isAdminUser, request }: { isAdminUser: boolean;
         ) : null}
       </div>
 
+      {canUploadDocumentation ? (
+        <FormContainer
+          action={uploadNameChangeDocumentationAction}
+          className='grid gap-2 rounded-md border bg-background/70 p-3'
+          encType='multipart/form-data'
+          refreshOnMessage
+        >
+          <input type='hidden' name='requestId' value={request.id} />
+          <div className='grid gap-1.5'>
+            <Label htmlFor={`${request.id}-document`}>Upload requested documentation</Label>
+            <p className='text-muted-foreground text-xs'>PDF or image, up to 20 MB.</p>
+            <Input id={`${request.id}-document`} name='documentFile' type='file' accept={documentAccept} required />
+          </div>
+          <SubmitButton text='Upload documentation' className='h-8 w-full text-xs normal-case sm:w-fit' />
+        </FormContainer>
+      ) : null}
+
       {isAdminUser ? <AdminReviewControls request={request} /> : null}
     </div>
   )
 }
 
-const MemberNameChangeCard = ({ member }: { member: NameChangeMember }) => (
+const SponsorNameChangeProposalForm = ({ members }: { members: NameChangeMember[] }) => (
   <Card className='rounded-lg py-0'>
     <CardHeader className='border-b px-4 py-4'>
       <div className='flex items-start gap-3'>
         <UserRound className='text-primary mt-1 size-5 shrink-0' />
         <div className='min-w-0'>
-          <CardTitle className='text-lg break-words'>
-            {member.firstName} {member.lastAndMiddleNames}
-          </CardTitle>
-          <p className='text-muted-foreground mt-1 text-xs'>Matriculation: {member.memberMatriculationNumber}</p>
+          <CardTitle className='text-lg break-words'>Propose a name change</CardTitle>
+          <p className='text-muted-foreground mt-1 text-xs'>
+            Choose the loved one, enter the corrected name, and submit it for admin review.
+          </p>
         </div>
       </div>
     </CardHeader>
     <CardContent className='px-4 py-4'>
-      <FormContainer
-        action={submitNameChangeRequestAction}
-        className='grid gap-3'
-        encType='multipart/form-data'
-        refreshOnMessage
-      >
-        <input type='hidden' name='memberId' value={member.id} />
-        <div className='grid gap-3 sm:grid-cols-2'>
-          <div className='grid gap-1.5'>
-            <Label htmlFor={`${member.id}-first-name`}>Corrected given names</Label>
-            <Input id={`${member.id}-first-name`} name='requestedFirstName' defaultValue={member.firstName} required />
-          </div>
-          <div className='grid gap-1.5'>
-            <Label htmlFor={`${member.id}-last-name`}>Corrected last and middle names</Label>
-            <Input
-              id={`${member.id}-last-name`}
-              name='requestedLastAndMiddleNames'
-              defaultValue={member.lastAndMiddleNames}
-              required
-            />
-          </div>
-        </div>
+      <FormContainer action={submitNameChangeRequestAction} className='grid gap-3' refreshOnMessage>
         <div className='grid gap-1.5'>
-          <Label htmlFor={`${member.id}-reason`}>Reason</Label>
-          <p className='text-muted-foreground text-xs'>
-            Typo corrections apply immediately. Legal document changes are submitted for admin review.
-          </p>
-          <select
-            id={`${member.id}-reason`}
-            name='reason'
-            defaultValue='typo_or_error'
-            className='border-input bg-background ring-offset-background focus-visible:ring-ring h-9 rounded-md border px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-offset-2'
-          >
-            {nameChangeRequestReasons.map(reason => (
-              <option key={reason} value={reason}>
-                {nameChangeRequestReasonLabels[reason]}
+          <Label htmlFor='name-change-member'>Loved one</Label>
+          <select id='name-change-member' name='memberId' required className={selectClassName} defaultValue=''>
+            <option value='' disabled>
+              Select a loved one
+            </option>
+            {members.map(member => (
+              <option key={member.id} value={member.id}>
+                {member.firstName} {member.lastAndMiddleNames} - {member.memberMatriculationNumber}
               </option>
             ))}
           </select>
         </div>
-        <div className='flex items-start gap-2 rounded-md border bg-muted/30 p-3'>
-          <Checkbox id={`${member.id}-typo-confirmation`} name='typoCorrectionConfirmation' value='on' />
-          <div className='grid gap-1'>
-            <Label htmlFor={`${member.id}-typo-confirmation`} className='text-sm leading-snug'>
-              I confirm this is only a typo correction and not a legal name change or a different person.
-            </Label>
-            <p className='text-muted-foreground text-xs'>Required when reason is Typo or correction.</p>
+        <div className='grid gap-3 sm:grid-cols-2'>
+          <div className='grid gap-1.5'>
+            <Label htmlFor='requested-first-name'>Proposed given names</Label>
+            <Input id='requested-first-name' name='requestedFirstName' required />
+          </div>
+          <div className='grid gap-1.5'>
+            <Label htmlFor='requested-last-name'>Proposed last and middle names</Label>
+            <Input id='requested-last-name' name='requestedLastAndMiddleNames' required />
           </div>
         </div>
-        <div className='grid gap-1.5'>
-          <Label htmlFor={`${member.id}-document`}>Official name change document</Label>
-          <p className='text-muted-foreground text-xs'>Required for legal document changes. PDF or image, up to 20 MB.</p>
-          <Input id={`${member.id}-document`} name='documentFile' type='file' accept={documentAccept} />
-        </div>
-        <SubmitButton text='Save name correction' className='h-9 w-full text-sm normal-case' />
+        <SubmitButton text='Submit for admin review' className='h-9 w-full text-sm normal-case sm:w-fit' />
       </FormContainer>
     </CardContent>
   </Card>
@@ -259,7 +267,7 @@ const NameChangeDocumentationPage = async () => {
         <div>
           <h1 className='text-2xl font-extrabold tracking-normal sm:text-3xl'>Name Change & Documentations</h1>
           <p className='text-muted-foreground mt-1 text-sm'>
-            Correct typos directly or submit legal name changes with official documentation for admin review.
+            Sponsors submit proposed name changes for admin review. Admin can approve, reject, or request documentation.
           </p>
         </div>
         <Badge variant='outline' className='w-fit text-sm'>
@@ -268,7 +276,7 @@ const NameChangeDocumentationPage = async () => {
       </div>
 
       {!isAdminUser ? (
-        <div className='grid gap-4 xl:grid-cols-2'>
+        <div className='grid gap-4'>
           {members.length === 0 ? (
             <Card className='rounded-lg'>
               <CardContent className='py-8 text-center'>
@@ -278,7 +286,7 @@ const NameChangeDocumentationPage = async () => {
               </CardContent>
             </Card>
           ) : (
-            members.map(member => <MemberNameChangeCard key={member.id} member={member} />)
+            <SponsorNameChangeProposalForm members={members} />
           )}
         </div>
       ) : null}
@@ -286,7 +294,7 @@ const NameChangeDocumentationPage = async () => {
       <div className='grid gap-3'>
         <div className='flex items-center gap-2'>
           <FilePenLine className='text-primary size-5' />
-          <h2 className='text-lg font-extrabold'>{isAdminUser ? 'All submitted requests' : 'Your requests'}</h2>
+          <h2 className='text-lg font-extrabold'>{isAdminUser ? 'All name change requests' : 'Your requests'}</h2>
         </div>
         {requests.length === 0 ? (
           <Card className='rounded-lg'>

@@ -23,11 +23,9 @@ import {
   deceasedMemberDocumentStatuses,
   deceasedMemberDocumentTypes,
   memberStatus,
-  nameChangeRequestReasons,
   nameChangeRequestStatuses,
   type DeceasedMemberDocumentStatus,
   type DeceasedMemberDocumentType,
-  type NameChangeRequestReason,
   type NameChangeRequestStatus
 } from './types'
 import {
@@ -367,9 +365,6 @@ const isDeceasedMemberDocumentType = (value: string): value is DeceasedMemberDoc
 
 const isDeceasedMemberDocumentStatus = (value: string): value is DeceasedMemberDocumentStatus =>
   deceasedMemberDocumentStatuses.includes(value as DeceasedMemberDocumentStatus)
-
-const isNameChangeRequestReason = (value: string): value is NameChangeRequestReason =>
-  nameChangeRequestReasons.includes(value as NameChangeRequestReason)
 
 const isNameChangeRequestStatus = (value: string): value is NameChangeRequestStatus =>
   nameChangeRequestStatuses.includes(value as NameChangeRequestStatus)
@@ -1689,20 +1684,6 @@ export const submitNameChangeRequestAction = async (
     const memberId = getRequiredFormValue(formData, 'memberId')
     const requestedFirstName = getUppercaseFormName(formData, 'requestedFirstName')
     const requestedLastAndMiddleNames = getUppercaseFormName(formData, 'requestedLastAndMiddleNames')
-    const reason = getRequiredFormValue(formData, 'reason')
-    const file = formData.get('documentFile')
-
-    if (!isNameChangeRequestReason(reason)) {
-      throw new Error('Select a valid name change reason.')
-    }
-
-    const typoCorrectionConfirmed = formData.get('typoCorrectionConfirmation') === 'on'
-
-    if (reason === 'typo_or_error' && !typoCorrectionConfirmed) {
-      throw new Error(
-        'Please confirm this is only a typo correction and not a legal name change or a different person.'
-      )
-    }
 
     const member = await db.member.findUnique({
       select: {
@@ -1737,107 +1718,141 @@ export const submitNameChangeRequestAction = async (
       },
       where: {
         memberId: member.id,
-        status: 'submitted'
+        status: {
+          in: ['submitted', 'documentation_requested']
+        }
       }
     })
 
     if (pendingRequest) {
-      throw new Error('This loved one already has a submitted name change request.')
-    }
-
-    const documentRequired = reason === 'legal_document'
-    const hasFile = file instanceof File && file.size > 0
-
-    if (documentRequired && !hasFile) {
-      throw new Error('Please upload the official name change document.')
-    }
-
-    if (hasFile) {
-      if (file.size > maxDocumentationFileSize) {
-        throw new Error('The file is too large. Please upload a file that is 20 MB or smaller.')
-      }
-
-      if (!isAllowedDeceasedMemberDocumentFile(file)) {
-        throw new Error('Please upload a PDF, JPG, PNG, WEBP, HEIC, or HEIF file.')
-      }
+      throw new Error('This loved one already has a name change request waiting for admin review.')
     }
 
     const requestId = randomUUID()
-    const safeFileName = hasFile ? getSafeUploadedFileName(file, 'Official name change document') : null
 
-    const uploadedDocument = hasFile
-      ? await uploadNameChangeDocumentationToCloudinary({
-          buffer: Buffer.from(await file.arrayBuffer()),
-          fileName: safeFileName ?? 'Official name change document',
-          requestId,
-          sponsorCode: member.sponsorCode
-        })
-      : null
-
-    try {
-      const requestData = {
+    await db.nameChangeRequest.create({
+      data: {
         id: requestId,
         clerkId: member.clerkId,
-        cloudinaryDeliveryType: uploadedDocument?.deliveryType,
-        cloudinaryFormat: uploadedDocument?.format,
-        cloudinaryPublicId: uploadedDocument?.publicId,
-        cloudinaryResourceType: uploadedDocument?.resourceType,
-        cloudinaryVersion: uploadedDocument?.version,
         currentFirstName: member.firstName,
         currentLastAndMiddleNames: member.lastAndMiddleNames,
-        documentRequired,
-        fileName: safeFileName,
-        fileSize: hasFile ? file.size : null,
+        documentRequired: false,
         memberId: member.id,
-        mimeType: hasFile ? file.type || 'application/octet-stream' : null,
-        reason,
+        reason: 'typo_or_error',
         requestedFirstName,
         requestedLastAndMiddleNames,
-        secureUrl: uploadedDocument?.secureUrl,
-        sponsorCode: member.sponsorCode
+        sponsorCode: member.sponsorCode,
+        status: 'submitted'
       }
+    })
 
-      if (reason === 'typo_or_error') {
-        await db.$transaction([
-          db.member.update({
-            data: {
-              firstName: requestedFirstName,
-              lastAndMiddleNames: requestedLastAndMiddleNames
-            },
-            where: {
-              id: member.id
-            }
-          }),
-          db.nameChangeRequest.create({
-            data: {
-              ...requestData,
-              reviewedAt: new Date(),
-              reviewedBy: user.id,
-              status: 'approved'
-            }
-          })
-        ])
-      } else {
-        await db.nameChangeRequest.create({
-          data: requestData
-        })
+    revalidateNameChangeDocumentationViews()
+
+    return { message: 'Name change request submitted for admin review' }
+  } catch (error) {
+    return renderError(error)
+  }
+}
+
+export const uploadNameChangeDocumentationAction = async (
+  prevState: any,
+  formData: FormData
+): Promise<{ message: string }> => {
+  const user = await getAuthUser()
+
+  try {
+    const requestId = getRequiredFormValue(formData, 'requestId')
+    const file = formData.get('documentFile')
+
+    if (!(file instanceof File) || file.size <= 0) {
+      throw new Error('Please choose the requested documentation.')
+    }
+
+    if (file.size > maxDocumentationFileSize) {
+      throw new Error('The file is too large. Please upload a file that is 20 MB or smaller.')
+    }
+
+    if (!isAllowedDeceasedMemberDocumentFile(file)) {
+      throw new Error('Please upload a PDF, JPG, PNG, WEBP, HEIC, or HEIF file.')
+    }
+
+    const request = await db.nameChangeRequest.findUnique({
+      select: {
+        clerkId: true,
+        cloudinaryDeliveryType: true,
+        cloudinaryFormat: true,
+        cloudinaryPublicId: true,
+        cloudinaryResourceType: true,
+        cloudinaryVersion: true,
+        id: true,
+        secureUrl: true,
+        sponsorCode: true,
+        status: true
+      },
+      where: {
+        id: requestId
       }
+    })
+
+    if (!request) {
+      throw new Error('Name change request not found.')
+    }
+
+    const isAdminUser = user.id === process.env.ADMIN_USER_ID
+
+    if (!isAdminUser && request.clerkId !== user.id) {
+      throw new Error('You can only upload documentation for name changes from your own account.')
+    }
+
+    if (request.status !== 'documentation_requested') {
+      throw new Error('Documentation has not been requested for this name change.')
+    }
+
+    const safeFileName = getSafeUploadedFileName(file, 'Official name change document')
+    const previousDocument = getStoredCloudinaryDocument(request)
+
+    const uploadedDocument = await uploadNameChangeDocumentationToCloudinary({
+      buffer: Buffer.from(await file.arrayBuffer()),
+      fileName: safeFileName,
+      requestId: request.id,
+      sponsorCode: request.sponsorCode
+    })
+
+    try {
+      await db.nameChangeRequest.update({
+        data: {
+          cloudinaryDeliveryType: uploadedDocument.deliveryType,
+          cloudinaryFormat: uploadedDocument.format,
+          cloudinaryPublicId: uploadedDocument.publicId,
+          cloudinaryResourceType: uploadedDocument.resourceType,
+          cloudinaryVersion: uploadedDocument.version,
+          documentRequired: true,
+          fileName: safeFileName,
+          fileSize: file.size,
+          mimeType: file.type || 'application/octet-stream',
+          rejectionReason: null,
+          reviewedAt: null,
+          reviewedBy: null,
+          secureUrl: uploadedDocument.secureUrl,
+          status: 'submitted'
+        },
+        where: {
+          id: request.id
+        }
+      })
     } catch (error) {
-      if (uploadedDocument) {
-        await deleteDeathDocumentationFromCloudinary(uploadedDocument)
-      }
+      await deleteDeathDocumentationFromCloudinary(uploadedDocument)
 
       throw error
     }
 
+    if (previousDocument && !isSameCloudinaryDocument(previousDocument, uploadedDocument)) {
+      await deleteStoredCloudinaryDocument(request)
+    }
+
     revalidateNameChangeDocumentationViews()
 
-    return {
-      message:
-        reason === 'typo_or_error'
-          ? 'Loved one name corrected successfully'
-          : 'Name change request submitted successfully'
-    }
+    return { message: 'Name change documentation uploaded successfully' }
   } catch (error) {
     return renderError(error)
   }
@@ -1870,6 +1885,29 @@ export const reviewNameChangeRequestAction = async (
 
     if (request.status !== 'submitted') {
       throw new Error('This name change request has already been reviewed.')
+    }
+
+    if (status === 'approved' && request.documentRequired && !request.cloudinaryPublicId) {
+      throw new Error('Documentation is required before approving this name change.')
+    }
+
+    if (status === 'documentation_requested') {
+      await db.nameChangeRequest.update({
+        data: {
+          documentRequired: true,
+          rejectionReason: rejectionReason || 'Please upload official documentation for this name change.',
+          reviewedAt: new Date(),
+          reviewedBy: user.id,
+          status
+        },
+        where: {
+          id: request.id
+        }
+      })
+
+      revalidateNameChangeDocumentationViews()
+
+      return { message: 'Name change documentation requested' }
     }
 
     if (status === 'approved') {

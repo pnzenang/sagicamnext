@@ -173,12 +173,13 @@ export const nameChangeRequestReasonLabels: Record<NameChangeRequestReason, stri
   typo_or_error: 'Typo or correction'
 }
 
-export const nameChangeRequestStatuses = ['submitted', 'approved', 'rejected'] as const
+export const nameChangeRequestStatuses = ['submitted', 'documentation_requested', 'approved', 'rejected'] as const
 
 export type NameChangeRequestStatus = (typeof nameChangeRequestStatuses)[number]
 
 export const nameChangeRequestStatusLabels: Record<NameChangeRequestStatus, string> = {
   approved: 'Approved',
+  documentation_requested: 'Documentation requested',
   rejected: 'Rejected',
   submitted: 'Submitted'
 }
