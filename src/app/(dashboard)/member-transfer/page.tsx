@@ -1,5 +1,6 @@
 import { ArrowLeftRight, Inbox } from 'lucide-react'
 
+import AutoRefreshAt from '@/components/dashboard/AutoRefreshAt'
 import MemberTransferRequestCard from '@/components/dashboard/MemberTransferRequestCard'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
@@ -8,7 +9,7 @@ import { fetchMemberTransferPageAction } from '@/utils/actions'
 import MemberTransferRequestForm from './MemberTransferRequestForm'
 
 const MemberTransferPage = async () => {
-  const { members, profile, requests, sponsors } = await fetchMemberTransferPageAction()
+  const { members, nextCancelledTransferRefreshAt, profile, requests, sponsors } = await fetchMemberTransferPageAction()
 
   const incomingActionCount = requests.filter(
     request => request.receivingClerkId === profile.clerkId && request.status === 'receiving_sponsor_pending'
@@ -16,6 +17,8 @@ const MemberTransferPage = async () => {
 
   return (
     <section className='grid w-full max-w-full min-w-0 gap-5 overflow-hidden px-0 py-4 sm:px-6 sm:py-8 lg:px-8'>
+      <AutoRefreshAt refreshAt={nextCancelledTransferRefreshAt} />
+
       <div className='flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between'>
         <div>
           <h1 className='text-2xl font-extrabold tracking-normal sm:text-3xl'>Member Transfer</h1>

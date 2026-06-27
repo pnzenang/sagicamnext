@@ -2044,6 +2044,33 @@ const openMemberTransferRequestStatuses: MemberTransferRequestStatus[] = [
   'receiving_sponsor_approved'
 ]
 
+const CANCELLED_MEMBER_TRANSFER_CARD_VISIBILITY_MS = 5 * 60 * 1000
+
+const getVisibleMemberTransferRequestWhere = () => ({
+  OR: [
+    {
+      status: {
+        not: 'cancelled'
+      }
+    },
+    {
+      updatedAt: {
+        gte: new Date(Date.now() - CANCELLED_MEMBER_TRANSFER_CARD_VISIBILITY_MS)
+      }
+    }
+  ]
+})
+
+const getNextCancelledMemberTransferRefreshAt = (requests: { status: string; updatedAt: Date }[]) => {
+  const nextRefreshAt = requests
+    .filter(request => request.status === 'cancelled')
+    .map(request => request.updatedAt.getTime() + CANCELLED_MEMBER_TRANSFER_CARD_VISIBILITY_MS)
+    .filter(refreshAt => refreshAt > Date.now())
+    .sort((firstRefreshAt, secondRefreshAt) => firstRefreshAt - secondRefreshAt)[0]
+
+  return nextRefreshAt ? new Date(nextRefreshAt).toISOString() : null
+}
+
 const getTransferredMemberMatriculationNumber = ({
   initiatingSponsorCode,
   memberMatriculationNumber,
@@ -2066,6 +2093,7 @@ export const fetchMemberTransferPageAction = async () => {
   noStore()
 
   const profile = await fetchProfile()
+  const visibleMemberTransferRequestWhere = getVisibleMemberTransferRequestWhere()
 
   const [members, sponsors, requests] = await Promise.all([
     db.member.findMany({
@@ -2108,12 +2136,23 @@ export const fetchMemberTransferPageAction = async () => {
       },
       orderBy: { createdAt: 'desc' },
       where: {
-        OR: [{ initiatingClerkId: profile.clerkId }, { receivingClerkId: profile.clerkId }]
+        AND: [
+          {
+            OR: [{ initiatingClerkId: profile.clerkId }, { receivingClerkId: profile.clerkId }]
+          },
+          visibleMemberTransferRequestWhere
+        ]
       }
     })
   ])
 
-  return { members, profile, requests, sponsors }
+  return {
+    members,
+    nextCancelledTransferRefreshAt: getNextCancelledMemberTransferRefreshAt(requests),
+    profile,
+    requests,
+    sponsors
+  }
 }
 
 export const fetchAdminMemberTransferPageAction = async () => {
@@ -2132,10 +2171,11 @@ export const fetchAdminMemberTransferPageAction = async () => {
         }
       }
     },
-    orderBy: { createdAt: 'desc' }
+    orderBy: { createdAt: 'desc' },
+    where: getVisibleMemberTransferRequestWhere()
   })
 
-  return { requests }
+  return { nextCancelledTransferRefreshAt: getNextCancelledMemberTransferRefreshAt(requests), requests }
 }
 
 export const submitMemberTransferRequestAction = async (
