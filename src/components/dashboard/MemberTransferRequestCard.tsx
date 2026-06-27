@@ -173,8 +173,6 @@ const SponsorCancelTransferControl = ({
   compact?: boolean
   request: MemberTransferRequestCardData
 }) => {
-  if (!['receiving_sponsor_pending', 'receiving_sponsor_approved'].includes(request.status)) return null
-
   const cancelRequest = cancelMemberTransferRequestAction.bind(null, { requestId: request.id })
 
   return (
@@ -185,10 +183,12 @@ const SponsorCancelTransferControl = ({
           className={cn('h-8 w-full bg-red-700 px-3 text-xs normal-case hover:bg-red-800', compact ? '' : 'sm:w-fit')}
         />
       </FormContainer>
-      <p className='text-muted-foreground text-xs'>You can cancel this request until SAGICAM admin responds.</p>
+      <p className='text-muted-foreground text-xs'>You can cancel this request unless SAGICAM admin has approved it.</p>
     </div>
   )
 }
+
+const canRequestingSponsorCancelTransfer = (status: string) => status !== 'admin_approved' && status !== 'cancelled'
 
 export const MemberTransferRequestActions = ({
   className,
@@ -208,8 +208,7 @@ export const MemberTransferRequestActions = ({
   const isInitiatingSponsor = currentUserClerkId === request.initiatingClerkId
   const isReceivingSponsor = currentUserClerkId === request.receivingClerkId
 
-  const hasReceivingSponsorAction =
-    isReceivingSponsor && ['receiving_sponsor_pending', 'receiving_sponsor_approved'].includes(request.status)
+  const hasReceivingSponsorAction = isReceivingSponsor && canRequestingSponsorCancelTransfer(request.status)
 
   const hasReleasingSponsorAction = isInitiatingSponsor && request.status === 'receiving_sponsor_pending'
   const hasAdminAction = isAdminUser && request.status === 'receiving_sponsor_approved'
