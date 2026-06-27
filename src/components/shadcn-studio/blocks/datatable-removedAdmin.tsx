@@ -67,6 +67,7 @@ import type { RemovedMemberType } from '@/utils/types'
 import { type MemberType } from '@/utils/types'
 import { deleteRemovedMemberAction } from '@/utils/actions'
 import FormContainer from '@/components/forms/FormContainer'
+import RestoreRemovedMemberButton from '@/components/global/RestoreRemovedMemberButton'
 
 declare module '@tanstack/react-table' {
   interface ColumnMeta<TData extends RowData, TValue> {
@@ -160,12 +161,7 @@ const columns: ColumnDef<RemovedMemberType>[] = [
   {
     header: 'Actions',
     accessorKey: 'id',
-    cell: ({ row: { original } }) => {
-      // Destructuring 'id' directly from the row data
-      const { id } = original
-
-      return <RowActions removedMemberId={id} />
-    },
+    cell: ({ row: { original } }) => <RowActions removedMember={original} />,
     size: 20
   }
 ]
@@ -476,7 +472,7 @@ function Filter({ column }: { column: Column<any, unknown> }) {
 
   if (filterVariant === 'select') {
     return (
-      <div className='w-full min-w-0 space-y-2 rounded border border-red-400 md:flex-1 md:max-w-none xl:max-w-2xs'>
+      <div className='w-full min-w-0 space-y-2 rounded border border-red-400 md:max-w-none md:flex-1 xl:max-w-2xs'>
         {/* <Label htmlFor={`${id}-select`}>Select {columnHeader}</Label> */}
         <Select
           value={columnFilterValue?.toString() ?? 'all'}
@@ -501,7 +497,7 @@ function Filter({ column }: { column: Column<any, unknown> }) {
   }
 
   return (
-    <div className='w-full min-w-0 rounded border border-red-400 md:flex-1 md:max-w-none xl:max-w-2xs'>
+    <div className='w-full min-w-0 rounded border border-red-400 md:max-w-none md:flex-1 xl:max-w-2xs'>
       <Label htmlFor={`${id}-input`} className='sr-only'>
         {columnHeader}
       </Label>
@@ -522,14 +518,17 @@ function Filter({ column }: { column: Column<any, unknown> }) {
   )
 }
 
-function RowActions({ removedMemberId }: { removedMemberId: string }) {
-  const deleteRemovedMember = deleteRemovedMemberAction.bind(null, { removedMemberId })
+function RowActions({ removedMember }: { removedMember: RemovedMemberType }) {
+  const deleteRemovedMember = deleteRemovedMemberAction.bind(null, { removedMemberId: removedMember.id })
 
   return (
-    <FormContainer action={deleteRemovedMember}>
-      <Button size='icon' variant='ghost' className='rounded-full p-2 hover:bg-red-300' aria-label='Edit item'>
-        <Trash2 className='text-destructive size-5' aria-hidden='true' />
-      </Button>
-    </FormContainer>
+    <div className='flex items-center gap-2'>
+      <RestoreRemovedMemberButton removedMember={removedMember} />
+      <FormContainer action={deleteRemovedMember}>
+        <Button size='icon' variant='ghost' className='rounded-full p-2 hover:bg-red-300' aria-label='Delete item'>
+          <Trash2 className='text-destructive size-5' aria-hidden='true' />
+        </Button>
+      </FormContainer>
+    </div>
   )
 }

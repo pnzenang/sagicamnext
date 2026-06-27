@@ -60,15 +60,19 @@ export type MemberType = {
 
 export type RemovedMemberType = {
   id: string
+  originalMemberId?: string | null
   clerkId: string
   firstName: string
   lastAndMiddleNames: string
   dateOfBirth: string
   countryOfBirth: string
   memberMatriculationNumber: string
+  nameOfBeneficiary?: string | null
+  delegateRecommendation?: string | null
   memberStatus?: string | null
   sponsorCode: string
   reasonForLeaving: string
+  originalMemberCreatedAt?: Date | null
   createdAt: Date
   updatedAt: Date
 }

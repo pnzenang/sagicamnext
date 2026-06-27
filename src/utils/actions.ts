@@ -1,15 +1,11 @@
 'use server'
 
-import { error } from 'console'
-
 import { auth } from '@clerk/nextjs/server'
 
 import { redirect } from 'next/navigation'
 
 import { revalidatePath, unstable_noStore as noStore } from 'next/cache'
 import { customAlphabet } from 'nanoid'
-
-import { id } from 'date-fns/locale'
 
 import db from './db'
 import {
@@ -34,7 +30,6 @@ import {
 } from './sagicam-registration-summary'
 import { sponsorPaymentLedgerEventTypes, sponsorPaymentTypes } from './sagicam-payment-ledger'
 import { Prisma } from '@/generated/prisma/client'
-import prisma from './db'
 
 const randomMatriculation = customAlphabet('1234567890', 6)
 
@@ -53,6 +48,7 @@ const registrationDateFormatter = new Intl.DateTimeFormat('en-US', {
 
 const contributionPaymentAlertType = 'contribution'
 const registrationPaymentAlertType = 'registration'
+const MEMBER_REMOVAL_RESTORE_WINDOW_MS = 48 * 60 * 60 * 1000
 
 const formatRegistrationDate = (date: Date) => registrationDateFormatter.format(date)
 
@@ -228,6 +224,7 @@ const revalidateSponsorPaymentPages = () => {
 const revalidateMemberPaymentViews = () => {
   revalidatePath('/admin-count')
   revalidatePath('/admin-members')
+  revalidatePath('/admin-removed')
   revalidatePath('/admin-sagicam-payments')
   revalidatePath('/admin-sagicam-registrations')
   revalidatePath('/all-members')
@@ -247,6 +244,9 @@ const fetchSponsorByCode = async (sponsorCode: string) => {
 
   return sponsor
 }
+
+const isWithinMemberRemovalRestoreWindow = (createdAt: Date) =>
+  Date.now() - createdAt.getTime() <= MEMBER_REMOVAL_RESTORE_WINDOW_MS
 
 const getAuthUser = async () => {
   const { userId } = await auth()
@@ -1497,40 +1497,52 @@ export const createRemovedMemberAction = async (provState: any, formData: FormDa
     const memberId = formData.get('id') as string
     const rawData = Object.fromEntries(formData)
     const validatedFields = validateWithZodSchema(RemovedMemberSchema, rawData)
-    const sponsor = await fetchSponsorByCode(validatedFields.sponsorCode)
 
-    const member = await db.member.findUnique({
+    const member = await db.member.findFirst({
       where: {
         id: memberId,
         clerkId: user.id
-      },
-      select: {
-        memberMatriculationNumber: true,
-        memberStatus: true
       }
     })
 
-    await db.removedMember.create({
-      data: {
-        ...validatedFields,
-        clerkId: user.id,
-        memberStatus: member?.memberStatus
-      }
-    })
-    await db.member.delete({
-      where: {
-        id: memberId
-      }
+    if (!member) throw new Error('Loved one not found.')
+
+    const sponsor = await fetchSponsorByCode(member.sponsorCode)
+
+    await db.$transaction(async tx => {
+      await tx.removedMember.create({
+        data: {
+          clerkId: member.clerkId,
+          countryOfBirth: member.countryOfBirth,
+          dateOfBirth: member.dateOfBirth,
+          delegateRecommendation: member.delegateRecommendation,
+          firstName: member.firstName,
+          lastAndMiddleNames: member.lastAndMiddleNames,
+          memberMatriculationNumber: member.memberMatriculationNumber,
+          memberStatus: member.memberStatus,
+          nameOfBeneficiary: member.nameOfBeneficiary,
+          originalMemberCreatedAt: member.createdAt,
+          originalMemberId: member.id,
+          reasonForLeaving: validatedFields.reasonForLeaving,
+          sponsorCode: member.sponsorCode
+        }
+      })
+
+      await tx.member.delete({
+        where: {
+          id: member.id
+        }
+      })
     })
 
     await sendLovedOneRemovalConfirmationEmail({
       sponsorEmail: sponsor.sponsorEmail,
       sponsorFirstName: sponsor.sponsorFirstName,
-      lovedOneFirstName: validatedFields.firstName,
-      lovedOneLastAndMiddleNames: validatedFields.lastAndMiddleNames,
-      dateOfBirth: validatedFields.dateOfBirth,
-      sponsorCode: validatedFields.sponsorCode,
-      memberMatriculationNumber: validatedFields.memberMatriculationNumber,
+      lovedOneFirstName: member.firstName,
+      lovedOneLastAndMiddleNames: member.lastAndMiddleNames,
+      dateOfBirth: member.dateOfBirth,
+      sponsorCode: member.sponsorCode,
+      memberMatriculationNumber: member.memberMatriculationNumber,
       reasonForLeaving: validatedFields.reasonForLeaving
     })
     revalidateMemberPaymentViews()
@@ -1545,45 +1557,57 @@ export const createRemovedMemberActionAdmin = async (
   provState: any,
   formData: FormData
 ): Promise<{ message: string }> => {
-  const user = await getAuthUser()
+  await getAuthUser()
 
   try {
     const memberId = formData.get('id') as string
     const rawData = Object.fromEntries(formData)
     const validatedFields = validateWithZodSchema(RemovedMemberSchema, rawData)
-    const sponsor = await fetchSponsorByCode(validatedFields.sponsorCode)
 
     const member = await db.member.findUnique({
       where: {
         id: memberId
-      },
-      select: {
-        memberMatriculationNumber: true,
-        memberStatus: true
       }
     })
 
-    await db.removedMember.create({
-      data: {
-        ...validatedFields,
-        clerkId: user.id,
-        memberStatus: member?.memberStatus
-      }
-    })
-    await db.member.delete({
-      where: {
-        id: memberId
-      }
+    if (!member) throw new Error('Loved one not found.')
+
+    const sponsor = await fetchSponsorByCode(member.sponsorCode)
+
+    await db.$transaction(async tx => {
+      await tx.removedMember.create({
+        data: {
+          clerkId: member.clerkId,
+          countryOfBirth: member.countryOfBirth,
+          dateOfBirth: member.dateOfBirth,
+          delegateRecommendation: member.delegateRecommendation,
+          firstName: member.firstName,
+          lastAndMiddleNames: member.lastAndMiddleNames,
+          memberMatriculationNumber: member.memberMatriculationNumber,
+          memberStatus: member.memberStatus,
+          nameOfBeneficiary: member.nameOfBeneficiary,
+          originalMemberCreatedAt: member.createdAt,
+          originalMemberId: member.id,
+          reasonForLeaving: validatedFields.reasonForLeaving,
+          sponsorCode: member.sponsorCode
+        }
+      })
+
+      await tx.member.delete({
+        where: {
+          id: member.id
+        }
+      })
     })
 
     await sendLovedOneRemovalConfirmationEmail({
       sponsorEmail: sponsor.sponsorEmail,
       sponsorFirstName: sponsor.sponsorFirstName,
-      lovedOneFirstName: validatedFields.firstName,
-      lovedOneLastAndMiddleNames: validatedFields.lastAndMiddleNames,
-      dateOfBirth: validatedFields.dateOfBirth,
-      sponsorCode: validatedFields.sponsorCode,
-      memberMatriculationNumber: validatedFields.memberMatriculationNumber,
+      lovedOneFirstName: member.firstName,
+      lovedOneLastAndMiddleNames: member.lastAndMiddleNames,
+      dateOfBirth: member.dateOfBirth,
+      sponsorCode: member.sponsorCode,
+      memberMatriculationNumber: member.memberMatriculationNumber,
       reasonForLeaving: validatedFields.reasonForLeaving
     })
     revalidateMemberPaymentViews()
@@ -1608,7 +1632,7 @@ export const fetchRemovedMembersAction = async () => {
 }
 
 export const fetchRemovedMembersActionAdmin = async () => {
-  const user = await getAuthUser()
+  await getAuthUser()
 
   const removedMembers = await db.removedMember.findMany({
     where: {
@@ -1618,6 +1642,83 @@ export const fetchRemovedMembersActionAdmin = async () => {
   })
 
   return removedMembers
+}
+
+export const restoreRemovedMemberAction = async (prevState: { removedMemberId: string }) => {
+  const user = await getAuthUser()
+  const { removedMemberId } = prevState
+
+  try {
+    const removedMember = await db.removedMember.findUnique({
+      where: {
+        id: removedMemberId
+      }
+    })
+
+    if (!removedMember) throw new Error('Removed loved one not found.')
+
+    const isAdminUser = user.id === process.env.ADMIN_USER_ID
+
+    if (!isAdminUser && removedMember.clerkId !== user.id) {
+      throw new Error('You can only restore loved ones removed from your own account.')
+    }
+
+    if (!isWithinMemberRemovalRestoreWindow(removedMember.createdAt)) {
+      throw new Error('This loved one can no longer be restored because the 48-hour reversal window has expired.')
+    }
+
+    if (!removedMember.nameOfBeneficiary || !removedMember.delegateRecommendation || !removedMember.memberStatus) {
+      throw new Error('This removed loved one record is missing the original details needed for restoration.')
+    }
+
+    await db.$transaction([
+      db.member.create({
+        data: {
+          ...(removedMember.originalMemberId ? { id: removedMember.originalMemberId } : {}),
+          clerkId: removedMember.clerkId,
+          countryOfBirth: removedMember.countryOfBirth,
+          dateOfBirth: removedMember.dateOfBirth,
+          delegateRecommendation: removedMember.delegateRecommendation,
+          firstName: removedMember.firstName,
+          lastAndMiddleNames: removedMember.lastAndMiddleNames,
+          memberMatriculationNumber: removedMember.memberMatriculationNumber,
+          memberStatus: removedMember.memberStatus,
+          nameOfBeneficiary: removedMember.nameOfBeneficiary,
+          sponsorCode: removedMember.sponsorCode,
+          ...(removedMember.originalMemberCreatedAt ? { createdAt: removedMember.originalMemberCreatedAt } : {})
+        }
+      }),
+      db.removedMember.delete({
+        where: {
+          id: removedMember.id
+        }
+      })
+    ])
+
+    if (removedMember.memberStatus === memberStatus.Pending) {
+      await createPendingRegistrationUsage({
+        memberMatriculationNumber: removedMember.memberMatriculationNumber,
+        sponsorCode: removedMember.sponsorCode
+      })
+    }
+
+    if (removedMember.memberStatus === memberStatus.Vested) {
+      await createVestedContributionCredit({
+        memberMatriculationNumber: removedMember.memberMatriculationNumber,
+        sponsorCode: removedMember.sponsorCode
+      })
+    }
+
+    revalidateMemberPaymentViews()
+
+    return { message: 'Loved one restored successfully' }
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      return { message: 'This loved one already exists in All Members and cannot be restored again.' }
+    }
+
+    return renderError(error)
+  }
 }
 
 export const createDeceasedMemberAction = async (provState: any, formData: FormData): Promise<{ message: string }> => {
@@ -1774,9 +1875,9 @@ export const deleteRemovedMemberAction = async (prevState: { removedMemberId: st
     revalidateMemberPaymentViews()
 
     return { message: 'deleted member removed ' }
-  } catch (error) {}
-
-  return renderError(error)
+  } catch (error) {
+    return renderError(error)
+  }
 }
 
 export const deleteDeceasedMemberAction = async (prevState: { deceasedMemberId: string }) => {
@@ -1793,9 +1894,9 @@ export const deleteDeceasedMemberAction = async (prevState: { deceasedMemberId: 
     revalidateMemberPaymentViews()
 
     return { message: 'deceased member removed ' }
-  } catch (error) {}
-
-  return renderError(error)
+  } catch (error) {
+    return renderError(error)
+  }
 }
 
 export const fetchSingleDeceasedMemberDetails = async (deceasedMemberId: string) => {
