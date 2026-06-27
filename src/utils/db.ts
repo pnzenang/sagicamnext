@@ -18,8 +18,10 @@ const shouldReuseCachedPrisma = (cachedPrisma?: PrismaClient) =>
     cachedPrisma &&
   'contributionAssessment' in (cachedPrisma as unknown as Record<string, unknown>) &&
   'deceasedMemberDocument' in (cachedPrisma as unknown as Record<string, unknown>) &&
+  'memberTransferRequest' in (cachedPrisma as unknown as Record<string, unknown>) &&
   'nameChangeRequest' in (cachedPrisma as unknown as Record<string, unknown>) &&
   hasCachedModelField(cachedPrisma, 'DeceasedMemberDocument', 'cloudinaryPublicId') &&
+  hasCachedModelField(cachedPrisma, 'MemberTransferRequest', 'receivingSponsorCode') &&
   hasCachedModelField(cachedPrisma, 'NameChangeRequest', 'cloudinaryPublicId') &&
   hasCachedModelField(cachedPrisma, 'RemovedMember', 'memberStatus') &&
   hasCachedModelField(cachedPrisma, 'DeceasedMember', 'memberStatus') &&

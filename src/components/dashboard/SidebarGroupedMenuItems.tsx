@@ -4,13 +4,13 @@ import SidebarGroupedMenuItemsClient from './SidebarGroupedMenuItemsClient'
 
 type SidebarBadgeMap = Record<string, string | undefined>
 
-const getNameChangeBadge = (requestCount: number) => {
+const getSidebarBadge = (requestCount: number) => {
   if (requestCount <= 0) return undefined
 
   return requestCount > 99 ? '99+' : String(requestCount)
 }
 
-const fetchNameChangeSidebarBadges = async ({
+const fetchSidebarBadges = async ({
   isAdminUser,
   userId
 }: {
@@ -22,7 +22,12 @@ const fetchNameChangeSidebarBadges = async ({
   try {
     const { default: db } = await import('@/utils/db')
 
-    const [adminPendingReviewCount, sponsorRequiredActionCount] = await Promise.all([
+    const [
+      adminPendingNameChangeCount,
+      sponsorRequiredNameChangeCount,
+      adminPendingTransferCount,
+      sponsorPendingTransferCount
+    ] = await Promise.all([
       isAdminUser
         ? db.nameChangeRequest.count({
             where: {
@@ -37,15 +42,32 @@ const fetchNameChangeSidebarBadges = async ({
               status: 'documentation_requested'
             }
           })
+        : Promise.resolve(0),
+      isAdminUser
+        ? db.memberTransferRequest.count({
+            where: {
+              status: 'receiving_sponsor_approved'
+            }
+          })
+        : Promise.resolve(0),
+      !isAdminUser
+        ? db.memberTransferRequest.count({
+            where: {
+              receivingClerkId: userId,
+              status: 'receiving_sponsor_pending'
+            }
+          })
         : Promise.resolve(0)
     ])
 
     return {
-      '/admin-name-changes': getNameChangeBadge(adminPendingReviewCount),
-      '/name-change-documents-upload': getNameChangeBadge(sponsorRequiredActionCount)
+      '/admin-member-transfers': getSidebarBadge(adminPendingTransferCount),
+      '/admin-name-changes': getSidebarBadge(adminPendingNameChangeCount),
+      '/member-transfer': getSidebarBadge(sponsorPendingTransferCount),
+      '/name-change-documents-upload': getSidebarBadge(sponsorRequiredNameChangeCount)
     }
   } catch (error) {
-    console.error('Unable to load name change sidebar badges', error)
+    console.error('Unable to load sidebar badges', error)
 
     return {}
   }
@@ -55,7 +77,7 @@ const SidebarGroupedMenuItems = async ({ groupLabel }: { groupLabel?: string }) 
   const { userId } = await auth()
   const isAdminUser = userId === process.env.ADMIN_USER_ID
 
-  const menuBadges = await fetchNameChangeSidebarBadges({ isAdminUser, userId })
+  const menuBadges = await fetchSidebarBadges({ isAdminUser, userId })
 
   return (
     <SidebarGroupedMenuItemsClient

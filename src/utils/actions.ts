@@ -23,9 +23,11 @@ import {
   deceasedMemberDocumentStatuses,
   deceasedMemberDocumentTypes,
   memberStatus,
+  memberTransferRequestStatuses,
   nameChangeRequestStatuses,
   type DeceasedMemberDocumentStatus,
   type DeceasedMemberDocumentType,
+  type MemberTransferRequestStatus,
   type NameChangeRequestStatus
 } from './types'
 import {
@@ -297,6 +299,11 @@ const revalidateNameChangeDocumentationViews = () => {
   revalidatePath('/name-change-documents-upload')
 }
 
+const revalidateMemberTransferViews = () => {
+  revalidatePath('/admin-member-transfers')
+  revalidatePath('/member-transfer')
+}
+
 const fetchSponsorByCode = async (sponsorCode: string) => {
   const sponsor = await db.profile.findUnique({
     where: {
@@ -369,6 +376,9 @@ const isDeceasedMemberDocumentStatus = (value: string): value is DeceasedMemberD
 
 const isNameChangeRequestStatus = (value: string): value is NameChangeRequestStatus =>
   nameChangeRequestStatuses.includes(value as NameChangeRequestStatus)
+
+const isMemberTransferRequestStatus = (value: string): value is MemberTransferRequestStatus =>
+  memberTransferRequestStatuses.includes(value as MemberTransferRequestStatus)
 
 const getFileExtension = (fileName: string) => {
   const extensionStart = fileName.lastIndexOf('.')
@@ -2024,6 +2034,342 @@ export const deleteNameChangeRequestAction = async (prevState: { requestId: stri
     revalidateNameChangeDocumentationViews()
 
     return { message: 'Name change request removed successfully' }
+  } catch (error) {
+    return renderError(error)
+  }
+}
+
+const openMemberTransferRequestStatuses: MemberTransferRequestStatus[] = [
+  'receiving_sponsor_pending',
+  'receiving_sponsor_approved'
+]
+
+export const fetchMemberTransferPageAction = async () => {
+  noStore()
+
+  const profile = await fetchProfile()
+
+  const [members, sponsors, requests] = await Promise.all([
+    db.member.findMany({
+      orderBy: [{ lastAndMiddleNames: 'asc' }, { firstName: 'asc' }],
+      select: {
+        firstName: true,
+        id: true,
+        lastAndMiddleNames: true,
+        memberMatriculationNumber: true,
+        memberStatus: true,
+        sponsorCode: true
+      },
+      where: {
+        clerkId: profile.clerkId
+      }
+    }),
+    db.profile.findMany({
+      orderBy: [{ sponsorCode: 'asc' }],
+      select: {
+        sponsorCode: true,
+        sponsorFirstName: true,
+        sponsorLastAndMiddleName: true
+      },
+      where: {
+        clerkId: {
+          not: profile.clerkId
+        }
+      }
+    }),
+    db.memberTransferRequest.findMany({
+      include: {
+        member: {
+          select: {
+            firstName: true,
+            lastAndMiddleNames: true,
+            memberMatriculationNumber: true,
+            sponsorCode: true
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' },
+      where: {
+        OR: [{ initiatingClerkId: profile.clerkId }, { receivingClerkId: profile.clerkId }]
+      }
+    })
+  ])
+
+  return { members, profile, requests, sponsors }
+}
+
+export const fetchAdminMemberTransferPageAction = async () => {
+  noStore()
+  await assertAdminUser()
+
+  const requests = await db.memberTransferRequest.findMany({
+    include: {
+      member: {
+        select: {
+          clerkId: true,
+          firstName: true,
+          lastAndMiddleNames: true,
+          memberMatriculationNumber: true,
+          sponsorCode: true
+        }
+      }
+    },
+    orderBy: { createdAt: 'desc' }
+  })
+
+  return { requests }
+}
+
+export const submitMemberTransferRequestAction = async (
+  prevState: any,
+  formData: FormData
+): Promise<{ message: string }> => {
+  const user = await getAuthUser()
+
+  try {
+    const memberId = getRequiredFormValue(formData, 'memberId')
+    const receivingSponsorCode = getRequiredFormValue(formData, 'receivingSponsorCode').toUpperCase()
+    const initiatingSponsor = await fetchProfile()
+
+    const [member, receivingSponsor] = await Promise.all([
+      db.member.findUnique({
+        select: {
+          clerkId: true,
+          firstName: true,
+          id: true,
+          lastAndMiddleNames: true,
+          memberMatriculationNumber: true,
+          sponsorCode: true
+        },
+        where: {
+          id: memberId
+        }
+      }),
+      db.profile.findUnique({
+        select: {
+          clerkId: true,
+          sponsorCode: true
+        },
+        where: {
+          sponsorCode: receivingSponsorCode
+        }
+      })
+    ])
+
+    if (!member) {
+      throw new Error('Loved one not found.')
+    }
+
+    if (member.clerkId !== user.id) {
+      throw new Error('You can only request transfers for loved ones from your own account.')
+    }
+
+    if (!receivingSponsor) {
+      throw new Error('Receiving sponsor was not found.')
+    }
+
+    if (member.sponsorCode === receivingSponsor.sponsorCode) {
+      throw new Error('Choose a different sponsor for the transfer.')
+    }
+
+    const openRequest = await db.memberTransferRequest.findFirst({
+      select: {
+        id: true
+      },
+      where: {
+        memberId: member.id,
+        status: {
+          in: openMemberTransferRequestStatuses
+        }
+      }
+    })
+
+    if (openRequest) {
+      throw new Error('This loved one already has a member transfer request in progress.')
+    }
+
+    await db.memberTransferRequest.create({
+      data: {
+        currentFirstName: member.firstName,
+        currentLastAndMiddleNames: member.lastAndMiddleNames,
+        initiatingClerkId: user.id,
+        initiatingSponsorCode: initiatingSponsor.sponsorCode,
+        memberId: member.id,
+        memberMatriculationNumber: member.memberMatriculationNumber,
+        receivingClerkId: receivingSponsor.clerkId,
+        receivingSponsorCode: receivingSponsor.sponsorCode,
+        status: 'receiving_sponsor_pending'
+      }
+    })
+
+    revalidateMemberTransferViews()
+
+    return { message: 'Member transfer request sent to the receiving sponsor.' }
+  } catch (error) {
+    return renderError(error)
+  }
+}
+
+export const reviewIncomingMemberTransferRequestAction = async (
+  prevState: any,
+  formData: FormData
+): Promise<{ message: string }> => {
+  const user = await getAuthUser()
+
+  try {
+    const requestId = getRequiredFormValue(formData, 'requestId')
+    const status = getRequiredFormValue(formData, 'status')
+    const rejectionReason = String(formData.get('rejectionReason') ?? '').trim()
+
+    if (!isMemberTransferRequestStatus(status) || !['receiving_sponsor_approved', 'receiving_sponsor_rejected'].includes(status)) {
+      throw new Error('Select a valid transfer decision.')
+    }
+
+    const request = await db.memberTransferRequest.findUnique({
+      where: {
+        id: requestId
+      }
+    })
+
+    if (!request) {
+      throw new Error('Member transfer request not found.')
+    }
+
+    if (request.receivingClerkId !== user.id) {
+      throw new Error('Only the receiving sponsor can review this transfer request.')
+    }
+
+    if (request.status !== 'receiving_sponsor_pending') {
+      throw new Error('This transfer request has already been reviewed by the receiving sponsor.')
+    }
+
+    await db.memberTransferRequest.update({
+      data: {
+        receivingReviewedAt: new Date(),
+        receivingReviewedBy: user.id,
+        rejectionReason:
+          status === 'receiving_sponsor_rejected'
+            ? rejectionReason || 'Receiving sponsor rejected this transfer request.'
+            : null,
+        status
+      },
+      where: {
+        id: request.id
+      }
+    })
+
+    revalidateMemberTransferViews()
+
+    return {
+      message:
+        status === 'receiving_sponsor_approved'
+          ? 'Member transfer approved and sent to SAGICAM admin.'
+          : 'Member transfer rejected.'
+    }
+  } catch (error) {
+    return renderError(error)
+  }
+}
+
+export const reviewAdminMemberTransferRequestAction = async (
+  prevState: any,
+  formData: FormData
+): Promise<{ message: string }> => {
+  const user = await assertAdminUser()
+
+  try {
+    const requestId = getRequiredFormValue(formData, 'requestId')
+    const status = getRequiredFormValue(formData, 'status')
+    const rejectionReason = String(formData.get('rejectionReason') ?? '').trim()
+
+    if (!isMemberTransferRequestStatus(status) || !['admin_approved', 'admin_rejected'].includes(status)) {
+      throw new Error('Select a valid admin transfer decision.')
+    }
+
+    const request = await db.memberTransferRequest.findUnique({
+      include: {
+        member: true
+      },
+      where: {
+        id: requestId
+      }
+    })
+
+    if (!request) {
+      throw new Error('Member transfer request not found.')
+    }
+
+    if (request.status !== 'receiving_sponsor_approved') {
+      throw new Error('This transfer is not ready for admin review.')
+    }
+
+    if (status === 'admin_rejected') {
+      await db.memberTransferRequest.update({
+        data: {
+          adminReviewedAt: new Date(),
+          adminReviewedBy: user.id,
+          rejectionReason: rejectionReason || 'SAGICAM admin rejected this transfer request.',
+          status
+        },
+        where: {
+          id: request.id
+        }
+      })
+
+      revalidateMemberTransferViews()
+
+      return { message: 'Member transfer rejected by admin.' }
+    }
+
+    const receivingSponsor = await db.profile.findFirst({
+      select: {
+        clerkId: true,
+        sponsorCode: true
+      },
+      where: {
+        clerkId: request.receivingClerkId,
+        sponsorCode: request.receivingSponsorCode
+      }
+    })
+
+    if (!receivingSponsor) {
+      throw new Error('Receiving sponsor profile is no longer available.')
+    }
+
+    if (
+      request.member.clerkId !== request.initiatingClerkId ||
+      request.member.sponsorCode !== request.initiatingSponsorCode
+    ) {
+      throw new Error('This loved one no longer belongs to the initiating sponsor.')
+    }
+
+    await db.$transaction([
+      db.member.update({
+        data: {
+          clerkId: receivingSponsor.clerkId,
+          sponsorCode: receivingSponsor.sponsorCode
+        },
+        where: {
+          id: request.memberId
+        }
+      }),
+      db.memberTransferRequest.update({
+        data: {
+          adminReviewedAt: new Date(),
+          adminReviewedBy: user.id,
+          rejectionReason: null,
+          status
+        },
+        where: {
+          id: request.id
+        }
+      })
+    ])
+
+    revalidateMemberPaymentViews()
+    revalidateMemberTransferViews()
+
+    return { message: 'Member transfer approved and completed.' }
   } catch (error) {
     return renderError(error)
   }

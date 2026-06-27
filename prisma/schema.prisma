@@ -40,6 +40,7 @@ model Member {
   createdAt                 DateTime            @default(now())
   updatedAt                 DateTime            @updatedAt
   nameChangeRequests        NameChangeRequest[]
+  memberTransferRequests    MemberTransferRequest[]
 
   @@unique([firstName, lastAndMiddleNames, dateOfBirth, delegateRecommendation])
 }
@@ -150,6 +151,35 @@ model NameChangeRequest {
   @@index([memberId])
   @@index([clerkId])
   @@index([sponsorCode])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model MemberTransferRequest {
+  id                        String   @id @default(uuid())
+  memberId                  String
+  initiatingClerkId         String
+  initiatingSponsorCode     String
+  receivingClerkId          String
+  receivingSponsorCode      String
+  currentFirstName          String
+  currentLastAndMiddleNames String
+  memberMatriculationNumber String
+  status                    String   @default("receiving_sponsor_pending")
+  rejectionReason           String?
+  receivingReviewedBy       String?
+  receivingReviewedAt       DateTime?
+  adminReviewedBy           String?
+  adminReviewedAt           DateTime?
+  member                    Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+
+  @@index([memberId])
+  @@index([initiatingClerkId])
+  @@index([receivingClerkId])
+  @@index([initiatingSponsorCode])
+  @@index([receivingSponsorCode])
   @@index([status])
   @@index([createdAt])
 }
