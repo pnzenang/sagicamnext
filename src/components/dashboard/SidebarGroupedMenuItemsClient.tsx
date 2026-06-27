@@ -16,6 +16,7 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem
 } from '../ui/sidebar'
+import { pagesItems } from '@/utils/links'
 import type { MenuItem } from '@/utils/types'
 
 const activeMenuButtonClassName =
@@ -34,22 +35,25 @@ const MenuBadge = ({ value }: { value?: string }) =>
   ) : null
 
 const SidebarGroupedMenuItemsClient = ({
-  data,
   groupLabel,
-  isAdminUser
+  isAdminUser,
+  nameChangeBadge
 }: {
-  data: MenuItem[]
   groupLabel?: string
   isAdminUser: boolean
+  nameChangeBadge?: string
 }) => {
   const pathname = usePathname()
+
+  const getMenuBadge = (item: MenuItem) =>
+    item.href === '/name-change-documents-upload' ? nameChangeBadge : item.badge
 
   return (
     <SidebarGroup className='pt-16'>
       {groupLabel && <SidebarGroupLabel>{groupLabel}</SidebarGroupLabel>}
       <SidebarGroupContent>
         <SidebarMenu>
-          {data.map(item => {
+          {pagesItems.map(item => {
             if (item.label.includes('Admin') && !isAdminUser) return null
 
             if (item.children) {
@@ -66,7 +70,7 @@ const SidebarGroupedMenuItemsClient = ({
                       >
                         <item.icon />
                         <span className='truncate capitalize'>{item.label}</span>
-                        <MenuBadge value={item.badge} />
+                        <MenuBadge value={getMenuBadge(item)} />
                         <ChevronRightIcon className='ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90' />
                       </SidebarMenuButton>
                     </CollapsibleTrigger>
