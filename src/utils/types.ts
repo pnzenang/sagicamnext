@@ -112,3 +112,54 @@ export enum contributionStatus {
   underway = 'Contribution_Underway',
   completed = 'Contribution_Completed'
 }
+
+export const deceasedMemberDocumentTypes = [
+  'death_certificate',
+  'deceased_id_card',
+  'deceased_picture',
+  'funeral_program'
+] as const
+
+export type DeceasedMemberDocumentType = (typeof deceasedMemberDocumentTypes)[number]
+
+export const deceasedMemberDocumentLabels: Record<DeceasedMemberDocumentType, string> = {
+  death_certificate: 'Death certificate',
+  deceased_id_card: 'Deceased ID card',
+  deceased_picture: 'Deceased picture',
+  funeral_program: 'Funeral program'
+}
+
+export const deceasedMemberDocumentStatuses = ['submitted', 'approved', 'rejected'] as const
+
+export type DeceasedMemberDocumentStatus = (typeof deceasedMemberDocumentStatuses)[number]
+
+export const deceasedMemberDocumentStatusLabels: Record<DeceasedMemberDocumentStatus, string> = {
+  approved: 'Approved',
+  rejected: 'Rejected',
+  submitted: 'Submitted'
+}
+
+export type DeceasedMemberDocument = {
+  id: string
+  deceasedMemberId: string
+  clerkId: string
+  cloudinaryDeliveryType?: string | null
+  cloudinaryFormat?: string | null
+  cloudinaryPublicId?: string | null
+  cloudinaryResourceType?: string | null
+  cloudinaryVersion?: number | null
+  sponsorCode: string
+  documentType: string
+  fileName: string
+  mimeType: string
+  fileSize: number
+  secureUrl?: string | null
+  status: string
+  rejectionReason?: string | null
+  createdAt: Date
+  updatedAt: Date
+}
+
+export type DeceasedMemberWithDocuments = DeceasedMemberType & {
+  documents: DeceasedMemberDocument[]
+}

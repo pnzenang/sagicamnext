@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useEffect } from 'react'
+import { useActionState, useEffect, type FormHTMLAttributes, type ReactNode } from 'react'
 
 import { toast } from 'sonner'
 
@@ -10,7 +10,17 @@ const initialState = {
   message: ''
 }
 
-const FormContainer = ({ action, children }: { action: actionFunction; children: React.ReactNode }) => {
+const FormContainer = ({
+  action,
+  children,
+  className,
+  encType
+}: {
+  action: actionFunction
+  children: ReactNode
+  className?: string
+  encType?: FormHTMLAttributes<HTMLFormElement>['encType']
+}) => {
   const [state, formAction] = useActionState(action, initialState)
 
   useEffect(() => {
@@ -19,7 +29,11 @@ const FormContainer = ({ action, children }: { action: actionFunction; children:
     }
   }, [state])
 
-  return <form action={formAction}>{children}</form>
+  return (
+    <form action={formAction} className={className} encType={encType}>
+      {children}
+    </form>
+  )
 }
 
 export default FormContainer

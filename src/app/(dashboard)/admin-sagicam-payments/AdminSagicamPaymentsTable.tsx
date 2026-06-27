@@ -95,10 +95,8 @@ const compareValues = (firstValue: AdminSagicamPaymentsRow[SortKey], secondValue
 
 const getContributionBalanceTarget = (vestedMembers: number) => contributionCreditPerVestedMember * vestedMembers
 
-const getContributionReserveLabel = (balance: number, vestedMembers: number) => {
+const getContributionReserveLabel = (balance: number) => {
   if (balance < 0) return 'Deficit'
-
-  if (shouldShowReplenishAccountNotice(balance, vestedMembers)) return 'LOW RESERVE(please replenish)'
 
   return 'Reserve'
 }
@@ -107,6 +105,18 @@ const shouldShowReplenishAccountNotice = (balance: number, vestedMembers: number
   balance > 0 && balance < getContributionBalanceTarget(vestedMembers)
 
 const shouldShowNotInGoodStandingNotice = (balance: number) => balance < 0
+
+const ContributionReserveLabel = ({ balance, vestedMembers }: { balance: number; vestedMembers: number }) => {
+  if (shouldShowReplenishAccountNotice(balance, vestedMembers)) {
+    return (
+      <>
+        LOW RESERVE<span className='normal-case'>(please replenish)</span>
+      </>
+    )
+  }
+
+  return getContributionReserveLabel(balance)
+}
 
 const getContributionBalanceStatusClassName = (balance: number, vestedMembers: number) => {
   if (balance >= getContributionBalanceTarget(vestedMembers)) {
@@ -149,7 +159,7 @@ const BalanceCard = ({
     )}
   >
     <span className='mb-1 text-[10px] leading-tight font-extrabold uppercase'>
-      {getContributionReserveLabel(balance, vestedMembers)}
+      <ContributionReserveLabel balance={balance} vestedMembers={vestedMembers} />
     </span>
     <span className='tabular-nums'>{currencyFormatter.format(balance)}</span>
     {shouldShowNotInGoodStandingNotice(balance) ? (
@@ -530,7 +540,7 @@ const AdminSagicamPaymentsTable = ({
                         <ContributionPaymentControls row={row} />
                         <span className='bg-background/80 col-start-3 row-span-2 row-start-1 flex min-w-0 flex-col items-center justify-center self-stretch justify-self-stretch rounded-md border border-current/20 px-2 py-2 text-center text-xl leading-none font-black'>
                           <span className='mb-1 text-[10px] leading-tight font-extrabold uppercase'>
-                            {getContributionReserveLabel(row.balance, row.vestedMembers)}
+                            <ContributionReserveLabel balance={row.balance} vestedMembers={row.vestedMembers} />
                           </span>
                           <span className='tabular-nums'>{currencyFormatter.format(row.balance)}</span>
                           {shouldShowNotInGoodStandingNotice(row.balance) ? (
@@ -616,7 +626,7 @@ const AdminSagicamPaymentsTable = ({
                   <MobileValue label='Verified' value={currencyFormatter.format(row.amountReceived)} />
                   <div className='grid grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] items-start gap-2 border-t pt-3'>
                     <span className='text-muted-foreground text-xs font-semibold uppercase'>
-                      {getContributionReserveLabel(row.balance, row.vestedMembers)}
+                      <ContributionReserveLabel balance={row.balance} vestedMembers={row.vestedMembers} />
                     </span>
                     <BalanceCard
                       balance={row.balance}
@@ -644,7 +654,10 @@ const AdminSagicamPaymentsTable = ({
                 />
                 <div className='grid grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] items-start gap-2 border-t pt-3'>
                   <span className='text-xs font-semibold uppercase'>
-                    {getContributionReserveLabel(visibleTotals.balance, visibleTotals.vestedMembers)}
+                    <ContributionReserveLabel
+                      balance={visibleTotals.balance}
+                      vestedMembers={visibleTotals.vestedMembers}
+                    />
                   </span>
                   <BalanceCard
                     balance={visibleTotals.balance}

@@ -22,6 +22,8 @@ const hasCachedModelField = (modelName: string, fieldName: string) =>
 const shouldReuseCachedPrisma =
   cachedPrisma &&
   'contributionAssessment' in (cachedPrisma as unknown as Record<string, unknown>) &&
+  'deceasedMemberDocument' in (cachedPrisma as unknown as Record<string, unknown>) &&
+  hasCachedModelField('DeceasedMemberDocument', 'cloudinaryPublicId') &&
   hasCachedModelField('RemovedMember', 'memberStatus') &&
   hasCachedModelField('DeceasedMember', 'memberStatus') &&
   hasCachedModelField('PaymentAlertReset', 'sponsorCode') &&

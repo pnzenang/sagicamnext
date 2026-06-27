@@ -65,7 +65,7 @@ model RemovedMember {
 }
 
 model DeceasedMember {
-  id                        String    @id @default(uuid())
+  id                        String                   @id @default(uuid())
   originalMemberId          String?
   clerkId                   String
   firstName                 String
@@ -82,10 +82,40 @@ model DeceasedMember {
   placeOfDeath              String
   contributionStatus        String
   originalMemberCreatedAt   DateTime?
-  createdAt                 DateTime  @default(now())
-  updatedAt                 DateTime  @updatedAt
+  createdAt                 DateTime                 @default(now())
+  updatedAt                 DateTime                 @updatedAt
+  documents                 DeceasedMemberDocument[]
 
   @@index([sponsorCode, memberStatus])
+}
+
+model DeceasedMemberDocument {
+  id                     String         @id @default(uuid())
+  deceasedMemberId       String
+  clerkId                String
+  sponsorCode            String
+  documentType           String
+  fileName               String
+  mimeType               String
+  fileSize               Int
+  fileData               Bytes?
+  cloudinaryPublicId     String?
+  cloudinaryResourceType String?
+  cloudinaryDeliveryType String?
+  cloudinaryFormat       String?
+  cloudinaryVersion      Int?
+  secureUrl              String?
+  status                 String         @default("submitted")
+  rejectionReason        String?
+  deceasedMember         DeceasedMember @relation(fields: [deceasedMemberId], references: [id], onDelete: Cascade)
+  createdAt              DateTime       @default(now())
+  updatedAt              DateTime       @updatedAt
+
+  @@unique([deceasedMemberId, documentType])
+  @@index([deceasedMemberId])
+  @@index([sponsorCode])
+  @@index([clerkId])
+  @@index([status])
 }
 
 model ContributionAssessment {

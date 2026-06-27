@@ -15,7 +15,15 @@ import {
   RemovedMemberSchema,
   validateWithZodSchema
 } from './schemas'
-import { contributionStatus, memberStatus } from './types'
+import {
+  contributionStatus,
+  deceasedMemberDocumentLabels,
+  deceasedMemberDocumentStatuses,
+  deceasedMemberDocumentTypes,
+  memberStatus,
+  type DeceasedMemberDocumentStatus,
+  type DeceasedMemberDocumentType
+} from './types'
 import {
   sendDeathAnnouncementConfirmationEmail,
   sendLovedOneConfirmationEmail,
@@ -29,6 +37,11 @@ import {
   registrationFeePerEligibleMember
 } from './sagicam-registration-summary'
 import { sponsorPaymentLedgerEventTypes, sponsorPaymentTypes } from './sagicam-payment-ledger'
+import {
+  deleteDeathDocumentationFromCloudinary,
+  isSameCloudinaryDocument,
+  uploadDeathDocumentationToCloudinary
+} from './cloudinary'
 import { Prisma } from '@/generated/prisma/client'
 
 const randomMatriculation = customAlphabet('1234567890', 6)
@@ -50,7 +63,19 @@ const contributionPaymentAlertType = 'contribution'
 const registrationPaymentAlertType = 'registration'
 const allPaymentAlertSponsorsCode = '__all__'
 const MEMBER_REMOVAL_RESTORE_WINDOW_MS = 48 * 60 * 60 * 1000
+const maxDeceasedMemberDocumentFileSize = 10 * 1024 * 1024
 const blockedDeceasedRestoreStatuses = new Set<string>([contributionStatus.underway, contributionStatus.completed])
+
+const allowedDeceasedMemberDocumentMimeTypes = new Set([
+  'application/pdf',
+  'image/heic',
+  'image/heif',
+  'image/jpeg',
+  'image/png',
+  'image/webp'
+])
+
+const allowedDeceasedMemberDocumentExtensions = new Set(['.heic', '.heif', '.jpeg', '.jpg', '.pdf', '.png', '.webp'])
 
 const formatRegistrationDate = (date: Date) => registrationDateFormatter.format(date)
 
@@ -254,6 +279,12 @@ const revalidateMemberPaymentViews = () => {
   revalidatePath('/removed-members')
 }
 
+const revalidateDeathDocumentationViews = () => {
+  revalidatePath('/admin-deceased')
+  revalidatePath('/death-documentations')
+  revalidatePath('/deceased-members')
+}
+
 const fetchSponsorByCode = async (sponsorCode: string) => {
   const sponsor = await db.profile.findUnique({
     where: {
@@ -316,6 +347,68 @@ const getRequiredFormValue = (formData: FormData, fieldName: string) => {
   }
 
   return value
+}
+
+const isDeceasedMemberDocumentType = (value: string): value is DeceasedMemberDocumentType =>
+  deceasedMemberDocumentTypes.includes(value as DeceasedMemberDocumentType)
+
+const isDeceasedMemberDocumentStatus = (value: string): value is DeceasedMemberDocumentStatus =>
+  deceasedMemberDocumentStatuses.includes(value as DeceasedMemberDocumentStatus)
+
+const getFileExtension = (fileName: string) => {
+  const extensionStart = fileName.lastIndexOf('.')
+
+  return extensionStart >= 0 ? fileName.slice(extensionStart).toLowerCase() : ''
+}
+
+const isAllowedDeceasedMemberDocumentFile = (file: File) =>
+  allowedDeceasedMemberDocumentMimeTypes.has(file.type) ||
+  allowedDeceasedMemberDocumentExtensions.has(getFileExtension(file.name))
+
+const getSafeDocumentFileName = (file: File, documentType: DeceasedMemberDocumentType) => {
+  const fileName = file.name.trim()
+
+  if (!fileName) return deceasedMemberDocumentLabels[documentType]
+
+  return fileName.slice(0, 180)
+}
+
+type StoredCloudinaryDocumentFields = {
+  cloudinaryDeliveryType?: string | null
+  cloudinaryFormat?: string | null
+  cloudinaryPublicId?: string | null
+  cloudinaryResourceType?: string | null
+  cloudinaryVersion?: number | null
+  secureUrl?: string | null
+}
+
+const getStoredCloudinaryDocument = (document: StoredCloudinaryDocumentFields | null | undefined) => {
+  if (!document?.cloudinaryPublicId || !document.cloudinaryResourceType || !document.cloudinaryDeliveryType) return null
+
+  return {
+    deliveryType: document.cloudinaryDeliveryType,
+    format: document.cloudinaryFormat,
+    publicId: document.cloudinaryPublicId,
+    resourceType: document.cloudinaryResourceType,
+    secureUrl: document.secureUrl,
+    version: document.cloudinaryVersion
+  }
+}
+
+const deleteStoredCloudinaryDocument = async (document: StoredCloudinaryDocumentFields | null | undefined) => {
+  const storedDocument = getStoredCloudinaryDocument(document)
+
+  if (!storedDocument) return
+
+  try {
+    await deleteDeathDocumentationFromCloudinary(storedDocument)
+  } catch (error) {
+    console.error('Unable to delete Cloudinary death document', error)
+  }
+}
+
+const deleteStoredCloudinaryDocuments = async (documents: StoredCloudinaryDocumentFields[]) => {
+  await Promise.all(documents.map(document => deleteStoredCloudinaryDocument(document)))
 }
 
 const getDollarAmountFromForm = (formData: FormData, fieldName: string) => {
@@ -1909,6 +2002,250 @@ export const fetchDeceasedMembersActionAdmin = async () => {
   return deceasedMember
 }
 
+export const fetchDeathDocumentationCasesAction = async () => {
+  const user = await getAuthUser()
+  const isAdminUser = user.id === process.env.ADMIN_USER_ID
+
+  const deceasedMembers = await db.deceasedMember.findMany({
+    include: {
+      documents: {
+        orderBy: { updatedAt: 'desc' },
+        select: {
+          clerkId: true,
+          createdAt: true,
+          deceasedMemberId: true,
+          documentType: true,
+          fileName: true,
+          fileSize: true,
+          id: true,
+          mimeType: true,
+          rejectionReason: true,
+          sponsorCode: true,
+          status: true,
+          updatedAt: true
+        }
+      }
+    },
+    orderBy: { createdAt: 'desc' },
+    where: isAdminUser
+      ? {}
+      : {
+          clerkId: user.id
+        }
+  })
+
+  return { deceasedMembers, isAdminUser }
+}
+
+export const uploadDeceasedMemberDocumentAction = async (
+  provState: any,
+  formData: FormData
+): Promise<{ message: string }> => {
+  const user = await getAuthUser()
+
+  try {
+    const deceasedMemberId = getRequiredFormValue(formData, 'deceasedMemberId')
+    const documentType = getRequiredFormValue(formData, 'documentType')
+    const file = formData.get('documentFile')
+
+    if (!isDeceasedMemberDocumentType(documentType)) {
+      throw new Error('Select a valid document type.')
+    }
+
+    if (!(file instanceof File) || file.size <= 0) {
+      throw new Error(`Please choose a file for ${deceasedMemberDocumentLabels[documentType]}.`)
+    }
+
+    if (file.size > maxDeceasedMemberDocumentFileSize) {
+      throw new Error('The file is too large. Please upload a file that is 10 MB or smaller.')
+    }
+
+    if (!isAllowedDeceasedMemberDocumentFile(file)) {
+      throw new Error('Please upload a PDF, JPG, PNG, WEBP, HEIC, or HEIF file.')
+    }
+
+    const deceasedMember = await db.deceasedMember.findUnique({
+      select: {
+        clerkId: true,
+        id: true,
+        sponsorCode: true
+      },
+      where: {
+        id: deceasedMemberId
+      }
+    })
+
+    if (!deceasedMember) {
+      throw new Error('Death announcement not found.')
+    }
+
+    const isAdminUser = user.id === process.env.ADMIN_USER_ID
+
+    if (!isAdminUser && deceasedMember.clerkId !== user.id) {
+      throw new Error('You can only upload documents for death announcements from your own account.')
+    }
+
+    const safeFileName = getSafeDocumentFileName(file, documentType)
+
+    const existingDocument = await db.deceasedMemberDocument.findUnique({
+      select: {
+        cloudinaryDeliveryType: true,
+        cloudinaryFormat: true,
+        cloudinaryPublicId: true,
+        cloudinaryResourceType: true,
+        cloudinaryVersion: true,
+        secureUrl: true
+      },
+      where: {
+        deceasedMemberId_documentType: {
+          deceasedMemberId,
+          documentType
+        }
+      }
+    })
+
+    const uploadedDocument = await uploadDeathDocumentationToCloudinary({
+      buffer: Buffer.from(await file.arrayBuffer()),
+      deceasedMemberId,
+      documentType,
+      fileName: safeFileName,
+      sponsorCode: deceasedMember.sponsorCode
+    })
+
+    await db.deceasedMemberDocument.upsert({
+      create: {
+        clerkId: deceasedMember.clerkId,
+        cloudinaryDeliveryType: uploadedDocument.deliveryType,
+        cloudinaryFormat: uploadedDocument.format,
+        cloudinaryPublicId: uploadedDocument.publicId,
+        cloudinaryResourceType: uploadedDocument.resourceType,
+        cloudinaryVersion: uploadedDocument.version,
+        deceasedMemberId,
+        documentType,
+        fileData: null,
+        fileName: safeFileName,
+        fileSize: file.size,
+        mimeType: file.type || 'application/octet-stream',
+        secureUrl: uploadedDocument.secureUrl,
+        sponsorCode: deceasedMember.sponsorCode
+      },
+      update: {
+        clerkId: deceasedMember.clerkId,
+        cloudinaryDeliveryType: uploadedDocument.deliveryType,
+        cloudinaryFormat: uploadedDocument.format,
+        cloudinaryPublicId: uploadedDocument.publicId,
+        cloudinaryResourceType: uploadedDocument.resourceType,
+        cloudinaryVersion: uploadedDocument.version,
+        fileData: null,
+        fileName: safeFileName,
+        fileSize: file.size,
+        mimeType: file.type || 'application/octet-stream',
+        rejectionReason: null,
+        secureUrl: uploadedDocument.secureUrl,
+        sponsorCode: deceasedMember.sponsorCode,
+        status: 'submitted'
+      },
+      where: {
+        deceasedMemberId_documentType: {
+          deceasedMemberId,
+          documentType
+        }
+      }
+    })
+
+    const previousDocument = getStoredCloudinaryDocument(existingDocument)
+
+    if (previousDocument && !isSameCloudinaryDocument(previousDocument, uploadedDocument)) {
+      await deleteStoredCloudinaryDocument(existingDocument)
+    }
+
+    revalidateDeathDocumentationViews()
+
+    return { message: `${deceasedMemberDocumentLabels[documentType]} uploaded successfully` }
+  } catch (error) {
+    return renderError(error)
+  }
+}
+
+export const deleteDeceasedMemberDocumentAction = async (prevState: { documentId: string }) => {
+  const user = await getAuthUser()
+  const { documentId } = prevState
+
+  try {
+    const document = await db.deceasedMemberDocument.findUnique({
+      select: {
+        clerkId: true,
+        cloudinaryDeliveryType: true,
+        cloudinaryFormat: true,
+        cloudinaryPublicId: true,
+        cloudinaryResourceType: true,
+        cloudinaryVersion: true,
+        id: true
+      },
+      where: {
+        id: documentId
+      }
+    })
+
+    if (!document) {
+      throw new Error('Document not found.')
+    }
+
+    const isAdminUser = user.id === process.env.ADMIN_USER_ID
+
+    if (!isAdminUser && document.clerkId !== user.id) {
+      throw new Error('You can only remove documents from your own account.')
+    }
+
+    await db.deceasedMemberDocument.delete({
+      where: {
+        id: document.id
+      }
+    })
+
+    await deleteStoredCloudinaryDocument(document)
+
+    revalidateDeathDocumentationViews()
+
+    return { message: 'Document removed successfully' }
+  } catch (error) {
+    return renderError(error)
+  }
+}
+
+export const reviewDeceasedMemberDocumentAction = async (
+  provState: any,
+  formData: FormData
+): Promise<{ message: string }> => {
+  await assertAdminUser()
+
+  try {
+    const documentId = getRequiredFormValue(formData, 'documentId')
+    const status = getRequiredFormValue(formData, 'status')
+    const rejectionReason = String(formData.get('rejectionReason') ?? '').trim()
+
+    if (!isDeceasedMemberDocumentStatus(status)) {
+      throw new Error('Select a valid document review status.')
+    }
+
+    await db.deceasedMemberDocument.update({
+      data: {
+        rejectionReason: status === 'rejected' ? rejectionReason || 'Please upload a clearer or corrected document.' : null,
+        status
+      },
+      where: {
+        id: documentId
+      }
+    })
+
+    revalidateDeathDocumentationViews()
+
+    return { message: `Document marked ${status}` }
+  } catch (error) {
+    return renderError(error)
+  }
+}
+
 export const restoreDeceasedMemberAction = async (prevState: { deceasedMemberId: string }) => {
   const user = await getAuthUser()
   const { deceasedMemberId } = prevState
@@ -1950,6 +2287,20 @@ export const restoreDeceasedMemberAction = async (prevState: { deceasedMemberId:
     if (!dateOfBirth || !delegateRecommendation || !restoredMemberStatus || !originalMemberCreatedAt) {
       throw new Error('This death announcement is missing the original details needed for restoration.')
     }
+
+    const documentsToDelete = await db.deceasedMemberDocument.findMany({
+      select: {
+        cloudinaryDeliveryType: true,
+        cloudinaryFormat: true,
+        cloudinaryPublicId: true,
+        cloudinaryResourceType: true,
+        cloudinaryVersion: true,
+        secureUrl: true
+      },
+      where: {
+        deceasedMemberId: deceasedMember.id
+      }
+    })
 
     await db.$transaction(async tx => {
       await tx.member.create({
@@ -2040,6 +2391,8 @@ export const restoreDeceasedMemberAction = async (prevState: { deceasedMemberId:
       }
     })
 
+    await deleteStoredCloudinaryDocuments(documentsToDelete)
+
     revalidateMemberPaymentViews()
 
     return { message: 'Death announcement restored successfully' }
@@ -2077,11 +2430,28 @@ export const deleteDeceasedMemberAction = async (prevState: { deceasedMemberId: 
   await assertAdminUser()
 
   try {
+    const documentsToDelete = await db.deceasedMemberDocument.findMany({
+      select: {
+        cloudinaryDeliveryType: true,
+        cloudinaryFormat: true,
+        cloudinaryPublicId: true,
+        cloudinaryResourceType: true,
+        cloudinaryVersion: true,
+        secureUrl: true
+      },
+      where: {
+        deceasedMemberId
+      }
+    })
+
     await db.deceasedMember.delete({
       where: {
         id: deceasedMemberId
       }
     })
+
+    await deleteStoredCloudinaryDocuments(documentsToDelete)
+
     revalidateMemberPaymentViews()
 
     return { message: 'deceased member removed ' }
