@@ -2271,6 +2271,47 @@ export const reviewIncomingMemberTransferRequestAction = async (
   }
 }
 
+export const cancelMemberTransferRequestAction = async (prevState: { requestId: string }) => {
+  const user = await getAuthUser()
+  const { requestId } = prevState
+
+  try {
+    const request = await db.memberTransferRequest.findUnique({
+      where: {
+        id: requestId
+      }
+    })
+
+    if (!request) {
+      throw new Error('Member transfer request not found.')
+    }
+
+    if (request.initiatingClerkId !== user.id) {
+      throw new Error('Only the requesting sponsor can cancel this transfer request.')
+    }
+
+    if (!openMemberTransferRequestStatuses.includes(request.status as MemberTransferRequestStatus)) {
+      throw new Error('This member transfer request can no longer be cancelled.')
+    }
+
+    await db.memberTransferRequest.update({
+      data: {
+        rejectionReason: 'Requesting sponsor cancelled this transfer request.',
+        status: 'cancelled'
+      },
+      where: {
+        id: request.id
+      }
+    })
+
+    revalidateMemberTransferViews()
+
+    return { message: 'Member transfer request cancelled.' }
+  } catch (error) {
+    return renderError(error)
+  }
+}
+
 export const reviewAdminMemberTransferRequestAction = async (
   prevState: any,
   formData: FormData

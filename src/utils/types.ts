@@ -190,7 +190,8 @@ export const memberTransferRequestStatuses = [
   'receiving_sponsor_approved',
   'receiving_sponsor_rejected',
   'admin_approved',
-  'admin_rejected'
+  'admin_rejected',
+  'cancelled'
 ] as const
 
 export type MemberTransferRequestStatus = (typeof memberTransferRequestStatuses)[number]
@@ -198,6 +199,7 @@ export type MemberTransferRequestStatus = (typeof memberTransferRequestStatuses)
 export const memberTransferRequestStatusLabels: Record<MemberTransferRequestStatus, string> = {
   admin_approved: 'Admin approved',
   admin_rejected: 'Admin rejected',
+  cancelled: 'Cancelled',
   receiving_sponsor_approved: 'Receiving sponsor approved',
   receiving_sponsor_pending: 'Receiving sponsor pending',
   receiving_sponsor_rejected: 'Receiving sponsor rejected'

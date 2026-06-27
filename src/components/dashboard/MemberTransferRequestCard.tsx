@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
 import {
+  cancelMemberTransferRequestAction,
   reviewAdminMemberTransferRequestAction,
   reviewIncomingMemberTransferRequestAction
 } from '@/utils/actions'
@@ -52,7 +53,7 @@ const getStatusClassName = (status: string) => {
     return 'border-green-200 bg-green-50 text-green-700 dark:border-green-900 dark:bg-green-950/40 dark:text-green-300'
   }
 
-  if (status === 'admin_rejected' || status === 'receiving_sponsor_rejected') {
+  if (status === 'admin_rejected' || status === 'cancelled' || status === 'receiving_sponsor_rejected') {
     return 'border-red-200 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300'
   }
 
@@ -66,7 +67,9 @@ const getStatusClassName = (status: string) => {
 const RequestStatusBadge = ({ status }: { status: string }) => (
   <Badge variant='outline' className={cn('shrink-0 capitalize', getStatusClassName(status))}>
     {status === 'admin_approved' ? <CheckCircle2 /> : null}
-    {status === 'admin_rejected' || status === 'receiving_sponsor_rejected' ? <XCircle /> : null}
+    {status === 'admin_rejected' || status === 'cancelled' || status === 'receiving_sponsor_rejected' ? (
+      <XCircle />
+    ) : null}
     {status === 'receiving_sponsor_pending' || status === 'receiving_sponsor_approved' ? <Clock3 /> : null}
     {getStatusLabel(status)}
   </Badge>
@@ -140,6 +143,18 @@ const AdminTransferControls = ({ request }: { request: MemberTransferRequestCard
   )
 }
 
+const SponsorCancelTransferControl = ({ request }: { request: MemberTransferRequestCardData }) => {
+  if (!['receiving_sponsor_pending', 'receiving_sponsor_approved'].includes(request.status)) return null
+
+  const cancelRequest = cancelMemberTransferRequestAction.bind(null, { requestId: request.id })
+
+  return (
+    <FormContainer action={cancelRequest} refreshOnMessage>
+      <SubmitButton text='Cancel request' className='h-8 w-full bg-red-700 px-3 text-xs normal-case hover:bg-red-800 sm:w-fit' />
+    </FormContainer>
+  )
+}
+
 const MemberTransferRequestCard = ({
   currentUserClerkId,
   isAdminUser,
@@ -149,6 +164,7 @@ const MemberTransferRequestCard = ({
   isAdminUser: boolean
   request: MemberTransferRequestCardData
 }) => {
+  const isInitiatingSponsor = currentUserClerkId === request.initiatingClerkId
   const isReceivingSponsor = currentUserClerkId === request.receivingClerkId
   const memberName = `${request.currentFirstName} ${request.currentLastAndMiddleNames}`
 
@@ -185,6 +201,7 @@ const MemberTransferRequestCard = ({
         </p>
       ) : null}
 
+      {isInitiatingSponsor ? <SponsorCancelTransferControl request={request} /> : null}
       {isReceivingSponsor ? <ReceivingSponsorControls request={request} /> : null}
       {isAdminUser ? <AdminTransferControls request={request} /> : null}
     </div>
