@@ -2290,6 +2290,10 @@ export const reviewIncomingMemberTransferRequestAction = async (
       throw new Error('Select a valid transfer decision.')
     }
 
+    if (status === 'receiving_sponsor_rejected' && !rejectionReason) {
+      throw new Error('Give the reason to reject the release.')
+    }
+
     const request = await db.memberTransferRequest.findUnique({
       where: {
         id: requestId
@@ -2312,10 +2316,7 @@ export const reviewIncomingMemberTransferRequestAction = async (
       data: {
         receivingReviewedAt: new Date(),
         receivingReviewedBy: user.id,
-        rejectionReason:
-          status === 'receiving_sponsor_rejected'
-            ? rejectionReason || 'Current sponsor rejected this transfer release request.'
-            : null,
+        rejectionReason: status === 'receiving_sponsor_rejected' ? rejectionReason : null,
         status
       },
       where: {

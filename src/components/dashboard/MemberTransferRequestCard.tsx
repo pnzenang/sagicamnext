@@ -84,6 +84,8 @@ const ReleasingSponsorControls = ({
 }) => {
   if (request.status !== 'receiving_sponsor_pending') return null
 
+  const rejectionReasonId = `release-rejection-reason-${request.id}`
+
   return (
     <div className={cn('grid gap-2 rounded-md border bg-white/60 dark:bg-black/10', compact ? 'p-2' : 'p-3')}>
       <div className='flex items-center gap-1.5 text-xs font-semibold'>
@@ -107,8 +109,11 @@ const ReleasingSponsorControls = ({
             className='h-8 w-full bg-red-700 px-3 text-xs normal-case hover:bg-red-800'
           />
           <Textarea
+            id={rejectionReasonId}
+            aria-label='Give the reason to reject the release'
             name='rejectionReason'
-            placeholder='Reason if rejected'
+            placeholder='Give the reason to reject the release'
+            required
             defaultValue={request.rejectionReason ?? ''}
             className={cn('text-xs', compact ? 'min-h-14' : 'min-h-16')}
           />
