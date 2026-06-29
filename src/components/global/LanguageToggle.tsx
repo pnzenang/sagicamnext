@@ -4,8 +4,8 @@ import { Suspense, useMemo } from 'react'
 
 import { usePathname, useSearchParams } from 'next/navigation'
 
+import { PrimaryFlowButton } from '@/components/ui/flow-button'
 import { languageCookieName, languageOptions, normalizeLanguage, type AppLanguage } from '@/lib/i18n'
-import { cn } from '@/lib/utils'
 
 type LanguageToggleContentProps = {
   currentLanguage?: AppLanguage
@@ -32,63 +32,36 @@ const getLanguageRedirectPath = (language: AppLanguage) => {
   return `${url.pathname}${url.search}${url.hash}`
 }
 
-const LanguageToggleContent = ({ currentLanguage = 'en', nextPath }: LanguageToggleContentProps) => (
-  <div
-    className='ring-primary/60 bg-primary/10 text-primary relative grid h-10 w-[5.75rem] grid-cols-2 gap-1 rounded-md p-1 text-xs font-semibold shadow-[inset_0_-3px_6px_0px_rgba(255,255,255,100)] ring-2 backdrop-blur duration-500'
-    aria-label='Choose site language'
-  >
-    <span
-      aria-hidden='true'
-      className='bg-primary absolute top-1 left-1 h-8 w-10 rounded-sm shadow-sm transition-transform duration-300 ease-out'
-      style={{
-        transform: currentLanguage === 'fr' ? 'translateX(2.75rem)' : 'translateX(0)'
+const LanguageToggleContent = ({ currentLanguage = 'en', nextPath }: LanguageToggleContentProps) => {
+  const targetLanguage: AppLanguage = currentLanguage === 'fr' ? 'en' : 'fr'
+  const targetOption = languageOptions[targetLanguage]
+
+  return (
+    <PrimaryFlowButton
+      type='button'
+      size='icon-lg'
+      aria-label={targetOption.ariaLabel}
+      className='bg-accent relative'
+      disabled={!nextPath}
+      onClick={() => {
+        setLanguageCookie(targetLanguage)
+
+        const redirectPath = getLanguageRedirectPath(targetLanguage)
+        const currentPath = `${window.location.pathname}${window.location.search}${window.location.hash}`
+
+        if (redirectPath === currentPath) {
+          window.location.reload()
+
+          return
+        }
+
+        window.location.assign(redirectPath)
       }}
-    />
-    {Object.entries(languageOptions).map(([language, option]) => {
-      const typedLanguage = language as AppLanguage
-      const isActive = typedLanguage === currentLanguage
-
-      const className = cn(
-        'relative z-10 flex h-8 w-10 items-center justify-center rounded-sm transition-colors duration-200',
-        isActive ? 'text-primary-foreground' : 'hover:text-foreground'
-      )
-
-      if (!nextPath) {
-        return (
-          <span key={language} className={className}>
-            {option.shortLabel}
-          </span>
-        )
-      }
-
-      return (
-        <button
-          key={language}
-          type='button'
-          aria-label={option.ariaLabel}
-          aria-current={isActive ? 'page' : undefined}
-          className={className}
-          onClick={() => {
-            setLanguageCookie(typedLanguage)
-
-            const redirectPath = getLanguageRedirectPath(typedLanguage)
-            const currentPath = `${window.location.pathname}${window.location.search}${window.location.hash}`
-
-            if (redirectPath === currentPath) {
-              window.location.reload()
-
-              return
-            }
-
-            window.location.assign(redirectPath)
-          }}
-        >
-          {option.shortLabel}
-        </button>
-      )
-    })}
-  </div>
-)
+    >
+      <span className='text-xs font-bold'>{targetOption.shortLabel}</span>
+    </PrimaryFlowButton>
+  )
+}
 
 const LanguageToggleInner = ({ homeOnly, initialLanguage }: { homeOnly?: boolean; initialLanguage: AppLanguage }) => {
   const pathname = usePathname()
