@@ -1,5 +1,7 @@
 import { auth } from '@clerk/nextjs/server'
 
+import { dashboardText, type AppLanguage } from '@/lib/i18n'
+
 import SidebarGroupedMenuItemsClient from './SidebarGroupedMenuItemsClient'
 
 type SidebarBadgeMap = Record<string, string | undefined>
@@ -68,13 +70,28 @@ const fetchSidebarBadges = async ({
   }
 }
 
-const SidebarGroupedMenuItems = async ({ groupLabel }: { groupLabel?: string }) => {
+const SidebarGroupedMenuItems = async ({
+  groupLabel,
+  language = 'en'
+}: {
+  groupLabel?: string
+  language?: AppLanguage
+}) => {
   const { userId } = await auth()
   const isAdminUser = userId === process.env.ADMIN_USER_ID
+  const copy = dashboardText[language]
 
   const menuBadges = await fetchSidebarBadges({ isAdminUser, userId })
 
-  return <SidebarGroupedMenuItemsClient groupLabel={groupLabel} isAdminUser={isAdminUser} menuBadges={menuBadges} />
+  return (
+    <SidebarGroupedMenuItemsClient
+      adminLabel={copy.sidebar.admin}
+      groupLabel={groupLabel}
+      isAdminUser={isAdminUser}
+      language={language}
+      menuBadges={menuBadges}
+    />
+  )
 }
 
 export default SidebarGroupedMenuItems

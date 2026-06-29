@@ -1,10 +1,10 @@
 import type { ComponentType } from 'react'
 
-import { Badge } from '@/components/ui/badge'
+import Image from 'next/image'
 
+import { Badge } from '@/components/ui/badge'
 import { BorderBeam } from '@/components/ui/border-beam'
 import { MotionPreset } from '@/components/ui/motion-preset'
-import Image from 'next/image'
 
 type ContactInfo = {
   icon: ComponentType
@@ -12,7 +12,25 @@ type ContactInfo = {
   details: string[]
 }[]
 
-const ContactUs = ({ contactInfo }: { contactInfo: ContactInfo }) => {
+export type ContactSectionCopy = {
+  badge: string
+  title: string
+  imageAlt: string
+}
+
+const defaultContactSectionCopy: ContactSectionCopy = {
+  badge: 'GETTING IN TOUCH WITH SAGICAM',
+  title: 'Get in touch with SAGICAM!',
+  imageAlt: 'Contact Form'
+}
+
+const ContactUs = ({
+  contactInfo,
+  copy = defaultContactSectionCopy
+}: {
+  contactInfo: ContactInfo
+  copy?: ContactSectionCopy
+}) => {
   return (
     <section id='contact' className='bg-muted py-8 sm:py-16 lg:py-24'>
       <MotionPreset
@@ -22,7 +40,7 @@ const ContactUs = ({ contactInfo }: { contactInfo: ContactInfo }) => {
         delay={0.1}
       >
         <Badge variant='outline' className='bg-background text-primary relative mx-4 my-2 ml-8 space-y-2 font-normal'>
-          GETTING IN TOUCH WITH SAGICAM
+          {copy.badge}
           <BorderBeam colorFrom='var(--primary)' colorTo='var(--primary)' size={35} duration={8} />
         </Badge>
       </MotionPreset>
@@ -40,7 +58,7 @@ const ContactUs = ({ contactInfo }: { contactInfo: ContactInfo }) => {
                 delay={0.3}
                 transition={{ duration: 0.5 }}
               >
-                Get in touch with SAGICAM!
+                {copy.title}
               </MotionPreset>
             </div>
 
@@ -80,7 +98,7 @@ const ContactUs = ({ contactInfo }: { contactInfo: ContactInfo }) => {
           {/* <MotionPreset fade blur zoom={{ initialScale: 0.9 }} delay={0.3} transition={{ duration: 0.8 }}> */}
           <Image
             src='https://res.cloudinary.com/dp8tkb7hq/image/upload/v1776095057/contact_wzb69b.svg'
-            alt='Contact Form'
+            alt={copy.imageAlt}
             width={500}
             height={500}
             className='rounded-lg shadow-lg'

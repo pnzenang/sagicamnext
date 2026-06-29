@@ -7,7 +7,24 @@ import { Badge } from '@/components/ui/badge'
 import { TextFlip } from '@/components/ui/text-flip'
 import { BorderBeam } from '@/components/ui/border-beam'
 
-const HeroSection = () => {
+export type HeroSectionCopy = {
+  badge: string
+  titleLead: string
+  flipWords: string[]
+  description: string
+  imageAlt: string
+}
+
+export const defaultHeroSectionCopy: HeroSectionCopy = {
+  badge: 'SOLUTION FOR FAMILIES AND FRIENDS LIVING IN CAMEROON',
+  titleLead: 'SAGICAM Connects',
+  flipWords: ['Friends.', 'Families.', 'Generations.', 'Promotions.', 'Communities.'],
+  description:
+    "By sponsoring your loved ones living in Cameroon in SAGICAM, you make their eventual passing a SAGI problem, the whole SAGICAM community will come together to support you in the trying time. At SAGICAM.\nwe the camerooninan solidarity, making one family's problem the problem of the whole community. Making it a little easier for any of us, to face up to the adversity of financially taking care of expenses related to the funeral of a loved one.",
+  imageAlt: 'SAGICAM family support illustration'
+}
+
+const HeroSection = ({ copy = defaultHeroSectionCopy }: { copy?: HeroSectionCopy }) => {
   return (
     <section className='flex-1 py-4 sm:py-6 lg:py-8'>
       <div className='mx-auto flex h-full max-w-7xl flex-col gap-12 px-4 sm:gap-16 sm:px-6 lg:gap-24 lg:px-8'>
@@ -20,7 +37,7 @@ const HeroSection = () => {
               delay={0.1}
             >
               <Badge variant='outline' className='bg-background text-primary relative px-3 py-1 font-normal'>
-                SOLUTION FOR FAMILIES AND FRIENDS LIVING IN CAMEROON
+                {copy.badge}
                 <BorderBeam colorFrom='var(--primary)' colorTo='var(--primary)' size={35} duration={8} />
               </Badge>
             </MotionPreset>
@@ -32,7 +49,7 @@ const HeroSection = () => {
               delay={0.2}
             >
               <h1 className='max-w-3xl text-2xl leading-[1.29167] font-bold sm:text-3xl lg:text-4xl'>
-                SAGICAM Connects{' '}
+                {copy.titleLead}{' '}
                 <MotionPreset
                   component='div'
                   zoom={{ initialScale: 0.5 }}
@@ -41,7 +58,7 @@ const HeroSection = () => {
                   delay={0.5}
                   className='bg-primary/10 relative inline-block border-2 px-3'
                 >
-                  <TextFlip words={['Friends.', 'Families.', 'Generations.', 'Promotions.', 'Communities.']} />
+                  <TextFlip words={copy.flipWords} />
                   <MotionPreset
                     component='span'
                     zoom={{ initialScale: 0 }}
@@ -80,14 +97,7 @@ const HeroSection = () => {
               transition={{ type: 'spring', stiffness: 120, damping: 20 }}
               delay={0.4}
             >
-              <p className='text-muted-foreground text-lg'>
-                By sponsoring your loved ones living in Cameroon in SAGICAM, you make their eventual passing a SAGI
-                problem, the whole SAGICAM community will come together to support you in the trying time. At SAGICAM.
-                <br />
-                we the camerooninan solidarity, making one family's problem the problem of the whole community. Making
-                it a little easier for any of us, to face up to the adversity of financially taking care of expenses
-                related to the funeral of a loved one.
-              </p>
+              <p className='text-muted-foreground text-lg whitespace-pre-line'>{copy.description}</p>
             </MotionPreset>
             <MotionPreset
               component='div'
@@ -109,12 +119,12 @@ const HeroSection = () => {
           >
             <img
               src='https://res.cloudinary.com/dp8tkb7hq/image/upload/v1775974319/Untitled_design-removebg-preview_1_qzzdqa.png'
-              alt='girl light'
+              alt={copy.imageAlt}
               className='size-127 object-cover transition-all duration-300 hover:scale-105 hover:-rotate-2 max-sm:size-100 dark:hidden'
             />
             <img
               src='https://res.cloudinary.com/dp8tkb7hq/image/upload/v1775974319/Untitled_design-removebg-preview_1_qzzdqa.png'
-              alt='girl dark'
+              alt={copy.imageAlt}
               className='hidden size-127 object-cover transition-all duration-300 hover:scale-105 hover:-rotate-2 max-sm:size-100 dark:block'
             />
           </MotionPreset>

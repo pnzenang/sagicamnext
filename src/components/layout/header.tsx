@@ -10,7 +10,9 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { PrimaryFlowButton, SecondaryFlowButton } from '@/components/ui/flow-button'
 
 import { HeaderNavigation, HeaderNavigationSmallScreen, type Navigation } from '@/components/layout/header-navigation'
+import { LanguageToggle } from '@/components/global/LanguageToggle'
 
+import type { AppLanguage } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
 import Logo from '../logo'
 import { ModeToggle } from './mode-toggle/mode-toggle'
@@ -18,10 +20,12 @@ import LogoSmall from '../logoSmall'
 
 type HeaderProps = {
   navigationData: Navigation[]
+  language?: AppLanguage
+  loginLabel?: string
   className?: string
 }
 
-const Header = ({ navigationData, className }: HeaderProps) => {
+const Header = ({ navigationData, language = 'en', loginLabel = 'Login', className }: HeaderProps) => {
   const [isScrolled, setIsScrolled] = useState(false)
 
   useEffect(() => {
@@ -63,11 +67,13 @@ const Header = ({ navigationData, className }: HeaderProps) => {
         />
 
         {/* Actions */}
-        <div className='flex gap-4 sm:gap-6'>
+        <div className='flex items-center gap-4 sm:gap-6'>
+          <LanguageToggle homeOnly initialLanguage={language} />
+
           <ModeToggle />
 
           <PrimaryFlowButton size='lg' className='max-sm:hidden' asChild>
-            <Link href='/profile/create'>Login</Link>
+            <Link href='/profile/create'>{loginLabel}</Link>
           </PrimaryFlowButton>
 
           <Tooltip>
@@ -75,11 +81,11 @@ const Header = ({ navigationData, className }: HeaderProps) => {
               <SecondaryFlowButton size='icon-lg' className='sm:hidden' asChild>
                 <Link href='/profile/create'>
                   <LogInIcon />
-                  <span className='sr-only'>Login</span>
+                  <span className='sr-only'>{loginLabel}</span>
                 </Link>
               </SecondaryFlowButton>
             </TooltipTrigger>
-            <TooltipContent>Login</TooltipContent>
+            <TooltipContent>{loginLabel}</TooltipContent>
           </Tooltip>
 
           <HeaderNavigationSmallScreen navigationData={navigationData} />

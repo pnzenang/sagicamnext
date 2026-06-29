@@ -23,7 +23,25 @@ type PricingPlans = {
   features: string[]
 }[]
 
-const Pricing = ({ pricingPlans }: { pricingPlans: PricingPlans }) => {
+export type PricingPlansSectionCopy = {
+  badge: string
+  title: string
+  description: string
+}
+
+const defaultPricingPlansSectionCopy: PricingPlansSectionCopy = {
+  badge: 'SAGICAM FFEE AND CONTRIBUTION PLANS',
+  title: 'Fee and contributions Details',
+  description: 'A Comprehensive Breakdown of Our Fee and Contribution Plans to Help You Make the Best Choice!'
+}
+
+const Pricing = ({
+  copy = defaultPricingPlansSectionCopy,
+  pricingPlans
+}: {
+  copy?: PricingPlansSectionCopy
+  pricingPlans: PricingPlans
+}) => {
   useEffect(() => {
     const all = document.querySelectorAll('.card')
 
@@ -60,6 +78,7 @@ const Pricing = ({ pricingPlans }: { pricingPlans: PricingPlans }) => {
       window.removeEventListener('mousemove', handleMouseMove)
     }
   }, [])
+
   return (
     <div className='py-2'>
       <MotionPreset
@@ -72,19 +91,17 @@ const Pricing = ({ pricingPlans }: { pricingPlans: PricingPlans }) => {
           variant='outline'
           className='bg-background text-primary relative mx-4 mb-12 ml-8 space-y-4 py-1 font-normal'
         >
-          SAGICAM FFEE AND CONTRIBUTION PLANS
+          {copy.badge}
           <BorderBeam colorFrom='var(--primary)' colorTo='var(--primary)' size={35} duration={8} />
         </Badge>
       </MotionPreset>
       <div className='mx-auto max-w-7xl space-y-12 px-4 sm:space-y-16 sm:px-6 lg:space-y-24 lg:px-8'>
         <div className='flex flex-col items-start gap-4'>
           <div className='flex flex-col gap-0.5 text-start'>
-            <h2 className='text-2xl font-semibold sm:text-3xl lg:text-4xl'>Fee and contributions Details</h2>
+            <h2 className='text-2xl font-semibold sm:text-3xl lg:text-4xl'>{copy.title}</h2>
             <Separator className='bg-primary h-px' />
           </div>
-          <p className='text-muted-foreground text-start text-xl font-normal'>
-            A Comprehensive Breakdown of Our Fee and Contribution Plans to Help You Make the Best Choice!
-          </p>
+          <p className='text-muted-foreground text-start text-xl font-normal'>{copy.description}</p>
         </div>
 
         <div className='grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3'>

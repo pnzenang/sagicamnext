@@ -1,4 +1,5 @@
 import type { ComponentType } from 'react'
+
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Card, CardContent } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
@@ -15,7 +16,26 @@ type Features = {
   avatarBgColor: string
 }[]
 
-const Features = ({ featuresList }: { featuresList: Features }) => {
+export type FeaturesSectionCopy = {
+  badge: string
+  title: string
+  description: string
+}
+
+const defaultFeaturesSectionCopy: FeaturesSectionCopy = {
+  badge: 'SAGICAM PROMISES',
+  title: ' AT SAGICAM, No One Gets Left Behind.',
+  description:
+    'From your 18 years old nephew to your 80 years old grandma, SAGICAM is designed to keep you connected with your loved ones, no matter the distance or circumstances.\nOur staggered helps and affordable contributions are designed to fit your needs and budget, so you can focus on what matters most - your family and friends.'
+}
+
+const Features = ({
+  copy = defaultFeaturesSectionCopy,
+  featuresList
+}: {
+  copy?: FeaturesSectionCopy
+  featuresList: Features
+}) => {
   return (
     <section className='py-2'>
       <MotionPreset
@@ -28,20 +48,15 @@ const Features = ({ featuresList }: { featuresList: Features }) => {
           variant='outline'
           className='bg-background text-primary relative mx-4 mb-12 ml-8 space-y-4 py-1 font-normal'
         >
-          SAGICAM PROMISES
+          {copy.badge}
           <BorderBeam colorFrom='var(--primary)' colorTo='var(--primary)' size={35} duration={8} />
         </Badge>
       </MotionPreset>
       <div className='mx-auto max-w-7xl px-4 sm:px-6 lg:px-8'>
         {/* Header */}
         <div className='mb-12 space-y-4 sm:mb-16 lg:mb-24'>
-          <h2 className='text-2xl font-semibold md:text-3xl lg:text-4xl'> AT SAGICAM, No One Gets Left Behind.</h2>
-          <p className='text-muted-foreground text-xl'>
-            From your 18 years old nephew to your 80 years old grandma, SAGICAM is designed to keep you connected with
-            your loved ones, no matter the distance or circumstances. <br />
-            Our staggered helps and affordable contributions are designed to fit your needs and budget, so you can focus
-            on what matters most - your family and friends.
-          </p>
+          <h2 className='text-2xl font-semibold md:text-3xl lg:text-4xl'>{copy.title}</h2>
+          <p className='text-muted-foreground text-xl whitespace-pre-line'>{copy.description}</p>
         </div>
 
         <div className='grid gap-6 sm:grid-cols-2 lg:grid-cols-3'>

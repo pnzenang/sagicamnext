@@ -10,10 +10,28 @@ type FAQItem = {
 }
 
 type FAQComponentProps = {
+  copy?: FAQSectionCopy
   faqItems: FAQItem[]
 }
 
-const FAQ = ({ faqItems }: FAQComponentProps) => {
+export type FAQSectionCopy = {
+  badge: string
+  title: string
+  description: string
+  cardTitle: string
+  imageAlt: string
+}
+
+const defaultFAQSectionCopy: FAQSectionCopy = {
+  badge: 'SAGICAM FREQUENTLY ASKED QUESTIONS',
+  title: 'Frequently Asked Questions',
+  description:
+    'An idea about what you can expect from SAGICAM service and answers to some of the most common questions we get asked.',
+  cardTitle: 'Frequently asked questions?',
+  imageAlt: 'Customer support representative'
+}
+
+const FAQ = ({ copy = defaultFAQSectionCopy, faqItems }: FAQComponentProps) => {
   return (
     <section id='faq' className='py-1'>
       <MotionPreset
@@ -23,19 +41,16 @@ const FAQ = ({ faqItems }: FAQComponentProps) => {
         delay={0.1}
       >
         <Badge variant='outline' className='bg-background text-primary relative mx-4 my-2 ml-8 space-y-2 font-normal'>
-          SAGICAM FREQUENTLY ASKED QUESTIONS
+          {copy.badge}
           <BorderBeam colorFrom='var(--primary)' colorTo='var(--primary)' size={35} duration={8} />
         </Badge>
       </MotionPreset>
       <div className='flex flex-col items-start gap-4 px-8 py-8 sm:pb-16'>
         <div className='flex flex-col gap-0.5 text-start'>
-          <h2 className='text-2xl font-semibold sm:text-3xl lg:text-4xl'>Frequently Asked Questions</h2>
+          <h2 className='text-2xl font-semibold sm:text-3xl lg:text-4xl'>{copy.title}</h2>
           <Separator className='bg-primary h-px' />
         </div>
-        <p className='text-muted-foreground text-start text-xl font-normal'>
-          An idea about what you can expect from SAGICAM service and answers to some of the most common questions we get
-          asked.
-        </p>
+        <p className='text-muted-foreground text-start text-xl font-normal'>{copy.description}</p>
       </div>
       <div className='mx-auto max-w-7xl px-4 sm:px-6 lg:px-8'>
         <div className='grid grid-cols-1 items-center gap-8 lg:grid-cols-2'>
@@ -47,16 +62,14 @@ const FAQ = ({ faqItems }: FAQComponentProps) => {
             className='bg-primary text-primary-foreground relative z-1 h-100 overflow-hidden rounded-xl p-6 sm:h-150 lg:p-12'
           >
             <div className='space-y-4'>
-              <h2 className='text-3xl leading-tight font-semibold md:text-4xl'>
-                Frequently asked <br className='hidden xl:block' /> questions?
-              </h2>
+              <h2 className='text-3xl leading-tight font-semibold md:text-4xl'>{copy.cardTitle}</h2>
             </div>
 
             {/* Person Image */}
             <div className='h-100% absolute -right-15 -bottom-15'>
               <img
                 src='https://res.cloudinary.com/dp8tkb7hq/image/upload/v1775996982/Question_ptixxz.png'
-                alt='Customer support representative'
+                alt={copy.imageAlt}
                 className='h-full'
               />
             </div>

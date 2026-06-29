@@ -25,7 +25,20 @@ export type Plan = {
   buttonText: string
 }
 
-const Pricing = ({ plans }: { plans: Plan[] }) => {
+export type PayoutSectionCopy = {
+  badge: string
+  title: string
+  description: string
+}
+
+const defaultPayoutSectionCopy: PayoutSectionCopy = {
+  badge: 'SAGICAM PAYOUT SCHEDULE',
+  title: 'SAGICAM Payout Schedule',
+  description:
+    'A Comprehensive Summary of SAGICAM Payout Schedule the more detailed information is available in the SAGICAM Internal Rules in the sponsor dashboard.'
+}
+
+const Pricing = ({ copy = defaultPayoutSectionCopy, plans }: { copy?: PayoutSectionCopy; plans: Plan[] }) => {
   const [selectedPlan, setSelectedPlan] = useState<PlanType>('free')
 
   const selectedPlanData = plans.find(plan => plan.id === selectedPlan)!
@@ -42,7 +55,7 @@ const Pricing = ({ plans }: { plans: Plan[] }) => {
           variant='outline'
           className='bg-background text-primary relative mx-4 mb-12 ml-8 space-y-4 py-1 font-normal'
         >
-          SAGICAM PAYOUT SCHEDULE
+          {copy.badge}
           <BorderBeam colorFrom='var(--primary)' colorTo='var(--primary)' size={35} duration={8} />
         </Badge>
       </MotionPreset>
@@ -50,13 +63,10 @@ const Pricing = ({ plans }: { plans: Plan[] }) => {
         <div className='flex max-w-7xl flex-col gap-4'>
           <div className='flex flex-col items-start gap-4'>
             <div className='flex flex-col gap-0.5 text-start'>
-              <h2 className='text-2xl font-semibold sm:text-3xl lg:text-4xl'>SAGICAM Payout Schedule</h2>
+              <h2 className='text-2xl font-semibold sm:text-3xl lg:text-4xl'>{copy.title}</h2>
               <Separator className='bg-primary h-px' />
             </div>
-            <p className='text-muted-foreground text-start text-xl font-normal'>
-              A Comprehensive Summary of SAGICAM Payout Schedule the more detailed information is available in the
-              SAGICAM Internal Rules in the sponsor dashboard.
-            </p>
+            <p className='text-muted-foreground text-start text-xl font-normal'>{copy.description}</p>
           </div>
         </div>
         <div className='flex flex-col gap-6 lg:flex-row'>

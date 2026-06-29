@@ -7,16 +7,22 @@ export type brandLogos = {
   name: string
 }
 
-const TrustedBrands = ({ brandLogos }: { brandLogos: brandLogos[] }) => {
+export const defaultTrustedBrandsIntro =
+  'SAGICAM unites people from all Cameroonian communities(Do you recognize the region in which your loved ones are located?)'
+
+const TrustedBrands = ({
+  brandLogos,
+  intro = defaultTrustedBrandsIntro
+}: {
+  brandLogos: brandLogos[]
+  intro?: string
+}) => {
   return (
     <section id='trusted-brands' className='py-4 sm:py-6 lg:py-8'>
       <div className='mx-auto max-w-7xl px-4 sm:px-6 lg:px-8'>
         {/* Header */}
         <div className='mb-4 space-y-4 text-center sm:mb-6 lg:mb-8'>
-          <p className='text-muted-foreground text-xl'>
-            SAGICAM unites people from all Cameroonian communities(Do you recognize the region in which your loved ones
-            are located?)
-          </p>
+          <p className='text-muted-foreground text-xl'>{intro}</p>
         </div>
 
         <div className='relative'>

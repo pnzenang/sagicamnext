@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import { UserButton } from '@clerk/nextjs'
 
 import Link from 'next/link'
+import { cookies } from 'next/headers'
 
 import SidebarGroupedMenuItems from '@/components/dashboard/SidebarGroupedMenuItems'
 import { ModeToggleSmall } from '@/components/layout/mode-toggle/mode-toggle-small'
@@ -18,11 +19,18 @@ import {
   SidebarTrigger,
   Sidebar
 } from '@/components/ui/sidebar'
+import { dashboardText, languageCookieName, normalizeLanguage } from '@/lib/i18n'
 
-const PagesLayout = ({ children }: Readonly<{ children: ReactNode }>) => {
+export const dynamic = 'force-dynamic'
+
+const PagesLayout = async ({ children }: Readonly<{ children: ReactNode }>) => {
+  const cookieStore = await cookies()
+  const language = normalizeLanguage(cookieStore.get(languageCookieName)?.value)
+  const copy = dashboardText[language]
+
   return (
     <>
-      <div className='bg-muted flex min-h-dvh w-full'>
+      <div className='bg-muted flex min-h-dvh w-full' lang={language}>
         <SidebarProvider>
           <Sidebar collapsible='icon' className='**:data-[slot=sidebar-inner]:bg-muted border-r-0!'>
             <SidebarHeader>
@@ -37,7 +45,7 @@ const PagesLayout = ({ children }: Readonly<{ children: ReactNode }>) => {
               </SidebarMenu>
             </SidebarHeader>
             <SidebarContent>
-              <SidebarGroupedMenuItems />
+              <SidebarGroupedMenuItems language={language} />
             </SidebarContent>
           </Sidebar>
           <div className='flex min-w-0 flex-1 flex-col'>
@@ -46,7 +54,7 @@ const PagesLayout = ({ children }: Readonly<{ children: ReactNode }>) => {
                 <SidebarTrigger className='[&_svg]:size-5!' />
                 <LogoSmall className='size-10 sm:hidden' />
               </div>
-              <div className='text-primary font-bold sm:text-2xl'>SAGICAM</div>
+              <div className='text-primary font-bold sm:text-2xl'>{copy.brand}</div>
               <div className='mx=auto flex justify-center gap-x-3'>
                 <ModeToggleSmall />
                 <UserButton />

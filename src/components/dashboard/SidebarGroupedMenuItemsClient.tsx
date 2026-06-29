@@ -1,5 +1,7 @@
 'use client'
 
+import { useMemo } from 'react'
+
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { ChevronRightIcon } from 'lucide-react'
@@ -18,6 +20,7 @@ import {
 } from '../ui/sidebar'
 import { pagesItems } from '@/utils/links'
 import type { MenuItem, MenuSubItem } from '@/utils/types'
+import { translateDashboardMenuItems, type AppLanguage } from '@/lib/i18n'
 
 type SidebarBadgeMap = Record<string, string | undefined>
 
@@ -37,18 +40,23 @@ const MenuBadge = ({ value }: { value?: string }) =>
   ) : null
 
 const SidebarGroupedMenuItemsClient = ({
+  adminLabel = 'Admin',
   groupLabel,
   isAdminUser,
+  language = 'en',
   menuBadges
 }: {
+  adminLabel?: string
   groupLabel?: string
   isAdminUser: boolean
+  language?: AppLanguage
   menuBadges?: SidebarBadgeMap
 }) => {
   const pathname = usePathname()
+  const translatedPagesItems = useMemo(() => translateDashboardMenuItems(pagesItems, language), [language])
 
   const getLinkBadge = (item: MenuItem | MenuSubItem) =>
-    'href' in item && item.href ? menuBadges?.[item.href] ?? item.badge : item.badge
+    'href' in item && item.href ? (menuBadges?.[item.href] ?? item.badge) : item.badge
 
   const getParentBadge = (item: MenuItem) => {
     if (!item.children) return getLinkBadge(item)
@@ -61,23 +69,24 @@ const SidebarGroupedMenuItemsClient = ({
       {groupLabel && <SidebarGroupLabel>{groupLabel}</SidebarGroupLabel>}
       <SidebarGroupContent>
         <SidebarMenu>
-          {pagesItems.map(item => {
+          {translatedPagesItems.map(item => {
             if (item.label.includes('Admin') && !isAdminUser) return null
 
             if (item.children) {
               const hasActiveChild = item.children.some(child => isHrefActive(pathname, child.href))
+              const parentLabel = item.label === 'Admin' ? adminLabel : item.label
 
               return (
                 <Collapsible key={item.label} asChild defaultOpen={hasActiveChild} className='group/collapsible'>
                   <SidebarMenuItem>
                     <CollapsibleTrigger asChild>
                       <SidebarMenuButton
-                        tooltip={item.label}
+                        tooltip={parentLabel}
                         isActive={hasActiveChild}
                         className={`my-1 py-1 transition-all duration-500 hover:ml-5 ${transparentDropdownButtonClassName}`}
                       >
                         <item.icon />
-                        <span className='truncate capitalize'>{item.label}</span>
+                        <span className='truncate capitalize'>{parentLabel}</span>
                         <MenuBadge value={getParentBadge(item)} />
                         <ChevronRightIcon className='ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90' />
                       </SidebarMenuButton>
@@ -92,7 +101,7 @@ const SidebarGroupedMenuItemsClient = ({
                               <SidebarMenuSubButton
                                 asChild
                                 isActive={isActive}
-                                className={`my-1 transition-all duration-500 hover:ml-2 focus:bg-primary focus:text-neutral-50 ${activeMenuButtonClassName}`}
+                                className={`focus:bg-primary my-1 transition-all duration-500 hover:ml-2 focus:text-neutral-50 ${activeMenuButtonClassName}`}
                               >
                                 <Link href={child.href}>
                                   {child.icon && <child.icon />}

@@ -1,12 +1,21 @@
-import { FacebookIcon, InstagramIcon, TwitterIcon, YoutubeIcon } from 'lucide-react'
+import Link from 'next/link'
 
 import { Separator } from '@/components/ui/separator'
-
-import Link from 'next/link'
 import LogoSmall from '@/components/logoSmall'
 import Logo from '@/components/logo'
+import { publicText, translatePublicNavigationLabel, type AppLanguage } from '@/lib/i18n'
 
-const MegaFooter = () => {
+const footerNavigation = [
+  { label: 'Mission', href: '#mission' },
+  { label: 'Benefits', href: '#benefits' },
+  { label: 'Fees & Payments', href: '#fees' },
+  { label: 'FAQ', href: '#faq' },
+  { label: 'Contact', href: '#contact' }
+]
+
+const MegaFooter = ({ language = 'en' }: { language?: AppLanguage }) => {
+  const copy = publicText[language]
+
   return (
     <footer className='bg-primary/20'>
       <Separator />
@@ -18,11 +27,11 @@ const MegaFooter = () => {
           </div>
         </Link>
         <div className='flex items-center gap-6 whitespace-nowrap *:font-semibold'>
-          <Link href='#mission'>Mission</Link>
-          <Link href='#benefits'>Benefits</Link>
-          <Link href='#fees'>Fees & Payments</Link>
-          <Link href='#faq'>FAQ</Link>
-          <Link href='#contact'>Contact</Link>
+          {footerNavigation.map(item => (
+            <Link key={item.href} href={item.href}>
+              {translatePublicNavigationLabel(item.label, language)}
+            </Link>
+          ))}
         </div>
       </div>
       <Separator />
@@ -32,7 +41,7 @@ const MegaFooter = () => {
           <Link href='#' className='text-primary'>
             SAGICAM
           </Link>
-          , All rights reserved.
+          , {copy.footerRights}
         </p>
       </div>
     </footer>
