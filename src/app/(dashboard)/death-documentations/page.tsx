@@ -175,7 +175,6 @@ const DocumentationSlot = ({
 
       <FormContainer
         action={uploadDeceasedMemberDocumentAction}
-        encType='multipart/form-data'
         className='grid gap-2'
         refreshOnMessage
       >
