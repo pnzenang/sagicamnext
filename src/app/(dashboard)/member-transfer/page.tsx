@@ -59,7 +59,7 @@ const MemberTransferPage = async () => {
             <ArrowLeftRight className='text-muted-foreground mx-auto mb-3 size-8' />
             <p className='font-semibold'>No outside loved ones available to request.</p>
             <p className='text-muted-foreground mt-1 text-sm'>
-              Vested loved ones under other sponsor codes will appear here.
+              Loved ones under other sponsor codes will appear here.
             </p>
           </CardContent>
         </Card>

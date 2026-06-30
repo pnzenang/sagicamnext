@@ -23,8 +23,10 @@ type MemberTransferMemberOption = {
 
 const maxVisibleMembers = 10
 
+const formatMemberStatus = (status: string) => status.replaceAll('_', ' ')
+
 const getMemberNameSearchValue = (member: MemberTransferMemberOption) =>
-  `${member.firstName} ${member.lastAndMiddleNames} ${member.memberMatriculationNumber} ${member.sponsorCode}`.toLowerCase()
+  `${member.firstName} ${member.lastAndMiddleNames} ${member.memberMatriculationNumber} ${member.sponsorCode} ${formatMemberStatus(member.memberStatus)}`.toLowerCase()
 
 const MemberTransferRequestForm = ({
   members,
@@ -88,7 +90,7 @@ const MemberTransferRequestForm = ({
                 type='search'
                 value={searchQuery}
                 onChange={event => handleSearchChange(event.target.value)}
-                placeholder='Search name, matriculation, or sponsor code'
+                placeholder='Search name, matriculation, sponsor code, or status'
                 className='pl-9'
               />
             </div>
@@ -109,19 +111,15 @@ const MemberTransferRequestForm = ({
               <div className='grid max-h-72 gap-2 overflow-y-auto pr-1'>
                 {displayedMembers.map(member => {
                   const isSelected = selectedMemberId === member.id
-                  const isTransferAllowed = member.memberStatus === 'vested'
 
                   return (
                     <button
                       key={member.id}
                       type='button'
                       aria-pressed={isSelected}
-                      disabled={!isTransferAllowed}
                       onClick={() => setSelectedMemberId(member.id)}
                       className={cn(
                         'bg-background/70 hover:border-primary/60 hover:bg-muted/40 grid min-w-0 gap-1 rounded-md border p-3 text-left text-sm transition-colors',
-                        !isTransferAllowed &&
-                          'hover:border-border hover:bg-background/70 cursor-not-allowed opacity-60',
                         isSelected && 'border-primary bg-primary/10'
                       )}
                     >
@@ -131,11 +129,9 @@ const MemberTransferRequestForm = ({
                       <span className='text-muted-foreground text-xs'>
                         Matriculation: {member.memberMatriculationNumber} · Present sponsor: {member.sponsorCode}
                       </span>
-                      {!isTransferAllowed ? (
-                        <span className='text-xs font-semibold text-red-700 dark:text-red-300'>
-                          Transfer is not allowed on non-vested members.
-                        </span>
-                      ) : null}
+                      <span className='text-muted-foreground text-xs capitalize'>
+                        Status: {formatMemberStatus(member.memberStatus)}
+                      </span>
                     </button>
                   )
                 })}
@@ -164,6 +160,12 @@ const MemberTransferRequestForm = ({
             <div className='min-w-0'>
               <p className='text-muted-foreground text-xs font-semibold'>Requesting sponsor code</p>
               <p className='mt-1 font-extrabold break-words'>{receivingSponsorCode}</p>
+            </div>
+            <div className='min-w-0'>
+              <p className='text-muted-foreground text-xs font-semibold'>Status</p>
+              <p className='mt-1 font-extrabold break-words capitalize'>
+                {selectedMember ? formatMemberStatus(selectedMember.memberStatus) : 'N/A'}
+              </p>
             </div>
           </div>
 

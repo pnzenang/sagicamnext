@@ -228,7 +228,7 @@ const syncVestedContributionCredit = async ({
   sponsorCode: string
   memberMatriculationNumber: string
 }) => {
-  if (previousStatus !== memberStatus.Vested && nextStatus === memberStatus.Vested) {
+  if (previousStatus === memberStatus.Awaiting && nextStatus === memberStatus.Vested) {
     await createVestedContributionCredit({ memberMatriculationNumber, sponsorCode })
 
     return
@@ -2128,7 +2128,6 @@ export const fetchMemberTransferPageAction = async () => {
         sponsorCode: true
       },
       where: {
-        memberStatus: memberStatus.Vested,
         clerkId: {
           not: profile.clerkId
         }
@@ -2219,10 +2218,6 @@ export const submitMemberTransferRequestAction = async (
 
     if (member.clerkId === user.id || member.sponsorCode === receivingSponsor.sponsorCode) {
       throw new Error('This loved one is already in your sponsor group.')
-    }
-
-    if (member.memberStatus !== memberStatus.Vested) {
-      throw new Error('Transfer is not allowed on non-vested members. Only vested members can be transferred.')
     }
 
     const releasingSponsor = await db.profile.findFirst({
@@ -2477,6 +2472,24 @@ export const reviewAdminMemberTransferRequestAction = async (
           id: request.memberId
         }
       }),
+      db.sponsorRegistrationUsage.updateMany({
+        data: {
+          memberMatriculationNumber: nextMemberMatriculationNumber,
+          sponsorCode: receivingSponsor.sponsorCode
+        },
+        where: {
+          memberMatriculationNumber: request.member.memberMatriculationNumber
+        }
+      }),
+      db.sponsorContributionCredit.updateMany({
+        data: {
+          memberMatriculationNumber: nextMemberMatriculationNumber,
+          sponsorCode: receivingSponsor.sponsorCode
+        },
+        where: {
+          memberMatriculationNumber: request.member.memberMatriculationNumber
+        }
+      }),
       db.memberTransferRequest.update({
         data: {
           adminReviewedAt: new Date(),
@@ -2712,13 +2725,6 @@ export const restoreRemovedMemberAction = async (prevState: { removedMemberId: s
       })
     }
 
-    if (removedMember.memberStatus === memberStatus.Vested) {
-      await createVestedContributionCredit({
-        memberMatriculationNumber: removedMember.memberMatriculationNumber,
-        sponsorCode: removedMember.sponsorCode
-      })
-    }
-
     revalidateMemberPaymentViews()
 
     return { message: 'Loved one restored successfully' }
@@ -2748,6 +2754,10 @@ export const createDeceasedMemberAction = async (provState: any, formData: FormD
 
     if (!member) {
       throw new Error('Loved one not found.')
+    }
+
+    if (member.memberStatus !== memberStatus.Vested) {
+      throw new Error('Death announcement is only allowed for vested loved ones.')
     }
 
     const sponsor = await fetchSponsorByCode(member.sponsorCode)
@@ -2818,6 +2828,10 @@ export const createDeceasedMemberActionAdmin = async (
 
     if (!member) {
       throw new Error('Loved one not found.')
+    }
+
+    if (member.memberStatus !== memberStatus.Vested) {
+      throw new Error('Death announcement is only allowed for vested loved ones.')
     }
 
     const sponsor = await fetchSponsorByCode(member.sponsorCode)
@@ -3268,23 +3282,6 @@ export const restoreDeceasedMemberAction = async (prevState: { deceasedMemberId:
           },
           update: {
             amountUsed: registrationFeePerEligibleMember,
-            sponsorCode: deceasedMember.sponsorCode
-          },
-          where: {
-            memberMatriculationNumber: deceasedMember.memberMatriculationNumber
-          }
-        })
-      }
-
-      if (restoredMemberStatus === memberStatus.Vested) {
-        await tx.sponsorContributionCredit.upsert({
-          create: {
-            amountCredited: contributionCreditPerVestedMember,
-            memberMatriculationNumber: deceasedMember.memberMatriculationNumber,
-            sponsorCode: deceasedMember.sponsorCode
-          },
-          update: {
-            amountCredited: contributionCreditPerVestedMember,
             sponsorCode: deceasedMember.sponsorCode
           },
           where: {

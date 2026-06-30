@@ -55,9 +55,16 @@ const PagesLayout = async ({ children }: Readonly<{ children: ReactNode }>) => {
                 <LogoSmall className='size-10 sm:hidden' />
               </div>
               <div className='text-primary font-bold sm:text-2xl'>{copy.brand}</div>
-              <div className='mx=auto flex justify-center gap-x-3'>
+              <div className='flex shrink-0 items-center justify-end gap-3'>
                 <ModeToggleSmall />
-                <UserButton />
+                <UserButton
+                  appearance={{
+                    elements: {
+                      userButtonAvatarBox: 'size-8',
+                      userButtonTrigger: 'flex items-center justify-center'
+                    }
+                  }}
+                />
               </div>
             </header>
             <main className='size-full min-w-0 flex-1 px-2 py-2 sm:px-6 sm:py-6'>

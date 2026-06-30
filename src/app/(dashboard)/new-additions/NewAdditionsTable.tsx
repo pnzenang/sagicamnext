@@ -199,7 +199,7 @@ const NewAdditionsTable = ({ monthKey, rows }: { monthKey: string; rows: NewAddi
             disabled={sortedRows.length === 0}
           >
             <FileSpreadsheetIcon />
-            Export Filtered
+            Export Page
           </Button>
         </div>
       </div>
