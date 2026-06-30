@@ -288,6 +288,7 @@ const revalidateMemberPaymentViews = () => {
 
 const revalidateDeathDocumentationViews = () => {
   revalidatePath('/admin-deceased')
+  revalidatePath('/admin-death-documentations')
   revalidatePath('/death-documentations')
   revalidatePath('/deceased-members')
 }
@@ -2894,11 +2895,8 @@ export const fetchDeceasedMembersActionAdmin = async () => {
   return deceasedMember
 }
 
-export const fetchDeathDocumentationCasesAction = async () => {
-  const user = await getAuthUser()
-  const isAdminUser = user.id === process.env.ADMIN_USER_ID
-
-  const deceasedMembers = await db.deceasedMember.findMany({
+const fetchDeathDocumentationCases = async (where: Prisma.DeceasedMemberWhereInput = {}) => {
+  return db.deceasedMember.findMany({
     include: {
       documents: {
         orderBy: { updatedAt: 'desc' },
@@ -2919,14 +2917,26 @@ export const fetchDeathDocumentationCasesAction = async () => {
       }
     },
     orderBy: { createdAt: 'desc' },
-    where: isAdminUser
-      ? {}
-      : {
-          clerkId: user.id
-        }
+    where
+  })
+}
+
+export const fetchSponsorDeathDocumentationCasesAction = async () => {
+  const user = await getAuthUser()
+
+  const deceasedMembers = await fetchDeathDocumentationCases({
+    clerkId: user.id
   })
 
-  return { deceasedMembers, isAdminUser }
+  return { deceasedMembers }
+}
+
+export const fetchAdminDeathDocumentationCasesAction = async () => {
+  await assertAdminUser()
+
+  const deceasedMembers = await fetchDeathDocumentationCases()
+
+  return { deceasedMembers }
 }
 
 export const uploadDeceasedMemberDocumentAction = async (

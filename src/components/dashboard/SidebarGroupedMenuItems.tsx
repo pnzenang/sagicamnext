@@ -1,16 +1,38 @@
 import { auth } from '@clerk/nextjs/server'
 
 import { dashboardText, type AppLanguage } from '@/lib/i18n'
+import { deceasedMemberDocumentTypes } from '@/utils/types'
 
 import SidebarGroupedMenuItemsClient from './SidebarGroupedMenuItemsClient'
 
 type SidebarBadgeMap = Record<string, string | undefined>
+type DeathDocumentationBadgeCase = {
+  documents: {
+    documentType: string
+    status: string
+  }[]
+}
 
 const getSidebarBadge = (requestCount: number) => {
   if (requestCount <= 0) return undefined
 
   return requestCount > 99 ? '99+' : String(requestCount)
 }
+
+const getSponsorDeathDocumentationActionCount = (deceasedMembers: DeathDocumentationBadgeCase[]) =>
+  deceasedMembers.reduce((total, deceasedMember) => {
+    const documentStatusByType = new Map(
+      deceasedMember.documents.map(document => [document.documentType, document.status])
+    )
+
+    const actionRequiredCount = deceasedMemberDocumentTypes.filter(documentType => {
+      const status = documentStatusByType.get(documentType)
+
+      return !status || status === 'rejected'
+    }).length
+
+    return total + actionRequiredCount
+  }, 0)
 
 const fetchSidebarBadges = async ({
   isAdminUser,
@@ -25,41 +47,74 @@ const fetchSidebarBadges = async ({
     const { default: db } = await import('@/utils/db')
 
     let adminPendingNameChangeCount = 0
+    let adminPendingDeathDocumentCount = 0
     let adminPendingTransferCount = 0
+    let sponsorRequiredDeathDocumentCount = 0
     let sponsorRequiredNameChangeCount = 0
     let sponsorPendingTransferCount = 0
 
     if (isAdminUser) {
-      adminPendingNameChangeCount = await db.nameChangeRequest.count({
-        where: {
-          status: 'submitted'
-        }
-      })
+      const [pendingNameChanges, pendingDeathDocuments, pendingTransfers] = await Promise.all([
+        db.nameChangeRequest.count({
+          where: {
+            status: 'submitted'
+          }
+        }),
+        db.deceasedMemberDocument.count({
+          where: {
+            status: 'submitted'
+          }
+        }),
+        db.memberTransferRequest.count({
+          where: {
+            status: 'receiving_sponsor_approved'
+          }
+        })
+      ])
 
-      adminPendingTransferCount = await db.memberTransferRequest.count({
-        where: {
-          status: 'receiving_sponsor_approved'
-        }
-      })
+      adminPendingNameChangeCount = pendingNameChanges
+      adminPendingDeathDocumentCount = pendingDeathDocuments
+      adminPendingTransferCount = pendingTransfers
     } else {
-      sponsorRequiredNameChangeCount = await db.nameChangeRequest.count({
-        where: {
-          clerkId: userId,
-          status: 'documentation_requested'
-        }
-      })
+      const [sponsorRequiredNameChanges, sponsorPendingTransfers, sponsorDeathDocumentationCases] =
+        await Promise.all([
+          db.nameChangeRequest.count({
+            where: {
+              clerkId: userId,
+              status: 'documentation_requested'
+            }
+          }),
+          db.memberTransferRequest.count({
+            where: {
+              initiatingClerkId: userId,
+              status: 'receiving_sponsor_pending'
+            }
+          }),
+          db.deceasedMember.findMany({
+            select: {
+              documents: {
+                select: {
+                  documentType: true,
+                  status: true
+                }
+              }
+            },
+            where: {
+              clerkId: userId
+            }
+          })
+        ])
 
-      sponsorPendingTransferCount = await db.memberTransferRequest.count({
-        where: {
-          initiatingClerkId: userId,
-          status: 'receiving_sponsor_pending'
-        }
-      })
+      sponsorRequiredNameChangeCount = sponsorRequiredNameChanges
+      sponsorPendingTransferCount = sponsorPendingTransfers
+      sponsorRequiredDeathDocumentCount = getSponsorDeathDocumentationActionCount(sponsorDeathDocumentationCases)
     }
 
     return {
+      '/admin-death-documentations': getSidebarBadge(adminPendingDeathDocumentCount),
       '/admin-member-transfers': getSidebarBadge(adminPendingTransferCount),
       '/admin-name-changes': getSidebarBadge(adminPendingNameChangeCount),
+      '/death-documentations': getSidebarBadge(sponsorRequiredDeathDocumentCount),
       '/member-transfer': getSidebarBadge(sponsorPendingTransferCount),
       '/name-change-documents-upload': getSidebarBadge(sponsorRequiredNameChangeCount)
     }

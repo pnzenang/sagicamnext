@@ -14,11 +14,9 @@ import {
   FileCheck,
   WalletCards,
   WalletMinimal,
-  CreditCard,
   History,
   List,
-  ArrowLeftRight,
-  Table
+  ArrowLeftRight
 } from 'lucide-react'
 
 import type { MenuItem } from './types'
@@ -81,11 +79,6 @@ export const pagesItems: MenuItem[] = [
     label: 'New Additions  ',
     href: '/new-additions'
   },
-  {
-    icon: Table,
-    label: 'Contribution Table',
-    href: '/contribution-table'
-  },
 
   // {
   //   icon: Wallet,
@@ -107,11 +100,6 @@ export const pagesItems: MenuItem[] = [
     icon: ArrowLeftRight,
     label: 'Member Transfer',
     href: '/member-transfer'
-  },
-  {
-    icon: CreditCard,
-    label: 'Payment Instructions',
-    href: '/payment-instructions'
   },
   {
     icon: SquareUser,
@@ -148,9 +136,19 @@ export const pagesItems: MenuItem[] = [
         href: '/admin-deceased'
       },
       {
+        icon: FileStack,
+        label: 'Admin Death Documentations',
+        href: '/admin-death-documentations'
+      },
+      {
         icon: UserCog,
         label: 'Admin Count',
         href: '/admin-count'
+      },
+      {
+        icon: SquareUser,
+        label: 'Users Contacts',
+        href: '/admin-users-contacts'
       },
       {
         icon: WalletCards,

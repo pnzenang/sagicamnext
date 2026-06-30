@@ -2,12 +2,24 @@
 
 import { useMemo, useState } from 'react'
 
-import { ArrowDown, ArrowUp, ArrowUpDown, CheckCircle2, Download, RotateCcw } from 'lucide-react'
+import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
+  CheckCircle2,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  Download,
+  RotateCcw
+} from 'lucide-react'
 import * as XLSX from 'xlsx'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem } from '@/components/ui/pagination'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { usePagination } from '@/hooks/use-pagination'
 import { usePersistentState } from '@/hooks/use-persistent-state'
 import { cn } from '@/lib/utils'
 import {
@@ -66,6 +78,8 @@ const columns: AdminSagicamRegistrationsColumn[] = [
   { key: 'registrationReceived', label: 'Registration verified', align: 'right' },
   { key: 'registrationBalance', label: 'Registration Reserve / REGISTATION FEES', align: 'right' }
 ]
+
+const pageSizeOptions = [10, 25, 50, 100]
 
 const exportColumnWidths: Partial<Record<SortKey, number>> = {
   awaitingPublication: 12,
@@ -318,6 +332,8 @@ const AdminSagicamRegistrationsTable = ({
   const [sortKey, setSortKey] = useState<SortKey>('sponsorCode')
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
   const [codeSearch, setCodeSearch] = usePersistentState('sagicam:admin-sagicam-registrations:code-search', '')
+  const [pageSize, setPageSize] = usePersistentState('sagicam:admin-sagicam-registrations:page-size', 25)
+  const [currentPage, setCurrentPage] = useState(1)
 
   const normalizedCodeSearch = codeSearch.trim().toLowerCase()
 
@@ -362,15 +378,44 @@ const AdminSagicamRegistrationsTable = ({
     )
   }, [filteredRows, normalizedCodeSearch, totals])
 
+  const totalPages = Math.max(1, Math.ceil(sortedRows.length / pageSize))
+  const effectiveCurrentPage = Math.min(currentPage, totalPages)
+  const pageStartIndex = (effectiveCurrentPage - 1) * pageSize
+  const pageEndIndex = Math.min(pageStartIndex + pageSize, sortedRows.length)
+  const paginatedRows = sortedRows.slice(pageStartIndex, pageEndIndex)
+  const showingStart = sortedRows.length > 0 ? pageStartIndex + 1 : 0
+
+  const { pages, showLeftEllipsis, showRightEllipsis } = usePagination({
+    currentPage: effectiveCurrentPage,
+    paginationItemsToDisplay: 3,
+    totalPages
+  })
+
   const handleSort = (nextSortKey: SortKey) => {
     if (nextSortKey === sortKey) {
       setSortDirection(currentDirection => (currentDirection === 'asc' ? 'desc' : 'asc'))
+      setCurrentPage(1)
 
       return
     }
 
     setSortKey(nextSortKey)
     setSortDirection('asc')
+    setCurrentPage(1)
+  }
+
+  const handleCodeSearchChange = (nextCodeSearch: string) => {
+    setCodeSearch(nextCodeSearch)
+    setCurrentPage(1)
+  }
+
+  const handlePageSizeChange = (nextPageSize: string) => {
+    setPageSize(Number(nextPageSize))
+    setCurrentPage(1)
+  }
+
+  const handlePageChange = (nextPage: number) => {
+    setCurrentPage(Math.min(Math.max(nextPage, 1), totalPages))
   }
 
   const handleExportPage = () => {
@@ -428,7 +473,7 @@ const AdminSagicamRegistrationsTable = ({
                     <Input
                       id='registration-sponsor-code-search'
                       value={codeSearch}
-                      onChange={event => setCodeSearch(event.target.value)}
+                      onChange={event => handleCodeSearchChange(event.target.value)}
                       placeholder='Search sponsor code, e.g. MLNO'
                       className='bg-background h-10 w-full text-sm font-semibold'
                     />
@@ -469,7 +514,7 @@ const AdminSagicamRegistrationsTable = ({
                   </TableCell>
                 </TableRow>
               ) : (
-                sortedRows.map(row => (
+                paginatedRows.map(row => (
                   <TableRow key={row.sponsorCode} className='odd:bg-muted/30 even:bg-background'>
                     <TableCell className='text-sm font-semibold' style={getColumnStyle('sponsorEmail')}>
                       <EmailLink email={row.sponsorEmail} className='break-all' />
@@ -571,7 +616,7 @@ const AdminSagicamRegistrationsTable = ({
             <Input
               id='registration-sponsor-code-search-mobile'
               value={codeSearch}
-              onChange={event => setCodeSearch(event.target.value)}
+              onChange={event => handleCodeSearchChange(event.target.value)}
               placeholder='Search sponsor code, e.g. MLNO'
               className='bg-background h-9 text-sm font-semibold'
             />
@@ -583,7 +628,7 @@ const AdminSagicamRegistrationsTable = ({
                 : 'No Sagicam registrations found.'}
             </div>
           ) : (
-            sortedRows.map(row => (
+            paginatedRows.map(row => (
               <article key={row.sponsorCode} className='bg-background overflow-hidden rounded-md border shadow-sm'>
                 <div className='flex flex-col gap-3 border-b px-3 py-3 sm:flex-row sm:items-start sm:justify-between sm:px-4'>
                   <div className='w-full min-w-0'>
@@ -650,6 +695,94 @@ const AdminSagicamRegistrationsTable = ({
             </article>
           )}
         </div>
+        {sortedRows.length > 0 ? (
+          <div className='bg-background flex flex-col gap-3 border-t px-3 py-3 lg:flex-row lg:items-center lg:justify-between'>
+            <p className='text-muted-foreground text-sm font-semibold'>
+              Showing {showingStart}-{pageEndIndex} of {sortedRows.length} sponsor
+              {sortedRows.length === 1 ? '' : 's'}
+            </p>
+            <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end'>
+              <div className='flex items-center gap-2'>
+                <span className='text-muted-foreground text-sm font-semibold whitespace-nowrap'>Rows per page</span>
+                <Select value={pageSize.toString()} onValueChange={handlePageSizeChange}>
+                  <SelectTrigger className='bg-background h-9 w-24'>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {pageSizeOptions.map(option => (
+                      <SelectItem key={option} value={option.toString()}>
+                        {option}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <Pagination className='mx-0 w-auto justify-start sm:justify-end'>
+                <PaginationContent className='w-max flex-nowrap'>
+                  <PaginationItem>
+                    <Button
+                      type='button'
+                      variant='ghost'
+                      onClick={() => handlePageChange(effectiveCurrentPage - 1)}
+                      disabled={effectiveCurrentPage === 1}
+                      className='disabled:pointer-events-none disabled:opacity-50'
+                      aria-label='Go to previous page'
+                    >
+                      <ChevronLeftIcon className='size-4' />
+                      <span className='hidden sm:inline'>Previous</span>
+                    </Button>
+                  </PaginationItem>
+
+                  {showLeftEllipsis ? (
+                    <PaginationItem>
+                      <PaginationEllipsis />
+                    </PaginationItem>
+                  ) : null}
+
+                  {pages.map(page => {
+                    const isActive = page === effectiveCurrentPage
+
+                    return (
+                      <PaginationItem key={page}>
+                        <Button
+                          type='button'
+                          size='icon'
+                          variant={isActive ? 'default' : 'outline'}
+                          onClick={() => handlePageChange(page)}
+                          aria-current={isActive ? 'page' : undefined}
+                          aria-label={`Go to page ${page}`}
+                        >
+                          {page}
+                        </Button>
+                      </PaginationItem>
+                    )
+                  })}
+
+                  {showRightEllipsis ? (
+                    <PaginationItem>
+                      <PaginationEllipsis />
+                    </PaginationItem>
+                  ) : null}
+
+                  <PaginationItem>
+                    <Button
+                      type='button'
+                      variant='ghost'
+                      onClick={() => handlePageChange(effectiveCurrentPage + 1)}
+                      disabled={effectiveCurrentPage === totalPages}
+                      className='disabled:pointer-events-none disabled:opacity-50'
+                      aria-label='Go to next page'
+                    >
+                      <span className='hidden sm:inline'>Next</span>
+                      <ChevronRightIcon className='size-4' />
+                    </Button>
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          </div>
+        ) : null}
       </div>
     </div>
   )

@@ -94,6 +94,7 @@ const dashboardMenuLabelTranslations: Record<string, string> = {
   Admin: 'Admin',
   'Admin Count': 'Décompte',
   'Admin Deceased': 'Membres décédés',
+  'Admin Death Documentations': 'Documents de décès admin',
   'Admin Member Transfers': 'Transferts de membres',
   'Admin Members': 'Membres',
   'Admin Name Changes': 'Changements de nom',
@@ -102,7 +103,6 @@ const dashboardMenuLabelTranslations: Record<string, string> = {
   'All Loved Ones': 'Tous les proches',
   'All Removed Loved Ones': 'Tous les proches retirés',
   'Contributions Payments': 'Paiements des cotisations',
-  'Contribution Table': 'Tableau des cotisations',
   'Death Announcement': 'Annonce de décès',
   'Death Documentations': 'Documents de décès',
   'Internal Rules At Glance': 'Aperçu des règles internes',
@@ -110,13 +110,13 @@ const dashboardMenuLabelTranslations: Record<string, string> = {
   'Member Transfer': 'Transfert de membre',
   'Name Change & Documentations': 'Changement de nom et documents',
   'New Additions': 'Nouveaux ajouts',
-  'Payment Instructions': 'Instructions de paiement',
   'Registration Payments': "Paiements d'inscription",
   'Remove Member': 'Retirer un membre',
   'Sagicam Contributions': 'Cotisations SAGICAM',
   'Sagicam Registrations': 'Inscriptions SAGICAM',
   'Sponsor Profile': 'Profil du sponsor',
-  'Transaction History': 'Historique des transactions'
+  'Transaction History': 'Historique des transactions',
+  'Users Contacts': 'Contacts des utilisateurs'
 }
 
 export const translateDashboardMenuLabel = (label: string, language: AppLanguage) => {
