@@ -127,7 +127,13 @@ export const viewport: Viewport = {
 const RootLayout = ({ children }: Readonly<{ children: ReactNode }>) => {
   return (
     <>
-      <ClerkProvider>
+      <ClerkProvider
+        signInUrl='/sign-in'
+        signUpUrl='/sign-up'
+        signInFallbackRedirectUrl='/profile/create'
+        signUpFallbackRedirectUrl='/profile/create'
+        afterSignOutUrl='/'
+      >
         <html
           lang='en'
           className={cn(geistSans.variable, geistMono.variable, 'flex min-h-dvh w-full scroll-smooth antialiased')}

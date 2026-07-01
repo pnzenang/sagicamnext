@@ -7,6 +7,9 @@ Sitemap: https://shadcn-nextjs-flow-landing-page.vercel.app/sitemap.xml
 # Disallow specific paths
 Disallow: /private/*
 Disallow: /*?*                        # Disallow URLs with a query string
+Disallow: /sign-in                    # Exclude sign-in page
+Disallow: /sign-up                    # Exclude sign-up page
+Disallow: /sign-out                   # Exclude sign-out page
 Disallow: /login                      # Exclude login page
 Disallow: /register                   # Exclude registration page
 Disallow: /forgot-password            # Exclude password recovery page

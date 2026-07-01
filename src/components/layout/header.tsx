@@ -73,13 +73,13 @@ const Header = ({ navigationData, language = 'en', loginLabel = 'Login', classNa
           <ModeToggle />
 
           <PrimaryFlowButton size='lg' className='max-sm:hidden' asChild>
-            <Link href='/profile/create'>{loginLabel}</Link>
+            <Link href='/sign-in'>{loginLabel}</Link>
           </PrimaryFlowButton>
 
           <Tooltip>
             <TooltipTrigger asChild>
               <SecondaryFlowButton size='icon-lg' className='sm:hidden' asChild>
-                <Link href='/profile/create'>
+                <Link href='/sign-in'>
                   <LogInIcon />
                   <span className='sr-only'>{loginLabel}</span>
                 </Link>
