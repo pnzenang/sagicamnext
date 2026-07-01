@@ -1414,25 +1414,37 @@ export const resetContributionCalculationAction = async (): Promise<{ message: s
   const user = await getAuthUser()
 
   try {
-    const latestAssessment = await fetchLatestContributionAssessment()
+    const [contributionAssessments, sponsorContributionPayments] = await Promise.all([
+      db.contributionAssessment.findMany({
+        include: {
+          groups: true
+        }
+      }),
+      db.sponsorContributionPayment.findMany({
+        where: {
+          OR: [{ amountSent: { gt: 0 } }, { amountVerified: { gt: 0 } }]
+        }
+      })
+    ])
 
-    if (!latestAssessment) {
-      return { message: 'No contribution calculation found to reset.' }
+    if (contributionAssessments.length === 0 && sponsorContributionPayments.length === 0) {
+      return { message: 'No contribution values found to reset.' }
     }
 
-    const sponsorContributionPayments = await db.sponsorContributionPayment.findMany({
-      where: {
-        OR: [{ amountSent: { gt: 0 } }, { amountVerified: { gt: 0 } }]
-      }
-    })
+    const assessedAmountByCode = contributionAssessments.reduce((amountsByCode, assessment) => {
+      assessment.groups.forEach(group => {
+        const currentAmount = amountsByCode.get(group.sponsorCode) ?? 0
+        const nextAmount = Number((currentAmount + decimalToNumber(group.amountOwed)).toFixed(2))
 
-    const latestGroupAmountByCode = new Map(
-      latestAssessment.groups.map(group => [group.sponsorCode, decimalToNumber(group.amountOwed)])
-    )
+        amountsByCode.set(group.sponsorCode, nextAmount)
+      })
+
+      return amountsByCode
+    }, new Map<string, number>())
 
     const affectedSponsorCodes = Array.from(
       new Set([
-        ...latestAssessment.groups.map(group => group.sponsorCode),
+        ...assessedAmountByCode.keys(),
         ...sponsorContributionPayments.map(payment => payment.sponsorCode)
       ])
     )
@@ -1442,8 +1454,8 @@ export const resetContributionCalculationAction = async (): Promise<{ message: s
     )
 
     const balanceAdjustments = contributionSummaries.map(summary => {
-      const latestGroupAmount = latestGroupAmountByCode.get(summary.sponsorCode) ?? 0
-      const totalAmountUsedAfterReset = Number((summary.totalAmountUsed - latestGroupAmount).toFixed(2))
+      const assessedAmount = assessedAmountByCode.get(summary.sponsorCode) ?? 0
+      const totalAmountUsedAfterReset = Number((summary.totalAmountUsed - assessedAmount).toFixed(2))
 
       return {
         amount: Number((summary.balance - summary.vestedContributionCredit + totalAmountUsedAfterReset).toFixed(2)),
@@ -1452,28 +1464,35 @@ export const resetContributionCalculationAction = async (): Promise<{ message: s
     })
 
     const resetLedgerEntries = contributionSummaries.map(summary => ({
-      amount: latestGroupAmountByCode.get(summary.sponsorCode) ?? 0,
+      amount: assessedAmountByCode.get(summary.sponsorCode) ?? 0,
       createdBy: user.id,
       eventType: sponsorPaymentLedgerEventTypes.reset,
-      note: 'Contribution calculation reset. The prior due entry remains in history for audit tracking.',
+      note: 'Contribution calculation reset. Contribution owed, sent, and verified values were cleared; balance/deficit was preserved.',
       paymentType: sponsorPaymentTypes.contribution,
       sponsorCode: summary.sponsorCode
     }))
 
-    await db.$transaction([
-      db.sponsorContributionPayment.updateMany({
-        data: {
-          amountSent: 0,
-          amountVerified: 0,
-          lastSubmittedAt: null,
-          verifiedAt: null
-        },
-        where: {
-          sponsorCode: {
-            in: sponsorContributionPayments.map(payment => payment.sponsorCode)
-          }
-        }
-      }),
+    const assessmentIds = contributionAssessments.map(assessment => assessment.id)
+    const paymentSponsorCodes = sponsorContributionPayments.map(payment => payment.sponsorCode)
+
+    const resetOperations: Prisma.PrismaPromise<unknown>[] = [
+      ...(paymentSponsorCodes.length > 0
+        ? [
+            db.sponsorContributionPayment.updateMany({
+              data: {
+                amountSent: 0,
+                amountVerified: 0,
+                lastSubmittedAt: null,
+                verifiedAt: null
+              },
+              where: {
+                sponsorCode: {
+                  in: paymentSponsorCodes
+                }
+              }
+            })
+          ]
+        : []),
       ...balanceAdjustments.map(adjustment =>
         db.sponsorBalanceAdjustment.upsert({
           create: {
@@ -1499,12 +1518,27 @@ export const resetContributionCalculationAction = async (): Promise<{ message: s
             })
           ]
         : []),
-      db.contributionAssessment.delete({
-        where: {
-          id: latestAssessment.id
-        }
-      })
-    ])
+      ...(assessmentIds.length > 0
+        ? [
+            db.contributionAssessmentGroup.deleteMany({
+              where: {
+                assessmentId: {
+                  in: assessmentIds
+                }
+              }
+            }),
+            db.contributionAssessment.deleteMany({
+              where: {
+                id: {
+                  in: assessmentIds
+                }
+              }
+            })
+          ]
+        : [])
+    ]
+
+    await db.$transaction(resetOperations)
 
     revalidatePath('/admin-count')
     revalidatePath('/admin-members')
@@ -1513,7 +1547,7 @@ export const resetContributionCalculationAction = async (): Promise<{ message: s
     revalidateSponsorPaymentPages()
 
     return {
-      message: 'Latest contribution calculation reset successfully. Contribution sent and verified were cleared.'
+      message: 'Contribution reset successfully. Contribution owed, sent, and verified were cleared while balance/deficit was preserved.'
     }
   } catch (error) {
     return renderError(error)
@@ -3282,6 +3316,23 @@ export const restoreDeceasedMemberAction = async (prevState: { deceasedMemberId:
           },
           update: {
             amountUsed: registrationFeePerEligibleMember,
+            sponsorCode: deceasedMember.sponsorCode
+          },
+          where: {
+            memberMatriculationNumber: deceasedMember.memberMatriculationNumber
+          }
+        })
+      }
+
+      if (restoredMemberStatus === memberStatus.Vested) {
+        await tx.sponsorContributionCredit.upsert({
+          create: {
+            amountCredited: contributionCreditPerVestedMember,
+            memberMatriculationNumber: deceasedMember.memberMatriculationNumber,
+            sponsorCode: deceasedMember.sponsorCode
+          },
+          update: {
+            amountCredited: contributionCreditPerVestedMember,
             sponsorCode: deceasedMember.sponsorCode
           },
           where: {

@@ -57,7 +57,7 @@ const ContributionAssessmentForm = ({ vestedMembersCount }: ContributionAssessme
             </form>
 
             <form action={resetFormAction}>
-              <SubmitButton text='Reset calculation' className='w-full bg-red-600 text-white hover:bg-red-700' />
+              <SubmitButton text='Reset contribution' className='w-full bg-red-600 text-white hover:bg-red-700' />
             </form>
           </div>
 
