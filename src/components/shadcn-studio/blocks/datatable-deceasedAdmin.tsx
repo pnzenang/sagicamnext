@@ -87,6 +87,7 @@ import DeceasedSummaryCards, { type DeceasedSummary } from '@/components/dashboa
 import ResponsiveTableCards from '@/components/dashboard/ResponsiveTableCards'
 import { TablePaginationControls } from '@/components/dashboard/TablePaginationControls'
 import { cn } from '@/lib/utils'
+import { getNameSearchValue, nameSearchColumnId, normalizeNameColumnFilters } from '@/utils/table-filters'
 
 import { type DeceasedMemberType } from '@/utils/types'
 import { deleteDeceasedMemberAction } from '@/utils/actions'
@@ -100,6 +101,11 @@ declare module '@tanstack/react-table' {
 }
 
 const columns: ColumnDef<DeceasedMemberType>[] = [
+  {
+    id: nameSearchColumnId,
+    header: 'Names',
+    accessorFn: getNameSearchValue
+  },
   {
     header: 'Last Names',
     accessorKey: 'lastAndMiddleNames',
@@ -246,6 +252,8 @@ const DeceasedMembersDataTable = ({
     []
   )
 
+  const normalizedColumnFilters = useMemo(() => normalizeNameColumnFilters(columnFilters), [columnFilters])
+
   const pageSize = 100
 
   const [pagination, setPagination] = useState<PaginationState>({
@@ -257,8 +265,13 @@ const DeceasedMembersDataTable = ({
     data,
     columns,
     state: {
-      columnFilters,
+      columnFilters: normalizedColumnFilters,
       pagination
+    },
+    initialState: {
+      columnVisibility: {
+        [nameSearchColumnId]: false
+      }
     },
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
@@ -446,8 +459,7 @@ const DeceasedMembersDataTable = ({
         </div>
         <div className='flex min-w-0 flex-col items-start gap-4 p-3 sm:p-6 md:flex-row md:items-center md:justify-between'>
           <div className='flex w-full min-w-0 flex-col justify-start gap-2 md:flex-1 md:flex-row md:flex-nowrap md:items-center'>
-            <Filter column={table.getColumn('lastAndMiddleNames')!} />
-            <Filter column={table.getColumn('firstName')!} />
+            <Filter column={table.getColumn(nameSearchColumnId)!} />
             <Filter column={table.getColumn('sponsorCode')!} />
             <Filter column={table.getColumn('contributionStatus')!} />
           </div>

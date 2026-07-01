@@ -76,6 +76,7 @@ import ResponsiveTableCards from '@/components/dashboard/ResponsiveTableCards'
 import { TablePaginationControls } from '@/components/dashboard/TablePaginationControls'
 import { cn } from '@/lib/utils'
 import { awaitingPublicationVestingLongevityDays } from '@/utils/sagicam-member-longevity'
+import { getNameSearchValue, nameSearchColumnId, normalizeNameColumnFilters } from '@/utils/table-filters'
 import { vestEligibleAwaitingPublicationMembersAction } from '@/utils/actions'
 import { memberStatus, type MemberType } from '@/utils/types'
 
@@ -86,6 +87,11 @@ declare module '@tanstack/react-table' {
 }
 
 const columns: ColumnDef<MemberType>[] = [
+  {
+    id: nameSearchColumnId,
+    header: 'Names',
+    accessorFn: getNameSearchValue
+  },
   {
     header: 'Code',
     accessorKey: 'sponsorCode',
@@ -244,6 +250,8 @@ const MembersDataTable = ({
     []
   )
 
+  const normalizedColumnFilters = useMemo(() => normalizeNameColumnFilters(columnFilters), [columnFilters])
+
   const [autoVestState, autoVestFormAction] = useActionState(vestEligibleAwaitingPublicationMembersAction, {
     message: ''
   })
@@ -259,8 +267,13 @@ const MembersDataTable = ({
     data,
     columns,
     state: {
-      columnFilters,
+      columnFilters: normalizedColumnFilters,
       pagination
+    },
+    initialState: {
+      columnVisibility: {
+        [nameSearchColumnId]: false
+      }
     },
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
@@ -473,8 +486,7 @@ const MembersDataTable = ({
         <div className='flex min-w-0 flex-col items-start gap-4 p-3 sm:p-6 md:flex-row md:items-center md:justify-between'>
           <div className='flex w-full min-w-0 flex-col justify-start gap-2 md:flex-1 md:flex-row md:flex-nowrap md:items-center'>
             <Filter column={table.getColumn('sponsorCode')!} />
-            <Filter column={table.getColumn('lastAndMiddleNames')!} />
-            <Filter column={table.getColumn('firstName')!} />
+            <Filter column={table.getColumn(nameSearchColumnId)!} />
             <Filter column={table.getColumn('delegateRecommendation')!} />
             <Filter column={table.getColumn('memberStatus')!} />
           </div>
