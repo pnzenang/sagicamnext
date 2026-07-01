@@ -6,7 +6,9 @@ const authLogoUrl = 'https://res.cloudinary.com/dp8tkb7hq/image/upload/v17758894
 
 const authAppearance = {
   elements: {
+    card: "[&_a[href*='clerk.com']]:hidden",
     cardBox: 'shadow-none',
+    footerPages: 'hidden',
     header:
       "gap-4 before:mx-auto before:block before:h-20 before:w-20 before:bg-[url('https://res.cloudinary.com/dp8tkb7hq/image/upload/v1775889433/sagicam_bkoygk.svg')] before:bg-contain before:bg-center before:bg-no-repeat before:content-['']",
     rootBox: 'mx-auto'
