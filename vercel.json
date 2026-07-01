@@ -1,4 +1,10 @@
 {
+  "crons": [
+    {
+      "path": "/api/cron/auto-vest-awaiting-members",
+      "schedule": "0 6 1 * *"
+    }
+  ],
   "git": {
     "deploymentEnabled": true
   }
