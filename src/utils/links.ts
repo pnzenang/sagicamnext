@@ -1,5 +1,6 @@
 import {
   BookCheck,
+  CreditCard,
   Cross,
   Megaphone,
   MessageCircle,
@@ -53,6 +54,11 @@ export const pagesItems: MenuItem[] = [
     icon: WalletCards,
     label: 'Contributions Payments',
     href: '/contributions-payments'
+  },
+  {
+    icon: CreditCard,
+    label: 'Payment Instructions',
+    href: '/payment-instructions'
   },
   {
     icon: UserMinus,
