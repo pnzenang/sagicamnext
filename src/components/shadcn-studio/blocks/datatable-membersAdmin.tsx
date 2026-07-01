@@ -1,5 +1,7 @@
 'use client'
-import { useId, useMemo, useState } from 'react'
+import { useActionState, useId, useMemo, useState } from 'react'
+
+import { useFormStatus } from 'react-dom'
 
 import day from 'dayjs'
 import advancedFormat from 'dayjs/plugin/advancedFormat'
@@ -19,7 +21,8 @@ import {
   SearchIcon,
   UploadIcon,
   Cross,
-  Eye,
+  Loader,
+  ShieldCheck,
   Pencil
 } from 'lucide-react'
 
@@ -38,11 +41,19 @@ import {
 
 import Link from 'next/link'
 
-import { id } from 'zod/v4/locales'
-
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger
+} from '@/components/ui/alert-dialog'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -64,7 +75,9 @@ import MembershipSummaryCards from '@/components/dashboard/MembershipSummaryCard
 import ResponsiveTableCards from '@/components/dashboard/ResponsiveTableCards'
 import { TablePaginationControls } from '@/components/dashboard/TablePaginationControls'
 import { cn } from '@/lib/utils'
-import { type MemberType } from '@/utils/types'
+import { awaitingPublicationVestingLongevityDays } from '@/utils/sagicam-member-longevity'
+import { vestEligibleAwaitingPublicationMembersAction } from '@/utils/actions'
+import { memberStatus, type MemberType } from '@/utils/types'
 
 declare module '@tanstack/react-table' {
   interface ColumnMeta<TData extends RowData, TValue> {
@@ -231,6 +244,10 @@ const MembersDataTable = ({
     []
   )
 
+  const [autoVestState, autoVestFormAction] = useActionState(vestEligibleAwaitingPublicationMembersAction, {
+    message: ''
+  })
+
   const pageSize = 100
 
   const [pagination, setPagination] = useState<PaginationState>({
@@ -256,6 +273,16 @@ const MembersDataTable = ({
     getPaginationRowModel: getPaginationRowModel(),
     onPaginationChange: setPagination
   })
+
+  const eligibleAutoVestCount = useMemo(() => {
+    const now = day()
+
+    return data.filter(
+      member =>
+        member.memberStatus === memberStatus.Awaiting &&
+        now.diff(day(member.createdAt), 'days') >= awaitingPublicationVestingLongevityDays
+    ).length
+  }, [data])
 
   const exportToCSV = () => {
     const selectedRows = table.getSelectedRowModel().rows
@@ -375,6 +402,33 @@ const MembersDataTable = ({
                 showRightEllipsis={showRightEllipsis}
                 className='mx-0 w-auto justify-start md:justify-end'
               />
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    className='bg-emerald-700 text-white hover:bg-emerald-800 focus-visible:ring-emerald-700/30 shrink-0 max-md:flex-1 max-md:justify-center'
+                    disabled={eligibleAutoVestCount === 0}
+                  >
+                    <ShieldCheck />
+                    Vest 30+ Days ({eligibleAutoVestCount})
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Move eligible loved ones to Vested?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will move {eligibleAutoVestCount} loved one
+                      {eligibleAutoVestCount === 1 ? '' : 's'} from Awaiting Publication to Vested and apply the $30
+                      contribution credit to each related sponsor.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <form action={autoVestFormAction}>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel type='button'>Cancel</AlertDialogCancel>
+                      <AutoVestSubmitButton disabled={eligibleAutoVestCount === 0} />
+                    </AlertDialogFooter>
+                  </form>
+                </AlertDialogContent>
+              </AlertDialog>
               <Button
                 className='bg-primary/10 text-primary hover:bg-primary/20 focus-visible:ring-primary/20 dark:focus-visible:ring-primary/40 shrink-0 max-md:flex-1 max-md:justify-center'
                 onClick={exportFilteredPageToExcel}
@@ -407,6 +461,11 @@ const MembersDataTable = ({
               </DropdownMenu>
             </div>
           </div>
+          {autoVestState.message ? (
+            <p className='text-primary text-sm font-semibold' aria-live='polite'>
+              {autoVestState.message}
+            </p>
+          ) : null}
           <div className='grid grid-cols-1 gap-6 max-md:*:last:col-span-full sm:grid-cols-2 md:grid-cols-3'>
             {/* <Filter column={table.getColumn('dateOfBirth')!} /> */}
           </div>
@@ -534,6 +593,27 @@ const MembersDataTable = ({
 }
 
 export default MembersDataTable
+
+function AutoVestSubmitButton({ disabled }: { disabled: boolean }) {
+  const { pending } = useFormStatus()
+
+  return (
+    <Button
+      type='submit'
+      disabled={disabled || pending}
+      className='bg-emerald-700 text-white hover:bg-emerald-800 focus-visible:ring-emerald-700/30'
+    >
+      {pending ? (
+        <>
+          <Loader className='animate-spin' />
+          Please wait...
+        </>
+      ) : (
+        'Move to Vested'
+      )}
+    </Button>
+  )
+}
 
 function Filter({ column }: { column: Column<any, unknown> }) {
   const id = useId()

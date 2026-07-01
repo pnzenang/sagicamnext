@@ -43,6 +43,7 @@ import {
   registrationFeePerEligibleMember
 } from './sagicam-registration-summary'
 import { sponsorPaymentLedgerEventTypes, sponsorPaymentTypes } from './sagicam-payment-ledger'
+import { awaitingPublicationVestingLongevityDays, getAwaitingPublicationVestingCutoff } from './sagicam-member-longevity'
 import {
   deleteDeathDocumentationFromCloudinary,
   isSameCloudinaryDocument,
@@ -1700,6 +1701,95 @@ export const updateMemberDetailsActionForAdmin = async (prevState: any, formData
   }
 
   redirect('/admin-members')
+}
+
+export const vestEligibleAwaitingPublicationMembersAction = async (): Promise<{ message: string }> => {
+  await assertAdminUser()
+
+  try {
+    const cutoffAt = getAwaitingPublicationVestingCutoff()
+
+    const eligibleMembers = await db.member.findMany({
+      orderBy: {
+        createdAt: 'asc'
+      },
+      select: {
+        id: true,
+        memberMatriculationNumber: true,
+        sponsorCode: true
+      },
+      where: {
+        createdAt: {
+          lte: cutoffAt
+        },
+        memberStatus: memberStatus.Awaiting
+      }
+    })
+
+    if (eligibleMembers.length === 0) {
+      return {
+        message: `No Awaiting Publication loved ones with at least ${awaitingPublicationVestingLongevityDays} days of longevity were found.`
+      }
+    }
+
+    let vestedCount = 0
+
+    await db.$transaction(async tx => {
+      for (const member of eligibleMembers) {
+        const updatedMember = await tx.member.updateMany({
+          data: {
+            memberStatus: memberStatus.Vested
+          },
+          where: {
+            createdAt: {
+              lte: cutoffAt
+            },
+            id: member.id,
+            memberStatus: memberStatus.Awaiting
+          }
+        })
+
+        if (updatedMember.count === 0) {
+          continue
+        }
+
+        await tx.sponsorContributionCredit.upsert({
+          create: {
+            amountCredited: contributionCreditPerVestedMember,
+            memberMatriculationNumber: member.memberMatriculationNumber,
+            sponsorCode: member.sponsorCode
+          },
+          update: {
+            amountCredited: contributionCreditPerVestedMember,
+            sponsorCode: member.sponsorCode
+          },
+          where: {
+            memberMatriculationNumber: member.memberMatriculationNumber
+          }
+        })
+
+        vestedCount += updatedMember.count
+      }
+    })
+
+    revalidateMemberPaymentViews()
+    revalidatePath('/admin-users-contacts')
+    revalidatePath('/new-additions')
+
+    if (vestedCount === 0) {
+      return {
+        message: 'No loved ones were moved because the eligible records changed before the action completed.'
+      }
+    }
+
+    return {
+      message: `${vestedCount} loved one${vestedCount === 1 ? '' : 's'} moved to Vested. ${currencyFormatter.format(
+        vestedCount * contributionCreditPerVestedMember
+      )} in sponsor contribution credit was applied.`
+    }
+  } catch (error) {
+    return renderError(error)
+  }
 }
 
 export const fetchNameChangeDocumentationPageAction = async () => {
