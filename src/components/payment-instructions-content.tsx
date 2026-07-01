@@ -24,7 +24,8 @@ const getPaymentSteps = (memoReference: string) => [
   {
     icon: WalletCards,
     title: 'Open the right payment page',
-    description: 'Use Registration Payments for new loved one fees and Contributions Payments for monthly contributions.'
+    description:
+      'Use Registration Payments for new loved one fees and Contributions Payments for monthly contributions.'
   },
   {
     icon: CreditCard,
@@ -35,7 +36,7 @@ const getPaymentSteps = (memoReference: string) => [
   {
     icon: FileText,
     title: 'Write a clear payment memo',
-    description: `Always include ${memoReference} in the Zelle memo so SAGICAM can match the payment to your account.`
+    description: `Always include your 4-letter code in the Zelle memo so SAGICAM can match the payment to your account.`
   },
   {
     icon: Upload,
