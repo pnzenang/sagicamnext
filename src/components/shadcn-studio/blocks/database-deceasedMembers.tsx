@@ -15,7 +15,8 @@ import {
   FileSpreadsheetIcon,
   FileTextIcon,
   SearchIcon,
-  UploadIcon
+  UploadIcon,
+  XIcon
 } from 'lucide-react'
 
 import type { Column, ColumnDef, ColumnFiltersState, PaginationState, RowData } from '@tanstack/react-table'
@@ -556,6 +557,7 @@ function Filter({ column }: { column: Column<any, unknown> }) {
   const columnFilterValue = column.getFilterValue()
   const { filterVariant } = column.columnDef.meta ?? {}
   const columnHeader = typeof column.columnDef.header === 'string' ? column.columnDef.header : ''
+  const textFilterValue = (columnFilterValue ?? '') as string
 
   const sortedUniqueValues = useMemo(() => {
     if (filterVariant === 'range') return []
@@ -608,8 +610,8 @@ function Filter({ column }: { column: Column<any, unknown> }) {
       <div className='relative'>
         <Input
           id={`${id}-input`}
-          className='peer pl-9'
-          value={(columnFilterValue ?? '') as string}
+          className='peer px-9'
+          value={textFilterValue}
           onChange={e => column.setFilterValue(e.target.value)}
           placeholder={`Search ${columnHeader.toLowerCase()}`}
           type='text'
@@ -617,6 +619,16 @@ function Filter({ column }: { column: Column<any, unknown> }) {
         <div className='text-muted-foreground/80 pointer-events-none absolute inset-y-0 left-0 flex items-center justify-center pl-3 peer-disabled:opacity-50'>
           <SearchIcon size={16} />
         </div>
+        {textFilterValue ? (
+          <button
+            type='button'
+            aria-label={`Clear ${columnHeader.toLowerCase()} search`}
+            className='text-muted-foreground/80 hover:text-foreground focus-visible:ring-ring/50 absolute inset-y-0 right-0 flex items-center justify-center pr-3 transition-colors outline-none focus-visible:ring-[3px]'
+            onClick={() => column.setFilterValue(undefined)}
+          >
+            <XIcon size={16} />
+          </button>
+        ) : null}
       </div>
     </div>
   )
