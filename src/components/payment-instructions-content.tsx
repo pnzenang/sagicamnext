@@ -62,7 +62,7 @@ const PaymentInstructionsContent = ({ sponsorCode }: { sponsorCode?: string | nu
           <p className='text-muted-foreground mt-4 max-w-3xl text-base leading-7'>
             Send your payment first, then record it in the correct SAGICAM payment page so the admin team can match the
             money to your sponsor account without delays.{' '}
-            <span className='text-primary font-bold'>Always include {memoReference} in the payment memo.</span>
+            <span className='text-primary font-bold'>Always include your SAGICAM 4-letter code in the Zelle memo.</span>
           </p>
           <div className='mt-6 flex flex-col gap-3 sm:flex-row'>
             <Button asChild>
