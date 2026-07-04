@@ -30,8 +30,8 @@ const PagesLayout = async ({ children }: Readonly<{ children: ReactNode }>) => {
 
   return (
     <>
-      <div className='bg-muted flex min-h-dvh w-full' lang={language}>
-        <SidebarProvider>
+      <div className='bg-muted h-dvh w-full overflow-hidden' lang={language}>
+        <SidebarProvider className='h-full min-h-0 overflow-hidden'>
           <Sidebar collapsible='icon' className='**:data-[slot=sidebar-inner]:bg-muted border-r-0!'>
             <SidebarHeader>
               <SidebarMenu>
@@ -48,13 +48,13 @@ const PagesLayout = async ({ children }: Readonly<{ children: ReactNode }>) => {
               <SidebarGroupedMenuItems language={language} />
             </SidebarContent>
           </Sidebar>
-          <div className='flex min-w-0 flex-1 flex-col'>
-            <header className='bg-muted sticky top-0 z-50 flex items-center justify-between gap-6 px-3 py-3 sm:px-6 sm:py-4'>
+          <div className='flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden'>
+            <header className='bg-muted z-50 flex shrink-0 items-center justify-between gap-4 px-3 py-3 sm:gap-6 sm:px-6 sm:py-4'>
               <div className='flex items-center gap-4'>
                 <SidebarTrigger className='[&_svg]:size-5!' />
                 <LogoSmall className='size-10 sm:hidden' />
               </div>
-              <div className='text-primary font-bold sm:text-2xl'>{copy.brand}</div>
+              <div className='text-primary min-w-0 truncate text-center font-bold sm:text-2xl'>{copy.brand}</div>
               <div className='flex shrink-0 items-center justify-end gap-3'>
                 <ModeToggleSmall />
                 <UserButton
@@ -67,10 +67,12 @@ const PagesLayout = async ({ children }: Readonly<{ children: ReactNode }>) => {
                 />
               </div>
             </header>
-            <main className='size-full min-w-0 flex-1 px-2 py-2 sm:px-6 sm:py-6'>
-              <Card className='h-full min-w-0 overflow-hidden py-2 sm:py-6'>
-                <CardContent className='h-full min-w-0 px-2 sm:px-6'>
-                  <main className='flex min-w-0 flex-1 flex-col *:scroll-mt-20'>{children}</main>
+            <main className='min-h-0 min-w-0 flex-1 overflow-hidden px-2 pb-2 sm:px-6 sm:pb-6'>
+              <Card className='h-full min-h-0 min-w-0 overflow-hidden py-0'>
+                <CardContent className='h-full min-h-0 min-w-0 overflow-hidden px-0'>
+                  <main className='flex h-full min-h-0 min-w-0 flex-col overflow-y-auto overflow-x-hidden px-2 py-2 sm:px-6 sm:py-6 *:scroll-mt-20'>
+                    {children}
+                  </main>
                 </CardContent>
               </Card>
             </main>
