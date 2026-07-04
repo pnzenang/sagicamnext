@@ -1,21 +1,13 @@
 import { ClerkLoaded, ClerkLoading, SignUp } from '@clerk/nextjs'
 
-const authAppearance = {
-  elements: {
-    card: "[&_a[href*='clerk.com']]:hidden [&_.cl-logoBox]:hidden [&_.cl-logoImage]:hidden",
-    cardBox: 'shadow-none',
-    footerPages: 'hidden',
-    logoBox: 'hidden',
-    logoImage: 'hidden',
-    rootBox: 'mx-auto'
-  }
-}
+import { authAppearance } from '../../auth-appearance'
 
 const AuthLoadingCard = () => {
   return (
     <div className='bg-background w-full max-w-md rounded-lg border p-8 shadow-sm'>
       <div className='space-y-6'>
         <div className='space-y-4'>
+          <div className='bg-muted mx-auto h-16 w-32 animate-pulse rounded-md' />
           <div className='space-y-2'>
             <div className='bg-muted mx-auto h-7 w-40 animate-pulse rounded-md' />
             <div className='bg-muted mx-auto h-4 w-64 max-w-full animate-pulse rounded-md' />
