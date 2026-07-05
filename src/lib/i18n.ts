@@ -102,6 +102,8 @@ const dashboardMenuLabelTranslations: Record<string, string> = {
   'All Deceased Loved Ones': 'Tous les proches décédés',
   'All Loved Ones': 'Tous les proches',
   'All Removed Loved Ones': 'Tous les proches retirés',
+  'Contribution Calculation': 'Calcul des cotisations',
+  'Contribution Table': 'Tableau des cotisations',
   'Contributions Payments': 'Paiements des cotisations',
   'Death Announcement': 'Annonce de décès',
   'Death Documentations': 'Documents de décès',
@@ -110,6 +112,7 @@ const dashboardMenuLabelTranslations: Record<string, string> = {
   'Member Transfer': 'Transfert de membre',
   'Name Change & Documentations': 'Changement de nom et documents',
   'New Additions': 'Nouveaux ajouts',
+  'Payment Update': 'Mise à jour des paiements',
   'Payment Instructions': 'Instructions de paiement',
   'Registration Payments': "Paiements d'inscription",
   'Remove Member': 'Retirer un membre',
@@ -120,10 +123,18 @@ const dashboardMenuLabelTranslations: Record<string, string> = {
   'Users Contacts': 'Contacts des utilisateurs'
 }
 
+const contributionTableLabelPattern = /^(.+)'s Contribution Table$/
+
 export const translateDashboardMenuLabel = (label: string, language: AppLanguage) => {
   if (language !== 'fr') return label
 
   const normalizedLabel = label.trim()
+
+  const contributionTableLabelMatch = normalizedLabel.match(contributionTableLabelPattern)
+
+  if (contributionTableLabelMatch) {
+    return `Tableau des cotisations de ${contributionTableLabelMatch[1]}`
+  }
 
   return dashboardMenuLabelTranslations[normalizedLabel] ?? label
 }

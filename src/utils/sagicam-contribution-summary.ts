@@ -30,7 +30,7 @@ export type SponsorContributionSummary = {
 
 const decimalToNumber = (value: unknown) => Number(value ?? 0)
 
-const fetchLatestContributionAssessment = () =>
+export const fetchLatestContributionAssessment = () =>
   db.contributionAssessment.findFirst({
     include: {
       groups: true
@@ -64,7 +64,8 @@ export const fetchSponsorContributionSummary = async (
         include: {
           assessment: {
             select: {
-              createdAt: true
+              createdAt: true,
+              dueDate: true
             }
           }
         },
@@ -98,6 +99,7 @@ export const fetchSponsorContributionSummary = async (
   const amountOwed = contributionGroup
     ? decimalToNumber(contributionGroup.amountOwed)
     : Number((amountPerVestedMember * vestedMembersCount).toFixed(2))
+
   const amountReceived = decimalToNumber(payment?.amountSent)
   const amountVerified = decimalToNumber(payment?.amountVerified)
   const manualBalanceAdjustment = decimalToNumber(balanceAdjustment?.amount)
@@ -113,7 +115,7 @@ export const fetchSponsorContributionSummary = async (
   )
 
   const contributionDueMonthsByDate = contributionAssessmentGroups.reduce((groups, group) => {
-    const dueDate = group.assessment.createdAt
+    const dueDate = group.assessment.dueDate ?? group.assessment.createdAt
     const dueDateKey = dueDate.toISOString().slice(0, 7)
     const currentGroup = groups.get(dueDateKey)
 
@@ -130,12 +132,12 @@ export const fetchSponsorContributionSummary = async (
   )
 
   const fallbackContributionDueMonths =
-    contributionDueMonths.length > 0 || amountOwed <= 0 || !latestAssessment?.createdAt
+    contributionDueMonths.length > 0 || amountOwed <= 0 || !(latestAssessment?.dueDate ?? latestAssessment?.createdAt)
       ? contributionDueMonths
       : [
           {
             amount: amountOwed,
-            dueDate: latestAssessment.createdAt.toISOString()
+            dueDate: (latestAssessment.dueDate ?? latestAssessment.createdAt).toISOString()
           }
         ]
 
@@ -146,7 +148,7 @@ export const fetchSponsorContributionSummary = async (
     amountVerified,
     balance: Number((amountVerified + vestedContributionCredit + manualBalanceAdjustment - totalAmountUsed).toFixed(2)),
     contributionDueMonths: fallbackContributionDueMonths,
-    dueDate: latestAssessment?.createdAt.toISOString() ?? null,
+    dueDate: (latestAssessment?.dueDate ?? latestAssessment?.createdAt)?.toISOString() ?? null,
     lastSubmittedAt: payment?.lastSubmittedAt?.toISOString() ?? null,
     manualBalanceAdjustment,
     sponsorCode,

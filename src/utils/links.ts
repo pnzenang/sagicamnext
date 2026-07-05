@@ -17,7 +17,9 @@ import {
   WalletMinimal,
   History,
   List,
-  ArrowLeftRight
+  ArrowLeftRight,
+  Calculator,
+  Table2
 } from 'lucide-react'
 
 import type { MenuItem } from './types'
@@ -54,6 +56,11 @@ export const pagesItems: MenuItem[] = [
     icon: WalletCards,
     label: 'Contributions Payments',
     href: '/contributions-payments'
+  },
+  {
+    icon: Table2,
+    label: 'Contribution Table',
+    href: '/contribution-table'
   },
   {
     icon: CreditCard,
@@ -155,6 +162,16 @@ export const pagesItems: MenuItem[] = [
         icon: SquareUser,
         label: 'Users Contacts',
         href: '/admin-users-contacts'
+      },
+      {
+        icon: Calculator,
+        label: 'Contribution Calculation',
+        href: '/admin-contribution-calculation'
+      },
+      {
+        icon: Table2,
+        label: 'Payment Update',
+        href: '/admin-payment-update'
       },
       {
         icon: WalletCards,

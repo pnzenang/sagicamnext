@@ -30,7 +30,11 @@ const PagesLayout = async ({ children }: Readonly<{ children: ReactNode }>) => {
 
   return (
     <>
-      <div className='bg-muted h-dvh w-full overflow-hidden' lang={language}>
+      <div
+        data-dashboard-shell
+        className='bg-muted h-dvh w-full overflow-hidden print:block print:h-auto print:overflow-visible print:bg-white'
+        lang={language}
+      >
         <SidebarProvider className='h-full min-h-0 overflow-hidden'>
           <Sidebar collapsible='icon' className='**:data-[slot=sidebar-inner]:bg-muted border-r-0!'>
             <SidebarHeader>
@@ -49,7 +53,10 @@ const PagesLayout = async ({ children }: Readonly<{ children: ReactNode }>) => {
             </SidebarContent>
           </Sidebar>
           <div className='flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden'>
-            <header className='bg-muted z-50 flex shrink-0 items-center justify-between gap-4 px-3 py-3 sm:gap-6 sm:px-6 sm:py-4'>
+            <header
+              data-dashboard-header
+              className='bg-muted z-50 flex shrink-0 items-center justify-between gap-4 px-3 py-3 sm:gap-6 sm:px-6 sm:py-4 print:hidden'
+            >
               <div className='flex items-center gap-4'>
                 <SidebarTrigger className='[&_svg]:size-5!' />
                 <LogoSmall className='size-10 sm:hidden' />
@@ -67,10 +74,16 @@ const PagesLayout = async ({ children }: Readonly<{ children: ReactNode }>) => {
                 />
               </div>
             </header>
-            <main className='min-h-0 min-w-0 flex-1 overflow-hidden px-2 pb-2 sm:px-6 sm:pb-6'>
-              <Card className='h-full min-h-0 min-w-0 overflow-hidden py-0'>
-                <CardContent className='h-full min-h-0 min-w-0 overflow-hidden px-0'>
-                  <main className='flex h-full min-h-0 min-w-0 flex-col overflow-y-auto overflow-x-hidden px-2 py-2 sm:px-6 sm:py-6 *:scroll-mt-20'>
+            <main
+              data-dashboard-main
+              className='min-h-0 min-w-0 flex-1 overflow-hidden px-2 pb-2 sm:px-6 sm:pb-6 print:block print:overflow-visible print:p-0'
+            >
+              <Card
+                data-dashboard-frame
+                className='h-full min-h-0 min-w-0 overflow-hidden py-0 print:h-auto print:overflow-visible print:rounded-none print:border-0 print:shadow-none'
+              >
+                <CardContent className='h-full min-h-0 min-w-0 overflow-hidden px-0 print:h-auto print:overflow-visible print:p-0'>
+                  <main className='flex h-full min-h-0 min-w-0 flex-col overflow-y-auto overflow-x-hidden px-2 py-2 sm:px-6 sm:py-6 print:h-auto print:overflow-visible print:p-0 *:scroll-mt-20'>
                     {children}
                   </main>
                 </CardContent>

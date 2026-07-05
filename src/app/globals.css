@@ -203,6 +203,426 @@
   }
 }
 
+@layer components {
+  @media (width < 40rem) {
+    [data-mobile-cards='true'] {
+      border-collapse: separate;
+      border-spacing: 0 0.5rem;
+      box-sizing: border-box;
+      display: block;
+      max-width: 100%;
+      min-width: 0 !important;
+      padding: 0.5rem;
+      table-layout: fixed;
+      width: 100% !important;
+    }
+
+    [data-mobile-cards='true'] thead {
+      display: none;
+    }
+
+    [data-mobile-cards='true'] tbody {
+      display: grid;
+      gap: 0.5rem;
+      min-width: 0;
+      width: 100%;
+    }
+
+    [data-mobile-cards='true'] tbody tr {
+      background: var(--card);
+      border: 1px solid var(--border) !important;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      contain: layout paint;
+      display: grid;
+      max-width: 100%;
+      min-width: 0;
+      overflow: hidden;
+      width: 100%;
+    }
+
+    [data-mobile-cards='true'] tbody tr:hover {
+      background: var(--card);
+    }
+
+    [data-mobile-cards='true'] tbody tr:last-child {
+      border: 1px solid var(--border) !important;
+    }
+
+    [data-mobile-cards='true'] tbody td {
+      align-items: start;
+      border-bottom: 1px solid var(--border);
+      display: grid;
+      gap: 0.5rem;
+      grid-template-columns: minmax(5.75rem, 36%) minmax(0, 1fr);
+      height: auto !important;
+      justify-items: stretch;
+      min-height: 0 !important;
+      min-width: 0 !important;
+      padding: 0.5rem !important;
+      text-align: right;
+      white-space: normal;
+      width: 100% !important;
+    }
+
+    [data-mobile-cards='true'] tbody td:last-child {
+      border-bottom: 0;
+    }
+
+    [data-mobile-cards='true'] tbody td:not([data-label]) {
+      display: block;
+      text-align: center;
+    }
+
+    [data-mobile-cards='true'] tbody td:not([data-label])::before {
+      content: none;
+    }
+
+    [data-mobile-cards='true'] tbody td::before {
+      color: var(--muted-foreground);
+      content: attr(data-label);
+      font-size: 0.75rem;
+      font-weight: 700;
+      line-height: 1.25;
+      text-align: left;
+      text-transform: uppercase;
+    }
+
+    [data-mobile-cards='true'] tbody td > * {
+      justify-self: end;
+      min-width: 0;
+      overflow-wrap: anywhere;
+      text-align: right;
+    }
+
+    [data-payment-update-table][data-mobile-cards='true'] tbody td {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    [data-payment-update-table][data-mobile-cards='true'] tbody td::before,
+    [data-payment-update-table][data-mobile-cards='true'] tbody td > * {
+      overflow: hidden;
+      overflow-wrap: normal;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    [data-mobile-cards='true'] tbody td[data-label='Actions'] {
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    [data-mobile-cards='true'] tbody td[data-label='Actions']::before {
+      content: none;
+    }
+  }
+
+  @media print {
+    [data-dashboard-shell] {
+      background: white !important;
+      display: block !important;
+      min-height: 0 !important;
+      overflow: visible !important;
+    }
+
+    [data-dashboard-header],
+    [data-slot='sidebar'],
+    [data-slot='sidebar-gap'],
+    [data-slot='sidebar-container'],
+    [data-slot='sidebar-trigger'] {
+      display: none !important;
+    }
+
+    [data-dashboard-main],
+    [data-dashboard-frame],
+    [data-dashboard-frame] > [data-slot='card-content'] {
+      margin: 0 !important;
+      max-width: none !important;
+      min-height: 0 !important;
+      overflow: visible !important;
+      padding: 0 !important;
+      width: 100% !important;
+    }
+
+    [data-dashboard-frame] {
+      border: 0 !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+    }
+
+    @page contribution-table-page {
+      margin: 0.35in 0.35in 0.55in;
+      size: landscape;
+
+      @bottom-center {
+        color: rgb(71 85 105);
+        content: 'Page ' counter(page) ' of ' counter(pages);
+        font-size: 9px;
+        font-weight: 600;
+      }
+    }
+
+    [data-contribution-table-print] {
+      page: contribution-table-page;
+    }
+
+    body:has([data-contribution-table-print]) main,
+    body:has([data-contribution-table-print]) [data-slot='card'],
+    body:has([data-contribution-table-print]) [data-slot='card-content'] {
+      overflow: visible !important;
+    }
+
+    body:has([data-contribution-table-print]) [data-slot='card'] {
+      border-color: var(--border);
+      box-shadow: none !important;
+    }
+
+    [data-contribution-table-print] [data-slot='card'] {
+      break-inside: avoid;
+      gap: 0.5rem !important;
+      padding-block: 0.45rem !important;
+    }
+
+    [data-contribution-table-print] [data-sponsor-contribution-section] {
+      break-inside: auto !important;
+    }
+
+    [data-contribution-table-print] [data-slot='card-header'],
+    [data-contribution-table-print] [data-slot='card-content'] {
+      padding-inline: 0.5rem !important;
+    }
+
+    [data-contribution-table-print] [data-slot='card-title'] {
+      font-size: 0.8rem !important;
+    }
+
+    [data-contribution-table-print] [data-slot='card-description'] {
+      font-size: 0.65rem !important;
+      line-height: 1.2 !important;
+    }
+
+    [data-contribution-table-print] [data-mobile-cards='true'] {
+      border-collapse: collapse !important;
+      border-spacing: 0 !important;
+      display: table !important;
+      min-width: 0 !important;
+      padding: 0 !important;
+      table-layout: auto !important;
+      width: 100% !important;
+    }
+
+    [data-contribution-table-print] [data-mobile-cards='true'] thead {
+      display: table-header-group !important;
+    }
+
+    [data-contribution-table-print] [data-mobile-cards='true'] tbody {
+      display: table-row-group !important;
+    }
+
+    [data-contribution-table-print] [data-mobile-cards='true'] tr {
+      break-inside: avoid;
+      box-shadow: none !important;
+      display: table-row !important;
+    }
+
+    [data-contribution-table-print] [data-mobile-cards='true'] th,
+    [data-contribution-table-print] [data-mobile-cards='true'] td {
+      border: 1px solid var(--border) !important;
+      display: table-cell !important;
+      font-size: 0.58rem !important;
+      height: 0.3in !important;
+      line-height: 1.35 !important;
+      min-width: 0 !important;
+      padding: 0.32rem 0.22rem !important;
+      white-space: normal !important;
+      width: auto !important;
+    }
+
+    [data-contribution-table-print] [data-mobile-cards='true'] td::before {
+      content: none !important;
+    }
+
+    [data-contribution-table-print] [data-mobile-cards='true'] td > * {
+      justify-self: auto !important;
+      overflow-wrap: anywhere;
+    }
+
+    [data-contribution-table-print] [data-mobile-cards='true'] th button {
+      color: var(--foreground) !important;
+    }
+
+    [data-contribution-table-print] [data-sponsor-contribution-table] {
+      break-inside: auto !important;
+      page-break-inside: auto;
+    }
+
+    [data-contribution-table-print] [data-sponsor-contribution-table] thead {
+      display: table-header-group !important;
+    }
+
+    [data-contribution-table-print] [data-sponsor-contribution-table] thead th {
+      -webkit-print-color-adjust: exact;
+      background: rgb(243 244 246) !important;
+      print-color-adjust: exact;
+    }
+
+    [data-contribution-table-print] [data-sponsor-contribution-table] tbody tr {
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    [data-contribution-table-print] [data-sponsor-contribution-table] tbody tr:nth-child(odd) td {
+      -webkit-print-color-adjust: exact;
+      background: rgb(229 231 235) !important;
+      line-height: 1.35 !important;
+      padding-block: 0.42rem !important;
+      print-color-adjust: exact;
+    }
+
+    [data-contribution-table-print] [data-sponsor-contribution-table] tbody tr:nth-child(even) td {
+      -webkit-print-color-adjust: exact;
+      background: white !important;
+      line-height: 1.35 !important;
+      padding-block: 0.42rem !important;
+      print-color-adjust: exact;
+    }
+
+    @page payment-update-page {
+      margin: 0.35in 0.35in 0.55in;
+      size: landscape;
+
+      @bottom-center {
+        color: rgb(71 85 105);
+        content: 'Page ' counter(page) ' of ' counter(pages);
+        font-size: 9px;
+        font-weight: 600;
+      }
+    }
+
+    [data-payment-update-print] {
+      page: payment-update-page;
+    }
+
+    body:has([data-payment-update-print]) main,
+    body:has([data-payment-update-print]) [data-slot='card'],
+    body:has([data-payment-update-print]) [data-slot='card-content'],
+    body:has([data-payment-update-print]) [data-slot='table-container'] {
+      overflow: visible !important;
+    }
+
+    body:has([data-payment-update-print]) [data-slot='card'] {
+      border-color: var(--border);
+      box-shadow: none !important;
+    }
+
+    [data-payment-update-print] [data-slot='card'] {
+      break-inside: avoid;
+      gap: 0.5rem !important;
+      padding-block: 0.45rem !important;
+    }
+
+    [data-payment-update-print] [data-payment-update-table-card] {
+      break-inside: auto !important;
+      page-break-inside: auto;
+    }
+
+    [data-payment-update-print] [data-slot='card-header'],
+    [data-payment-update-print] [data-slot='card-content'] {
+      padding-inline: 0.5rem !important;
+    }
+
+    [data-payment-update-print] [data-slot='card-title'] {
+      font-size: 0.8rem !important;
+    }
+
+    [data-payment-update-print] [data-payment-update-table] {
+      border-collapse: collapse !important;
+      border-spacing: 0 !important;
+      display: table !important;
+      min-width: 0 !important;
+      padding: 0 !important;
+      table-layout: fixed !important;
+      width: 100% !important;
+    }
+
+    [data-payment-update-print] [data-payment-update-table] thead {
+      display: table-header-group !important;
+    }
+
+    [data-payment-update-print] [data-payment-update-table] tbody {
+      display: table-row-group !important;
+    }
+
+    [data-payment-update-print] [data-payment-update-table] tr {
+      break-inside: avoid;
+      box-shadow: none !important;
+      display: table-row !important;
+      page-break-inside: avoid;
+    }
+
+    [data-payment-update-print] [data-payment-update-table] th,
+    [data-payment-update-print] [data-payment-update-table] td {
+      border: 1px solid var(--border) !important;
+      display: table-cell !important;
+      font-size: 0.58rem !important;
+      height: 0.3in !important;
+      line-height: 1.35 !important;
+      min-width: 0 !important;
+      overflow: hidden !important;
+      padding: 0.34rem 0.25rem !important;
+      text-overflow: ellipsis !important;
+      white-space: nowrap !important;
+      width: auto !important;
+    }
+
+    [data-payment-update-print] [data-payment-update-table] th {
+      -webkit-print-color-adjust: exact;
+      background: rgb(243 244 246) !important;
+      color: var(--foreground) !important;
+      print-color-adjust: exact;
+    }
+
+    [data-payment-update-print] [data-payment-update-table] th button {
+      color: var(--foreground) !important;
+      pointer-events: none;
+    }
+
+    [data-payment-update-print] [data-payment-update-table] th svg {
+      display: none !important;
+    }
+
+    [data-payment-update-print] [data-payment-update-table] td::before {
+      content: none !important;
+    }
+
+    [data-payment-update-print] [data-payment-update-table] td > * {
+      justify-self: auto !important;
+      overflow: hidden !important;
+      overflow-wrap: normal !important;
+      text-overflow: ellipsis !important;
+      white-space: nowrap !important;
+    }
+
+    [data-payment-update-print] [data-payment-update-table] tbody tr:nth-child(odd) td {
+      -webkit-print-color-adjust: exact;
+      background: rgb(229 231 235) !important;
+      line-height: 1.35 !important;
+      padding-block: 0.42rem !important;
+      print-color-adjust: exact;
+    }
+
+    [data-payment-update-print] [data-payment-update-table] tbody tr:nth-child(even) td {
+      -webkit-print-color-adjust: exact;
+      background: white !important;
+      line-height: 1.35 !important;
+      padding-block: 0.42rem !important;
+      print-color-adjust: exact;
+    }
+  }
+}
+
 a.link-animated {
   position: relative;
   text-decoration: none;

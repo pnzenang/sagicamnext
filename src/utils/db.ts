@@ -16,13 +16,18 @@ const hasCachedModelField = (client: PrismaClient, modelName: string, fieldName:
 const shouldReuseCachedPrisma = (cachedPrisma?: PrismaClient) =>
   Boolean(
     cachedPrisma &&
+  'contributionAssessmentDeath' in (cachedPrisma as unknown as Record<string, unknown>) &&
   'contributionAssessment' in (cachedPrisma as unknown as Record<string, unknown>) &&
+  'contributionCalculationAdminFee' in (cachedPrisma as unknown as Record<string, unknown>) &&
+  'contributionCalculationDeath' in (cachedPrisma as unknown as Record<string, unknown>) &&
   'deceasedMemberDocument' in (cachedPrisma as unknown as Record<string, unknown>) &&
   'memberTransferRequest' in (cachedPrisma as unknown as Record<string, unknown>) &&
   'nameChangeRequest' in (cachedPrisma as unknown as Record<string, unknown>) &&
   hasCachedModelField(cachedPrisma, 'DeceasedMemberDocument', 'cloudinaryPublicId') &&
   hasCachedModelField(cachedPrisma, 'MemberTransferRequest', 'receivingSponsorCode') &&
   hasCachedModelField(cachedPrisma, 'NameChangeRequest', 'cloudinaryPublicId') &&
+  hasCachedModelField(cachedPrisma, 'ContributionAssessment', 'deathCount') &&
+  hasCachedModelField(cachedPrisma, 'ContributionAssessment', 'dueDate') &&
   hasCachedModelField(cachedPrisma, 'RemovedMember', 'memberStatus') &&
   hasCachedModelField(cachedPrisma, 'DeceasedMember', 'memberStatus') &&
   hasCachedModelField(cachedPrisma, 'PaymentAlertReset', 'sponsorCode') &&

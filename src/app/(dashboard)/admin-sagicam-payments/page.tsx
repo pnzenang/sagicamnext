@@ -2,7 +2,7 @@ import { BellRing } from 'lucide-react'
 
 import ContributionAssessmentForm from '@/components/dashboard/ContributionAssessmentForm'
 import { Button } from '@/components/ui/button'
-import { resetContributionPaymentAlertAction } from '@/utils/actions'
+import { fetchContributionCalculationSummaryAction, resetContributionPaymentAlertAction } from '@/utils/actions'
 import { contributionBalanceAdjustmentType } from '@/utils/sagicam-contribution-summary'
 import { memberStatus } from '@/utils/types'
 import db from '@/utils/db'
@@ -90,11 +90,14 @@ const PaymentAlertCard = ({ action, alerts, title }: PaymentAlertCardProps) => {
 }
 
 const AdminSagicamPayments = async () => {
-  const vestedMembersCount = await db.member.count({
-    where: {
-      memberStatus: memberStatus.Vested
-    }
-  })
+  const [vestedMembersCount, contributionCalculationSummary] = await Promise.all([
+    db.member.count({
+      where: {
+        memberStatus: memberStatus.Vested
+      }
+    }),
+    fetchContributionCalculationSummaryAction()
+  ])
 
   const latestContributionAssessment = await db.contributionAssessment.findFirst({
     include: {
@@ -325,7 +328,11 @@ const AdminSagicamPayments = async () => {
         </p>
       </div>
 
-      <ContributionAssessmentForm vestedMembersCount={vestedMembersCount} />
+      <ContributionAssessmentForm
+        calculationDeathCount={contributionCalculationSummary.deathCount}
+        monthlyContributionTotal={contributionCalculationSummary.totalAmount}
+        vestedMembersCount={vestedMembersCount}
+      />
 
       <div className='max-w-full min-w-0'>
         <PaymentAlertCard
