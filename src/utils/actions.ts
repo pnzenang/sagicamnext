@@ -25,6 +25,7 @@ import {
   memberStatus,
   memberTransferRequestStatuses,
   nameChangeRequestStatuses,
+  reasonForLeaving,
   type DeceasedMemberDocumentStatus,
   type DeceasedMemberDocumentType,
   type MemberTransferRequestStatus,
@@ -44,6 +45,7 @@ import {
 } from './sagicam-registration-summary'
 import { sponsorPaymentLedgerEventTypes, sponsorPaymentTypes } from './sagicam-payment-ledger'
 import { awaitingPublicationVestingLongevityDays, getAwaitingPublicationVestingCutoff } from './sagicam-member-longevity'
+import { getOverdueRegistrationPaymentCreatedAtCutoff } from './registration-payment-deadline'
 import {
   deleteDeathDocumentationFromCloudinary,
   isSameCloudinaryDocument,
@@ -3253,6 +3255,74 @@ export const createRemovedMemberActionAdmin = async (
   }
 
   redirect('/admin-members')
+}
+
+export const removeOverduePendingMembersAction = async (): Promise<{ message: string }> => {
+  await assertAdminUser()
+
+  try {
+    const overdueCutoff = getOverdueRegistrationPaymentCreatedAtCutoff()
+
+    const overdueMembers = await db.member.findMany({
+      where: {
+        createdAt: {
+          lt: overdueCutoff
+        },
+        memberStatus: memberStatus.Pending
+      }
+    })
+
+    if (overdueMembers.length === 0) {
+      return { message: 'No overdue pending members were found.' }
+    }
+
+    const overdueMemberIds = overdueMembers.map(member => member.id)
+    const overdueMemberMatriculationNumbers = overdueMembers.map(member => member.memberMatriculationNumber)
+
+    await db.$transaction(async tx => {
+      await tx.removedMember.createMany({
+        data: overdueMembers.map(member => ({
+          clerkId: member.clerkId,
+          countryOfBirth: member.countryOfBirth,
+          dateOfBirth: member.dateOfBirth,
+          delegateRecommendation: member.delegateRecommendation,
+          firstName: member.firstName,
+          lastAndMiddleNames: member.lastAndMiddleNames,
+          memberMatriculationNumber: member.memberMatriculationNumber,
+          memberStatus: member.memberStatus,
+          nameOfBeneficiary: member.nameOfBeneficiary,
+          originalMemberCreatedAt: member.createdAt,
+          originalMemberId: member.id,
+          reasonForLeaving: reasonForLeaving.NoReason,
+          sponsorCode: member.sponsorCode
+        }))
+      })
+
+      await tx.sponsorRegistrationUsage.deleteMany({
+        where: {
+          memberMatriculationNumber: {
+            in: overdueMemberMatriculationNumbers
+          }
+        }
+      })
+
+      await tx.member.deleteMany({
+        where: {
+          id: {
+            in: overdueMemberIds
+          }
+        }
+      })
+    })
+
+    revalidateMemberPaymentViews()
+
+    return {
+      message: `${overdueMembers.length} overdue pending member${overdueMembers.length === 1 ? '' : 's'} moved to Removed Members.`
+    }
+  } catch (error) {
+    return renderError(error)
+  }
 }
 
 export const fetchRemovedMembersAction = async () => {

@@ -1,6 +1,7 @@
 import { unstable_noStore as noStore } from 'next/cache'
 
 import db from './db'
+import { contributionReserveAdjustmentPerVestedMember } from './sagicam-contribution-constants'
 
 export const contributionBalanceAdjustmentType = 'contribution'
 
@@ -29,6 +30,10 @@ export type SponsorContributionSummary = {
 }
 
 const decimalToNumber = (value: unknown) => Number(value ?? 0)
+const roundCurrencyAmount = (amount: number) => Number(amount.toFixed(2))
+
+export const getContributionReserveAdjustment = (vestedMembersCount: number) =>
+  roundCurrencyAmount(contributionReserveAdjustmentPerVestedMember * vestedMembersCount)
 
 export const fetchLatestContributionAssessment = () =>
   db.contributionAssessment.findFirst({
@@ -104,6 +109,7 @@ export const fetchSponsorContributionSummary = async (
   const amountVerified = decimalToNumber(payment?.amountVerified)
   const manualBalanceAdjustment = decimalToNumber(balanceAdjustment?.amount)
   const vestedContributionCredit = decimalToNumber(contributionCredit._sum.amountCredited)
+  const reserveAdjustment = getContributionReserveAdjustment(vestedMembersCount)
 
   const totalAssessedContribution = contributionAssessmentGroups.reduce(
     (total, group) => Number((total + decimalToNumber(group.amountOwed)).toFixed(2)),
@@ -146,7 +152,9 @@ export const fetchSponsorContributionSummary = async (
     amountPerVestedMember,
     amountReceived,
     amountVerified,
-    balance: Number((amountVerified + vestedContributionCredit + manualBalanceAdjustment - totalAmountUsed).toFixed(2)),
+    balance: roundCurrencyAmount(
+      amountVerified + vestedContributionCredit + manualBalanceAdjustment + reserveAdjustment - totalAmountUsed
+    ),
     contributionDueMonths: fallbackContributionDueMonths,
     dueDate: (latestAssessment?.dueDate ?? latestAssessment?.createdAt)?.toISOString() ?? null,
     lastSubmittedAt: payment?.lastSubmittedAt?.toISOString() ?? null,

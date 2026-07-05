@@ -139,10 +139,10 @@ const RootLayout = ({ children }: Readonly<{ children: ReactNode }>) => {
           className={cn(geistSans.variable, geistMono.variable, 'flex min-h-dvh w-full scroll-smooth antialiased')}
           suppressHydrationWarning
         >
-          <body className='flex min-h-dvh w-full flex-auto flex-col'>
+          <body className='flex min-h-dvh w-full max-w-full flex-auto flex-col overflow-x-hidden'>
             <ThemeProvider attribute='class' enableSystem={false} disableTransitionOnChange>
               <TooltipProvider>
-                <main>{children}</main>
+                <main className='min-w-0 max-w-full overflow-x-hidden'>{children}</main>
                 <Toaster />
               </TooltipProvider>
             </ThemeProvider>

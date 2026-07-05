@@ -185,6 +185,11 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html,
+  body {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
   body {
     @apply bg-background text-foreground;
     letter-spacing: var(--tracking-normal);
@@ -307,6 +312,10 @@
       overflow-wrap: normal;
       text-overflow: ellipsis;
       white-space: nowrap;
+    }
+
+    [data-payment-update-table][data-mobile-cards='true'] tbody tr[data-page-visible='false'] {
+      display: none;
     }
 
     [data-mobile-cards='true'] tbody td[data-label='Actions'] {

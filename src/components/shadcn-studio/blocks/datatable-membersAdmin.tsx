@@ -11,6 +11,7 @@ import * as XLSX from 'xlsx'
 day.extend(advancedFormat)
 
 import {
+  AlertTriangle,
   ArrowDown,
   ArrowUp,
   ArrowUpDown,
@@ -73,9 +74,16 @@ import { usePagination } from '@/hooks/use-pagination'
 import { usePersistentState } from '@/hooks/use-persistent-state'
 
 import MembershipSummaryCards from '@/components/dashboard/MembershipSummaryCards'
+import RemoveOverduePendingMembersButton from '@/components/global/RemoveOverduePendingMembersButton'
 import ResponsiveTableCards from '@/components/dashboard/ResponsiveTableCards'
 import { TablePaginationControls } from '@/components/dashboard/TablePaginationControls'
 import { cn } from '@/lib/utils'
+import {
+  getOverdueRegistrationPaymentCreatedAtCutoff,
+  getRegistrationPaymentCountdown,
+  getRegistrationPaymentCountdownLabel,
+  registrationPaymentDeadlineDays
+} from '@/utils/registration-payment-deadline'
 import { awaitingPublicationVestingLongevityDays } from '@/utils/sagicam-member-longevity'
 import { getNameSearchValue, nameSearchColumnId, normalizeNameColumnFilters } from '@/utils/table-filters'
 import { vestEligibleAwaitingPublicationMembersAction } from '@/utils/actions'
@@ -85,6 +93,37 @@ declare module '@tanstack/react-table' {
   interface ColumnMeta<TData extends RowData, TValue> {
     filterVariant?: 'text' | 'range' | 'select'
   }
+}
+
+const getRegistrationPaymentWarning = (member: MemberType) => {
+  if (member.memberStatus !== memberStatus.Pending) return ''
+
+  const countdown = getRegistrationPaymentCountdown(member.createdAt)
+  const countdownLabel = getRegistrationPaymentCountdownLabel(countdown.daysRemaining)
+
+  return `${countdownLabel}.`
+}
+
+const getRegistrationPaymentSortValue = (member: MemberType) => {
+  if (member.memberStatus !== memberStatus.Pending) return undefined
+
+  return getRegistrationPaymentCountdown(member.createdAt).daysRemaining
+}
+
+const RegistrationPaymentWarningCell = ({ member }: { member: MemberType }) => {
+  const warning = getRegistrationPaymentWarning(member)
+
+  if (member.memberStatus !== memberStatus.Pending) return null
+
+  return (
+    <Badge
+      variant='outline'
+      className='border-destructive/30 bg-destructive/10 text-destructive dark:border-destructive/40 dark:bg-destructive/15 max-w-full shrink rounded-sm whitespace-normal'
+    >
+      <AlertTriangle aria-hidden='true' />
+      {warning}
+    </Badge>
+  )
 }
 
 const columns: ColumnDef<MemberType>[] = [
@@ -219,6 +258,14 @@ const columns: ColumnDef<MemberType>[] = [
     size: 100
   },
   {
+    id: 'registrationPaymentWarning',
+    header: `Registration Dues (${registrationPaymentDeadlineDays} days)`,
+    accessorFn: row => getRegistrationPaymentSortValue(row),
+    cell: ({ row }) => <RegistrationPaymentWarningCell member={row.original} />,
+    sortUndefined: 'last',
+    size: 260
+  },
+  {
     header: 'Actions',
     accessorKey: 'id',
     cell: ({ row: { original } }) => {
@@ -298,6 +345,14 @@ const MembersDataTable = ({
     ).length
   }, [data])
 
+  const overduePendingMembersCount = useMemo(() => {
+    const overdueCutoffTime = getOverdueRegistrationPaymentCreatedAtCutoff().getTime()
+
+    return data.filter(
+      member => member.memberStatus === memberStatus.Pending && new Date(member.createdAt).getTime() < overdueCutoffTime
+    ).length
+  }, [data])
+
   const exportToCSV = () => {
     const selectedRows = table.getSelectedRowModel().rows
 
@@ -353,7 +408,8 @@ const MembersDataTable = ({
         'First Name': member.firstName,
         'Longevity(Days)': day(Date.now()).diff(day(member.createdAt), 'days'),
         Recommendation: row.getValue('delegateRecommendation'),
-        Status: member.memberStatus
+        Status: member.memberStatus,
+        [`Registration Dues (${registrationPaymentDeadlineDays} days)`]: getRegistrationPaymentWarning(member)
       }
     })
 
@@ -362,7 +418,16 @@ const MembersDataTable = ({
 
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Loved Ones')
 
-    worksheet['!cols'] = [{ wch: 14 }, { wch: 18 }, { wch: 24 }, { wch: 18 }, { wch: 14 }, { wch: 18 }, { wch: 18 }]
+    worksheet['!cols'] = [
+      { wch: 14 },
+      { wch: 18 },
+      { wch: 24 },
+      { wch: 18 },
+      { wch: 14 },
+      { wch: 18 },
+      { wch: 18 },
+      { wch: 28 }
+    ]
 
     XLSX.writeFile(workbook, `loved-ones-filtered-export-${new Date().toISOString().split('T')[0]}.xlsx`)
   }
@@ -443,6 +508,7 @@ const MembersDataTable = ({
                   </form>
                 </AlertDialogContent>
               </AlertDialog>
+              <RemoveOverduePendingMembersButton overdueCount={overduePendingMembersCount} />
               <Button
                 className='bg-primary/10 text-primary hover:bg-primary/20 focus-visible:ring-primary/20 dark:focus-visible:ring-primary/40 shrink-0 max-md:flex-1 max-md:justify-center'
                 onClick={exportFilteredPageToExcel}

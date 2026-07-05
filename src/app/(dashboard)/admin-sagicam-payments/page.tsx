@@ -3,7 +3,10 @@ import { BellRing } from 'lucide-react'
 import ContributionAssessmentForm from '@/components/dashboard/ContributionAssessmentForm'
 import { Button } from '@/components/ui/button'
 import { fetchContributionCalculationSummaryAction, resetContributionPaymentAlertAction } from '@/utils/actions'
-import { contributionBalanceAdjustmentType } from '@/utils/sagicam-contribution-summary'
+import {
+  contributionBalanceAdjustmentType,
+  getContributionReserveAdjustment
+} from '@/utils/sagicam-contribution-summary'
 import { memberStatus } from '@/utils/types'
 import db from '@/utils/db'
 import AdminSagicamPaymentsTable, {
@@ -280,19 +283,21 @@ const AdminSagicamPayments = async () => {
     )
 
     const manualBalanceAdjustment = balanceAdjustmentByCode.get(sponsorCode) ?? 0
+    const vestedMembers = vestedMembersByCode.get(sponsorCode) ?? 0
+    const reserveAdjustment = getContributionReserveAdjustment(vestedMembers)
 
     return {
       amountOwed,
       amountReceived: amountVerified,
       balance: Number(
-        (amountVerified + vestedContributionCredit + manualBalanceAdjustment - totalAmountUsed).toFixed(2)
+        (amountVerified + vestedContributionCredit + manualBalanceAdjustment + reserveAdjustment - totalAmountUsed).toFixed(2)
       ),
       contributionCredit: vestedContributionCredit,
       contributionAmountUsed: totalAmountUsed,
       contributionAmountSent: decimalToNumber(contributionPayment?.amountSent),
       cemail: sponsor?.sponsorEmail ?? '',
       sponsorCode,
-      vestedMembers: vestedMembersByCode.get(sponsorCode) ?? 0
+      vestedMembers
     }
   })
 

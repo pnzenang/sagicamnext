@@ -269,67 +269,72 @@ const AdminPaymentUpdateTable = ({
             <TableBody>
               {sortedRows.length > 0 ? (
                 <>
-                  {sortedRows.map((row, index) => (
-                    <TableRow
-                      key={row.sponsorCode}
-                      className={cn(
-                        'h-12 hover:bg-gray-300 print:table-row',
-                        index >= pageStartIndex && index < pageEndIndex ? 'odd:bg-gray-200 even:bg-white' : 'hidden',
-                        index % 2 === 0 ? 'print:bg-gray-200' : 'print:bg-white'
-                      )}
-                    >
-                      <TableCell
-                        data-label='No.'
-                        className='overflow-hidden px-1.5 text-right font-semibold whitespace-nowrap tabular-nums'
+                  {sortedRows.map((row, index) => {
+                    const isPageRow = index >= pageStartIndex && index < pageEndIndex
+
+                    return (
+                      <TableRow
+                        key={row.sponsorCode}
+                        data-page-visible={isPageRow ? 'true' : 'false'}
+                        className={cn(
+                          'h-12 hover:bg-gray-300 print:table-row',
+                          isPageRow ? 'odd:bg-gray-200 even:bg-white' : 'hidden',
+                          index % 2 === 0 ? 'print:bg-gray-200' : 'print:bg-white'
+                        )}
                       >
-                        {index + 1}
-                      </TableCell>
-                      <TableCell
-                        data-label='Sponsor'
-                        className='overflow-hidden px-1.5 font-semibold whitespace-nowrap'
-                        title={row.sponsorName}
-                      >
-                        <span className='block min-w-0 truncate whitespace-nowrap'>{row.sponsorName}</span>
-                      </TableCell>
-                      <TableCell
-                        data-label='Code'
-                        className='overflow-hidden px-1.5 font-mono font-semibold whitespace-nowrap'
-                        title={row.sponsorCode}
-                      >
-                        <span className='block min-w-0 truncate whitespace-nowrap'>{row.sponsorCode}</span>
-                      </TableCell>
-                      <TableCell
-                        data-label='Vested'
-                        className='overflow-hidden px-1.5 text-right font-semibold whitespace-nowrap tabular-nums'
-                      >
-                        {row.vestedMembers.toLocaleString('en-US')}
-                      </TableCell>
-                      <TableCell
-                        data-label='Contribution Due'
-                        className='overflow-hidden px-1.5 text-right font-semibold whitespace-nowrap tabular-nums'
-                      >
-                        {currencyFormatter.format(row.contributionDue)}
-                      </TableCell>
-                      <TableCell
-                        data-label='Sent Not Verified'
-                        className='overflow-hidden px-1.5 text-right font-semibold whitespace-nowrap tabular-nums'
-                      >
-                        {currencyFormatter.format(row.amountSent)}
-                      </TableCell>
-                      <TableCell
-                        data-label='Verified'
-                        className='overflow-hidden px-1.5 text-right font-semibold whitespace-nowrap tabular-nums'
-                      >
-                        {currencyFormatter.format(row.amountVerified)}
-                      </TableCell>
-                      <TableCell
-                        data-label='Contribution Balance'
-                        className='overflow-hidden px-1.5 text-right whitespace-nowrap'
-                      >
-                        <BalanceValue balance={row.balance} />
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                        <TableCell
+                          data-label='No.'
+                          className='overflow-hidden px-1.5 text-right font-semibold whitespace-nowrap tabular-nums'
+                        >
+                          {index + 1}
+                        </TableCell>
+                        <TableCell
+                          data-label='Sponsor'
+                          className='overflow-hidden px-1.5 font-semibold whitespace-nowrap'
+                          title={row.sponsorName}
+                        >
+                          <span className='block min-w-0 truncate whitespace-nowrap'>{row.sponsorName}</span>
+                        </TableCell>
+                        <TableCell
+                          data-label='Code'
+                          className='overflow-hidden px-1.5 font-mono font-semibold whitespace-nowrap'
+                          title={row.sponsorCode}
+                        >
+                          <span className='block min-w-0 truncate whitespace-nowrap'>{row.sponsorCode}</span>
+                        </TableCell>
+                        <TableCell
+                          data-label='Vested'
+                          className='overflow-hidden px-1.5 text-right font-semibold whitespace-nowrap tabular-nums'
+                        >
+                          {row.vestedMembers.toLocaleString('en-US')}
+                        </TableCell>
+                        <TableCell
+                          data-label='Contribution Due'
+                          className='overflow-hidden px-1.5 text-right font-semibold whitespace-nowrap tabular-nums'
+                        >
+                          {currencyFormatter.format(row.contributionDue)}
+                        </TableCell>
+                        <TableCell
+                          data-label='Sent Not Verified'
+                          className='overflow-hidden px-1.5 text-right font-semibold whitespace-nowrap tabular-nums'
+                        >
+                          {currencyFormatter.format(row.amountSent)}
+                        </TableCell>
+                        <TableCell
+                          data-label='Verified'
+                          className='overflow-hidden px-1.5 text-right font-semibold whitespace-nowrap tabular-nums'
+                        >
+                          {currencyFormatter.format(row.amountVerified)}
+                        </TableCell>
+                        <TableCell
+                          data-label='Contribution Balance'
+                          className='overflow-hidden px-1.5 text-right whitespace-nowrap'
+                        >
+                          <BalanceValue balance={row.balance} />
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })}
                   <TableRow className='bg-primary/10 text-base font-black'>
                     <TableCell className='overflow-hidden px-1.5 font-black whitespace-nowrap' colSpan={3}>
                       Total

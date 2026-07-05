@@ -20,13 +20,16 @@ import {
   Sidebar
 } from '@/components/ui/sidebar'
 import { dashboardText, languageCookieName, normalizeLanguage } from '@/lib/i18n'
+import { fetchProfile } from '@/utils/actions'
 
 export const dynamic = 'force-dynamic'
 
 const PagesLayout = async ({ children }: Readonly<{ children: ReactNode }>) => {
-  const cookieStore = await cookies()
+  const [cookieStore, profile] = await Promise.all([cookies(), fetchProfile()])
   const language = normalizeLanguage(cookieStore.get(languageCookieName)?.value)
   const copy = dashboardText[language]
+  const sponsorName = `${profile.sponsorFirstName} ${profile.sponsorLastAndMiddleName}`.trim()
+  const sponsorLabel = `${profile.sponsorCode} - ${sponsorName || 'Sponsor'}`
 
   return (
     <>
@@ -61,7 +64,12 @@ const PagesLayout = async ({ children }: Readonly<{ children: ReactNode }>) => {
                 <SidebarTrigger className='[&_svg]:size-5!' />
                 <LogoSmall className='size-10 sm:hidden' />
               </div>
-              <div className='text-primary min-w-0 truncate text-center font-bold sm:text-2xl'>{copy.brand}</div>
+              <div className='text-primary flex min-w-0 flex-1 flex-col items-center text-center'>
+                <div className='max-w-full truncate text-base font-bold leading-tight sm:text-2xl'>{copy.brand}</div>
+                <div className='text-primary/80 max-w-full truncate text-xs leading-tight font-semibold sm:text-sm'>
+                  {sponsorLabel}
+                </div>
+              </div>
               <div className='flex shrink-0 items-center justify-end gap-3'>
                 <ModeToggleSmall />
                 <UserButton
