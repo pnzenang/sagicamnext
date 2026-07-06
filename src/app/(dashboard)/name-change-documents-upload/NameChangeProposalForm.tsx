@@ -20,7 +20,7 @@ type NameChangeMemberOption = {
   sponsorCode: string
 }
 
-const maxVisibleMembers = 10
+const maxVisibleMembers = 6
 
 const getMemberSearchValue = (member: NameChangeMemberOption) =>
   `${member.firstName} ${member.lastAndMiddleNames} ${member.memberMatriculationNumber} ${member.sponsorCode}`.toLowerCase()
@@ -70,91 +70,105 @@ const SponsorNameChangeProposalForm = ({ members }: { members: NameChangeMemberO
         </div>
       </CardHeader>
       <CardContent className='px-4 py-4'>
-        <FormContainer action={submitNameChangeRequestAction} className='grid gap-3' refreshOnMessage>
+        <FormContainer
+          action={submitNameChangeRequestAction}
+          className='grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,0.7fr)] lg:items-start'
+          refreshOnMessage
+        >
           <input type='hidden' name='memberId' value={selectedMemberId} />
-          <div className='grid gap-1.5'>
-            <Label htmlFor='name-change-search'>Search loved ones</Label>
-            <div className='relative'>
-              <Search className='text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2' />
-              <Input
-                id='name-change-search'
-                type='search'
-                value={searchQuery}
-                onChange={event => handleSearchChange(event.target.value)}
-                placeholder='Search by name, matriculation, or sponsor code'
-                className='pl-9'
+          <div className='grid min-w-0 gap-3'>
+            <div className='grid gap-1.5'>
+              <Label htmlFor='name-change-search'>Search loved ones</Label>
+              <div className='relative'>
+                <Search className='text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2' />
+                <Input
+                  id='name-change-search'
+                  type='search'
+                  value={searchQuery}
+                  onChange={event => handleSearchChange(event.target.value)}
+                  placeholder='Search by name, matriculation, or sponsor code'
+                  className='pl-9'
+                />
+              </div>
+            </div>
+            <div className='grid gap-2'>
+              <div className='flex items-center justify-between gap-2'>
+                <p className='text-sm font-semibold'>Select loved one</p>
+                <p className='text-muted-foreground text-xs'>
+                  {filteredMembers.length} match{filteredMembers.length === 1 ? '' : 'es'}
+                </p>
+              </div>
+              {filteredMembers.length === 0 ? (
+                <p className='text-muted-foreground bg-muted/30 rounded-md border p-3 text-sm'>
+                  No loved ones match your search.
+                </p>
+              ) : (
+                <div className='grid max-h-56 gap-2 overflow-y-auto pr-1'>
+                  {displayedMembers.map(member => {
+                    const isSelected = selectedMemberId === member.id
+
+                    return (
+                      <button
+                        key={member.id}
+                        type='button'
+                        aria-pressed={isSelected}
+                        onClick={() => setSelectedMemberId(member.id)}
+                        className={cn(
+                          'bg-background/70 hover:border-primary/60 hover:bg-muted/40 grid min-w-0 gap-1 rounded-md border p-3 text-left text-sm transition-colors',
+                          isSelected && 'border-primary bg-primary/10'
+                        )}
+                      >
+                        <span className='font-extrabold break-words'>
+                          {member.firstName} {member.lastAndMiddleNames}
+                        </span>
+                        <span className='text-muted-foreground text-xs'>
+                          Matriculation: {member.memberMatriculationNumber} · Sponsor: {member.sponsorCode}
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+              {hiddenMatchCount > 0 ? (
+                <p className='text-muted-foreground text-xs'>
+                  Showing first {maxVisibleMembers} matches. Keep typing to narrow the search.
+                </p>
+              ) : null}
+            </div>
+          </div>
+
+          <div className='grid min-w-0 gap-3 lg:sticky lg:top-4'>
+            <div className='bg-muted/30 grid gap-2 rounded-md border p-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2'>
+              <div className='min-w-0'>
+                <p className='text-muted-foreground text-xs font-semibold'>Current given name</p>
+                <p className='mt-1 font-extrabold break-words'>
+                  {selectedMember ? selectedMember.firstName : 'Select a loved one'}
+                </p>
+              </div>
+              <div className='min-w-0'>
+                <p className='text-muted-foreground text-xs font-semibold'>Current last and middle name</p>
+                <p className='mt-1 font-extrabold break-words'>
+                  {selectedMember ? selectedMember.lastAndMiddleNames : 'Select a loved one'}
+                </p>
+              </div>
+            </div>
+            <div className='grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2'>
+              <div className='grid gap-1.5'>
+                <Label htmlFor='requested-first-name'>Proposed given names</Label>
+                <Input id='requested-first-name' name='requestedFirstName' required />
+              </div>
+              <div className='grid gap-1.5'>
+                <Label htmlFor='requested-last-name'>Proposed last and middle names</Label>
+                <Input id='requested-last-name' name='requestedLastAndMiddleNames' required />
+              </div>
+            </div>
+            <div className='bg-card/95 sticky bottom-0 z-10 -mx-4 border-t px-4 py-3 backdrop-blur lg:static lg:mx-0 lg:border-0 lg:bg-transparent lg:p-0 lg:backdrop-blur-none'>
+              <SubmitButton
+                text='Submit for admin review'
+                className='h-9 w-full text-sm normal-case sm:w-fit lg:w-full xl:w-fit'
               />
             </div>
           </div>
-          <div className='grid gap-2'>
-            <div className='flex items-center justify-between gap-2'>
-              <p className='text-sm font-semibold'>Select loved one</p>
-              <p className='text-muted-foreground text-xs'>
-                {filteredMembers.length} match{filteredMembers.length === 1 ? '' : 'es'}
-              </p>
-            </div>
-            {filteredMembers.length === 0 ? (
-              <p className='text-muted-foreground rounded-md border bg-muted/30 p-3 text-sm'>
-                No loved ones match your search.
-              </p>
-            ) : (
-              <div className='grid max-h-72 gap-2 overflow-y-auto pr-1'>
-                {displayedMembers.map(member => {
-                  const isSelected = selectedMemberId === member.id
-
-                  return (
-                    <button
-                      key={member.id}
-                      type='button'
-                      aria-pressed={isSelected}
-                      onClick={() => setSelectedMemberId(member.id)}
-                      className={cn(
-                        'grid min-w-0 gap-1 rounded-md border bg-background/70 p-3 text-left text-sm transition-colors hover:border-primary/60 hover:bg-muted/40',
-                        isSelected && 'border-primary bg-primary/10'
-                      )}
-                    >
-                      <span className='font-extrabold break-words'>
-                        {member.firstName} {member.lastAndMiddleNames}
-                      </span>
-                      <span className='text-muted-foreground text-xs'>
-                        Matriculation: {member.memberMatriculationNumber} · Sponsor: {member.sponsorCode}
-                      </span>
-                    </button>
-                  )
-                })}
-              </div>
-            )}
-            {hiddenMatchCount > 0 ? (
-              <p className='text-muted-foreground text-xs'>
-                Showing first {maxVisibleMembers} matches. Keep typing to narrow the search.
-              </p>
-            ) : null}
-          </div>
-          <div className='grid gap-2 rounded-md border bg-muted/30 p-3 sm:grid-cols-2'>
-            <div className='min-w-0'>
-              <p className='text-muted-foreground text-xs font-semibold'>Current given name</p>
-              <p className='mt-1 font-extrabold break-words'>
-                {selectedMember ? selectedMember.firstName : 'Select a loved one'}
-              </p>
-            </div>
-            <div className='min-w-0'>
-              <p className='text-muted-foreground text-xs font-semibold'>Current last and middle name</p>
-              <p className='mt-1 font-extrabold break-words'>
-                {selectedMember ? selectedMember.lastAndMiddleNames : 'Select a loved one'}
-              </p>
-            </div>
-          </div>
-          <div className='grid gap-3 sm:grid-cols-2'>
-            <div className='grid gap-1.5'>
-              <Label htmlFor='requested-first-name'>Proposed given names</Label>
-              <Input id='requested-first-name' name='requestedFirstName' required />
-            </div>
-            <div className='grid gap-1.5'>
-              <Label htmlFor='requested-last-name'>Proposed last and middle names</Label>
-              <Input id='requested-last-name' name='requestedLastAndMiddleNames' required />
-            </div>
-          </div>
-          <SubmitButton text='Submit for admin review' className='h-9 w-full text-sm normal-case sm:w-fit' />
         </FormContainer>
       </CardContent>
     </Card>
