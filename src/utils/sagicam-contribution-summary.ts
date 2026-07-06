@@ -2,6 +2,7 @@ import { unstable_noStore as noStore } from 'next/cache'
 
 import db from './db'
 import { contributionReserveAdjustmentPerVestedMember } from './sagicam-contribution-constants'
+import { memberStatus } from './types'
 
 export const contributionBalanceAdjustmentType = 'contribution'
 
@@ -56,50 +57,63 @@ export const fetchSponsorContributionSummary = async (
   const latestAssessment = await fetchLatestContributionAssessment()
   const contributionGroup = latestAssessment?.groups.find(group => group.sponsorCode === sponsorCode)
   const amountPerVestedMember = decimalToNumber(latestAssessment?.amountPerVestedMember)
-  const vestedMembersCount = contributionGroup?.vestedMembersCount ?? 0
 
-  const [payment, contributionAssessmentGroups, contributionUsage, contributionCredit, balanceAdjustment] =
-    await Promise.all([
-      db.sponsorContributionPayment.findUnique({
-        where: {
-          sponsorCode
-        }
-      }),
-      db.contributionAssessmentGroup.findMany({
-        include: {
-          assessment: {
-            select: {
-              createdAt: true,
-              dueDate: true
-            }
-          }
-        },
-        where: {
-          sponsorCode
-        }
-      }),
-      db.sponsorContributionUsage.findUnique({
-        where: {
-          sponsorCode
-        }
-      }),
-      db.sponsorContributionCredit.aggregate({
-        _sum: {
-          amountCredited: true
-        },
-        where: {
-          sponsorCode
-        }
-      }),
-      db.sponsorBalanceAdjustment.findUnique({
-        where: {
-          sponsorCode_balanceType: {
-            balanceType: contributionBalanceAdjustmentType,
-            sponsorCode
+  const [
+    payment,
+    contributionAssessmentGroups,
+    contributionUsage,
+    contributionCredit,
+    balanceAdjustment,
+    currentVestedMembersCount
+  ] = await Promise.all([
+    db.sponsorContributionPayment.findUnique({
+      where: {
+        sponsorCode
+      }
+    }),
+    db.contributionAssessmentGroup.findMany({
+      include: {
+        assessment: {
+          select: {
+            createdAt: true,
+            dueDate: true
           }
         }
-      })
-    ])
+      },
+      where: {
+        sponsorCode
+      }
+    }),
+    db.sponsorContributionUsage.findUnique({
+      where: {
+        sponsorCode
+      }
+    }),
+    db.sponsorContributionCredit.aggregate({
+      _sum: {
+        amountCredited: true
+      },
+      where: {
+        sponsorCode
+      }
+    }),
+    db.sponsorBalanceAdjustment.findUnique({
+      where: {
+        sponsorCode_balanceType: {
+          balanceType: contributionBalanceAdjustmentType,
+          sponsorCode
+        }
+      }
+    }),
+    db.member.count({
+      where: {
+        memberStatus: memberStatus.Vested,
+        sponsorCode
+      }
+    })
+  ])
+
+  const vestedMembersCount = currentVestedMembersCount
 
   const amountOwed = contributionGroup
     ? decimalToNumber(contributionGroup.amountOwed)

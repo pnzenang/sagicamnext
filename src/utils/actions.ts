@@ -1165,6 +1165,50 @@ export const fetchCurrentSponsorRegistrationPayment = async () => {
   return fetchSponsorRegistrationSummary(profile.sponsorCode, { noStore: true })
 }
 
+export const fetchAdminSponsorDashboardPreviewAction = async (sponsorCodeInput: string) => {
+  noStore()
+  await assertAdminUser()
+
+  const sponsorCode = sponsorCodeInput.trim().toUpperCase()
+
+  if (!sponsorCode) return null
+
+  const sponsor = await db.profile.findUnique({
+    select: {
+      sponsorCode: true,
+      sponsorEmail: true,
+      sponsorFirstName: true,
+      sponsorLastAndMiddleName: true,
+      sponsorPhoneNumber: true
+    },
+    where: {
+      sponsorCode
+    }
+  })
+
+  if (!sponsor) return null
+
+  const [members, currentContribution, currentRegistrationPayment] = await Promise.all([
+    db.member
+      .findMany({
+        orderBy: { createdAt: 'desc' },
+        where: {
+          sponsorCode
+        }
+      })
+      .then(attachContributionAmounts),
+    fetchSponsorContributionSummary(sponsorCode, { noStore: true }),
+    fetchSponsorRegistrationSummary(sponsorCode, { noStore: true })
+  ])
+
+  return {
+    currentContribution,
+    currentRegistrationPayment,
+    members,
+    sponsor
+  }
+}
+
 export const fetchMembersForAdmin = async () => {
   const user = await getAuthUser()
 

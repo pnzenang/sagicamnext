@@ -101,7 +101,7 @@ const shouldShowReplenishAccountNotice = (balance: number, vestedMembersCount: n
 
 const shouldShowNotInGoodStandingNotice = (balance: number) => balance < 0
 
-const getReserveOrDeficitLabel = (balance: number, reserveLabel: string) => (balance < 0 ? 'Deficit' : reserveLabel)
+const getReserveOrDeficitLabel = (balance: number, reserveLabel: string) => (balance < 0 ? 'DEFICIT' : reserveLabel)
 
 const getContributionBalanceTextClassName = (balance: number, vestedMembersCount: number) => {
   if (balance >= getContributionBalanceTarget(vestedMembersCount)) {
@@ -191,9 +191,6 @@ const ContributionSummaryCard = ({
       <SummaryRow label={`Amount Used for ${currentMonthName}'s Contribution`} value={currentContribution.amountOwed} />
       <SummaryRow label='Total Amount Used for Contributions' value={currentContribution.totalAmountUsed} />
       <SummaryRow label='Vested Loved One Credit' value={currentContribution.vestedContributionCredit} />
-      {currentContribution.manualBalanceAdjustment !== 0 ? (
-        <SummaryRow label='Reserve / Deficit Adjustment' value={currentContribution.manualBalanceAdjustment} />
-      ) : null}
     </div>
     <PaymentBalanceRow
       balance={currentContribution.balance}
@@ -217,16 +214,34 @@ const RegistrationSummaryCard = ({
       <SummaryRow label='Amount Sent' value={currentRegistrationPayment.amountReceived} />
       <SummaryRow label='Amount Verified by SAGICAM' value={currentRegistrationPayment.amountVerified} />
       <SummaryRow label='Used for Registration' value={currentRegistrationPayment.amountUsed} />
-      {currentRegistrationPayment.manualBalanceAdjustment !== 0 ? (
-        <SummaryRow label='Reserve / Deficit Adjustment' value={currentRegistrationPayment.manualBalanceAdjustment} />
-      ) : null}
     </div>
-    <PaymentBalanceRow balance={currentRegistrationPayment.balance} reserveLabel='Registration Reserve' />
+    <PaymentBalanceRow
+      balance={currentRegistrationPayment.balance}
+      deficitNoticeLabel='Awaiting Registration Fees'
+      reserveLabel='Registration Reserve'
+    />
     <p className='text-primary/70 mt-auto pt-4 text-[10px] leading-tight font-medium break-words'>
       All amounts will be verified by SAGICAM and reversed if not accurate.
     </p>
   </div>
 )
+
+export const SponsorPaymentSummaryCards = ({
+  currentContribution,
+  currentRegistrationPayment
+}: {
+  currentContribution: CurrentContributionPayment
+  currentRegistrationPayment: CurrentRegistrationPayment
+}) => {
+  const currentMonthName = getCurrentMonthName()
+
+  return (
+    <div className='grid w-full min-w-0 grid-cols-1 items-stretch gap-4 lg:grid-cols-2'>
+      <ContributionSummaryCard currentContribution={currentContribution} currentMonthName={currentMonthName} />
+      <RegistrationSummaryCard currentRegistrationPayment={currentRegistrationPayment} />
+    </div>
+  )
+}
 
 type PaymentLedgerHistoryCardProps = {
   summaryColumns: PaymentSummaryRow[][]
@@ -598,10 +613,12 @@ const buildRegistrationHistorySummaryColumns = (
 const PaymentBalanceRow = ({
   balance,
   contributionVestedMembersCount,
+  deficitNoticeLabel = 'Not In Good Standing',
   reserveLabel
 }: {
   balance: number
   contributionVestedMembersCount?: number
+  deficitNoticeLabel?: string
   reserveLabel: string
 }) => {
   const balanceClassName =
@@ -631,7 +648,7 @@ const PaymentBalanceRow = ({
       <span className='min-w-0 break-words'>
         {balanceLabel}
         {showNotInGoodStandingNotice ? (
-          <span className='text-[15px] leading-tight font-medium'>(Not In Good Standing)</span>
+          <span className='text-[15px] leading-tight font-medium'>({deficitNoticeLabel})</span>
         ) : null}
         {showUpcomingMonthsNotice ? (
           <span className='text-[15px] leading-tight font-medium'>(To be used for upcoming months)</span>

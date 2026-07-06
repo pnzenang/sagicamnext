@@ -275,13 +275,20 @@ const MembersDataTable = ({
   currentContribution,
   currentRegistrationPayment,
   data,
-  membershipSummary
+  membershipSummary,
+  readOnly = false
 }: {
   currentContribution: CurrentContributionPayment
   currentRegistrationPayment: CurrentRegistrationPayment
   data: MemberType[]
   membershipSummary: MembershipSummary
+  readOnly?: boolean
 }) => {
+  const tableColumns = useMemo(
+    () => (readOnly ? columns.filter(column => column.header !== 'Actions') : columns),
+    [readOnly]
+  )
+
   const [columnFilters, setColumnFilters] = usePersistentState<ColumnFiltersState>(
     'sagicam:all-members:column-filters',
     []
@@ -298,7 +305,7 @@ const MembersDataTable = ({
 
   const table = useReactTable({
     data,
-    columns,
+    columns: tableColumns,
     state: {
       columnFilters: normalizedColumnFilters,
       pagination
@@ -432,13 +439,15 @@ const MembersDataTable = ({
         <div className='flex flex-col gap-4 border-b p-3 sm:p-6'>
           <span className='text-2xl font-semibold sm:text-4xl lg:text-6xl'>All Registered Loved Ones</span>
           <MembershipSummaryCards {...membershipSummary} />
-          <div className='w-full pb-4'>
-            <SponsorPaymentNavigationCards
-              currentContribution={currentContribution}
-              currentRegistrationPayment={currentRegistrationPayment}
-              pendingMembersCount={membershipSummary.pending}
-            />
-          </div>
+          {!readOnly ? (
+            <div className='w-full pb-4'>
+              <SponsorPaymentNavigationCards
+                currentContribution={currentContribution}
+                currentRegistrationPayment={currentRegistrationPayment}
+                pendingMembersCount={membershipSummary.pending}
+              />
+            </div>
+          ) : null}
         </div>
         <div className='flex flex-col items-start gap-3 px-4 pt-4 pb-2 sm:px-6 md:flex-row md:items-center md:justify-between md:gap-6'>
           <div className='min-w-0 md:shrink-0'>
@@ -583,7 +592,7 @@ const MembersDataTable = ({
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={columns.length} className='h-24 text-center'>
+                  <TableCell colSpan={tableColumns.length} className='h-24 text-center'>
                     No Member Found, add members.
                   </TableCell>
                 </TableRow>
@@ -643,7 +652,7 @@ function Filter({ column }: { column: Column<any, unknown> }) {
 
   if (filterVariant === 'select') {
     return (
-      <div className='border-primary w-full min-w-0 space-y-2 rounded border md:flex-1 md:max-w-none xl:max-w-2xs'>
+      <div className='border-primary w-full min-w-0 space-y-2 rounded border md:max-w-none md:flex-1 xl:max-w-2xs'>
         {/* <Label htmlFor={`${id}-select`}>Select {columnHeader}</Label> */}
         <Select
           value={columnFilterValue?.toString() ?? 'all'}
@@ -668,7 +677,7 @@ function Filter({ column }: { column: Column<any, unknown> }) {
   }
 
   return (
-    <div className='border-primary w-full min-w-0 rounded border md:flex-1 md:max-w-none xl:max-w-2xs'>
+    <div className='border-primary w-full min-w-0 rounded border md:max-w-none md:flex-1 xl:max-w-2xs'>
       <Label htmlFor={`${id}-input`} className='sr-only'>
         {columnHeader}
       </Label>

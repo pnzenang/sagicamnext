@@ -8,11 +8,14 @@ import {
   ArrowUpDown,
   ChevronLeftIcon,
   ChevronRightIcon,
+  Eye,
   Mail,
   Phone,
   SearchIcon,
   type LucideIcon
 } from 'lucide-react'
+
+import Link from 'next/link'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -108,7 +111,10 @@ const ContactLink = ({
 
   return (
     <a
-      className={cn('text-primary inline-flex min-w-0 items-center gap-2 underline-offset-4 hover:underline', className)}
+      className={cn(
+        'text-primary inline-flex min-w-0 items-center gap-2 underline-offset-4 hover:underline',
+        className
+      )}
       href={href}
     >
       <Icon className='size-4 shrink-0' aria-hidden='true' />
@@ -117,13 +123,7 @@ const ContactLink = ({
   )
 }
 
-const MobileContactValue = ({
-  children,
-  label
-}: {
-  children: ReactNode
-  label: string
-}) => (
+const MobileContactValue = ({ children, label }: { children: ReactNode; label: string }) => (
   <div className='grid grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] items-start gap-2'>
     <span className='text-muted-foreground min-w-0 text-xs leading-snug font-semibold uppercase'>{label}</span>
     <span className='min-w-0 justify-self-end text-right text-sm leading-snug font-semibold break-words'>
@@ -132,15 +132,7 @@ const MobileContactValue = ({
   </div>
 )
 
-const MobileStatusCount = ({
-  className,
-  label,
-  value
-}: {
-  className?: string
-  label: string
-  value: number
-}) => (
+const MobileStatusCount = ({ className, label, value }: { className?: string; label: string; value: number }) => (
   <div className={cn('rounded-md border px-3 py-2 text-center', className)}>
     <div className='text-muted-foreground text-[11px] leading-tight font-semibold uppercase'>{label}</div>
     <div className='mt-1 text-xl leading-none font-extrabold tabular-nums'>{value}</div>
@@ -288,9 +280,17 @@ const UsersContactsTable = ({ rows }: { rows: UsersContactsRow[] }) => {
                   <TableRow key={row.id} className='odd:bg-muted/30 even:bg-background'>
                     <TableCell className='font-medium'>{row.sponsorName}</TableCell>
                     <TableCell>
-                      <Badge variant='secondary' className='rounded-md font-mono'>
-                        {row.sponsorCode}
-                      </Badge>
+                      <div className='flex min-w-0 flex-col items-start gap-2'>
+                        <Badge variant='secondary' className='rounded-md font-mono'>
+                          {row.sponsorCode}
+                        </Badge>
+                        <Button asChild size='xs' variant='outline' className='h-7 gap-1 px-2 text-xs'>
+                          <Link href={`/admin-sponsor-view/${encodeURIComponent(row.sponsorCode)}`}>
+                            <Eye aria-hidden='true' />
+                            View
+                          </Link>
+                        </Button>
+                      </div>
                     </TableCell>
                     <TableCell>
                       <ContactLink href={getTelHref(row.sponsorPhoneNumber)} icon={Phone}>
@@ -321,18 +321,23 @@ const UsersContactsTable = ({ rows }: { rows: UsersContactsRow[] }) => {
             </div>
           ) : (
             paginatedRows.map(row => (
-              <article
-                key={row.id}
-                className='bg-background overflow-hidden rounded-md border p-3 shadow-sm sm:p-4'
-              >
+              <article key={row.id} className='bg-background overflow-hidden rounded-md border p-3 shadow-sm sm:p-4'>
                 <div className='flex items-start justify-between gap-3'>
                   <div className='min-w-0'>
                     <div className='text-base font-extrabold break-words'>{row.sponsorName}</div>
                     <div className='text-muted-foreground mt-1 text-xs font-semibold'>{row.sponsorCode}</div>
                   </div>
-                  <Badge variant='secondary' className='shrink-0 rounded-md font-mono'>
-                    {row.sponsorCode}
-                  </Badge>
+                  <div className='flex shrink-0 flex-col items-end gap-2'>
+                    <Badge variant='secondary' className='rounded-md font-mono'>
+                      {row.sponsorCode}
+                    </Badge>
+                    <Button asChild size='xs' variant='outline' className='h-7 gap-1 px-2 text-xs'>
+                      <Link href={`/admin-sponsor-view/${encodeURIComponent(row.sponsorCode)}`}>
+                        <Eye aria-hidden='true' />
+                        View
+                      </Link>
+                    </Button>
+                  </div>
                 </div>
                 <div className='mt-4 grid gap-3'>
                   <MobileContactValue label='Phone'>
@@ -356,7 +361,7 @@ const UsersContactsTable = ({ rows }: { rows: UsersContactsRow[] }) => {
                   <MobileStatusCount label='Pending' value={row.pendingLovedOnes} />
                   <MobileStatusCount label='Delinquent' value={row.delinquentLovedOnes} />
                   <MobileStatusCount
-                    className='bg-primary/5 col-span-2 border-primary/20'
+                    className='bg-primary/5 border-primary/20 col-span-2'
                     label='Total'
                     value={row.totalLovedOnes}
                   />
