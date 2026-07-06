@@ -90,7 +90,7 @@ const deathSortColumns: SortColumn<DeathSortKey>[] = [
   { key: 'firstName', label: 'First Name' },
   { key: 'lastAndMiddleNames', label: 'Last Name', className: 'hidden sm:table-cell' },
   { key: 'registrationDate', label: 'Registration Date', className: 'hidden lg:table-cell' },
-  { key: 'dateOfDeath', label: 'Date Deceased', shortLabel: 'Death', className: 'px-1.5 md:min-w-40 md:px-2' },
+  { key: 'dateOfDeath', label: 'Date of Death', shortLabel: 'Death', className: 'px-1.5 md:min-w-40 md:px-2' },
   {
     align: 'center',
     className: 'px-1.5 md:min-w-36 md:px-2',
@@ -459,7 +459,7 @@ const PublishedContributionTables = ({
                         {formatDate(death.registrationDate)}
                       </TableCell>
                       <TableCell
-                        data-label='Date Deceased'
+                        data-label='Date of Death'
                         className='px-1.5 whitespace-normal break-words md:min-w-40 md:px-2 md:whitespace-nowrap'
                       >
                         {formatDate(death.dateOfDeath)}
