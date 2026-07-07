@@ -3644,6 +3644,8 @@ export const fetchDeceasedMembersActionAdmin = async () => {
 }
 
 const fetchDeathDocumentationCases = async (where: Prisma.DeceasedMemberWhereInput = {}) => {
+  noStore()
+
   return db.deceasedMember.findMany({
     include: {
       documents: {

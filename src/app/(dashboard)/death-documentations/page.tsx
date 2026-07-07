@@ -2,6 +2,9 @@ import { fetchSponsorDeathDocumentationCasesAction } from '@/utils/actions'
 
 import DeathDocumentationCases from './DeathDocumentationCases'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 const SponsorDeathDocumentationsPage = async () => {
   const { deceasedMembers } = await fetchSponsorDeathDocumentationCasesAction()
 
