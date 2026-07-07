@@ -164,7 +164,7 @@ const columns: ColumnDef<MemberType>[] = [
     meta: {
       headerTitle: 'Last and Middle Names'
     },
-    size: 150
+    size: 165
   },
   {
     header: 'First',
@@ -179,7 +179,7 @@ const columns: ColumnDef<MemberType>[] = [
     meta: {
       headerTitle: 'First Name'
     },
-    size: 120
+    size: 145
   },
 
   {
@@ -229,7 +229,7 @@ const columns: ColumnDef<MemberType>[] = [
       filterVariant: 'select',
       headerTitle: 'Recommendation'
     },
-    size: 130
+    size: 120
   },
 
   {
@@ -259,7 +259,7 @@ const columns: ColumnDef<MemberType>[] = [
       filterVariant: 'select',
       headerTitle: 'Member Status'
     },
-    size: 110
+    size: 105
   },
   {
     id: 'registrationPaymentWarning',
@@ -270,7 +270,7 @@ const columns: ColumnDef<MemberType>[] = [
       headerTitle: `Registration Dues (${registrationPaymentDeadlineDays} days)`
     },
     sortUndefined: 'last',
-    size: 180
+    size: 155
   },
   {
     header: 'Actions',
