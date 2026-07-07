@@ -3646,8 +3646,9 @@ export const fetchDeceasedMembersActionAdmin = async () => {
 const fetchDeathDocumentationCases = async (where: Prisma.DeceasedMemberWhereInput = {}) => {
   noStore()
 
-  return db.deceasedMember.findMany({
-    include: {
+  const deceasedMembers = await db.deceasedMember.findMany({
+    select: {
+      dateOfDeath: true,
       documents: {
         orderBy: { updatedAt: 'desc' },
         select: {
@@ -3664,11 +3665,26 @@ const fetchDeathDocumentationCases = async (where: Prisma.DeceasedMemberWhereInp
           status: true,
           updatedAt: true
         }
-      }
+      },
+      firstName: true,
+      id: true,
+      lastAndMiddleNames: true,
+      memberMatriculationNumber: true,
+      placeOfDeath: true,
+      sponsorCode: true
     },
     orderBy: { createdAt: 'desc' },
     where
   })
+
+  return deceasedMembers.map(deceasedMember => ({
+    ...deceasedMember,
+    documents: deceasedMember.documents.map(document => ({
+      ...document,
+      createdAt: document.createdAt.toISOString(),
+      updatedAt: document.updatedAt.toISOString()
+    }))
+  }))
 }
 
 export const fetchSponsorDeathDocumentationCasesAction = async () => {

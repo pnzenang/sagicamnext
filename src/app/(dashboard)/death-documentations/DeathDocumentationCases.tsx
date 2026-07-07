@@ -1,12 +1,19 @@
-import { CheckCircle2, Download, FileText, ShieldCheck, Upload, XCircle } from 'lucide-react'
+'use client'
+
+import { useMemo, useState } from 'react'
+
+import { CheckCircle2, Download, FileText, Search, ShieldCheck, Upload, XCircle } from 'lucide-react'
 
 import FormContainer from '@/components/forms/FormContainer'
 import { SubmitButton } from '@/components/forms/Buttons'
+import PaginationControls from '@/components/global/PaginationControls'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { usePagination } from '@/hooks/use-pagination'
 import { cn } from '@/lib/utils'
 import {
   deleteDeceasedMemberDocumentAction,
@@ -22,7 +29,7 @@ import {
 } from '@/utils/types'
 
 export type DeathDocumentationDocument = {
-  createdAt: Date
+  createdAt: Date | string
   deceasedMemberId: string
   documentType: string
   fileName: string
@@ -32,7 +39,7 @@ export type DeathDocumentationDocument = {
   rejectionReason?: string | null
   sponsorCode: string
   status: string
-  updatedAt: Date
+  updatedAt: Date | string
 }
 
 export type DeathDocumentationCase = {
@@ -58,7 +65,9 @@ const dateTimeFormatter = new Intl.DateTimeFormat('en-US', {
   timeStyle: 'short'
 })
 
-const formatDateTime = (date: Date) => dateTimeFormatter.format(date)
+const pageSizeOptions = [5, 10, 25, 50]
+
+const formatDateTime = (date: Date | string) => dateTimeFormatter.format(new Date(date))
 
 const formatFileSize = (fileSize: number) => {
   if (fileSize < 1024) return `${fileSize} B`
@@ -87,6 +96,17 @@ const getUploadedDocumentCount = (deceasedMember: DeathDocumentationCase) =>
   deceasedMemberDocumentTypes.filter(documentType =>
     deceasedMember.documents.some(uploadedDocument => uploadedDocument.documentType === documentType)
   ).length
+
+const getCaseSearchText = (deceasedMember: DeathDocumentationCase) =>
+  [
+    deceasedMember.firstName,
+    deceasedMember.lastAndMiddleNames,
+    deceasedMember.memberMatriculationNumber,
+    deceasedMember.sponsorCode,
+    deceasedMember.placeOfDeath
+  ]
+    .join(' ')
+    .toLowerCase()
 
 const ReviewDocumentControls = ({ uploadedDocument }: { uploadedDocument: DeathDocumentationDocument }) => (
   <div className='mt-3 grid gap-2 rounded-md border bg-white/60 p-2 dark:bg-black/10'>
@@ -290,8 +310,41 @@ const DeathDocumentationCases = ({
   emptyTitle,
   title
 }: DeathDocumentationCasesProps) => {
+  const [searchQuery, setSearchQuery] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState(pageSizeOptions[0])
   const totalRequiredDocuments = deceasedMembers.length * deceasedMemberDocumentTypes.length
   const uploadedDocuments = deceasedMembers.reduce((total, deceasedMember) => total + getUploadedDocumentCount(deceasedMember), 0)
+  const normalizedSearchQuery = searchQuery.trim().toLowerCase()
+
+  const filteredDeceasedMembers = useMemo(() => {
+    if (!normalizedSearchQuery) return deceasedMembers
+
+    return deceasedMembers.filter(deceasedMember => getCaseSearchText(deceasedMember).includes(normalizedSearchQuery))
+  }, [deceasedMembers, normalizedSearchQuery])
+
+  const totalPages = Math.max(1, Math.ceil(filteredDeceasedMembers.length / pageSize))
+  const activePage = Math.min(currentPage, totalPages)
+  const pageStartIndex = (activePage - 1) * pageSize
+  const pageEndIndex = Math.min(pageStartIndex + pageSize, filteredDeceasedMembers.length)
+  const paginatedDeceasedMembers = filteredDeceasedMembers.slice(pageStartIndex, pageEndIndex)
+  const hasSearchQuery = normalizedSearchQuery.length > 0
+
+  const { pages, showLeftEllipsis, showRightEllipsis } = usePagination({
+    currentPage: activePage,
+    paginationItemsToDisplay: 3,
+    totalPages
+  })
+
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value)
+    setCurrentPage(1)
+  }
+
+  const handlePageSizeChange = (value: string) => {
+    setPageSize(Number(value))
+    setCurrentPage(1)
+  }
 
   return (
     <section className='grid w-full max-w-full min-w-0 shrink-0 gap-5 overflow-visible px-0 py-4 sm:px-6 sm:py-8 lg:px-8'>
@@ -318,16 +371,91 @@ const DeathDocumentationCases = ({
           </CardContent>
         </Card>
       ) : (
-        <div className='grid gap-5'>
-          {deceasedMembers.map(deceasedMember => (
-            <DeceasedMemberDocumentationCard
-              key={deceasedMember.id}
-              canManageUploads={canManageUploads}
-              canReviewDocuments={canReviewDocuments}
-              deceasedMember={deceasedMember}
-              slotGridClassName={canReviewDocuments ? '2xl:grid-cols-2' : undefined}
-            />
-          ))}
+        <div className='grid gap-4'>
+          <Card className='rounded-lg py-0'>
+            <CardContent className='grid gap-3 px-3 py-3 sm:px-4'>
+              <div className='grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center'>
+                <div className='relative min-w-0'>
+                  <Search className='text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2' />
+                  <Input
+                    value={searchQuery}
+                    onChange={event => handleSearchChange(event.target.value)}
+                    placeholder='Search by deceased name, code, or place of death'
+                    className='h-10 pl-9'
+                    aria-label='Search by deceased name, code, or place of death'
+                  />
+                </div>
+                <div className='flex items-center gap-2'>
+                  <span className='text-muted-foreground text-sm font-semibold whitespace-nowrap'>Entries per page</span>
+                  <Select value={pageSize.toString()} onValueChange={handlePageSizeChange}>
+                    <SelectTrigger className='bg-background h-10 w-24'>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {pageSizeOptions.map(option => (
+                        <SelectItem key={option} value={option.toString()}>
+                          {option}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <p className='text-muted-foreground text-sm font-medium' aria-live='polite'>
+                {filteredDeceasedMembers.length > 0
+                  ? `Showing ${pageStartIndex + 1}-${pageEndIndex} of ${filteredDeceasedMembers.length} case${
+                      filteredDeceasedMembers.length === 1 ? '' : 's'
+                    }`
+                  : 'No cases match your search'}
+              </p>
+            </CardContent>
+          </Card>
+
+          {filteredDeceasedMembers.length === 0 ? (
+            <Card className='rounded-lg'>
+              <CardContent className='py-8 text-center'>
+                <Search className='text-muted-foreground mx-auto mb-3 size-8' />
+                <p className='font-semibold'>No matching death documentation cases found.</p>
+                <p className='text-muted-foreground mt-1 text-sm'>
+                  {hasSearchQuery ? 'Search by deceased name, sponsor code, matriculation code, or place of death.' : emptyDescription}
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className='grid gap-5'>
+              {paginatedDeceasedMembers.map(deceasedMember => (
+                <DeceasedMemberDocumentationCard
+                  key={deceasedMember.id}
+                  canManageUploads={canManageUploads}
+                  canReviewDocuments={canReviewDocuments}
+                  deceasedMember={deceasedMember}
+                  slotGridClassName={canReviewDocuments ? '2xl:grid-cols-2' : undefined}
+                />
+              ))}
+            </div>
+          )}
+
+          {filteredDeceasedMembers.length > 0 ? (
+            <div className='flex max-w-full flex-col items-center justify-between gap-3 rounded-lg border bg-background px-3 py-3 sm:flex-row'>
+              <p className='text-muted-foreground text-sm font-semibold' aria-live='polite'>
+                Page {activePage} of {totalPages}
+              </p>
+              <PaginationControls
+                activePage={activePage}
+                canNext={activePage < totalPages}
+                canPrevious={activePage > 1}
+                getPageButtonClassName={isActive => (isActive ? undefined : 'bg-primary/10 text-primary hover:bg-primary/20')}
+                iconClassName='text-primary'
+                onNext={() => setCurrentPage(Math.min(totalPages, activePage + 1))}
+                onPageChange={setCurrentPage}
+                onPrevious={() => setCurrentPage(Math.max(1, activePage - 1))}
+                pages={pages}
+                showLeftEllipsis={showLeftEllipsis}
+                showRightEllipsis={showRightEllipsis}
+              />
+            </div>
+          ) : null}
         </div>
       )}
     </section>
