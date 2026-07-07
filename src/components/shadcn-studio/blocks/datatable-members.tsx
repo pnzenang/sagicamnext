@@ -80,6 +80,7 @@ import { memberStatus, type MemberType } from '@/utils/types'
 declare module '@tanstack/react-table' {
   interface ColumnMeta<TData extends RowData, TValue> {
     filterVariant?: 'text' | 'range' | 'select'
+    headerTitle?: string
   }
 }
 
@@ -130,10 +131,13 @@ const columns: ColumnDef<MemberType>[] = [
         </div>
       </div>
     ),
-    size: 150
+    meta: {
+      headerTitle: 'Sponsor Code'
+    },
+    size: 50
   },
   {
-    header: 'Matriculation',
+    header: 'Matric.',
     accessorKey: 'memberMatriculationNumber',
     cell: ({ row }) => (
       <div className='flex items-center gap-2'>
@@ -142,10 +146,13 @@ const columns: ColumnDef<MemberType>[] = [
         </div>
       </div>
     ),
-    size: 150
+    meta: {
+      headerTitle: 'Matriculation Number'
+    },
+    size: 100
   },
   {
-    header: 'Last Names',
+    header: 'Last',
     accessorKey: 'lastAndMiddleNames',
     cell: ({ row }) => (
       <div className='flex items-center gap-2'>
@@ -154,10 +161,13 @@ const columns: ColumnDef<MemberType>[] = [
         </div>
       </div>
     ),
+    meta: {
+      headerTitle: 'Last and Middle Names'
+    },
     size: 150
   },
   {
-    header: 'First Name',
+    header: 'First',
     accessorKey: 'firstName',
     cell: ({ row }) => (
       <div className='flex items-center gap-2'>
@@ -165,12 +175,16 @@ const columns: ColumnDef<MemberType>[] = [
           <span className='font-medium'>{row.getValue('firstName')}</span>
         </div>
       </div>
-    )
+    ),
+    meta: {
+      headerTitle: 'First Name'
+    },
+    size: 120
   },
 
   {
     accessorKey: 'createdAt', // The key in your data object
-    header: 'Longevity(Days)',
+    header: 'Days',
     cell: ({ row }) => {
       const field = row.getValue('createdAt') as Date
       const time = day(Date.now())
@@ -181,10 +195,13 @@ const columns: ColumnDef<MemberType>[] = [
 
       return <div>{formattedLongevity}</div>
     },
-    size: 150
+    meta: {
+      headerTitle: 'Longevity (Days)'
+    },
+    size: 80
   },
   {
-    header: 'Recommendation',
+    header: 'Rec.',
     accessorKey: 'delegateRecommendation',
     cell: ({ row }) => {
       const recommendation = row.getValue('delegateRecommendation') as string
@@ -209,9 +226,10 @@ const columns: ColumnDef<MemberType>[] = [
       )
     },
     meta: {
-      filterVariant: 'select'
+      filterVariant: 'select',
+      headerTitle: 'Recommendation'
     },
-    size: 100
+    size: 130
   },
 
   {
@@ -238,17 +256,21 @@ const columns: ColumnDef<MemberType>[] = [
       )
     },
     meta: {
-      filterVariant: 'select'
+      filterVariant: 'select',
+      headerTitle: 'Member Status'
     },
-    size: 100
+    size: 110
   },
   {
     id: 'registrationPaymentWarning',
-    header: `Registration Dues (${registrationPaymentDeadlineDays} days)`,
+    header: `Reg. Dues (${registrationPaymentDeadlineDays}d)`,
     accessorFn: row => getRegistrationPaymentSortValue(row),
     cell: ({ row }) => <RegistrationPaymentWarningCell member={row.original} />,
+    meta: {
+      headerTitle: `Registration Dues (${registrationPaymentDeadlineDays} days)`
+    },
     sortUndefined: 'last',
-    size: 260
+    size: 180
   },
   {
     header: 'Actions',
@@ -259,9 +281,11 @@ const columns: ColumnDef<MemberType>[] = [
 
       return <RowActions memberId={id} />
     },
-    size: 20
+    size: 80
   }
 ]
+
+const getTableColumnWidth = (columnSize: number, totalSize: number) => `${(columnSize / totalSize) * 100}%`
 
 type MembershipSummary = {
   awaiting: number
@@ -508,7 +532,7 @@ const MembersDataTable = ({
           </div>
           <div className='flex w-full min-w-0 flex-wrap items-center gap-2 md:w-auto md:shrink-0 md:flex-nowrap md:justify-end md:gap-4'>
             <div className='flex min-w-0 items-center gap-2 max-md:flex-1'>
-              <Label htmlFor='#rowSelect' className=''>
+              <Label htmlFor='rowSelect' className=''>
                 Show
               </Label>
               <Select
@@ -532,22 +556,32 @@ const MembersDataTable = ({
           </div>
         </div>
         <div className='hidden overflow-x-auto md:block'>
-          <Table className='table-fixed [&_td]:wrap-break-word [&_td]:whitespace-normal [&_th]:wrap-break-word [&_th]:whitespace-normal'>
+          <Table className='[&_td]:wrap-break-word w-full min-w-0 table-fixed text-xs [&_td]:whitespace-normal [&_th]:wrap-break-word [&_th]:whitespace-normal'>
             <TableHeader>
               {table.getHeaderGroups().map(headerGroup => (
-                <TableRow key={headerGroup.id} className='bg-primary hover:bg-primary/80 h-14 border-t'>
+                <TableRow key={headerGroup.id} className='bg-primary hover:bg-primary/80 h-11 border-t'>
                   {headerGroup.headers.map(header => {
+                    const headerTitle =
+                      header.column.columnDef.meta?.headerTitle ??
+                      (typeof header.column.columnDef.header === 'string' ? header.column.columnDef.header : undefined)
+
+                    const headerGroupSize = headerGroup.headers.reduce(
+                      (total, currentHeader) => total + currentHeader.getSize(),
+                      0
+                    )
+
                     return (
                       <TableHead
                         key={header.id}
-                        style={{ width: `${100 / headerGroup.headers.length}%` }}
-                        className='px-4 font-extrabold text-white'
+                        style={{ width: getTableColumnWidth(header.getSize(), headerGroupSize) }}
+                        title={headerTitle}
+                        className='h-11 overflow-hidden px-1.5 py-2 text-xs leading-tight font-extrabold text-white first:pl-2 last:pr-2'
                       >
                         {header.isPlaceholder ? null : header.column.getCanSort() ? (
                           <div
                             className={cn(
                               header.column.getCanSort() &&
-                                'flex h-full cursor-pointer items-center justify-start gap-1.5 select-none'
+                                'flex h-full cursor-pointer items-center justify-start gap-1 select-none'
                             )}
                             onClick={header.column.getToggleSortingHandler()}
                             onKeyDown={e => {
@@ -560,10 +594,10 @@ const MembersDataTable = ({
                           >
                             {flexRender(header.column.columnDef.header, header.getContext())}
                             {{
-                              asc: <ArrowUp className='shrink-0 opacity-60' size={16} aria-hidden='true' />,
-                              desc: <ArrowDown className='shrink-0 opacity-60' size={16} aria-hidden='true' />
+                              asc: <ArrowUp className='shrink-0 opacity-60' size={14} aria-hidden='true' />,
+                              desc: <ArrowDown className='shrink-0 opacity-60' size={14} aria-hidden='true' />
                             }[header.column.getIsSorted() as string] ?? (
-                              <ArrowUpDown className='shrink-0 opacity-60' size={16} aria-hidden='true' />
+                              <ArrowUpDown className='shrink-0 opacity-60' size={14} aria-hidden='true' />
                             )}
                           </div>
                         ) : (
@@ -577,19 +611,28 @@ const MembersDataTable = ({
             </TableHeader>
             <TableBody>
               {table.getRowModel().rows?.length ? (
-                table.getRowModel().rows.map(row => (
-                  <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'} className='hover:bg-primary/30'>
-                    {row.getVisibleCells().map(cell => (
-                      <TableCell
-                        key={cell.id}
-                        style={{ width: `${100 / row.getVisibleCells().length}%` }}
-                        className='h-14 px-4'
-                      >
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
+                table.getRowModel().rows.map(row => {
+                  const visibleCells = row.getVisibleCells()
+                  const rowSize = visibleCells.reduce((total, cell) => total + cell.column.getSize(), 0)
+
+                  return (
+                    <TableRow
+                      key={row.id}
+                      data-state={row.getIsSelected() && 'selected'}
+                      className='hover:bg-primary/30'
+                    >
+                      {visibleCells.map(cell => (
+                        <TableCell
+                          key={cell.id}
+                          style={{ width: getTableColumnWidth(cell.column.getSize(), rowSize) }}
+                          className='h-12 overflow-hidden px-1.5 py-1.5 first:pl-2 last:pr-2'
+                        >
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  )
+                })
               ) : (
                 <TableRow>
                   <TableCell colSpan={tableColumns.length} className='h-24 text-center'>
@@ -709,15 +752,12 @@ function Filter({ column }: { column: Column<any, unknown> }) {
 }
 
 function RowActions({ memberId }: { memberId: string }) {
-  const currentDay = new Date().getDate()
-  const shouldShow = currentDay >= 12
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <div className='flex'>
-          <Button size='icon' variant='ghost' className='rounded-full p-2' aria-label='Edit item'>
-            <Ellipsis className='size-6' aria-hidden='true' />
+          <Button size='icon-xs' variant='ghost' className='rounded-full' aria-label='Edit item'>
+            <Ellipsis className='size-4' aria-hidden='true' />
           </Button>
         </div>
       </DropdownMenuTrigger>

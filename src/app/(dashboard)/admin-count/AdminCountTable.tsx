@@ -2,9 +2,11 @@
 
 import { useMemo, useState } from 'react'
 
-import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeftIcon, ChevronRightIcon, Download } from 'lucide-react'
+import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeftIcon, ChevronRightIcon, Download, Eye } from 'lucide-react'
+import Link from 'next/link'
 import * as XLSX from 'xlsx'
 
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem } from '@/components/ui/pagination'
@@ -49,15 +51,7 @@ const columns: AdminCountColumn[] = [
 
 const pageSizeOptions = [10, 25, 50, 100]
 
-const fixedLeftColumnCount = 2
-const fixedLeftColumnWidth = 20
-
-const flexibleColumnWidth =
-  (100 - fixedLeftColumnCount * fixedLeftColumnWidth) / (columns.length - fixedLeftColumnCount)
-
-const adminCountColumnWidths = columns.map((_, index) =>
-  index < fixedLeftColumnCount ? fixedLeftColumnWidth : flexibleColumnWidth
-)
+const adminCountColumnWidths = [20, 23, 7, 10, 10, 10, 10, 10]
 
 const getSortIcon = (isActive: boolean, direction: SortDirection) => {
   if (!isActive) return <ArrowUpDown className='size-3.5' />
@@ -237,6 +231,7 @@ const AdminCountTable = ({ rows, totals }: { rows: AdminCountRow[]; totals: Admi
                     <TableHead
                       key={column.key}
                       className={`text-primary-foreground ${column.className ?? ''}`}
+                      title={column.label}
                       aria-sort={isActive ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
                     >
                       <button
@@ -273,7 +268,19 @@ const AdminCountTable = ({ rows, totals }: { rows: AdminCountRow[]; totals: Admi
                         </a>
                       )}
                     </TableCell>
-                    <TableCell>{row.sponsorCode}</TableCell>
+                    <TableCell>
+                      <div className='flex min-w-0 flex-col items-start gap-2'>
+                        <Badge variant='secondary' className='rounded-md font-mono'>
+                          {row.sponsorCode}
+                        </Badge>
+                        <Button asChild size='xs' variant='outline' className='h-7 gap-1 px-2 text-xs'>
+                          <Link href={`/admin-sponsor-view/${encodeURIComponent(row.sponsorCode)}`}>
+                            <Eye aria-hidden='true' />
+                            View
+                          </Link>
+                        </Button>
+                      </div>
+                    </TableCell>
                     <TableCell className='text-right font-semibold'>{row.vested}</TableCell>
                     <TableCell className='text-right font-semibold'>{row.pending}</TableCell>
                     <TableCell className='text-right font-semibold'>{row.delinquent}</TableCell>
@@ -315,8 +322,14 @@ const AdminCountTable = ({ rows, totals }: { rows: AdminCountRow[]; totals: Admi
                     <div className='text-base font-extrabold break-words'>{row.sponsorName || row.sponsorCode}</div>
                     <div className='text-muted-foreground mt-1 text-xs font-semibold'>{row.sponsorCode}</div>
                   </div>
-                  <div className='shrink-0 text-right text-2xl leading-none font-extrabold tabular-nums'>
-                    {row.total}
+                  <div className='flex shrink-0 flex-col items-end gap-2'>
+                    <div className='text-right text-2xl leading-none font-extrabold tabular-nums'>{row.total}</div>
+                    <Button asChild size='xs' variant='outline' className='h-7 gap-1 px-2 text-xs'>
+                      <Link href={`/admin-sponsor-view/${encodeURIComponent(row.sponsorCode)}`}>
+                        <Eye aria-hidden='true' />
+                        View
+                      </Link>
+                    </Button>
                   </div>
                 </div>
                 <div className='mt-3 grid gap-1 text-sm'>

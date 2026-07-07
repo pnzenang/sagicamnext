@@ -79,14 +79,20 @@ const exportColumnWidths: Partial<Record<SortKey, number>> = {
   balance: 22,
   cemail: 32,
   contributionAmountSent: 20,
-  sponsorCode: 14,
+  sponsorCode: 10,
   vestedMembers: 10
 }
 
 const balanceColumnWidth = 30
-const regularColumnWidth = (100 - balanceColumnWidth) / (columns.length - 1)
+const codeColumnWidth = 6
+const regularColumnWidth = (100 - balanceColumnWidth - codeColumnWidth) / (columns.length - 2)
 
-const getColumnWidth = (columnKey: SortKey) => (columnKey === 'balance' ? balanceColumnWidth : regularColumnWidth)
+const getColumnWidth = (columnKey: SortKey) => {
+  if (columnKey === 'balance') return balanceColumnWidth
+  if (columnKey === 'sponsorCode') return codeColumnWidth
+
+  return regularColumnWidth
+}
 
 const getColumnStyle = (columnKey: SortKey) => ({ width: `${getColumnWidth(columnKey)}%` })
 
@@ -523,6 +529,7 @@ const AdminSagicamPaymentsTable = ({
                       key={column.key}
                       className='text-primary-foreground h-16'
                       style={getColumnStyle(column.key)}
+                      title={column.label}
                       aria-sort={isActive ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
                     >
                       <button

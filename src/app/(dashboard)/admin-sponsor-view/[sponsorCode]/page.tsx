@@ -39,6 +39,7 @@ const AdminSponsorViewPage = async ({ params }: AdminSponsorViewPageProps) => {
   }
 
   const sponsorName = `${preview.sponsor.sponsorFirstName} ${preview.sponsor.sponsorLastAndMiddleName}`.trim()
+  const sponsorContact = [preview.sponsor.sponsorEmail, preview.sponsor.sponsorPhoneNumber].filter(Boolean).join(' · ')
   const membershipSummary = getMembershipSummary(preview.members)
 
   return (
@@ -46,9 +47,9 @@ const AdminSponsorViewPage = async ({ params }: AdminSponsorViewPageProps) => {
       <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
         <div className='min-w-0'>
           <Button asChild variant='ghost' size='sm' className='mb-2 w-fit px-0 hover:bg-transparent'>
-            <Link href='/admin-users-contacts'>
+            <Link href='/admin-count'>
               <ArrowLeft aria-hidden='true' />
-              Users Contacts
+              Admin Count
             </Link>
           </Button>
           <div className='flex min-w-0 flex-wrap items-center gap-2'>
@@ -60,9 +61,9 @@ const AdminSponsorViewPage = async ({ params }: AdminSponsorViewPageProps) => {
           <p className='text-muted-foreground mt-1 text-sm'>
             Viewing the sponsor-facing dashboard for {sponsorName || preview.sponsor.sponsorCode}.
           </p>
-          <p className='text-muted-foreground mt-1 text-xs font-semibold'>
-            {preview.sponsor.sponsorEmail} · {preview.sponsor.sponsorPhoneNumber}
-          </p>
+          {sponsorContact ? (
+            <p className='text-muted-foreground mt-1 text-xs font-semibold'>{sponsorContact}</p>
+          ) : null}
         </div>
         <Badge variant='outline' className='w-fit rounded-md text-sm'>
           <Eye aria-hidden='true' />

@@ -63,6 +63,7 @@ import RestoreDeceasedMemberButton from '@/components/global/RestoreDeceasedMemb
 declare module '@tanstack/react-table' {
   interface ColumnMeta<TData extends RowData, TValue> {
     filterVariant?: 'text' | 'range' | 'select'
+    headerTitle?: string
   }
 }
 
@@ -73,7 +74,7 @@ const columns: ColumnDef<DeceasedMemberType>[] = [
     accessorFn: getNameSearchValue
   },
   {
-    header: 'Last Names',
+    header: 'Last',
     accessorKey: 'lastAndMiddleNames',
     cell: ({ row }) => (
       <div className='flex items-center gap-2'>
@@ -82,10 +83,13 @@ const columns: ColumnDef<DeceasedMemberType>[] = [
         </div>
       </div>
     ),
-    size: 150
+    meta: {
+      headerTitle: 'Last and Middle Names'
+    },
+    size: 140
   },
   {
-    header: 'First Name',
+    header: 'First',
     accessorKey: 'firstName',
     cell: ({ row }) => (
       <div className='flex items-center gap-2'>
@@ -93,11 +97,15 @@ const columns: ColumnDef<DeceasedMemberType>[] = [
           <span className='font-medium'>{row.getValue('firstName')}</span>
         </div>
       </div>
-    )
+    ),
+    meta: {
+      headerTitle: 'First Name'
+    },
+    size: 130
   },
 
   {
-    header: 'Matriculation',
+    header: 'Matric.',
     accessorKey: 'memberMatriculationNumber',
     cell: ({ row }) => (
       <div className='flex items-center gap-2'>
@@ -106,7 +114,10 @@ const columns: ColumnDef<DeceasedMemberType>[] = [
         </div>
       </div>
     ),
-    size: 150
+    meta: {
+      headerTitle: 'Matriculation Number'
+    },
+    size: 105
   },
   {
     header: 'Code',
@@ -118,11 +129,14 @@ const columns: ColumnDef<DeceasedMemberType>[] = [
         </div>
       </div>
     ),
-    size: 120
+    meta: {
+      headerTitle: 'Sponsor Code'
+    },
+    size: 60
   },
 
   {
-    header: 'Place of Death (State)',
+    header: 'Place',
     accessorKey: 'placeOfDeath',
     cell: ({ row }) => (
       <div className='flex items-center gap-2'>
@@ -131,12 +145,15 @@ const columns: ColumnDef<DeceasedMemberType>[] = [
         </div>
       </div>
     ),
-    size: 150
+    meta: {
+      headerTitle: 'Place of Death (State)'
+    },
+    size: 115
   },
 
   {
     accessorKey: 'registrationDate', // The key in your data object
-    header: 'Registration Date',
+    header: 'Reg.',
     cell: ({ row }) => {
       const field = row.getValue('registrationDate') as string
       const fieldDate = new Date(field)
@@ -145,11 +162,14 @@ const columns: ColumnDef<DeceasedMemberType>[] = [
 
       return <div>{formattedRegistrationDate}</div>
     },
-    size: 150
+    meta: {
+      headerTitle: 'Registration Date'
+    },
+    size: 95
   },
   {
     accessorKey: 'dateOfDeath', // The key in your data object
-    header: 'Date of Death',
+    header: 'Death',
     cell: ({ row }) => {
       const field = row.getValue('dateOfDeath') as string
       const fieldDate = new Date(field)
@@ -158,11 +178,14 @@ const columns: ColumnDef<DeceasedMemberType>[] = [
 
       return <div>{formattedDateOfDeath}</div>
     },
-    size: 150
+    meta: {
+      headerTitle: 'Date of Death'
+    },
+    size: 95
   },
   {
     accessorKey: 'createdAt', // The key in your data object
-    header: 'Date Announced',
+    header: 'Announced',
     cell: ({ row }) => {
       const field = row.getValue('createdAt') as Date
 
@@ -170,10 +193,13 @@ const columns: ColumnDef<DeceasedMemberType>[] = [
 
       return <div>{formattedAnnouncementDate}</div>
     },
-    size: 150
+    meta: {
+      headerTitle: 'Date Announced'
+    },
+    size: 105
   },
   {
-    header: 'contribution status',
+    header: 'Status',
     accessorKey: 'contributionStatus',
     cell: ({ row }) => {
       const contributionStatus = row.getValue('contributionStatus') as string
@@ -196,17 +222,20 @@ const columns: ColumnDef<DeceasedMemberType>[] = [
       )
     },
     meta: {
-      filterVariant: 'select'
+      filterVariant: 'select',
+      headerTitle: 'Contribution Status'
     },
-    size: 100
+    size: 120
   },
   {
     header: 'Actions',
     accessorKey: 'id',
     cell: ({ row: { original } }) => <RowActions deceasedMember={original} />,
-    size: 20
+    size: 65
   }
 ]
+
+const getTableColumnWidth = (columnSize: number, totalSize: number) => `${(columnSize / totalSize) * 100}%`
 
 const DeceasedMembersDataTable = ({
   data,
@@ -456,22 +485,32 @@ const DeceasedMembersDataTable = ({
           </div>
         </div>
         <div className='hidden overflow-x-auto md:block'>
-          <Table>
+          <Table className='w-full min-w-0 table-fixed text-xs [&_td]:whitespace-normal [&_th]:whitespace-normal'>
             <TableHeader>
               {table.getHeaderGroups().map(headerGroup => (
-                <TableRow key={headerGroup.id} className='h-14 border-t bg-purple-500 hover:bg-purple-400'>
+                <TableRow key={headerGroup.id} className='h-12 border-t bg-purple-500 hover:bg-purple-400'>
                   {headerGroup.headers.map(header => {
+                    const headerTitle =
+                      header.column.columnDef.meta?.headerTitle ??
+                      (typeof header.column.columnDef.header === 'string' ? header.column.columnDef.header : undefined)
+
+                    const headerGroupSize = headerGroup.headers.reduce(
+                      (total, currentHeader) => total + currentHeader.getSize(),
+                      0
+                    )
+
                     return (
                       <TableHead
                         key={header.id}
-                        style={{ width: `${header.getSize()}px` }}
-                        className='font-extrabold text-white first:pl-4 last:px-4'
+                        style={{ width: getTableColumnWidth(header.getSize(), headerGroupSize) }}
+                        title={headerTitle}
+                        className='h-12 overflow-hidden px-1.5 py-2 text-xs leading-tight font-extrabold text-white first:pl-2 last:pr-2'
                       >
                         {header.isPlaceholder ? null : header.column.getCanSort() ? (
                           <div
                             className={cn(
                               header.column.getCanSort() &&
-                                'flex h-full cursor-pointer items-center justify-start gap-1.5 select-none'
+                                'flex h-full min-w-0 cursor-pointer items-center justify-start gap-1 select-none'
                             )}
                             onClick={header.column.getToggleSortingHandler()}
                             onKeyDown={e => {
@@ -484,10 +523,10 @@ const DeceasedMembersDataTable = ({
                           >
                             {flexRender(header.column.columnDef.header, header.getContext())}
                             {{
-                              asc: <ArrowUp className='shrink-0 opacity-60' size={16} aria-hidden='true' />,
-                              desc: <ArrowDown className='shrink-0 opacity-60' size={16} aria-hidden='true' />
+                              asc: <ArrowUp className='shrink-0 opacity-60' size={14} aria-hidden='true' />,
+                              desc: <ArrowDown className='shrink-0 opacity-60' size={14} aria-hidden='true' />
                             }[header.column.getIsSorted() as string] ?? (
-                              <ArrowUpDown className='shrink-0 opacity-60' size={16} aria-hidden='true' />
+                              <ArrowUpDown className='shrink-0 opacity-60' size={14} aria-hidden='true' />
                             )}
                           </div>
                         ) : (
@@ -501,19 +540,28 @@ const DeceasedMembersDataTable = ({
             </TableHeader>
             <TableBody>
               {table.getRowModel().rows?.length ? (
-                table.getRowModel().rows.map(row => (
-                  <TableRow
-                    key={row.id}
-                    data-state={row.getIsSelected() && 'selected'}
-                    className='hover:bg-purple-300/30'
-                  >
-                    {row.getVisibleCells().map(cell => (
-                      <TableCell key={cell.id} className='h-14 first:w-12.5 first:pl-4 last:w-29 last:px-4'>
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
+                table.getRowModel().rows.map(row => {
+                  const visibleCells = row.getVisibleCells()
+                  const rowSize = visibleCells.reduce((total, cell) => total + cell.column.getSize(), 0)
+
+                  return (
+                    <TableRow
+                      key={row.id}
+                      data-state={row.getIsSelected() && 'selected'}
+                      className='hover:bg-purple-300/30'
+                    >
+                      {visibleCells.map(cell => (
+                        <TableCell
+                          key={cell.id}
+                          style={{ width: getTableColumnWidth(cell.column.getSize(), rowSize) }}
+                          className='h-12 overflow-hidden px-1.5 py-1.5 text-xs break-words first:pl-2 last:pr-2'
+                        >
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  )
+                })
               ) : (
                 <TableRow>
                   <TableCell colSpan={columns.length} className='h-24 text-center'>

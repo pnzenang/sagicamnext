@@ -74,6 +74,7 @@ import RestoreRemovedMemberButton from '@/components/global/RestoreRemovedMember
 declare module '@tanstack/react-table' {
   interface ColumnMeta<TData extends RowData, TValue> {
     filterVariant?: 'text' | 'range' | 'select'
+    headerTitle?: string
   }
 }
 
@@ -84,7 +85,7 @@ const columns: ColumnDef<RemovedMemberType>[] = [
     accessorFn: getNameSearchValue
   },
   {
-    header: 'Last Names',
+    header: 'Last',
     accessorKey: 'lastAndMiddleNames',
     cell: ({ row }) => (
       <div className='flex items-center gap-2'>
@@ -93,10 +94,13 @@ const columns: ColumnDef<RemovedMemberType>[] = [
         </div>
       </div>
     ),
+    meta: {
+      headerTitle: 'Last and Middle Names'
+    },
     size: 150
   },
   {
-    header: 'First Name',
+    header: 'First',
     accessorKey: 'firstName',
     cell: ({ row }) => (
       <div className='flex items-center gap-2'>
@@ -104,11 +108,15 @@ const columns: ColumnDef<RemovedMemberType>[] = [
           <span className='font-medium'>{row.getValue('firstName')}</span>
         </div>
       </div>
-    )
+    ),
+    meta: {
+      headerTitle: 'First Name'
+    },
+    size: 140
   },
 
   {
-    header: 'Matriculation',
+    header: 'Matric.',
     accessorKey: 'memberMatriculationNumber',
     cell: ({ row }) => (
       <div className='flex items-center gap-2'>
@@ -117,7 +125,10 @@ const columns: ColumnDef<RemovedMemberType>[] = [
         </div>
       </div>
     ),
-    size: 150
+    meta: {
+      headerTitle: 'Matriculation Number'
+    },
+    size: 115
   },
   {
     header: 'Code',
@@ -130,13 +141,14 @@ const columns: ColumnDef<RemovedMemberType>[] = [
       </div>
     ),
     meta: {
-      filterVariant: 'select'
+      filterVariant: 'select',
+      headerTitle: 'Sponsor Code'
     },
-    size: 150
+    size: 70
   },
 
   {
-    header: 'Reason For Leaving',
+    header: 'Reason',
     accessorKey: 'reasonForLeaving',
     cell: ({ row }) => (
       <div className='flex items-center gap-2'>
@@ -146,15 +158,16 @@ const columns: ColumnDef<RemovedMemberType>[] = [
       </div>
     ),
     meta: {
-      filterVariant: 'select'
+      filterVariant: 'select',
+      headerTitle: 'Reason For Leaving'
     },
 
-    size: 150
+    size: 140
   },
 
   {
     accessorKey: 'createdAt', // The key in your data object
-    header: 'Date Removed',
+    header: 'Removed',
     cell: ({ row }) => {
       const field = row.getValue('createdAt') as Date
       const time = day(Date.now())
@@ -163,15 +176,23 @@ const columns: ColumnDef<RemovedMemberType>[] = [
 
       return <div>{formattedLongevity}</div>
     },
-    size: 150
+    meta: {
+      headerTitle: 'Date Removed'
+    },
+    size: 100
   },
   {
-    header: 'Actions',
+    header: 'Act.',
     accessorKey: 'id',
+    meta: {
+      headerTitle: 'Actions'
+    },
     cell: ({ row: { original } }) => <RowActions removedMember={original} />,
-    size: 20
+    size: 80
   }
 ]
+
+const getTableColumnWidth = (columnSize: number, totalSize: number) => `${(columnSize / totalSize) * 100}%`
 
 const RemovedMembersDataTable = ({ data }: { data: RemovedMemberType[] }) => {
   const [columnFilters, setColumnFilters] = usePersistentState<ColumnFiltersState>(
@@ -368,22 +389,32 @@ const RemovedMembersDataTable = ({ data }: { data: RemovedMemberType[] }) => {
           </div>
         </div>
         <div className='hidden overflow-x-auto md:block'>
-          <Table>
+          <Table className='w-full min-w-0 table-fixed text-xs [&_td]:whitespace-normal [&_th]:whitespace-normal'>
             <TableHeader>
               {table.getHeaderGroups().map(headerGroup => (
-                <TableRow key={headerGroup.id} className='h-14 border-t bg-red-400 hover:bg-red-300'>
+                <TableRow key={headerGroup.id} className='h-12 border-t bg-red-400 hover:bg-red-300'>
                   {headerGroup.headers.map(header => {
+                    const headerTitle =
+                      header.column.columnDef.meta?.headerTitle ??
+                      (typeof header.column.columnDef.header === 'string' ? header.column.columnDef.header : undefined)
+
+                    const headerGroupSize = headerGroup.headers.reduce(
+                      (total, currentHeader) => total + currentHeader.getSize(),
+                      0
+                    )
+
                     return (
                       <TableHead
                         key={header.id}
-                        style={{ width: `${header.getSize()}px` }}
-                        className='font-extrabold text-white first:pl-4 last:px-4'
+                        style={{ width: getTableColumnWidth(header.getSize(), headerGroupSize) }}
+                        title={headerTitle}
+                        className='h-12 overflow-hidden px-1.5 py-2 text-xs leading-tight font-extrabold text-white first:pl-2 last:pr-2'
                       >
                         {header.isPlaceholder ? null : header.column.getCanSort() ? (
                           <div
                             className={cn(
                               header.column.getCanSort() &&
-                                'flex h-full cursor-pointer items-center justify-start gap-1.5 select-none'
+                                'flex h-full min-w-0 cursor-pointer items-center justify-start gap-1 select-none'
                             )}
                             onClick={header.column.getToggleSortingHandler()}
                             onKeyDown={e => {
@@ -396,10 +427,10 @@ const RemovedMembersDataTable = ({ data }: { data: RemovedMemberType[] }) => {
                           >
                             {flexRender(header.column.columnDef.header, header.getContext())}
                             {{
-                              asc: <ArrowUp className='shrink-0 opacity-60' size={16} aria-hidden='true' />,
-                              desc: <ArrowDown className='shrink-0 opacity-60' size={16} aria-hidden='true' />
+                              asc: <ArrowUp className='shrink-0 opacity-60' size={14} aria-hidden='true' />,
+                              desc: <ArrowDown className='shrink-0 opacity-60' size={14} aria-hidden='true' />
                             }[header.column.getIsSorted() as string] ?? (
-                              <ArrowUpDown className='shrink-0 opacity-60' size={16} aria-hidden='true' />
+                              <ArrowUpDown className='shrink-0 opacity-60' size={14} aria-hidden='true' />
                             )}
                           </div>
                         ) : (
@@ -413,15 +444,28 @@ const RemovedMembersDataTable = ({ data }: { data: RemovedMemberType[] }) => {
             </TableHeader>
             <TableBody>
               {table.getRowModel().rows?.length ? (
-                table.getRowModel().rows.map(row => (
-                  <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'} className='hover:bg-red-400/30'>
-                    {row.getVisibleCells().map(cell => (
-                      <TableCell key={cell.id} className='h-14 first:w-12.5 first:pl-4 last:w-29 last:px-4'>
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
+                table.getRowModel().rows.map(row => {
+                  const visibleCells = row.getVisibleCells()
+                  const rowSize = visibleCells.reduce((total, cell) => total + cell.column.getSize(), 0)
+
+                  return (
+                    <TableRow
+                      key={row.id}
+                      data-state={row.getIsSelected() && 'selected'}
+                      className='hover:bg-red-400/30'
+                    >
+                      {visibleCells.map(cell => (
+                        <TableCell
+                          key={cell.id}
+                          style={{ width: getTableColumnWidth(cell.column.getSize(), rowSize) }}
+                          className='h-12 overflow-hidden px-1.5 py-1.5 text-xs break-words first:pl-2 last:pr-2'
+                        >
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  )
+                })
               ) : (
                 <TableRow>
                   <TableCell colSpan={columns.length} className='h-24 text-center'>
@@ -547,7 +591,7 @@ function RowActions({ removedMember }: { removedMember: RemovedMemberType }) {
 
   return (
     <div className='flex items-center gap-2'>
-      <RestoreRemovedMemberButton removedMember={removedMember} />
+      <RestoreRemovedMemberButton removedMember={removedMember} compact />
       <FormContainer action={deleteRemovedMember}>
         <Button size='icon' variant='ghost' className='rounded-full p-2 hover:bg-red-300' aria-label='Delete item'>
           <Trash2 className='text-destructive size-5' aria-hidden='true' />

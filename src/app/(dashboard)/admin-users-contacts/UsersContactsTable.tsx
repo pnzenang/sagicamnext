@@ -8,14 +8,11 @@ import {
   ArrowUpDown,
   ChevronLeftIcon,
   ChevronRightIcon,
-  Eye,
   Mail,
   Phone,
   SearchIcon,
   type LucideIcon
 } from 'lucide-react'
-
-import Link from 'next/link'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -61,9 +58,9 @@ type UsersContactsColumn = {
 
 const columns: UsersContactsColumn[] = [
   { key: 'sponsorName', label: 'Sponsor name', width: 20 },
-  { key: 'sponsorCode', label: 'Code', width: 8 },
+  { key: 'sponsorCode', label: 'Code', width: 6 },
   { key: 'sponsorPhoneNumber', label: 'Phone number', width: 14 },
-  { key: 'sponsorEmail', label: 'Email', width: 24 },
+  { key: 'sponsorEmail', label: 'Email', width: 26 },
   { align: 'right', key: 'vestedLovedOnes', label: 'Vested', width: 6 },
   { align: 'right', key: 'awaitingLovedOnes', label: 'Awaiting', width: 7 },
   { align: 'right', key: 'pendingLovedOnes', label: 'Pending', width: 7 },
@@ -250,6 +247,7 @@ const UsersContactsTable = ({ rows }: { rows: UsersContactsRow[] }) => {
                     <TableHead
                       key={column.key}
                       className='text-primary-foreground'
+                      title={column.label}
                       aria-sort={isActive ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
                     >
                       <button
@@ -284,12 +282,6 @@ const UsersContactsTable = ({ rows }: { rows: UsersContactsRow[] }) => {
                         <Badge variant='secondary' className='rounded-md font-mono'>
                           {row.sponsorCode}
                         </Badge>
-                        <Button asChild size='xs' variant='outline' className='h-7 gap-1 px-2 text-xs'>
-                          <Link href={`/admin-sponsor-view/${encodeURIComponent(row.sponsorCode)}`}>
-                            <Eye aria-hidden='true' />
-                            View
-                          </Link>
-                        </Button>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -331,12 +323,6 @@ const UsersContactsTable = ({ rows }: { rows: UsersContactsRow[] }) => {
                     <Badge variant='secondary' className='rounded-md font-mono'>
                       {row.sponsorCode}
                     </Badge>
-                    <Button asChild size='xs' variant='outline' className='h-7 gap-1 px-2 text-xs'>
-                      <Link href={`/admin-sponsor-view/${encodeURIComponent(row.sponsorCode)}`}>
-                        <Eye aria-hidden='true' />
-                        View
-                      </Link>
-                    </Button>
                   </div>
                 </div>
                 <div className='mt-4 grid gap-3'>

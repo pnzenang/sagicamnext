@@ -121,17 +121,33 @@ const ContributionCalculationPage = async () => {
         </CardHeader>
         <CardContent className='min-w-0'>
           <div className='max-w-full overflow-x-auto rounded-lg border'>
-            <Table>
+            <Table className='table-fixed'>
               <TableHeader>
                 <TableRow className='bg-primary hover:bg-primary'>
-                  <TableHead className='text-primary-foreground'>Matriculation</TableHead>
-                  <TableHead className='text-primary-foreground'>First Name</TableHead>
-                  <TableHead className='text-primary-foreground'>Last and Middle Names</TableHead>
-                  <TableHead className='text-primary-foreground'>Registration Date</TableHead>
-                  <TableHead className='text-primary-foreground'>Date of Death</TableHead>
-                  <TableHead className='text-primary-foreground'>Amount</TableHead>
-                  <TableHead className='text-primary-foreground'>Sponsor</TableHead>
-                  <TableHead className='text-primary-foreground'>Action</TableHead>
+                  <TableHead className='text-primary-foreground w-28' title='Matriculation'>
+                    Matriculation
+                  </TableHead>
+                  <TableHead className='text-primary-foreground w-28' title='First Name'>
+                    First Name
+                  </TableHead>
+                  <TableHead className='text-primary-foreground w-40' title='Last and Middle Names'>
+                    Last and Middle Names
+                  </TableHead>
+                  <TableHead className='text-primary-foreground' title='Registration Date'>
+                    Registration Date
+                  </TableHead>
+                  <TableHead className='text-primary-foreground' title='Date of Death'>
+                    Date of Death
+                  </TableHead>
+                  <TableHead className='text-primary-foreground' title='Amount'>
+                    Amount
+                  </TableHead>
+                  <TableHead className='text-primary-foreground' title='Sponsor'>
+                    Sponsor
+                  </TableHead>
+                  <TableHead className='text-primary-foreground' title='Action'>
+                    Action
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -144,11 +160,11 @@ const ContributionCalculationPage = async () => {
                 ) : (
                   calculationDeaths.map(death => (
                     <TableRow key={death.id} className='odd:bg-muted/30 even:bg-background'>
-                      <TableCell className='font-mono text-sm font-semibold'>
+                      <TableCell className='w-28 font-mono text-sm font-semibold'>
                         {death.memberMatriculationNumber}
                       </TableCell>
-                      <TableCell className='font-semibold'>{death.firstName}</TableCell>
-                      <TableCell className='font-semibold'>{death.lastAndMiddleNames}</TableCell>
+                      <TableCell className='w-28 font-semibold'>{death.firstName}</TableCell>
+                      <TableCell className='w-40 font-semibold'>{death.lastAndMiddleNames}</TableCell>
                       <TableCell className='whitespace-nowrap'>{formatDate(death.registrationDate)}</TableCell>
                       <TableCell className='whitespace-nowrap'>{formatDate(death.dateOfDeath)}</TableCell>
                       <TableCell className='font-semibold whitespace-nowrap'>

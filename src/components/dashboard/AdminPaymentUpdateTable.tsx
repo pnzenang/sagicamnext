@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { usePagination } from '@/hooks/use-pagination'
 import { cn } from '@/lib/utils'
 import type { AdminContributionPaymentUpdateRow } from '@/utils/admin-contribution-payment-update'
@@ -95,17 +96,28 @@ const SortIcon = ({ active, direction }: { active: boolean; direction: SortDirec
   return <ArrowDown className='size-3 opacity-90' aria-hidden='true' />
 }
 
-const BalanceValue = ({ balance }: { balance: number }) => (
-  <span
-    className={cn(
-      'inline-block max-w-full min-w-0 truncate font-black whitespace-nowrap tabular-nums',
-      balance < 0 ? 'text-red-700 dark:text-red-300' : 'text-green-700'
-    )}
-    title={currencyFormatter.format(balance)}
-  >
-    {currencyFormatter.format(balance)}
-  </span>
-)
+const BalanceValue = ({ balance }: { balance: number }) => {
+  const formattedBalance = currencyFormatter.format(balance)
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span
+          className={cn(
+            'inline-block max-w-full min-w-0 truncate font-black whitespace-nowrap tabular-nums',
+            balance < 0 ? 'text-red-700 dark:text-red-300' : 'text-green-700'
+          )}
+          aria-label={formattedBalance}
+        >
+          {formattedBalance}
+        </span>
+      </TooltipTrigger>
+      <TooltipContent side='top' sideOffset={4}>
+        {formattedBalance}
+      </TooltipContent>
+    </Tooltip>
+  )
+}
 
 const AdminPaymentUpdateTable = ({
   defaultSort = { direction: 'asc', key: 'sponsorCode' },
@@ -224,8 +236,8 @@ const AdminPaymentUpdateTable = ({
           >
             <colgroup>
               <col className='w-[5%]' />
-              <col className='w-[31%]' />
-              <col className='w-[7%]' />
+              <col className='w-[33%]' />
+              <col className='w-[5%]' />
               <col className='w-[6%]' />
               <col className='w-[12%]' />
               <col className='w-[12%]' />
@@ -234,7 +246,10 @@ const AdminPaymentUpdateTable = ({
             </colgroup>
             <TableHeader>
               <TableRow className='bg-primary hover:bg-primary'>
-                <TableHead className='text-primary-foreground truncate px-1.5 text-right whitespace-nowrap'>
+                <TableHead
+                  className='text-primary-foreground truncate px-1.5 text-right whitespace-nowrap'
+                  title='No.'
+                >
                   No.
                 </TableHead>
                 {columns.map(column => {
@@ -244,6 +259,7 @@ const AdminPaymentUpdateTable = ({
                     <TableHead
                       key={column.key}
                       aria-sort={isActive ? (sort.direction === 'asc' ? 'ascending' : 'descending') : 'none'}
+                      title={column.label}
                       className={cn(
                         'text-primary-foreground overflow-hidden whitespace-nowrap',
                         'px-1.5',

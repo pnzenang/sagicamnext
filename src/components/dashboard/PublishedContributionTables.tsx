@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { usePagination } from '@/hooks/use-pagination'
 import { cn } from '@/lib/utils'
 
@@ -86,9 +87,14 @@ const defaultGroupRowsPerPage = 10
 const groupRowsPerPageOptions = [10, 25, 50, 100]
 
 const deathSortColumns: SortColumn<DeathSortKey>[] = [
-  { key: 'memberMatriculationNumber', label: 'Matriculation', shortLabel: 'Matric.', className: 'px-1.5 md:px-2' },
-  { key: 'firstName', label: 'First Name' },
-  { key: 'lastAndMiddleNames', label: 'Last Name', className: 'hidden sm:table-cell' },
+  {
+    key: 'memberMatriculationNumber',
+    label: 'Matriculation',
+    shortLabel: 'Matric.',
+    className: 'w-24 px-1.5 md:w-28 md:px-2'
+  },
+  { key: 'firstName', label: 'First Name', className: 'w-24 px-1.5 md:w-28 md:px-2' },
+  { key: 'lastAndMiddleNames', label: 'Last Name', className: 'hidden w-32 sm:table-cell md:w-36' },
   { key: 'registrationDate', label: 'Registration Date', className: 'hidden lg:table-cell' },
   { key: 'dateOfDeath', label: 'Date of Death', shortLabel: 'Death', className: 'px-1.5 md:min-w-40 md:px-2' },
   {
@@ -111,12 +117,12 @@ const deathSortColumns: SortColumn<DeathSortKey>[] = [
     key: 'amountToContribute',
     label: 'Amount'
   },
-  { key: 'sponsorCode', label: 'Sponsor Code', className: 'hidden min-w-40 md:table-cell' }
+  { key: 'sponsorCode', label: 'Sponsor Code', className: 'hidden min-w-24 md:table-cell' }
 ]
 
 const groupSortColumns: SortColumn<GroupSortKey>[] = [
   { key: 'sponsorName', label: 'Sponsor', className: 'hidden md:table-cell' },
-  { key: 'sponsorCode', label: 'Code', className: 'px-1.5 md:min-w-28 md:px-2' },
+  { key: 'sponsorCode', label: 'Code', className: 'px-1.5 md:min-w-20 md:px-2' },
   {
     align: 'right',
     className: 'px-1.5 md:min-w-40 md:px-2',
@@ -212,16 +218,25 @@ const ContributionTableDocumentLink = ({
     )
   }
 
+  const tooltipTitle = `${label}: ${document.fileName}`
+
   return (
-    <a
-      href={`/death-documentations/${document.id}/download`}
-      className='text-primary inline-flex items-center justify-center gap-1 text-xs font-semibold underline-offset-4 hover:underline print:text-foreground print:no-underline'
-      title={`${label}: ${document.fileName}`}
-    >
-      <Download className='size-3.5 print:hidden' />
-      <span className='hidden sm:inline print:hidden'>Download</span>
-      <span className='hidden print:inline'>{document.fileName}</span>
-    </a>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <a
+          href={`/death-documentations/${document.id}/download`}
+          className='text-primary inline-flex items-center justify-center gap-1 text-xs font-semibold underline-offset-4 hover:underline print:text-foreground print:no-underline'
+          aria-label={tooltipTitle}
+        >
+          <Download className='size-3.5 print:hidden' />
+          <span className='hidden sm:inline print:hidden'>Download</span>
+          <span className='hidden print:inline'>{document.fileName}</span>
+        </a>
+      </TooltipTrigger>
+      <TooltipContent side='top' sideOffset={4}>
+        {tooltipTitle}
+      </TooltipContent>
+    </Tooltip>
   )
 }
 
@@ -231,7 +246,8 @@ function SortHeader<T extends string>({
   className,
   onSort,
   sort,
-  sortKey
+  sortKey,
+  title
 }: {
   align?: 'center' | 'left' | 'right'
   children: ReactNode
@@ -239,6 +255,7 @@ function SortHeader<T extends string>({
   onSort: (key: T) => void
   sort: SortState<T>
   sortKey: T
+  title: string
 }) {
   const active = sort.key === sortKey
 
@@ -246,6 +263,7 @@ function SortHeader<T extends string>({
     <TableHead
       aria-sort={active ? (sort.direction === 'asc' ? 'ascending' : 'descending') : 'none'}
       className={cn('text-primary-foreground', className)}
+      title={title}
     >
       <button
         type='button'
@@ -406,7 +424,7 @@ const PublishedContributionTables = ({
         </CardHeader>
         <CardContent className='min-w-0'>
           <div className='max-w-full overflow-hidden rounded-lg border md:overflow-x-auto print:overflow-visible'>
-            <Table mobileCards className='min-w-0 table-fixed text-[11px] sm:text-xs md:min-w-max md:table-auto md:text-sm'>
+            <Table mobileCards className='min-w-0 table-fixed text-[11px] sm:text-xs md:min-w-max md:text-sm'>
               <TableHeader>
                 <TableRow className='bg-primary hover:bg-primary print:bg-muted print:hover:bg-muted'>
                   {deathSortColumns.map(column => (
@@ -417,6 +435,7 @@ const PublishedContributionTables = ({
                       onSort={handleDeathSort}
                       sort={deathSort}
                       sortKey={column.key}
+                      title={column.label}
                     >
                       {column.shortLabel ? (
                         <>
@@ -442,17 +461,17 @@ const PublishedContributionTables = ({
                     <TableRow key={death.id} className='odd:bg-muted/30 even:bg-background'>
                       <TableCell
                         data-label='Matriculation'
-                        className='whitespace-normal break-all px-1.5 font-mono font-semibold md:px-2 md:text-sm md:whitespace-nowrap'
+                        className='w-24 whitespace-normal break-all px-1.5 font-mono font-semibold md:w-28 md:px-2 md:text-sm md:whitespace-nowrap'
                       >
                         {death.memberMatriculationNumber}
                       </TableCell>
                       <TableCell
                         data-label='First Name'
-                        className='whitespace-normal px-1.5 font-semibold break-words md:px-2'
+                        className='w-24 whitespace-normal px-1.5 font-semibold break-words md:w-28 md:px-2'
                       >
                         {death.firstName}
                       </TableCell>
-                      <TableCell data-label='Last Name' className='font-semibold'>
+                      <TableCell data-label='Last Name' className='w-32 font-semibold md:w-36'>
                         {death.lastAndMiddleNames}
                       </TableCell>
                       <TableCell data-label='Registration Date' className='hidden whitespace-nowrap lg:table-cell'>
@@ -476,7 +495,7 @@ const PublishedContributionTables = ({
                       >
                         {currencyFormatter.format(death.amountToContribute)}
                       </TableCell>
-                      <TableCell data-label='Sponsor Code' className='hidden min-w-40 md:table-cell'>
+                      <TableCell data-label='Sponsor Code' className='hidden min-w-24 md:table-cell'>
                         <span className='block font-mono font-semibold'>{death.sponsorCode}</span>
                       </TableCell>
                     </TableRow>
@@ -535,11 +554,13 @@ const PublishedContributionTables = ({
             <Table
               data-sponsor-contribution-table
               mobileCards
-              className='min-w-0 table-fixed text-xs md:min-w-max md:table-auto md:text-sm'
+              className='min-w-0 table-fixed text-xs md:min-w-max md:text-sm'
             >
               <TableHeader>
                 <TableRow className='bg-primary hover:bg-primary print:bg-muted print:hover:bg-muted'>
-                  <TableHead className='text-primary-foreground w-12 px-1.5 text-right md:px-2'>No.</TableHead>
+                  <TableHead className='text-primary-foreground w-12 px-1.5 text-right md:px-2' title='No.'>
+                    No.
+                  </TableHead>
                   {groupSortColumns.map(column => (
                     <SortHeader
                       key={column.key}
@@ -548,6 +569,7 @@ const PublishedContributionTables = ({
                       onSort={handleGroupSort}
                       sort={groupSort}
                       sortKey={column.key}
+                      title={column.label}
                     >
                       {column.shortLabel ? (
                         <>
@@ -579,7 +601,7 @@ const PublishedContributionTables = ({
                     <TableCell data-label='Sponsor' className='hidden font-semibold md:table-cell'>
                       {group.sponsorName}
                     </TableCell>
-                    <TableCell data-label='Code' className='px-1.5 font-mono text-sm font-semibold md:min-w-28 md:px-2'>
+                    <TableCell data-label='Code' className='px-1.5 font-mono text-sm font-semibold md:min-w-20 md:px-2'>
                       {group.sponsorCode}
                     </TableCell>
                     <TableCell

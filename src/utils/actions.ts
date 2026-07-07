@@ -1186,8 +1186,6 @@ export const fetchAdminSponsorDashboardPreviewAction = async (sponsorCodeInput: 
     }
   })
 
-  if (!sponsor) return null
-
   const [members, currentContribution, currentRegistrationPayment] = await Promise.all([
     db.member
       .findMany({
@@ -1201,11 +1199,19 @@ export const fetchAdminSponsorDashboardPreviewAction = async (sponsorCodeInput: 
     fetchSponsorRegistrationSummary(sponsorCode, { noStore: true })
   ])
 
+  if (!sponsor && members.length === 0) return null
+
   return {
     currentContribution,
     currentRegistrationPayment,
     members,
-    sponsor
+    sponsor: sponsor ?? {
+      sponsorCode,
+      sponsorEmail: '',
+      sponsorFirstName: '',
+      sponsorLastAndMiddleName: '',
+      sponsorPhoneNumber: ''
+    }
   }
 }
 

@@ -73,7 +73,7 @@ const exportColumnWidths: Partial<Record<SortKey, number>> = {
   eventType: 20,
   note: 42,
   paymentType: 16,
-  sponsorCode: 12,
+  sponsorCode: 10,
   sponsorEmail: 32,
   sponsorName: 26
 }
@@ -84,9 +84,9 @@ const columnWidths: Partial<Record<SortKey, number>> = {
   amountVerified: 12,
   createdAt: 13,
   eventType: 12,
-  note: 16,
+  note: 18,
   paymentType: 9,
-  sponsorCode: 7,
+  sponsorCode: 5,
   sponsorName: 13
 }
 
@@ -367,6 +367,7 @@ const AdminPaymentHistoryTable = ({
                       key={column.key}
                       className='text-primary-foreground h-16'
                       style={getColumnStyle(column.key)}
+                      title={column.label}
                       aria-sort={isActive ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
                     >
                       <button

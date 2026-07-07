@@ -38,7 +38,13 @@ const formatTimeRemaining = (milliseconds: number) => {
   return `${hours}h ${minutes}m ${seconds}s`
 }
 
-const RestoreDeceasedMemberButton = ({ deceasedMember }: { deceasedMember: DeceasedMemberType }) => {
+const RestoreDeceasedMemberButton = ({
+  compact = false,
+  deceasedMember
+}: {
+  compact?: boolean
+  deceasedMember: DeceasedMemberType
+}) => {
   const [isOpen, setIsOpen] = useState(false)
   const [now, setNow] = useState(() => Date.now())
   const restoreDeceasedMember = restoreDeceasedMemberAction.bind(null, { deceasedMemberId: deceasedMember.id })
@@ -81,20 +87,24 @@ const RestoreDeceasedMemberButton = ({ deceasedMember }: { deceasedMember: Decea
   if (!canRestore) return null
 
   return (
-    <TooltipProvider delayDuration={150}>
+    <TooltipProvider delayDuration={0}>
       <Tooltip open={isOpen} onOpenChange={handleOpenChange}>
         <TooltipTrigger asChild>
           <div className='inline-flex'>
             <FormContainer action={restoreDeceasedMember}>
               <Button
                 type='submit'
-                size='sm'
+                size={compact ? 'icon' : 'sm'}
                 variant='outline'
-                className='border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800'
+                className={
+                  compact
+                    ? 'size-9 rounded-full border-emerald-200 p-0 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800'
+                    : 'border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800'
+                }
                 aria-label='Restore death announcement'
               >
                 <UserCheck className='size-4' aria-hidden='true' />
-                Restore
+                {compact ? null : 'Restore'}
               </Button>
             </FormContainer>
           </div>

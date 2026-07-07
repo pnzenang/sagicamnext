@@ -41,11 +41,11 @@ type NewAdditionColumn = {
 }
 
 const columns: NewAdditionColumn[] = [
-  { key: 'sponsorCode', label: 'Code', width: 13 },
-  { key: 'memberMatriculationNumber', label: 'Matriculation', width: 20 },
-  { key: 'firstName', label: 'First name', width: 20 },
-  { key: 'lastAndMiddleNames', label: 'Last and middle names', width: 31 },
-  { key: 'vestedAt', label: 'Vested date', width: 16 }
+  { key: 'sponsorCode', label: 'Code', width: 8 },
+  { key: 'memberMatriculationNumber', label: 'Matriculation', width: 14 },
+  { key: 'firstName', label: 'First name', width: 16 },
+  { key: 'lastAndMiddleNames', label: 'Last and middle names', width: 34 },
+  { key: 'vestedAt', label: 'Vested date', width: 28 }
 ]
 
 const pageSizeOptions = [10, 25, 50, 100]
@@ -221,6 +221,7 @@ const NewAdditionsTable = ({ monthKey, rows }: { monthKey: string; rows: NewAddi
                     <TableHead
                       key={column.key}
                       className='text-primary-foreground'
+                      title={column.label}
                       aria-sort={isActive ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
                     >
                       <button

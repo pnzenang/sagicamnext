@@ -24,20 +24,31 @@ const getStatusCountTotal = (counts: SponsorStatusCounts) =>
   statusColumns.reduce((total, column) => total + counts[column.key], 0)
 
 const AdminCount = async () => {
-  const memberCountsBySponsorCode = await db.member.groupBy({
-    by: ['sponsorCode', 'memberStatus'],
-    where: {
-      memberStatus: {
-        in: statusColumns.map(column => column.key)
+  const [memberCountsBySponsorCode, sponsors] = await Promise.all([
+    db.member.groupBy({
+      by: ['sponsorCode', 'memberStatus'],
+      where: {
+        memberStatus: {
+          in: statusColumns.map(column => column.key)
+        }
+      },
+      _count: {
+        _all: true
+      },
+      orderBy: {
+        sponsorCode: 'asc'
       }
-    },
-    _count: {
-      _all: true
-    },
-    orderBy: {
-      sponsorCode: 'asc'
-    }
-  })
+    }),
+    db.profile.findMany({
+      orderBy: [{ sponsorLastAndMiddleName: 'asc' }, { sponsorFirstName: 'asc' }],
+      select: {
+        sponsorCode: true,
+        sponsorEmail: true,
+        sponsorFirstName: true,
+        sponsorLastAndMiddleName: true
+      }
+    })
+  ])
 
   const statusCountsBySponsorCode = new Map<string, SponsorStatusCounts>()
 
@@ -48,23 +59,11 @@ const AdminCount = async () => {
     statusCountsBySponsorCode.set(item.sponsorCode, existingCounts)
   })
 
-  const sponsorCodes = Array.from(statusCountsBySponsorCode.keys())
-
-  const sponsors = await db.profile.findMany({
-    where: {
-      sponsorCode: {
-        in: sponsorCodes
-      }
-    },
-    select: {
-      sponsorCode: true,
-      sponsorEmail: true,
-      sponsorFirstName: true,
-      sponsorLastAndMiddleName: true
-    }
-  })
-
   const sponsorsByCode = new Map(sponsors.map(sponsor => [sponsor.sponsorCode, sponsor]))
+
+  const sponsorCodes = Array.from(
+    new Set([...statusCountsBySponsorCode.keys(), ...sponsors.map(sponsor => sponsor.sponsorCode)])
+  ).sort((firstCode, secondCode) => firstCode.localeCompare(secondCode, undefined, { sensitivity: 'base' }))
 
   const rows: AdminCountRow[] = sponsorCodes.map(sponsorCode => {
     const sponsor = sponsorsByCode.get(sponsorCode)
