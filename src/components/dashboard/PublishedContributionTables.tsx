@@ -34,6 +34,8 @@ export type PublishedContributionDeathRow = {
 }
 
 export type PublishedContributionGroupRow = {
+  accountAfterContribution: number
+  accountBeforeContribution: number
   amountOwed: number
   sponsorCode: string
   sponsorName: string
@@ -59,7 +61,12 @@ type DeathSortKey =
   | 'registrationDate'
   | 'sponsorCode'
   | 'sponsorName'
-type GroupSortKey = 'amountOwed' | 'sponsorCode' | 'sponsorName' | 'vestedMembersCount'
+type GroupSortKey =
+  | 'accountAfterContribution'
+  | 'accountBeforeContribution'
+  | 'amountOwed'
+  | 'sponsorCode'
+  | 'vestedMembersCount'
 
 type SortState<T extends string> = {
   direction: SortDirection
@@ -121,7 +128,6 @@ const deathSortColumns: SortColumn<DeathSortKey>[] = [
 ]
 
 const groupSortColumns: SortColumn<GroupSortKey>[] = [
-  { key: 'sponsorName', label: 'Sponsor', className: 'hidden md:table-cell' },
   { key: 'sponsorCode', label: 'Code', className: 'px-1.5 md:min-w-20 md:px-2' },
   {
     align: 'right',
@@ -132,10 +138,24 @@ const groupSortColumns: SortColumn<GroupSortKey>[] = [
   },
   {
     align: 'right',
+    className: 'px-1.5 md:min-w-44 md:px-2',
+    key: 'accountBeforeContribution',
+    label: 'Account Before Contribution',
+    shortLabel: 'Account Before'
+  },
+  {
+    align: 'right',
     className: 'px-1.5 md:min-w-48 md:px-2',
     key: 'amountOwed',
     label: 'Amount To Contribute',
     shortLabel: 'Amount'
+  },
+  {
+    align: 'right',
+    className: 'px-1.5 md:min-w-44 md:px-2',
+    key: 'accountAfterContribution',
+    label: 'Account After Contribution',
+    shortLabel: 'Account After'
   }
 ]
 
@@ -178,7 +198,11 @@ const getNextDirection = <T extends string>(sort: SortState<T>, key: T): SortDir
   return sort.direction === 'asc' ? 'desc' : 'asc'
 }
 
-const compareDeathRows = (left: PublishedContributionDeathRow, right: PublishedContributionDeathRow, key: DeathSortKey) => {
+const compareDeathRows = (
+  left: PublishedContributionDeathRow,
+  right: PublishedContributionDeathRow,
+  key: DeathSortKey
+) => {
   if (key === 'amountToContribute') return left.amountToContribute - right.amountToContribute
   if (key === 'dateOfDeath') return compareDates(left.dateOfDeath, right.dateOfDeath)
   if (key === 'registrationDate') return compareDates(left.registrationDate, right.registrationDate)
@@ -188,7 +212,13 @@ const compareDeathRows = (left: PublishedContributionDeathRow, right: PublishedC
   return compareText(left[key], right[key])
 }
 
-const compareGroupRows = (left: PublishedContributionGroupRow, right: PublishedContributionGroupRow, key: GroupSortKey) => {
+const compareGroupRows = (
+  left: PublishedContributionGroupRow,
+  right: PublishedContributionGroupRow,
+  key: GroupSortKey
+) => {
+  if (key === 'accountAfterContribution') return left.accountAfterContribution - right.accountAfterContribution
+  if (key === 'accountBeforeContribution') return left.accountBeforeContribution - right.accountBeforeContribution
   if (key === 'amountOwed') return left.amountOwed - right.amountOwed
   if (key === 'vestedMembersCount') return left.vestedMembersCount - right.vestedMembersCount
 
@@ -202,13 +232,7 @@ const SortIcon = ({ active, direction }: { active: boolean; direction: SortDirec
   return <ChevronDown className='size-3.5 opacity-80 print:hidden' aria-hidden='true' />
 }
 
-const ContributionTableDocumentLink = ({
-  document,
-  label
-}: {
-  document: ContributionTableDocument
-  label: string
-}) => {
+const ContributionTableDocumentLink = ({ document, label }: { document: ContributionTableDocument; label: string }) => {
   if (!document) {
     return (
       <span className='text-muted-foreground text-[10px] font-medium sm:text-xs'>
@@ -225,7 +249,7 @@ const ContributionTableDocumentLink = ({
       <TooltipTrigger asChild>
         <a
           href={`/death-documentations/${document.id}/download`}
-          className='text-primary inline-flex items-center justify-center gap-1 text-xs font-semibold underline-offset-4 hover:underline print:text-foreground print:no-underline'
+          className='text-primary print:text-foreground inline-flex items-center justify-center gap-1 text-xs font-semibold underline-offset-4 hover:underline print:no-underline'
           aria-label={tooltipTitle}
         >
           <Download className='size-3.5 print:hidden' />
@@ -269,7 +293,7 @@ function SortHeader<T extends string>({
         type='button'
         onClick={() => onSort(sortKey)}
         className={cn(
-          'inline-flex w-full items-center gap-1 text-primary-foreground transition hover:opacity-85 print:pointer-events-none',
+          'text-primary-foreground inline-flex w-full items-center gap-1 transition hover:opacity-85 print:pointer-events-none',
           align === 'center' && 'justify-center text-center',
           align === 'right' && 'justify-end text-right'
         )}
@@ -461,13 +485,13 @@ const PublishedContributionTables = ({
                     <TableRow key={death.id} className='odd:bg-muted/30 even:bg-background'>
                       <TableCell
                         data-label='Matriculation'
-                        className='w-24 whitespace-normal break-all px-1.5 font-mono font-semibold md:w-28 md:px-2 md:text-sm md:whitespace-nowrap'
+                        className='w-24 px-1.5 font-mono font-semibold break-all whitespace-normal md:w-28 md:px-2 md:text-sm md:whitespace-nowrap'
                       >
                         {death.memberMatriculationNumber}
                       </TableCell>
                       <TableCell
                         data-label='First Name'
-                        className='w-24 whitespace-normal px-1.5 font-semibold break-words md:w-28 md:px-2'
+                        className='w-24 px-1.5 font-semibold break-words whitespace-normal md:w-28 md:px-2'
                       >
                         {death.firstName}
                       </TableCell>
@@ -479,7 +503,7 @@ const PublishedContributionTables = ({
                       </TableCell>
                       <TableCell
                         data-label='Date of Death'
-                        className='px-1.5 whitespace-normal break-words md:min-w-40 md:px-2 md:whitespace-nowrap'
+                        className='px-1.5 break-words whitespace-normal md:min-w-40 md:px-2 md:whitespace-nowrap'
                       >
                         {formatDate(death.dateOfDeath)}
                       </TableCell>
@@ -507,7 +531,7 @@ const PublishedContributionTables = ({
         </CardContent>
       </Card>
 
-      <Card className='w-full max-w-full min-w-0 overflow-hidden print:break-inside-avoid print:shadow-none'>
+      <Card data-sponsor-contribution-section className='w-full max-w-full min-w-0 overflow-hidden print:shadow-none'>
         <CardHeader>
           <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
             <div>
@@ -518,7 +542,7 @@ const PublishedContributionTables = ({
                 loved one.
               </CardDescription>
             </div>
-            <div className='flex flex-col gap-3 print:hidden sm:items-end'>
+            <div className='flex flex-col gap-3 sm:items-end print:hidden'>
               <div className='flex items-center justify-between gap-2 sm:justify-end'>
                 <label
                   htmlFor={groupRowsPerPageSelectId}
@@ -584,45 +608,61 @@ const PublishedContributionTables = ({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sortedGroups.map((group, index) => (
-                  <TableRow
-                    key={group.sponsorCode}
-                    className={cn(
-                      'h-12 hover:bg-gray-300 print:table-row',
-                      index >= (activeGroupPage - 1) * groupRowsPerPage && index < activeGroupPage * groupRowsPerPage
-                        ? 'odd:bg-gray-200 even:bg-white'
-                        : 'hidden',
-                      index % 2 === 0 ? 'print:bg-gray-200' : 'print:bg-white'
-                    )}
-                  >
-                    <TableCell data-label='No.' className='px-1.5 text-right font-semibold md:px-2'>
-                      {index + 1}
-                    </TableCell>
-                    <TableCell data-label='Sponsor' className='hidden font-semibold md:table-cell'>
-                      {group.sponsorName}
-                    </TableCell>
-                    <TableCell data-label='Code' className='px-1.5 font-mono text-sm font-semibold md:min-w-20 md:px-2'>
-                      {group.sponsorCode}
-                    </TableCell>
-                    <TableCell
-                      data-label='Vested Loved Ones'
-                      className='px-1.5 text-right font-semibold tabular-nums md:min-w-40 md:px-2'
+                {sortedGroups.map((group, index) => {
+                  const isPageVisible =
+                    index >= (activeGroupPage - 1) * groupRowsPerPage && index < activeGroupPage * groupRowsPerPage
+
+                  return (
+                    <TableRow
+                      key={group.sponsorCode}
+                      data-page-visible={isPageVisible ? 'true' : 'false'}
+                      className={cn(
+                        'h-12 hover:bg-gray-300 print:table-row',
+                        isPageVisible && 'odd:bg-gray-200 even:bg-white',
+                        index % 2 === 0 ? 'print:bg-gray-200' : 'print:bg-white'
+                      )}
                     >
-                      {group.vestedMembersCount}
-                    </TableCell>
-                    <TableCell
-                      data-label='Amount'
-                      className='px-1.5 text-right font-semibold whitespace-nowrap md:min-w-48 md:px-2'
-                    >
-                      {currencyFormatter.format(group.amountOwed)}
-                    </TableCell>
-                  </TableRow>
-                ))}
+                      <TableCell data-label='No.' className='px-1.5 text-right font-semibold md:px-2'>
+                        {index + 1}
+                      </TableCell>
+                      <TableCell
+                        data-label='Code'
+                        className='px-1.5 font-mono text-sm font-semibold md:min-w-20 md:px-2'
+                      >
+                        {group.sponsorCode}
+                      </TableCell>
+                      <TableCell
+                        data-label='Vested Loved Ones'
+                        className='px-1.5 text-right font-semibold tabular-nums md:min-w-40 md:px-2'
+                      >
+                        {group.vestedMembersCount}
+                      </TableCell>
+                      <TableCell
+                        data-label='Account Before Contribution'
+                        className='px-1.5 text-right font-semibold whitespace-nowrap tabular-nums md:min-w-44 md:px-2'
+                      >
+                        {currencyFormatter.format(group.accountBeforeContribution)}
+                      </TableCell>
+                      <TableCell
+                        data-label='Amount'
+                        className='px-1.5 text-right font-semibold whitespace-nowrap md:min-w-48 md:px-2'
+                      >
+                        {currencyFormatter.format(group.amountOwed)}
+                      </TableCell>
+                      <TableCell
+                        data-label='Account After Contribution'
+                        className='px-1.5 text-right font-semibold whitespace-nowrap tabular-nums md:min-w-44 md:px-2'
+                      >
+                        {currencyFormatter.format(group.accountAfterContribution)}
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
               </TableBody>
             </Table>
           </div>
           {sortedGroups.length > 0 ? (
-            <div className='mt-4 flex flex-col items-center justify-between gap-3 print:hidden sm:flex-row'>
+            <div className='mt-4 flex flex-col items-center justify-between gap-3 sm:flex-row print:hidden'>
               <p className='text-muted-foreground text-sm' aria-live='polite'>
                 Showing {(activeGroupPage - 1) * groupRowsPerPage + 1}-
                 {Math.min(activeGroupPage * groupRowsPerPage, sortedGroups.length)} of {sortedGroups.length}

@@ -246,10 +246,7 @@ const AdminPaymentUpdateTable = ({
             </colgroup>
             <TableHeader>
               <TableRow className='bg-primary hover:bg-primary'>
-                <TableHead
-                  className='text-primary-foreground truncate px-1.5 text-right whitespace-nowrap'
-                  title='No.'
-                >
+                <TableHead className='text-primary-foreground truncate px-1.5 text-right whitespace-nowrap' title='No.'>
                   No.
                 </TableHead>
                 {columns.map(column => {
@@ -294,7 +291,7 @@ const AdminPaymentUpdateTable = ({
                         data-page-visible={isPageRow ? 'true' : 'false'}
                         className={cn(
                           'h-12 hover:bg-gray-300 print:table-row',
-                          isPageRow ? 'odd:bg-gray-200 even:bg-white' : 'hidden',
+                          isPageRow && 'odd:bg-gray-200 even:bg-white',
                           index % 2 === 0 ? 'print:bg-gray-200' : 'print:bg-white'
                         )}
                       >

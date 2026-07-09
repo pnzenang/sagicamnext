@@ -328,10 +328,27 @@
     }
   }
 
+  @media screen {
+    [data-admin-sagicam-payments-table] tbody tr[data-page-visible='false'],
+    [data-payment-update-table] tbody tr[data-page-visible='false'],
+    [data-sponsor-contribution-table] tbody tr[data-page-visible='false'] {
+      display: none;
+    }
+  }
+
   @media print {
+    html,
+    body {
+      height: auto !important;
+      max-height: none !important;
+      overflow: visible !important;
+    }
+
     [data-dashboard-shell] {
       background: white !important;
       display: block !important;
+      height: auto !important;
+      max-height: none !important;
       min-height: 0 !important;
       overflow: visible !important;
     }
@@ -347,7 +364,10 @@
     [data-dashboard-main],
     [data-dashboard-frame],
     [data-dashboard-frame] > [data-slot='card-content'] {
+      display: block !important;
+      height: auto !important;
       margin: 0 !important;
+      max-height: none !important;
       max-width: none !important;
       min-height: 0 !important;
       overflow: visible !important;
@@ -361,6 +381,54 @@
       box-shadow: none !important;
     }
 
+    :is([data-contribution-table-print], [data-admin-sagicam-payments-print], [data-payment-update-print])
+      [data-slot='table-container'] {
+      display: block !important;
+      overflow: visible !important;
+    }
+
+    :is([data-contribution-table-print], [data-admin-sagicam-payments-print], [data-payment-update-print])
+      [data-slot='table'] {
+      break-inside: auto !important;
+      display: table !important;
+      page-break-inside: auto;
+    }
+
+    :is([data-contribution-table-print], [data-admin-sagicam-payments-print], [data-payment-update-print])
+      [data-slot='table-header'] {
+      display: table-header-group !important;
+    }
+
+    :is([data-contribution-table-print], [data-admin-sagicam-payments-print], [data-payment-update-print])
+      [data-slot='table-body'] {
+      display: table-row-group !important;
+    }
+
+    :is([data-contribution-table-print], [data-admin-sagicam-payments-print], [data-payment-update-print])
+      [data-slot='table-footer'] {
+      display: table-footer-group !important;
+    }
+
+    :is([data-contribution-table-print], [data-admin-sagicam-payments-print], [data-payment-update-print])
+      [data-slot='table-row'] {
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    :is([data-contribution-table-print], [data-admin-sagicam-payments-print], [data-payment-update-print]) {
+      font-size: 1rem !important;
+    }
+
+    :is([data-contribution-table-print], [data-admin-sagicam-payments-print], [data-payment-update-print]) h1 {
+      font-size: 1.85rem !important;
+      line-height: 1.15 !important;
+    }
+
+    :is([data-contribution-table-print], [data-admin-sagicam-payments-print], [data-payment-update-print]) p {
+      font-size: 0.9rem !important;
+      line-height: 1.35 !important;
+    }
+
     @page contribution-table-page {
       margin: 0.35in 0.35in 0.55in;
       size: landscape;
@@ -368,18 +436,23 @@
       @bottom-center {
         color: rgb(71 85 105);
         content: 'Page ' counter(page) ' of ' counter(pages);
-        font-size: 9px;
+        font-size: 10px;
         font-weight: 600;
       }
     }
 
     [data-contribution-table-print] {
+      display: block !important;
+      height: auto !important;
+      max-height: none !important;
+      overflow: visible !important;
       page: contribution-table-page;
     }
 
     body:has([data-contribution-table-print]) main,
     body:has([data-contribution-table-print]) [data-slot='card'],
-    body:has([data-contribution-table-print]) [data-slot='card-content'] {
+    body:has([data-contribution-table-print]) [data-slot='card-content'],
+    body:has([data-contribution-table-print]) [data-slot='table-container'] {
       overflow: visible !important;
     }
 
@@ -389,13 +462,19 @@
     }
 
     [data-contribution-table-print] [data-slot='card'] {
-      break-inside: avoid;
+      break-inside: auto !important;
+      display: block !important;
       gap: 0.5rem !important;
+      height: auto !important;
+      max-height: none !important;
+      overflow: visible !important;
       padding-block: 0.45rem !important;
+      page-break-inside: auto;
     }
 
     [data-contribution-table-print] [data-sponsor-contribution-section] {
       break-inside: auto !important;
+      page-break-inside: auto;
     }
 
     [data-contribution-table-print] [data-slot='card-header'],
@@ -404,12 +483,12 @@
     }
 
     [data-contribution-table-print] [data-slot='card-title'] {
-      font-size: 0.8rem !important;
+      font-size: 1.08rem !important;
     }
 
     [data-contribution-table-print] [data-slot='card-description'] {
-      font-size: 0.65rem !important;
-      line-height: 1.2 !important;
+      font-size: 0.86rem !important;
+      line-height: 1.3 !important;
     }
 
     [data-contribution-table-print] [data-mobile-cards='true'] {
@@ -440,8 +519,8 @@
     [data-contribution-table-print] [data-mobile-cards='true'] td {
       border: 1px solid var(--border) !important;
       display: table-cell !important;
-      font-size: 0.58rem !important;
-      height: 0.3in !important;
+      font-size: 0.78rem !important;
+      height: 0.34in !important;
       line-height: 1.35 !important;
       min-width: 0 !important;
       padding: 0.32rem 0.22rem !important;
@@ -479,6 +558,7 @@
 
     [data-contribution-table-print] [data-sponsor-contribution-table] tbody tr {
       break-inside: avoid;
+      display: table-row !important;
       page-break-inside: avoid;
     }
 
@@ -498,6 +578,141 @@
       print-color-adjust: exact;
     }
 
+    @page admin-sagicam-payments-page {
+      margin: 0.35in 0.35in 0.55in;
+      size: landscape;
+
+      @bottom-center {
+        color: rgb(71 85 105);
+        content: 'Page ' counter(page) ' of ' counter(pages);
+        font-size: 10px;
+        font-weight: 600;
+      }
+    }
+
+    [data-admin-sagicam-payments-print] {
+      display: block !important;
+      height: auto !important;
+      max-height: none !important;
+      overflow: visible !important;
+      page: admin-sagicam-payments-page;
+    }
+
+    body:has([data-admin-sagicam-payments-print]) main,
+    body:has([data-admin-sagicam-payments-print]) [data-slot='table-container'] {
+      overflow: visible !important;
+    }
+
+    [data-admin-sagicam-payments-print] [data-admin-sagicam-payments-table-card] {
+      break-inside: auto !important;
+      border-radius: 0 !important;
+      overflow: visible !important;
+      page-break-inside: auto;
+    }
+
+    [data-admin-sagicam-payments-print] [data-admin-sagicam-payments-table] {
+      border-collapse: collapse !important;
+      border-spacing: 0 !important;
+      display: table !important;
+      min-width: 0 !important;
+      table-layout: fixed !important;
+      width: 100% !important;
+    }
+
+    [data-admin-sagicam-payments-print] [data-admin-sagicam-payments-table] thead {
+      display: table-header-group !important;
+    }
+
+    [data-admin-sagicam-payments-print] [data-admin-sagicam-payments-table] tbody {
+      display: table-row-group !important;
+    }
+
+    [data-admin-sagicam-payments-print] [data-admin-sagicam-payments-table] tfoot {
+      display: table-footer-group !important;
+    }
+
+    [data-admin-sagicam-payments-print] [data-admin-sagicam-payments-table] tr,
+    [data-admin-sagicam-payments-print] [data-admin-sagicam-payments-table] tbody tr[data-page-visible='false'] {
+      break-inside: avoid;
+      display: table-row !important;
+      page-break-inside: avoid;
+    }
+
+    [data-admin-sagicam-payments-print] [data-admin-sagicam-payments-table] th,
+    [data-admin-sagicam-payments-print] [data-admin-sagicam-payments-table] td {
+      border: 1px solid var(--border) !important;
+      display: table-cell !important;
+      font-size: 0.72rem !important;
+      height: auto !important;
+      line-height: 1.3 !important;
+      min-width: 0 !important;
+      overflow: hidden !important;
+      padding: 0.22rem 0.18rem !important;
+      text-overflow: ellipsis !important;
+      white-space: nowrap !important;
+      width: auto !important;
+    }
+
+    [data-admin-sagicam-payments-print] [data-admin-sagicam-payments-table] th {
+      -webkit-print-color-adjust: exact;
+      background: rgb(243 244 246) !important;
+      color: var(--foreground) !important;
+      print-color-adjust: exact;
+    }
+
+    [data-admin-sagicam-payments-print] [data-admin-sagicam-payments-table] th button {
+      color: var(--foreground) !important;
+      min-height: 0 !important;
+      pointer-events: none;
+    }
+
+    [data-admin-sagicam-payments-print] [data-admin-sagicam-payments-table] th svg,
+    [data-admin-sagicam-payments-print] [data-admin-sagicam-payment-actions],
+    [data-admin-sagicam-payments-print] form {
+      display: none !important;
+    }
+
+    [data-admin-sagicam-payments-print] [data-admin-sagicam-sent-cell],
+    [data-admin-sagicam-payments-print] [data-admin-sagicam-balance-cell] {
+      display: block !important;
+    }
+
+    [data-admin-sagicam-payments-print] [data-admin-sagicam-balance-display] {
+      -webkit-print-color-adjust: exact;
+      align-items: flex-end !important;
+      background: transparent !important;
+      border: 0 !important;
+      box-shadow: none !important;
+      color: inherit !important;
+      display: flex !important;
+      font-size: 0.72rem !important;
+      line-height: 1.3 !important;
+      min-width: 0 !important;
+      padding: 0 !important;
+      print-color-adjust: exact;
+      text-align: right !important;
+      white-space: nowrap !important;
+    }
+
+    [data-admin-sagicam-payments-print] [data-admin-sagicam-balance-display] > * {
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      white-space: nowrap !important;
+    }
+
+    [data-admin-sagicam-payments-print] [data-admin-sagicam-payments-table] tbody tr:nth-child(odd) td {
+      -webkit-print-color-adjust: exact;
+      background: rgb(229 231 235) !important;
+      print-color-adjust: exact;
+    }
+
+    [data-admin-sagicam-payments-print] [data-admin-sagicam-payments-table] tbody tr:nth-child(even) td,
+    [data-admin-sagicam-payments-print] [data-admin-sagicam-payments-table] tfoot td {
+      -webkit-print-color-adjust: exact;
+      background: white !important;
+      print-color-adjust: exact;
+    }
+
     @page payment-update-page {
       margin: 0.35in 0.35in 0.55in;
       size: landscape;
@@ -505,7 +720,7 @@
       @bottom-center {
         color: rgb(71 85 105);
         content: 'Page ' counter(page) ' of ' counter(pages);
-        font-size: 9px;
+        font-size: 10px;
         font-weight: 600;
       }
     }
@@ -543,7 +758,7 @@
     }
 
     [data-payment-update-print] [data-slot='card-title'] {
-      font-size: 0.8rem !important;
+      font-size: 1.08rem !important;
     }
 
     [data-payment-update-print] [data-payment-update-table] {
@@ -575,8 +790,8 @@
     [data-payment-update-print] [data-payment-update-table] td {
       border: 1px solid var(--border) !important;
       display: table-cell !important;
-      font-size: 0.58rem !important;
-      height: 0.3in !important;
+      font-size: 0.78rem !important;
+      height: 0.34in !important;
       line-height: 1.35 !important;
       min-width: 0 !important;
       overflow: hidden !important;

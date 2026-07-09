@@ -1,4 +1,4 @@
-import { CalendarDays, HeartHandshake, Table2, Users } from 'lucide-react'
+import { CalendarDays, DollarSign, HeartHandshake, Table2, Users } from 'lucide-react'
 
 import PublishedContributionTables from '@/components/dashboard/PublishedContributionTables'
 import PrintButton from '@/components/global/PrintButton'
@@ -52,6 +52,14 @@ const ContributionTable = async () => {
   }
 
   const contributionTableLabel = getContributionTableLabel(publishedTable.dueDate ?? publishedTable.createdAt)
+  const deathAmountTotal = publishedTable.deaths.reduce((total, death) => total + death.amountToContribute, 0)
+
+  const adminFee =
+    publishedTable.totalVestedMembers > 0
+      ? (publishedTable.totalAmount - deathAmountTotal) / publishedTable.totalVestedMembers
+      : 0
+
+  const adminFeePerDeath = publishedTable.deathCount > 0 ? adminFee / publishedTable.deathCount : 0
 
   return (
     <section
@@ -60,7 +68,7 @@ const ContributionTable = async () => {
     >
       <div className='flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
         <div className='min-w-0'>
-          <Badge className='mb-3 w-fit print:border print:bg-transparent print:text-foreground' variant='secondary'>
+          <Badge className='print:text-foreground mb-3 w-fit print:border print:bg-transparent' variant='secondary'>
             Published {formatDate(publishedTable.createdAt)}
           </Badge>
           <h1 className='text-xl font-semibold tracking-normal break-words md:text-4xl print:text-2xl'>
@@ -74,7 +82,7 @@ const ContributionTable = async () => {
         <PrintButton label='Print PDF' className='w-fit' />
       </div>
 
-      <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-4'>
+      <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-5'>
         <Card>
           <CardHeader className='space-y-1'>
             <CardTitle className='flex items-center gap-2 text-sm font-semibold'>
@@ -92,6 +100,15 @@ const ContributionTable = async () => {
             </CardTitle>
           </CardHeader>
           <CardContent className='text-2xl font-black'>{publishedTable.totalVestedMembers}</CardContent>
+        </Card>
+        <Card>
+          <CardHeader className='space-y-1'>
+            <CardTitle className='flex items-center gap-2 text-sm font-semibold'>
+              <DollarSign className='text-primary size-4' />
+              Admin Fee Per Death
+            </CardTitle>
+          </CardHeader>
+          <CardContent className='text-2xl font-black'>{currencyFormatter.format(adminFeePerDeath)}</CardContent>
         </Card>
         <Card>
           <CardHeader className='space-y-1'>

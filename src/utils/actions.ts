@@ -39,6 +39,7 @@ import {
 import { contributionCreditPerVestedMember } from './sagicam-contribution-constants'
 import {
   fetchSponsorContributionSummary,
+  getContributionReserveDeficitBalance,
   getContributionReserveDeficitAdjustment
 } from './sagicam-contribution-summary'
 import {
@@ -47,7 +48,10 @@ import {
   registrationFeePerEligibleMember
 } from './sagicam-registration-summary'
 import { sponsorPaymentLedgerEventTypes, sponsorPaymentTypes } from './sagicam-payment-ledger'
-import { awaitingPublicationVestingLongevityDays, getAwaitingPublicationVestingCutoff } from './sagicam-member-longevity'
+import {
+  awaitingPublicationVestingLongevityDays,
+  getAwaitingPublicationVestingCutoff
+} from './sagicam-member-longevity'
 import { getOverdueRegistrationPaymentCreatedAtCutoff } from './registration-payment-deadline'
 import {
   deleteDeathDocumentationFromCloudinary,
@@ -283,6 +287,7 @@ const upsertPaymentAlertReset = async (alertType: string, sponsorCode = allPayme
 const revalidateMemberPaymentViews = () => {
   revalidatePath('/admin-count')
   revalidatePath('/admin-members')
+  revalidatePath('/admin-payment-update')
   revalidatePath('/admin-removed')
   revalidatePath('/admin-sagicam-payments')
   revalidatePath('/admin-sagicam-registrations')
@@ -384,12 +389,17 @@ const preserveContributionReserveDeficitForSponsors = async (
     return
   }
 
-  const beforeSummaries = await Promise.all(uniqueSponsorCodes.map(sponsorCode => fetchSponsorContributionSummary(sponsorCode)))
+  const beforeSummaries = await Promise.all(
+    uniqueSponsorCodes.map(sponsorCode => fetchSponsorContributionSummary(sponsorCode))
+  )
+
   const beforeBalanceByCode = new Map(beforeSummaries.map(summary => [summary.sponsorCode, summary.balance]))
 
   await action()
 
-  const afterSummaries = await Promise.all(uniqueSponsorCodes.map(sponsorCode => fetchSponsorContributionSummary(sponsorCode)))
+  const afterSummaries = await Promise.all(
+    uniqueSponsorCodes.map(sponsorCode => fetchSponsorContributionSummary(sponsorCode))
+  )
 
   const adjustmentUpdates = afterSummaries
     .map(summary => {
@@ -949,6 +959,12 @@ export const createContributionAssessmentFromCalculationAction = async (
   }
 }
 
+const getSponsorDisplayName = (profile: {
+  sponsorCode: string
+  sponsorFirstName: string
+  sponsorLastAndMiddleName: string
+}) => `${profile.sponsorFirstName} ${profile.sponsorLastAndMiddleName}`.trim() || profile.sponsorCode
+
 const contributionTableDeathCertificateDocumentTypes = ['death_certificate']
 const contributionTableDocumentTypes = [...contributionTableDeathCertificateDocumentTypes, 'deceased_picture']
 
@@ -990,12 +1006,6 @@ const getPreferredContributionTableDocuments = (
   return documentsByMatriculationNumber
 }
 
-const getSponsorDisplayName = (profile: {
-  sponsorCode: string
-  sponsorFirstName: string
-  sponsorLastAndMiddleName: string
-}) => `${profile.sponsorFirstName} ${profile.sponsorLastAndMiddleName}`.trim() || profile.sponsorCode
-
 export const fetchPublishedContributionTableAction = async () => {
   await getAuthUser()
   noStore()
@@ -1028,7 +1038,18 @@ export const fetchPublishedContributionTableAction = async () => {
   const sponsorCodes = publishedAssessment.groups.map(group => group.sponsorCode)
   const deathMatriculationNumbers = publishedAssessment.deaths.map(death => death.memberMatriculationNumber)
 
-  const [profiles, contributionTableDocuments] = await Promise.all([
+  const [
+    profiles,
+    contributionTableDocuments,
+    payments,
+    contributionAssessmentTotals,
+    contributionUsages,
+    contributionCredits,
+    balanceAdjustments,
+    vestedMemberCounts,
+    deceasedVestedMemberCounts,
+    contributionLedgerEntries
+  ] = await Promise.all([
     db.profile.findMany({
       select: {
         sponsorCode: true,
@@ -1067,10 +1088,170 @@ export const fetchPublishedContributionTableAction = async () => {
         },
         status: 'approved'
       }
+    }),
+    db.sponsorContributionPayment.findMany({
+      select: {
+        amountVerified: true,
+        sponsorCode: true,
+        verifiedAt: true
+      },
+      where: {
+        sponsorCode: {
+          in: sponsorCodes
+        }
+      }
+    }),
+    db.contributionAssessmentGroup.groupBy({
+      _sum: {
+        amountOwed: true
+      },
+      by: ['sponsorCode'],
+      where: {
+        sponsorCode: {
+          in: sponsorCodes
+        }
+      }
+    }),
+    db.sponsorContributionUsage.findMany({
+      select: {
+        amountUsed: true,
+        sponsorCode: true
+      },
+      where: {
+        sponsorCode: {
+          in: sponsorCodes
+        }
+      }
+    }),
+    db.sponsorContributionCredit.groupBy({
+      _sum: {
+        amountCredited: true
+      },
+      by: ['sponsorCode'],
+      where: {
+        sponsorCode: {
+          in: sponsorCodes
+        }
+      }
+    }),
+    db.sponsorBalanceAdjustment.findMany({
+      select: {
+        amount: true,
+        sponsorCode: true
+      },
+      where: {
+        balanceType: contributionBalanceAdjustmentType,
+        sponsorCode: {
+          in: sponsorCodes
+        }
+      }
+    }),
+    db.member.groupBy({
+      _count: {
+        _all: true
+      },
+      by: ['sponsorCode'],
+      where: {
+        memberStatus: memberStatus.Vested,
+        sponsorCode: {
+          in: sponsorCodes
+        }
+      }
+    }),
+    db.deceasedMember.groupBy({
+      _count: {
+        _all: true
+      },
+      by: ['sponsorCode'],
+      where: {
+        memberStatus: memberStatus.Vested,
+        sponsorCode: {
+          in: sponsorCodes
+        }
+      }
+    }),
+    db.sponsorPaymentLedgerEntry.findMany({
+      orderBy: {
+        createdAt: 'asc'
+      },
+      select: {
+        amount: true,
+        createdAt: true,
+        eventType: true,
+        sponsorCode: true
+      },
+      where: {
+        createdAt: {
+          lte: publishedAssessment.createdAt
+        },
+        eventType: {
+          in: [sponsorPaymentLedgerEventTypes.reset, sponsorPaymentLedgerEventTypes.verified]
+        },
+        paymentType: sponsorPaymentTypes.contribution,
+        sponsorCode: {
+          in: sponsorCodes
+        }
+      }
     })
   ])
 
   const sponsorNamesByCode = new Map(profiles.map(profile => [profile.sponsorCode, getSponsorDisplayName(profile)]))
+  const latestContributionResetByCode = new Map<string, Date>()
+
+  contributionLedgerEntries.forEach(entry => {
+    if (entry.eventType === sponsorPaymentLedgerEventTypes.reset) {
+      latestContributionResetByCode.set(entry.sponsorCode, entry.createdAt)
+    }
+  })
+
+  const contributionVerifiedBeforePublishedByCode = contributionLedgerEntries.reduce((amountsByCode, entry) => {
+    if (entry.eventType !== sponsorPaymentLedgerEventTypes.verified) return amountsByCode
+
+    const latestReset = latestContributionResetByCode.get(entry.sponsorCode)
+
+    if (latestReset && entry.createdAt <= latestReset) return amountsByCode
+
+    amountsByCode.set(
+      entry.sponsorCode,
+      roundCurrencyAmount((amountsByCode.get(entry.sponsorCode) ?? 0) + decimalToNumber(entry.amount))
+    )
+
+    return amountsByCode
+  }, new Map<string, number>())
+
+  payments.forEach(payment => {
+    if (!payment.verifiedAt || payment.verifiedAt > publishedAssessment.createdAt) return
+
+    contributionVerifiedBeforePublishedByCode.set(
+      payment.sponsorCode,
+      Math.max(
+        contributionVerifiedBeforePublishedByCode.get(payment.sponsorCode) ?? 0,
+        decimalToNumber(payment.amountVerified)
+      )
+    )
+  })
+
+  const contributionAssessmentTotalsByCode = new Map(
+    contributionAssessmentTotals.map(group => [group.sponsorCode, decimalToNumber(group._sum.amountOwed)])
+  )
+
+  const contributionUsagesByCode = new Map(
+    contributionUsages.map(usage => [usage.sponsorCode, decimalToNumber(usage.amountUsed)])
+  )
+
+  const contributionCreditsByCode = new Map(
+    contributionCredits.map(credit => [credit.sponsorCode, decimalToNumber(credit._sum.amountCredited)])
+  )
+
+  const balanceAdjustmentsByCode = new Map(
+    balanceAdjustments.map(adjustment => [adjustment.sponsorCode, decimalToNumber(adjustment.amount)])
+  )
+
+  const vestedMemberCountsByCode = new Map(vestedMemberCounts.map(item => [item.sponsorCode, item._count._all]))
+
+  const deceasedVestedMemberCountsByCode = new Map(
+    deceasedVestedMemberCounts.map(item => [item.sponsorCode, item._count._all])
+  )
 
   const deathCertificatesByMatriculationNumber = getPreferredContributionTableDocuments(
     contributionTableDocuments,
@@ -1100,12 +1281,43 @@ export const fetchPublishedContributionTableAction = async () => {
       sponsorName: sponsorNamesByCode.get(death.sponsorCode) ?? death.sponsorCode
     })),
     dueDate: publishedAssessment.dueDate?.toISOString() ?? null,
-    groups: publishedAssessment.groups.map(group => ({
-      amountOwed: decimalToNumber(group.amountOwed),
-      sponsorCode: group.sponsorCode,
-      sponsorName: sponsorNamesByCode.get(group.sponsorCode) ?? group.sponsorCode,
-      vestedMembersCount: group.vestedMembersCount
-    })),
+    groups: publishedAssessment.groups.map(group => {
+      const amountOwed = decimalToNumber(group.amountOwed)
+      const totalAssessedContribution = contributionAssessmentTotalsByCode.get(group.sponsorCode) ?? 0
+
+      const contributionAmountUsedAfterCurrent = roundCurrencyAmount(
+        totalAssessedContribution + (contributionUsagesByCode.get(group.sponsorCode) ?? 0)
+      )
+
+      const contributionAmountUsedBeforeCurrent = roundCurrencyAmount(
+        totalAssessedContribution - amountOwed + (contributionUsagesByCode.get(group.sponsorCode) ?? 0)
+      )
+
+      const reserveDeficitAdjustmentMembersCount =
+        (vestedMemberCountsByCode.get(group.sponsorCode) ?? 0) +
+        (deceasedVestedMemberCountsByCode.get(group.sponsorCode) ?? 0)
+
+      return {
+        accountBeforeContribution: getContributionReserveDeficitBalance({
+          amountUsed: contributionAmountUsedBeforeCurrent,
+          amountVerified: contributionVerifiedBeforePublishedByCode.get(group.sponsorCode) ?? 0,
+          manualBalanceAdjustment: balanceAdjustmentsByCode.get(group.sponsorCode) ?? 0,
+          vestedContributionCredit: contributionCreditsByCode.get(group.sponsorCode) ?? 0,
+          vestedMembersCount: reserveDeficitAdjustmentMembersCount
+        }),
+        accountAfterContribution: getContributionReserveDeficitBalance({
+          amountUsed: contributionAmountUsedAfterCurrent,
+          amountVerified: contributionVerifiedBeforePublishedByCode.get(group.sponsorCode) ?? 0,
+          manualBalanceAdjustment: balanceAdjustmentsByCode.get(group.sponsorCode) ?? 0,
+          vestedContributionCredit: contributionCreditsByCode.get(group.sponsorCode) ?? 0,
+          vestedMembersCount: reserveDeficitAdjustmentMembersCount
+        }),
+        amountOwed,
+        sponsorCode: group.sponsorCode,
+        sponsorName: sponsorNamesByCode.get(group.sponsorCode) ?? group.sponsorCode,
+        vestedMembersCount: group.vestedMembersCount
+      }
+    }),
     totalAmount: decimalToNumber(publishedAssessment.totalAmount),
     totalVestedMembers: publishedAssessment.totalVestedMembers
   }
@@ -2023,25 +2235,21 @@ export const resetContributionCalculationAction = async (
   const user = await assertAdminUser()
 
   try {
-    const [
-      contributionAssessments,
-      sponsorContributionPayments,
-      calculationDeathCount,
-      calculationAdminFeeCount
-    ] = await Promise.all([
-      db.contributionAssessment.findMany({
-        include: {
-          groups: true
-        }
-      }),
-      db.sponsorContributionPayment.findMany({
-        where: {
-          OR: [{ amountSent: { gt: 0 } }, { amountVerified: { gt: 0 } }]
-        }
-      }),
-      db.contributionCalculationDeath.count(),
-      db.contributionCalculationAdminFee.count()
-    ])
+    const [contributionAssessments, sponsorContributionPayments, calculationDeathCount, calculationAdminFeeCount] =
+      await Promise.all([
+        db.contributionAssessment.findMany({
+          include: {
+            groups: true
+          }
+        }),
+        db.sponsorContributionPayment.findMany({
+          where: {
+            OR: [{ amountSent: { gt: 0 } }, { amountVerified: { gt: 0 } }]
+          }
+        }),
+        db.contributionCalculationDeath.count(),
+        db.contributionCalculationAdminFee.count()
+      ])
 
     if (
       contributionAssessments.length === 0 &&
@@ -2064,10 +2272,7 @@ export const resetContributionCalculationAction = async (
     }, new Map<string, number>())
 
     const affectedSponsorCodes = Array.from(
-      new Set([
-        ...assessedAmountByCode.keys(),
-        ...sponsorContributionPayments.map(payment => payment.sponsorCode)
-      ])
+      new Set([...assessedAmountByCode.keys(), ...sponsorContributionPayments.map(payment => payment.sponsorCode)])
     )
 
     const contributionSummaries = await Promise.all(
@@ -2176,7 +2381,8 @@ export const resetContributionCalculationAction = async (
     revalidateSponsorPaymentPages()
 
     return {
-      message: 'Contribution reset successfully. Contribution owed, sent, and verified were cleared while balance/deficit was preserved.'
+      message:
+        'Contribution reset successfully. Contribution owed, sent, and verified were cleared while balance/deficit was preserved.'
     }
   } catch (error) {
     return renderError(error)
@@ -2428,7 +2634,7 @@ export const vestEligibleAwaitingPublicationMembersAction = async (): Promise<{ 
     return {
       message: `${vestedCount} loved one${vestedCount === 1 ? '' : 's'} moved to Vested. ${currencyFormatter.format(
         vestedCount * contributionCreditPerVestedMember
-      )} in sponsor contribution credit was applied.`
+      )} in sponsor contribution credit was recorded while reserve/deficit was preserved.`
     }
   } catch (error) {
     return renderError(error)

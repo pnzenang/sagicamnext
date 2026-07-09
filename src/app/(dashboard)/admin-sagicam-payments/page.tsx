@@ -345,10 +345,13 @@ const AdminSagicamPayments = async () => {
   )
 
   return (
-    <div className='max-w-full min-w-0 space-y-6 py-4 sm:py-10'>
+    <div
+      data-admin-sagicam-payments-print
+      className='max-w-full min-w-0 space-y-6 py-4 sm:py-10 print:space-y-3 print:overflow-visible print:py-0'
+    >
       <div className='min-w-0'>
-        <h1 className='text-4xl font-semibold tracking-normal'>Sagicam Contributions</h1>
-        <p className='text-muted-foreground mt-2 text-sm'>
+        <h1 className='text-4xl font-semibold tracking-normal print:text-2xl'>Sagicam Contributions</h1>
+        <p className='text-muted-foreground mt-2 text-sm print:text-xs'>
           Sponsor contribution summary from the latest contribution assessment
           {latestContributionAssessment
             ? ` created on ${dateFormatter.format(latestContributionAssessment.createdAt)}`
@@ -357,13 +360,15 @@ const AdminSagicamPayments = async () => {
         </p>
       </div>
 
-      <ContributionAssessmentForm
-        calculationDeathCount={contributionCalculationSummary.deathCount}
-        monthlyContributionTotal={contributionCalculationSummary.totalAmount}
-        vestedMembersCount={vestedMembersCount}
-      />
+      <div className='print:hidden'>
+        <ContributionAssessmentForm
+          calculationDeathCount={contributionCalculationSummary.deathCount}
+          monthlyContributionTotal={contributionCalculationSummary.totalAmount}
+          vestedMembersCount={vestedMembersCount}
+        />
+      </div>
 
-      <div className='max-w-full min-w-0'>
+      <div className='max-w-full min-w-0 print:hidden'>
         <PaymentAlertCard
           title='Contribution Payment Alerts'
           alerts={contributionPaymentAlerts}

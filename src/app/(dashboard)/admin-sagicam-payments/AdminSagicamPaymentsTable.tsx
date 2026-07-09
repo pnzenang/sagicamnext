@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
 
+import PrintButton from '@/components/global/PrintButton'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem } from '@/components/ui/pagination'
@@ -172,6 +173,7 @@ const BalanceCard = ({
   vestedMembers: number
 }) => (
   <div
+    data-admin-sagicam-balance-display
     className={cn(
       'inline-flex min-w-28 flex-col items-end justify-center rounded-md border px-3 py-2 text-base font-black shadow-sm',
       getBalanceCardClassName(balance, vestedMembers),
@@ -232,7 +234,7 @@ const SentAmountAdjustmentForm = ({
   return (
     <form
       action={adjustSponsorContributionAmountSentAction}
-      className={cn('grid gap-1.5', layout === 'card' ? '' : 'w-20 justify-items-end')}
+      className={cn('grid gap-1.5 print:hidden', layout === 'card' ? '' : 'w-20 justify-items-end')}
     >
       <input type='hidden' name='sponsorCode' value={sponsorCode} />
       <label htmlFor={inputId} className='sr-only'>
@@ -278,7 +280,7 @@ const ManualBalanceAdjustmentForm = ({
   const inputId = `${balanceType}-balance-amount-${sponsorCode}`
 
   return (
-    <form action={action} className={layout === 'card' ? 'grid gap-1.5' : 'contents'}>
+    <form action={action} className={cn('print:hidden', layout === 'card' ? 'grid gap-1.5' : 'contents')}>
       <input type='hidden' name='sponsorCode' value={sponsorCode} />
       <label htmlFor={inputId} className='sr-only'>
         Amount to manually adjust {balanceType} balance
@@ -323,7 +325,10 @@ const ContributionPaymentControls = ({
   const hasPaymentValues = row.contributionAmountSent > 0 || row.amountReceived > 0 || row.contributionAmountUsed > 0
 
   return (
-    <div className={layout === 'card' ? 'grid w-full shrink-0 grid-cols-2 gap-2 sm:w-56' : 'contents'}>
+    <div
+      data-admin-sagicam-payment-actions
+      className={cn('print:hidden', layout === 'card' ? 'grid w-full shrink-0 grid-cols-2 gap-2 sm:w-56' : 'contents')}
+    >
       <div className={layout === 'card' ? 'grid gap-1.5' : 'contents'}>
         <form
           action={verifySponsorContributionPaymentAction}
@@ -488,23 +493,30 @@ const AdminSagicamPaymentsTable = ({
 
   return (
     <div className='max-w-full min-w-0 space-y-3'>
-      <div className='flex justify-end'>
+      <div className='flex flex-wrap justify-end gap-2 print:hidden'>
+        <PrintButton label='Print PDF' disabled={sortedRows.length === 0} />
         <Button type='button' size='sm' onClick={handleExportPage} disabled={sortedRows.length === 0}>
           <Download />
           Export Page
         </Button>
       </div>
 
-      <div className='border-border max-w-full min-w-0 overflow-hidden rounded-lg border'>
-        <div className='hidden overflow-x-auto md:block'>
-          <Table className='[[&_td]:wrap-break-word table-fixed [&_td]:whitespace-normal [&_th]:wrap-break-word [&_th]:whitespace-normal'>
+      <div
+        data-admin-sagicam-payments-table-card
+        className='border-border max-w-full min-w-0 overflow-hidden rounded-lg border'
+      >
+        <div className='hidden overflow-x-auto md:block print:block print:overflow-visible'>
+          <Table
+            data-admin-sagicam-payments-table
+            className='[[&_td]:wrap-break-word table-fixed print:min-w-0 [&_td]:whitespace-normal [&_th]:wrap-break-word [&_th]:whitespace-normal'
+          >
             <colgroup>
               {columns.map(column => (
                 <col key={column.key} style={getColumnStyle(column.key)} />
               ))}
             </colgroup>
             <TableHeader>
-              <TableRow className='bg-background hover:bg-background'>
+              <TableRow className='bg-background hover:bg-background print:hidden'>
                 <TableHead colSpan={columns.length} className='h-auto p-3'>
                   <form role='search' onSubmit={event => event.preventDefault()} className='w-full'>
                     <label htmlFor='contribution-sponsor-code-search' className='sr-only'>
@@ -555,54 +567,73 @@ const AdminSagicamPaymentsTable = ({
                   </TableCell>
                 </TableRow>
               ) : (
-                paginatedRows.map(row => (
-                  <TableRow key={row.sponsorCode} className='odd:bg-muted/30 even:bg-background'>
-                    <TableCell className='text-sm font-semibold' style={getColumnStyle('cemail')}>
-                      <EmailLink email={row.cemail} className='break-all' />
-                    </TableCell>
-                    <TableCell style={getColumnStyle('sponsorCode')}>{row.sponsorCode}</TableCell>
-                    <TableCell className='text-right font-semibold' style={getColumnStyle('vestedMembers')}>
-                      {row.vestedMembers}
-                    </TableCell>
-                    <TableCell className='text-right font-semibold' style={getColumnStyle('amountOwed')}>
-                      {currencyFormatter.format(row.amountOwed)}
-                    </TableCell>
-                    <TableCell
-                      className={`text-right font-semibold ${
-                        row.contributionAmountSent > 0 ? 'text-green-700 dark:text-green-300' : ''
-                      }`}
-                      style={getColumnStyle('contributionAmountSent')}
+                sortedRows.map((row, rowIndex) => {
+                  const isPageVisible = rowIndex >= pageStartIndex && rowIndex < pageEndIndex
+
+                  return (
+                    <TableRow
+                      key={row.sponsorCode}
+                      data-page-visible={isPageVisible ? 'true' : 'false'}
+                      className='odd:bg-muted/30 even:bg-background print:table-row'
                     >
-                      <div className='grid grid-cols-[minmax(5.75rem,1fr)_auto] items-center justify-items-end gap-2'>
-                        <span className='tabular-nums'>{currencyFormatter.format(row.contributionAmountSent)}</span>
-                        <SentAmountAdjustmentForm sponsorCode={row.sponsorCode} />
-                      </div>
-                    </TableCell>
-                    <TableCell className='text-right font-semibold' style={getColumnStyle('amountReceived')}>
-                      {currencyFormatter.format(row.amountReceived)}
-                    </TableCell>
-                    <TableCell
-                      className={cn(
-                        'text-center align-middle font-semibold',
-                        getContributionBalanceStatusClassName(row.balance, row.vestedMembers)
-                      )}
-                      style={getColumnStyle('balance')}
-                    >
-                      <div className='grid min-w-0 grid-cols-[auto_auto_minmax(0,1fr)] grid-rows-[auto_auto] items-center justify-items-center gap-x-2 gap-y-1'>
-                        <ContributionPaymentControls row={row} />
-                        <span className='bg-background/80 col-start-3 row-span-2 row-start-1 flex min-w-0 flex-col items-center justify-center self-stretch justify-self-stretch rounded-md border border-current/20 px-2 py-2 text-center text-xl leading-none font-black'>
-                          <span className='mb-1 text-[10px] leading-tight font-extrabold uppercase'>
-                            <ContributionReserveLabel balance={row.balance} vestedMembers={row.vestedMembers} />
+                      <TableCell className='text-sm font-semibold' style={getColumnStyle('cemail')}>
+                        <EmailLink email={row.cemail} className='break-all' />
+                      </TableCell>
+                      <TableCell style={getColumnStyle('sponsorCode')}>{row.sponsorCode}</TableCell>
+                      <TableCell className='text-right font-semibold' style={getColumnStyle('vestedMembers')}>
+                        {row.vestedMembers}
+                      </TableCell>
+                      <TableCell className='text-right font-semibold' style={getColumnStyle('amountOwed')}>
+                        {currencyFormatter.format(row.amountOwed)}
+                      </TableCell>
+                      <TableCell
+                        className={`text-right font-semibold ${
+                          row.contributionAmountSent > 0 ? 'text-green-700 dark:text-green-300' : ''
+                        }`}
+                        style={getColumnStyle('contributionAmountSent')}
+                      >
+                        <div
+                          data-admin-sagicam-sent-cell
+                          className='grid grid-cols-[minmax(5.75rem,1fr)_auto] items-center justify-items-end gap-2'
+                        >
+                          <span className='tabular-nums'>{currencyFormatter.format(row.contributionAmountSent)}</span>
+                          <SentAmountAdjustmentForm sponsorCode={row.sponsorCode} />
+                        </div>
+                      </TableCell>
+                      <TableCell className='text-right font-semibold' style={getColumnStyle('amountReceived')}>
+                        {currencyFormatter.format(row.amountReceived)}
+                      </TableCell>
+                      <TableCell
+                        className={cn(
+                          'text-center align-middle font-semibold',
+                          getContributionBalanceStatusClassName(row.balance, row.vestedMembers)
+                        )}
+                        style={getColumnStyle('balance')}
+                      >
+                        <div
+                          data-admin-sagicam-balance-cell
+                          className='grid min-w-0 grid-cols-[auto_auto_minmax(0,1fr)] grid-rows-[auto_auto] items-center justify-items-center gap-x-2 gap-y-1'
+                        >
+                          <ContributionPaymentControls row={row} />
+                          <span
+                            data-admin-sagicam-balance-display
+                            className='bg-background/80 col-start-3 row-span-2 row-start-1 flex min-w-0 flex-col items-center justify-center self-stretch justify-self-stretch rounded-md border border-current/20 px-2 py-2 text-center text-xl leading-none font-black'
+                          >
+                            <span className='mb-1 text-[10px] leading-tight font-extrabold uppercase'>
+                              <ContributionReserveLabel balance={row.balance} vestedMembers={row.vestedMembers} />
+                            </span>
+                            <span className='tabular-nums'>{currencyFormatter.format(row.balance)}</span>
+                            {shouldShowNotInGoodStandingNotice(row.balance) ? (
+                              <span className='mt-1 text-[10px] leading-tight font-semibold'>
+                                (Not In Good Standing)
+                              </span>
+                            ) : null}
                           </span>
-                          <span className='tabular-nums'>{currencyFormatter.format(row.balance)}</span>
-                          {shouldShowNotInGoodStandingNotice(row.balance) ? (
-                            <span className='mt-1 text-[10px] leading-tight font-semibold'>(Not In Good Standing)</span>
-                          ) : null}
-                        </span>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )
+                })
               )}
             </TableBody>
             {sortedRows.length > 0 && (
@@ -632,7 +663,7 @@ const AdminSagicamPaymentsTable = ({
             )}
           </Table>
         </div>
-        <div className='grid gap-3 p-2 sm:p-3 md:hidden'>
+        <div className='grid gap-3 p-2 sm:p-3 md:hidden print:hidden'>
           <form
             role='search'
             onSubmit={event => event.preventDefault()}
@@ -722,7 +753,7 @@ const AdminSagicamPaymentsTable = ({
           )}
         </div>
         {sortedRows.length > 0 ? (
-          <div className='bg-background flex flex-col gap-3 border-t px-3 py-3 lg:flex-row lg:items-center lg:justify-between'>
+          <div className='bg-background flex flex-col gap-3 border-t px-3 py-3 lg:flex-row lg:items-center lg:justify-between print:hidden'>
             <p className='text-muted-foreground text-sm font-semibold'>
               Showing {showingStart}-{pageEndIndex} of {sortedRows.length} sponsor
               {sortedRows.length === 1 ? '' : 's'}
