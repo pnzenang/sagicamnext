@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { fetchContributionCalculationSummaryAction, resetContributionPaymentAlertAction } from '@/utils/actions'
 import {
   contributionBalanceAdjustmentType,
-  getContributionReserveAdjustment
+  getContributionReserveDeficitBalance
 } from '@/utils/sagicam-contribution-summary'
 import { memberStatus } from '@/utils/types'
 import db from '@/utils/db'
@@ -284,14 +284,17 @@ const AdminSagicamPayments = async () => {
 
     const manualBalanceAdjustment = balanceAdjustmentByCode.get(sponsorCode) ?? 0
     const vestedMembers = vestedMembersByCode.get(sponsorCode) ?? 0
-    const reserveAdjustment = getContributionReserveAdjustment(vestedMembers)
 
     return {
       amountOwed,
       amountReceived: amountVerified,
-      balance: Number(
-        (amountVerified + vestedContributionCredit + manualBalanceAdjustment + reserveAdjustment - totalAmountUsed).toFixed(2)
-      ),
+      balance: getContributionReserveDeficitBalance({
+        amountUsed: totalAmountUsed,
+        amountVerified,
+        manualBalanceAdjustment,
+        vestedContributionCredit,
+        vestedMembersCount: vestedMembers
+      }),
       contributionCredit: vestedContributionCredit,
       contributionAmountUsed: totalAmountUsed,
       contributionAmountSent: decimalToNumber(contributionPayment?.amountSent),

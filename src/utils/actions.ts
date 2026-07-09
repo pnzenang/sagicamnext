@@ -37,7 +37,10 @@ import {
   sendLovedOneRemovalConfirmationEmail
 } from './email'
 import { contributionCreditPerVestedMember } from './sagicam-contribution-constants'
-import { fetchSponsorContributionSummary } from './sagicam-contribution-summary'
+import {
+  fetchSponsorContributionSummary,
+  getContributionReserveDeficitAdjustment
+} from './sagicam-contribution-summary'
 import {
   fetchSponsorRegistrationSummary,
   registrationBalanceAdjustmentType,
@@ -362,6 +365,21 @@ const renderError = (error: unknown): { message: string } => {
 
 const decimalToNumber = (value: unknown) => Number(value ?? 0)
 const roundCurrencyAmount = (amount: number) => Number(amount.toFixed(2))
+
+const getPreservedContributionBalanceAdjustment = ({
+  balance,
+  totalAmountUsed,
+  vestedContributionCredit,
+  vestedMembersCount
+}: {
+  balance: number
+  totalAmountUsed: number
+  vestedContributionCredit: number
+  vestedMembersCount: number
+}) =>
+  roundCurrencyAmount(
+    balance + totalAmountUsed - vestedContributionCredit - getContributionReserveDeficitAdjustment(vestedMembersCount)
+  )
 
 const getRequiredFormValue = (formData: FormData, fieldName: string) => {
   const value = String(formData.get(fieldName) ?? '').trim()
@@ -1584,14 +1602,7 @@ export const resetSponsorContributionPaymentAction = async (formData: FormData):
     const sponsorCode = getRequiredFormValue(formData, 'sponsorCode')
 
     const contributionSummary = await fetchSponsorContributionSummary(sponsorCode)
-
-    const preservedBalanceAdjustment = Number(
-      (
-        contributionSummary.balance +
-        contributionSummary.totalAmountUsed -
-        contributionSummary.vestedContributionCredit
-      ).toFixed(2)
-    )
+    const preservedBalanceAdjustment = getPreservedContributionBalanceAdjustment(contributionSummary)
 
     const currentPayment = await db.sponsorContributionPayment.findUnique({
       where: {
@@ -1936,8 +1947,11 @@ export const resetRegistrationPaymentAlertAction = async (formData: FormData): P
   await resetPaymentAlert(registrationPaymentAlertType, formData)
 }
 
-export const resetContributionCalculationAction = async (): Promise<{ message: string }> => {
-  const user = await getAuthUser()
+export const resetContributionCalculationAction = async (
+  _prevState: { message: string },
+  _formData: FormData
+): Promise<{ message: string }> => {
+  const user = await assertAdminUser()
 
   try {
     const [
@@ -1996,7 +2010,10 @@ export const resetContributionCalculationAction = async (): Promise<{ message: s
       const totalAmountUsedAfterReset = Number((summary.totalAmountUsed - assessedAmount).toFixed(2))
 
       return {
-        amount: Number((summary.balance - summary.vestedContributionCredit + totalAmountUsedAfterReset).toFixed(2)),
+        amount: getPreservedContributionBalanceAdjustment({
+          ...summary,
+          totalAmountUsed: totalAmountUsedAfterReset
+        }),
         sponsorCode: summary.sponsorCode
       }
     })

@@ -4,7 +4,7 @@ import db from '@/utils/db'
 import {
   contributionBalanceAdjustmentType,
   fetchLatestContributionAssessment,
-  getContributionReserveAdjustment
+  getContributionReserveDeficitBalance
 } from '@/utils/sagicam-contribution-summary'
 import { sponsorPaymentLedgerEventTypes, sponsorPaymentTypes } from '@/utils/sagicam-payment-ledger'
 import { memberStatus } from '@/utils/types'
@@ -122,8 +122,6 @@ export const fetchAdminContributionPaymentUpdateRows = async () => {
   const profilesByCode = new Map(profiles.map(profile => [profile.sponsorCode, profile]))
   const paymentsByCode = new Map(payments.map(payment => [payment.sponsorCode, payment]))
 
-  if (!latestContributionAssessment) return []
-
   const balanceAdjustmentsByCode = new Map(
     balanceAdjustments.map(adjustment => [adjustment.sponsorCode, decimalToNumber(adjustment.amount)])
   )
@@ -160,7 +158,6 @@ export const fetchAdminContributionPaymentUpdateRows = async () => {
     const recordedAmountVerified = verifiedLedgerTotalsByCode.get(sponsorCode) ?? 0
     const amountVerified = roundCurrencyAmount(Math.max(recordedAmountVerified, currentAmountVerified))
     const contributionDue = roundCurrencyAmount(amountPerVestedMember * vestedMembers)
-    const reserveAdjustment = getContributionReserveAdjustment(vestedMembers)
     const amountSent = roundCurrencyAmount(Math.max(currentAmountSent - currentAmountVerified, 0))
     const manualBalanceAdjustment = balanceAdjustmentsByCode.get(sponsorCode) ?? 0
     const sponsorName = getSponsorName(profile) || sponsorCode
@@ -168,7 +165,12 @@ export const fetchAdminContributionPaymentUpdateRows = async () => {
     return {
       amountSent,
       amountVerified,
-      balance: roundCurrencyAmount(amountVerified + manualBalanceAdjustment + reserveAdjustment - contributionDue),
+      balance: getContributionReserveDeficitBalance({
+        amountUsed: contributionDue,
+        amountVerified,
+        manualBalanceAdjustment,
+        vestedMembersCount: vestedMembers
+      }),
       contributionDue,
       sponsorCode,
       sponsorName,
