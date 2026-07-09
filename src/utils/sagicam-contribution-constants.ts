@@ -1,2 +1,2 @@
 export const contributionCreditPerVestedMember = 30
-export const contributionReserveDeficitAdjustmentPerVestedMember = 11.58 * 2
+export const contributionReserveDeficitAdjustmentPerVestedMember = 11.58 * 2 + 0.29

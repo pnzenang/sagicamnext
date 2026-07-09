@@ -204,10 +204,29 @@ const AdminSagicamPayments = async () => {
     }
   })
 
+  const deceasedVestedMemberCountsBySponsorCode = await db.deceasedMember.groupBy({
+    _count: {
+      _all: true
+    },
+    by: ['sponsorCode'],
+    orderBy: {
+      sponsorCode: 'asc'
+    },
+    where: {
+      memberStatus: memberStatus.Vested
+    }
+  })
+
   const vestedMembersByCode = new Map<string, number>()
 
   memberCountsBySponsorCode.forEach(item => {
     vestedMembersByCode.set(item.sponsorCode, item._count._all)
+  })
+
+  const deceasedVestedMembersByCode = new Map<string, number>()
+
+  deceasedVestedMemberCountsBySponsorCode.forEach(item => {
+    deceasedVestedMembersByCode.set(item.sponsorCode, item._count._all)
   })
 
   const sponsorCodes = Array.from(
@@ -218,7 +237,8 @@ const AdminSagicamPayments = async () => {
       ...contributionCreditsBySponsorCode.map(credit => credit.sponsorCode),
       ...sponsorContributionPayments.map(payment => payment.sponsorCode),
       ...sponsorBalanceAdjustments.map(adjustment => adjustment.sponsorCode),
-      ...vestedMembersByCode.keys()
+      ...vestedMembersByCode.keys(),
+      ...deceasedVestedMembersByCode.keys()
     ])
   ).sort((firstCode, secondCode) =>
     firstCode.localeCompare(secondCode, undefined, {
@@ -284,6 +304,7 @@ const AdminSagicamPayments = async () => {
 
     const manualBalanceAdjustment = balanceAdjustmentByCode.get(sponsorCode) ?? 0
     const vestedMembers = vestedMembersByCode.get(sponsorCode) ?? 0
+    const reserveDeficitAdjustmentMembers = vestedMembers + (deceasedVestedMembersByCode.get(sponsorCode) ?? 0)
 
     return {
       amountOwed,
@@ -293,7 +314,7 @@ const AdminSagicamPayments = async () => {
         amountVerified,
         manualBalanceAdjustment,
         vestedContributionCredit,
-        vestedMembersCount: vestedMembers
+        vestedMembersCount: reserveDeficitAdjustmentMembers
       }),
       contributionCredit: vestedContributionCredit,
       contributionAmountUsed: totalAmountUsed,

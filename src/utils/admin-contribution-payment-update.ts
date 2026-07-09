@@ -66,8 +66,10 @@ export const fetchAdminContributionPaymentUpdateRows = async () => {
     latestContributionAssessment,
     contributionAssessmentGroups,
     contributionUsages,
+    contributionCredits,
     balanceAdjustments,
-    vestedCounts
+    vestedCounts,
+    deceasedVestedCounts
   ] = await Promise.all([
     db.profile.findMany({
       orderBy: {
@@ -94,7 +96,17 @@ export const fetchAdminContributionPaymentUpdateRows = async () => {
         sponsorCode: 'asc'
       },
       select: {
+        amountUsed: true,
         sponsorCode: true
+      }
+    }),
+    db.sponsorContributionCredit.groupBy({
+      _sum: {
+        amountCredited: true
+      },
+      by: ['sponsorCode'],
+      orderBy: {
+        sponsorCode: 'asc'
       }
     }),
     db.sponsorBalanceAdjustment.findMany({
@@ -116,17 +128,42 @@ export const fetchAdminContributionPaymentUpdateRows = async () => {
       where: {
         memberStatus: memberStatus.Vested
       }
+    }),
+    db.deceasedMember.groupBy({
+      _count: {
+        _all: true
+      },
+      by: ['sponsorCode'],
+      orderBy: {
+        sponsorCode: 'asc'
+      },
+      where: {
+        memberStatus: memberStatus.Vested
+      }
     })
   ])
 
   const profilesByCode = new Map(profiles.map(profile => [profile.sponsorCode, profile]))
   const paymentsByCode = new Map(payments.map(payment => [payment.sponsorCode, payment]))
 
+  const latestContributionGroupsByCode = new Map(
+    latestContributionAssessment?.groups.map(group => [group.sponsorCode, group]) ?? []
+  )
+
   const balanceAdjustmentsByCode = new Map(
     balanceAdjustments.map(adjustment => [adjustment.sponsorCode, decimalToNumber(adjustment.amount)])
   )
 
+  const contributionUsagesByCode = new Map(
+    contributionUsages.map(usage => [usage.sponsorCode, decimalToNumber(usage.amountUsed)])
+  )
+
+  const contributionCreditsByCode = new Map(
+    contributionCredits.map(credit => [credit.sponsorCode, decimalToNumber(credit._sum.amountCredited)])
+  )
+
   const vestedCountsByCode = new Map(vestedCounts.map(item => [item.sponsorCode, item._count._all]))
+  const deceasedVestedCountsByCode = new Map(deceasedVestedCounts.map(item => [item.sponsorCode, item._count._all]))
 
   const sponsorCodes = Array.from(
     new Set([
@@ -135,8 +172,10 @@ export const fetchAdminContributionPaymentUpdateRows = async () => {
       ...(latestContributionAssessment?.groups.map(group => group.sponsorCode) ?? []),
       ...contributionAssessmentGroups.map(group => group.sponsorCode),
       ...contributionUsages.map(usage => usage.sponsorCode),
+      ...contributionCredits.map(credit => credit.sponsorCode),
       ...balanceAdjustments.map(adjustment => adjustment.sponsorCode),
-      ...vestedCountsByCode.keys()
+      ...vestedCountsByCode.keys(),
+      ...deceasedVestedCountsByCode.keys()
     ])
   ).sort((firstCode, secondCode) =>
     firstCode.localeCompare(secondCode, undefined, {
@@ -153,23 +192,36 @@ export const fetchAdminContributionPaymentUpdateRows = async () => {
     const payment = paymentsByCode.get(sponsorCode)
     const profile = profilesByCode.get(sponsorCode)
     const vestedMembers = vestedCountsByCode.get(sponsorCode) ?? 0
+    const reserveDeficitAdjustmentMembers = vestedMembers + (deceasedVestedCountsByCode.get(sponsorCode) ?? 0)
     const currentAmountSent = decimalToNumber(payment?.amountSent)
     const currentAmountVerified = decimalToNumber(payment?.amountVerified)
     const recordedAmountVerified = verifiedLedgerTotalsByCode.get(sponsorCode) ?? 0
     const amountVerified = roundCurrencyAmount(Math.max(recordedAmountVerified, currentAmountVerified))
-    const contributionDue = roundCurrencyAmount(amountPerVestedMember * vestedMembers)
+
+    const contributionDue = roundCurrencyAmount(
+      latestContributionGroupsByCode.has(sponsorCode)
+        ? decimalToNumber(latestContributionGroupsByCode.get(sponsorCode)?.amountOwed)
+        : amountPerVestedMember * vestedMembers
+    )
+
+    const contributionAmountUsed = roundCurrencyAmount(
+      contributionDue + (contributionUsagesByCode.get(sponsorCode) ?? 0)
+    )
+
     const amountSent = roundCurrencyAmount(Math.max(currentAmountSent - currentAmountVerified, 0))
     const manualBalanceAdjustment = balanceAdjustmentsByCode.get(sponsorCode) ?? 0
     const sponsorName = getSponsorName(profile) || sponsorCode
+    const vestedContributionCredit = contributionCreditsByCode.get(sponsorCode) ?? 0
 
     return {
       amountSent,
       amountVerified,
       balance: getContributionReserveDeficitBalance({
-        amountUsed: contributionDue,
+        amountUsed: contributionAmountUsed,
         amountVerified,
         manualBalanceAdjustment,
-        vestedMembersCount: vestedMembers
+        vestedContributionCredit,
+        vestedMembersCount: reserveDeficitAdjustmentMembers
       }),
       contributionDue,
       sponsorCode,

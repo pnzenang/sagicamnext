@@ -23,6 +23,7 @@ export type SponsorContributionSummary = {
   dueDate: string | null
   lastSubmittedAt: string | null
   manualBalanceAdjustment: number
+  reserveDeficitAdjustmentMembersCount: number
   sponsorCode: string
   totalAmountUsed: number
   verifiedAt: string | null
@@ -85,7 +86,8 @@ export const fetchSponsorContributionSummary = async (
     contributionUsage,
     contributionCredit,
     balanceAdjustment,
-    currentVestedMembersCount
+    currentVestedMembersCount,
+    deceasedVestedMembersCount
   ] = await Promise.all([
     db.sponsorContributionPayment.findUnique({
       where: {
@@ -131,10 +133,17 @@ export const fetchSponsorContributionSummary = async (
         memberStatus: memberStatus.Vested,
         sponsorCode
       }
+    }),
+    db.deceasedMember.count({
+      where: {
+        memberStatus: memberStatus.Vested,
+        sponsorCode
+      }
     })
   ])
 
   const vestedMembersCount = currentVestedMembersCount
+  const reserveDeficitAdjustmentMembersCount = vestedMembersCount + deceasedVestedMembersCount
 
   const amountOwed = contributionGroup
     ? decimalToNumber(contributionGroup.amountOwed)
@@ -191,12 +200,13 @@ export const fetchSponsorContributionSummary = async (
       amountVerified,
       manualBalanceAdjustment,
       vestedContributionCredit,
-      vestedMembersCount
+      vestedMembersCount: reserveDeficitAdjustmentMembersCount
     }),
     contributionDueMonths: fallbackContributionDueMonths,
     dueDate: (latestAssessment?.dueDate ?? latestAssessment?.createdAt)?.toISOString() ?? null,
     lastSubmittedAt: payment?.lastSubmittedAt?.toISOString() ?? null,
     manualBalanceAdjustment,
+    reserveDeficitAdjustmentMembersCount,
     sponsorCode,
     totalAmountUsed,
     verifiedAt: payment?.verifiedAt?.toISOString() ?? null,

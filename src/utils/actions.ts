@@ -366,19 +366,86 @@ const renderError = (error: unknown): { message: string } => {
 const decimalToNumber = (value: unknown) => Number(value ?? 0)
 const roundCurrencyAmount = (amount: number) => Number(amount.toFixed(2))
 
+const preserveContributionReserveDeficitForSponsors = async (
+  sponsorCodes: (string | null | undefined)[],
+  action: () => Promise<void>
+) => {
+  const uniqueSponsorCodes = Array.from(
+    new Set(
+      sponsorCodes
+        .map(sponsorCode => sponsorCode?.trim())
+        .filter((sponsorCode): sponsorCode is string => Boolean(sponsorCode))
+    )
+  )
+
+  if (uniqueSponsorCodes.length === 0) {
+    await action()
+
+    return
+  }
+
+  const beforeSummaries = await Promise.all(uniqueSponsorCodes.map(sponsorCode => fetchSponsorContributionSummary(sponsorCode)))
+  const beforeBalanceByCode = new Map(beforeSummaries.map(summary => [summary.sponsorCode, summary.balance]))
+
+  await action()
+
+  const afterSummaries = await Promise.all(uniqueSponsorCodes.map(sponsorCode => fetchSponsorContributionSummary(sponsorCode)))
+
+  const adjustmentUpdates = afterSummaries
+    .map(summary => {
+      const beforeBalance = beforeBalanceByCode.get(summary.sponsorCode) ?? 0
+      const balanceDifference = roundCurrencyAmount(beforeBalance - summary.balance)
+
+      return {
+        amount: roundCurrencyAmount(summary.manualBalanceAdjustment + balanceDifference),
+        balanceDifference,
+        sponsorCode: summary.sponsorCode
+      }
+    })
+    .filter(update => Math.abs(update.balanceDifference) >= 0.005)
+
+  if (adjustmentUpdates.length === 0) return
+
+  await db.$transaction(
+    adjustmentUpdates.map(update =>
+      db.sponsorBalanceAdjustment.upsert({
+        create: {
+          amount: update.amount,
+          balanceType: contributionBalanceAdjustmentType,
+          sponsorCode: update.sponsorCode
+        },
+        update: {
+          amount: update.amount
+        },
+        where: {
+          sponsorCode_balanceType: {
+            balanceType: contributionBalanceAdjustmentType,
+            sponsorCode: update.sponsorCode
+          }
+        }
+      })
+    )
+  )
+}
+
 const getPreservedContributionBalanceAdjustment = ({
   balance,
+  reserveDeficitAdjustmentMembersCount,
   totalAmountUsed,
   vestedContributionCredit,
   vestedMembersCount
 }: {
   balance: number
+  reserveDeficitAdjustmentMembersCount?: number
   totalAmountUsed: number
   vestedContributionCredit: number
   vestedMembersCount: number
 }) =>
   roundCurrencyAmount(
-    balance + totalAmountUsed - vestedContributionCredit - getContributionReserveDeficitAdjustment(vestedMembersCount)
+    balance +
+      totalAmountUsed -
+      vestedContributionCredit -
+      getContributionReserveDeficitAdjustment(reserveDeficitAdjustmentMembersCount ?? vestedMembersCount)
   )
 
 const getRequiredFormValue = (formData: FormData, fieldName: string) => {
@@ -1118,20 +1185,22 @@ export const createMemberAction = async (provState: any, formData: FormData): Pr
     const sponsor = await fetchSponsorByCode(validatedFields.sponsorCode)
     const memberMatriculationNumber = `SC${validatedFields.sponsorCode}${randomMatriculation()}`
 
-    await db.member.create({
-      data: {
-        ...validatedFields,
-        clerkId: user.id,
-        memberMatriculationNumber
+    await preserveContributionReserveDeficitForSponsors([validatedFields.sponsorCode], async () => {
+      await db.member.create({
+        data: {
+          ...validatedFields,
+          clerkId: user.id,
+          memberMatriculationNumber
+        }
+      })
+
+      if (validatedFields.memberStatus === memberStatus.Pending) {
+        await createPendingRegistrationUsage({
+          memberMatriculationNumber,
+          sponsorCode: validatedFields.sponsorCode
+        })
       }
     })
-
-    if (validatedFields.memberStatus === memberStatus.Pending) {
-      await createPendingRegistrationUsage({
-        memberMatriculationNumber,
-        sponsorCode: validatedFields.sponsorCode
-      })
-    }
 
     await sendLovedOneConfirmationEmail({
       sponsorEmail: sponsor.sponsorEmail,
@@ -2157,36 +2226,42 @@ export const updateMemberDetailsAction = async (prevState: any, formData: FormDa
       },
       select: {
         memberMatriculationNumber: true,
-        memberStatus: true
+        memberStatus: true,
+        sponsorCode: true
       }
     })
 
-    await db.member.update({
-      where: {
-        id: memberId
-      },
-      data: {
-        ...validatedFields
+    await preserveContributionReserveDeficitForSponsors(
+      [currentMember?.sponsorCode, validatedFields.sponsorCode],
+      async () => {
+        await db.member.update({
+          where: {
+            id: memberId
+          },
+          data: {
+            ...validatedFields
+          }
+        })
+
+        if (currentMember) {
+          await syncPendingRegistrationUsage({
+            memberMatriculationNumber: currentMember.memberMatriculationNumber,
+            nextStatus: validatedFields.memberStatus,
+            previousMatriculationNumber: currentMember.memberMatriculationNumber,
+            previousStatus: currentMember.memberStatus,
+            sponsorCode: validatedFields.sponsorCode
+          })
+
+          await syncVestedContributionCredit({
+            memberMatriculationNumber: currentMember.memberMatriculationNumber,
+            nextStatus: validatedFields.memberStatus,
+            previousMatriculationNumber: currentMember.memberMatriculationNumber,
+            previousStatus: currentMember.memberStatus,
+            sponsorCode: validatedFields.sponsorCode
+          })
+        }
       }
-    })
-
-    if (currentMember) {
-      await syncPendingRegistrationUsage({
-        memberMatriculationNumber: currentMember.memberMatriculationNumber,
-        nextStatus: validatedFields.memberStatus,
-        previousMatriculationNumber: currentMember.memberMatriculationNumber,
-        previousStatus: currentMember.memberStatus,
-        sponsorCode: validatedFields.sponsorCode
-      })
-
-      await syncVestedContributionCredit({
-        memberMatriculationNumber: currentMember.memberMatriculationNumber,
-        nextStatus: validatedFields.memberStatus,
-        previousMatriculationNumber: currentMember.memberMatriculationNumber,
-        previousStatus: currentMember.memberStatus,
-        sponsorCode: validatedFields.sponsorCode
-      })
-    }
+    )
 
     revalidatePath(`all-members/${memberId}/edit`)
     revalidateMemberPaymentViews()
@@ -2211,36 +2286,42 @@ export const updateMemberDetailsActionForAdmin = async (prevState: any, formData
       },
       select: {
         memberMatriculationNumber: true,
-        memberStatus: true
+        memberStatus: true,
+        sponsorCode: true
       }
     })
 
-    await db.member.update({
-      where: {
-        id: memberId
-      },
-      data: {
-        ...validatedFields
+    await preserveContributionReserveDeficitForSponsors(
+      [currentMember?.sponsorCode, validatedFields.sponsorCode],
+      async () => {
+        await db.member.update({
+          where: {
+            id: memberId
+          },
+          data: {
+            ...validatedFields
+          }
+        })
+
+        if (currentMember) {
+          await syncPendingRegistrationUsage({
+            memberMatriculationNumber: currentMember.memberMatriculationNumber,
+            nextStatus: validatedFields.memberStatus,
+            previousMatriculationNumber: currentMember.memberMatriculationNumber,
+            previousStatus: currentMember.memberStatus,
+            sponsorCode: validatedFields.sponsorCode
+          })
+
+          await syncVestedContributionCredit({
+            memberMatriculationNumber: currentMember.memberMatriculationNumber,
+            nextStatus: validatedFields.memberStatus,
+            previousMatriculationNumber: currentMember.memberMatriculationNumber,
+            previousStatus: currentMember.memberStatus,
+            sponsorCode: validatedFields.sponsorCode
+          })
+        }
       }
-    })
-
-    if (currentMember) {
-      await syncPendingRegistrationUsage({
-        memberMatriculationNumber: currentMember.memberMatriculationNumber,
-        nextStatus: validatedFields.memberStatus,
-        previousMatriculationNumber: currentMember.memberMatriculationNumber,
-        previousStatus: currentMember.memberStatus,
-        sponsorCode: validatedFields.sponsorCode
-      })
-
-      await syncVestedContributionCredit({
-        memberMatriculationNumber: currentMember.memberMatriculationNumber,
-        nextStatus: validatedFields.memberStatus,
-        previousMatriculationNumber: currentMember.memberMatriculationNumber,
-        previousStatus: currentMember.memberStatus,
-        sponsorCode: validatedFields.sponsorCode
-      })
-    }
+    )
 
     revalidatePath(`admin-members/${memberId}/edit`)
     revalidateMemberPaymentViews()
@@ -2292,43 +2373,46 @@ export const vestEligibleAwaitingPublicationMembersAction = async (): Promise<{ 
     }
 
     let vestedCount = 0
+    const affectedSponsorCodes = Array.from(new Set(eligibleMembers.map(member => member.sponsorCode)))
 
-    await db.$transaction(async tx => {
-      for (const member of eligibleMembers) {
-        const updatedMember = await tx.member.updateMany({
-          data: {
-            memberStatus: memberStatus.Vested
-          },
-          where: {
-            createdAt: {
-              lte: cutoffAt
+    await preserveContributionReserveDeficitForSponsors(affectedSponsorCodes, async () => {
+      await db.$transaction(async tx => {
+        for (const member of eligibleMembers) {
+          const updatedMember = await tx.member.updateMany({
+            data: {
+              memberStatus: memberStatus.Vested
             },
-            id: member.id,
-            memberStatus: memberStatus.Awaiting
-          }
-        })
+            where: {
+              createdAt: {
+                lte: cutoffAt
+              },
+              id: member.id,
+              memberStatus: memberStatus.Awaiting
+            }
+          })
 
-        if (updatedMember.count === 0) {
-          continue
+          if (updatedMember.count === 0) {
+            continue
+          }
+
+          await tx.sponsorContributionCredit.upsert({
+            create: {
+              amountCredited: contributionCreditPerVestedMember,
+              memberMatriculationNumber: member.memberMatriculationNumber,
+              sponsorCode: member.sponsorCode
+            },
+            update: {
+              amountCredited: contributionCreditPerVestedMember,
+              sponsorCode: member.sponsorCode
+            },
+            where: {
+              memberMatriculationNumber: member.memberMatriculationNumber
+            }
+          })
+
+          vestedCount += updatedMember.count
         }
-
-        await tx.sponsorContributionCredit.upsert({
-          create: {
-            amountCredited: contributionCreditPerVestedMember,
-            memberMatriculationNumber: member.memberMatriculationNumber,
-            sponsorCode: member.sponsorCode
-          },
-          update: {
-            amountCredited: contributionCreditPerVestedMember,
-            sponsorCode: member.sponsorCode
-          },
-          where: {
-            memberMatriculationNumber: member.memberMatriculationNumber
-          }
-        })
-
-        vestedCount += updatedMember.count
-      }
+      })
     })
 
     revalidateMemberPaymentViews()
@@ -3144,48 +3228,53 @@ export const reviewAdminMemberTransferRequestAction = async (
       receivingSponsorCode: receivingSponsor.sponsorCode
     })
 
-    await db.$transaction([
-      db.member.update({
-        data: {
-          clerkId: receivingSponsor.clerkId,
-          memberMatriculationNumber: nextMemberMatriculationNumber,
-          sponsorCode: receivingSponsor.sponsorCode
-        },
-        where: {
-          id: request.memberId
-        }
-      }),
-      db.sponsorRegistrationUsage.updateMany({
-        data: {
-          memberMatriculationNumber: nextMemberMatriculationNumber,
-          sponsorCode: receivingSponsor.sponsorCode
-        },
-        where: {
-          memberMatriculationNumber: request.member.memberMatriculationNumber
-        }
-      }),
-      db.sponsorContributionCredit.updateMany({
-        data: {
-          memberMatriculationNumber: nextMemberMatriculationNumber,
-          sponsorCode: receivingSponsor.sponsorCode
-        },
-        where: {
-          memberMatriculationNumber: request.member.memberMatriculationNumber
-        }
-      }),
-      db.memberTransferRequest.update({
-        data: {
-          adminReviewedAt: new Date(),
-          adminReviewedBy: user.id,
-          memberMatriculationNumber: nextMemberMatriculationNumber,
-          rejectionReason: null,
-          status
-        },
-        where: {
-          id: request.id
-        }
-      })
-    ])
+    await preserveContributionReserveDeficitForSponsors(
+      [request.initiatingSponsorCode, receivingSponsor.sponsorCode],
+      async () => {
+        await db.$transaction([
+          db.member.update({
+            data: {
+              clerkId: receivingSponsor.clerkId,
+              memberMatriculationNumber: nextMemberMatriculationNumber,
+              sponsorCode: receivingSponsor.sponsorCode
+            },
+            where: {
+              id: request.memberId
+            }
+          }),
+          db.sponsorRegistrationUsage.updateMany({
+            data: {
+              memberMatriculationNumber: nextMemberMatriculationNumber,
+              sponsorCode: receivingSponsor.sponsorCode
+            },
+            where: {
+              memberMatriculationNumber: request.member.memberMatriculationNumber
+            }
+          }),
+          db.sponsorContributionCredit.updateMany({
+            data: {
+              memberMatriculationNumber: nextMemberMatriculationNumber,
+              sponsorCode: receivingSponsor.sponsorCode
+            },
+            where: {
+              memberMatriculationNumber: request.member.memberMatriculationNumber
+            }
+          }),
+          db.memberTransferRequest.update({
+            data: {
+              adminReviewedAt: new Date(),
+              adminReviewedBy: user.id,
+              memberMatriculationNumber: nextMemberMatriculationNumber,
+              rejectionReason: null,
+              status
+            },
+            where: {
+              id: request.id
+            }
+          })
+        ])
+      }
+    )
 
     revalidateMemberPaymentViews()
     revalidateMemberTransferViews()
@@ -3215,29 +3304,31 @@ export const createRemovedMemberAction = async (provState: any, formData: FormDa
 
     const sponsor = await fetchSponsorByCode(member.sponsorCode)
 
-    await db.$transaction(async tx => {
-      await tx.removedMember.create({
-        data: {
-          clerkId: member.clerkId,
-          countryOfBirth: member.countryOfBirth,
-          dateOfBirth: member.dateOfBirth,
-          delegateRecommendation: member.delegateRecommendation,
-          firstName: member.firstName,
-          lastAndMiddleNames: member.lastAndMiddleNames,
-          memberMatriculationNumber: member.memberMatriculationNumber,
-          memberStatus: member.memberStatus,
-          nameOfBeneficiary: member.nameOfBeneficiary,
-          originalMemberCreatedAt: member.createdAt,
-          originalMemberId: member.id,
-          reasonForLeaving: validatedFields.reasonForLeaving,
-          sponsorCode: member.sponsorCode
-        }
-      })
+    await preserveContributionReserveDeficitForSponsors([member.sponsorCode], async () => {
+      await db.$transaction(async tx => {
+        await tx.removedMember.create({
+          data: {
+            clerkId: member.clerkId,
+            countryOfBirth: member.countryOfBirth,
+            dateOfBirth: member.dateOfBirth,
+            delegateRecommendation: member.delegateRecommendation,
+            firstName: member.firstName,
+            lastAndMiddleNames: member.lastAndMiddleNames,
+            memberMatriculationNumber: member.memberMatriculationNumber,
+            memberStatus: member.memberStatus,
+            nameOfBeneficiary: member.nameOfBeneficiary,
+            originalMemberCreatedAt: member.createdAt,
+            originalMemberId: member.id,
+            reasonForLeaving: validatedFields.reasonForLeaving,
+            sponsorCode: member.sponsorCode
+          }
+        })
 
-      await tx.member.delete({
-        where: {
-          id: member.id
-        }
+        await tx.member.delete({
+          where: {
+            id: member.id
+          }
+        })
       })
     })
 
@@ -3280,29 +3371,31 @@ export const createRemovedMemberActionAdmin = async (
 
     const sponsor = await fetchSponsorByCode(member.sponsorCode)
 
-    await db.$transaction(async tx => {
-      await tx.removedMember.create({
-        data: {
-          clerkId: member.clerkId,
-          countryOfBirth: member.countryOfBirth,
-          dateOfBirth: member.dateOfBirth,
-          delegateRecommendation: member.delegateRecommendation,
-          firstName: member.firstName,
-          lastAndMiddleNames: member.lastAndMiddleNames,
-          memberMatriculationNumber: member.memberMatriculationNumber,
-          memberStatus: member.memberStatus,
-          nameOfBeneficiary: member.nameOfBeneficiary,
-          originalMemberCreatedAt: member.createdAt,
-          originalMemberId: member.id,
-          reasonForLeaving: validatedFields.reasonForLeaving,
-          sponsorCode: member.sponsorCode
-        }
-      })
+    await preserveContributionReserveDeficitForSponsors([member.sponsorCode], async () => {
+      await db.$transaction(async tx => {
+        await tx.removedMember.create({
+          data: {
+            clerkId: member.clerkId,
+            countryOfBirth: member.countryOfBirth,
+            dateOfBirth: member.dateOfBirth,
+            delegateRecommendation: member.delegateRecommendation,
+            firstName: member.firstName,
+            lastAndMiddleNames: member.lastAndMiddleNames,
+            memberMatriculationNumber: member.memberMatriculationNumber,
+            memberStatus: member.memberStatus,
+            nameOfBeneficiary: member.nameOfBeneficiary,
+            originalMemberCreatedAt: member.createdAt,
+            originalMemberId: member.id,
+            reasonForLeaving: validatedFields.reasonForLeaving,
+            sponsorCode: member.sponsorCode
+          }
+        })
 
-      await tx.member.delete({
-        where: {
-          id: member.id
-        }
+        await tx.member.delete({
+          where: {
+            id: member.id
+          }
+        })
       })
     })
 
@@ -3445,36 +3538,42 @@ export const restoreRemovedMemberAction = async (prevState: { removedMemberId: s
       throw new Error('This removed loved one record is missing the original details needed for restoration.')
     }
 
-    await db.$transaction([
-      db.member.create({
-        data: {
-          ...(removedMember.originalMemberId ? { id: removedMember.originalMemberId } : {}),
-          clerkId: removedMember.clerkId,
-          countryOfBirth: removedMember.countryOfBirth,
-          dateOfBirth: removedMember.dateOfBirth,
-          delegateRecommendation: removedMember.delegateRecommendation,
-          firstName: removedMember.firstName,
-          lastAndMiddleNames: removedMember.lastAndMiddleNames,
-          memberMatriculationNumber: removedMember.memberMatriculationNumber,
-          memberStatus: removedMember.memberStatus,
-          nameOfBeneficiary: removedMember.nameOfBeneficiary,
-          sponsorCode: removedMember.sponsorCode,
-          ...(removedMember.originalMemberCreatedAt ? { createdAt: removedMember.originalMemberCreatedAt } : {})
-        }
-      }),
-      db.removedMember.delete({
-        where: {
-          id: removedMember.id
-        }
-      })
-    ])
+    const restoredDelegateRecommendation = removedMember.delegateRecommendation
+    const restoredMemberStatus = removedMember.memberStatus
+    const restoredNameOfBeneficiary = removedMember.nameOfBeneficiary
 
-    if (removedMember.memberStatus === memberStatus.Pending) {
-      await createPendingRegistrationUsage({
-        memberMatriculationNumber: removedMember.memberMatriculationNumber,
-        sponsorCode: removedMember.sponsorCode
-      })
-    }
+    await preserveContributionReserveDeficitForSponsors([removedMember.sponsorCode], async () => {
+      await db.$transaction([
+        db.member.create({
+          data: {
+            ...(removedMember.originalMemberId ? { id: removedMember.originalMemberId } : {}),
+            clerkId: removedMember.clerkId,
+            countryOfBirth: removedMember.countryOfBirth,
+            dateOfBirth: removedMember.dateOfBirth,
+            delegateRecommendation: restoredDelegateRecommendation,
+            firstName: removedMember.firstName,
+            lastAndMiddleNames: removedMember.lastAndMiddleNames,
+            memberMatriculationNumber: removedMember.memberMatriculationNumber,
+            memberStatus: restoredMemberStatus,
+            nameOfBeneficiary: restoredNameOfBeneficiary,
+            sponsorCode: removedMember.sponsorCode,
+            ...(removedMember.originalMemberCreatedAt ? { createdAt: removedMember.originalMemberCreatedAt } : {})
+          }
+        }),
+        db.removedMember.delete({
+          where: {
+            id: removedMember.id
+          }
+        })
+      ])
+
+      if (restoredMemberStatus === memberStatus.Pending) {
+        await createPendingRegistrationUsage({
+          memberMatriculationNumber: removedMember.memberMatriculationNumber,
+          sponsorCode: removedMember.sponsorCode
+        })
+      }
+    })
 
     revalidateMemberPaymentViews()
 
