@@ -43,8 +43,8 @@ const PagesLayout = async ({ children }: Readonly<{ children: ReactNode }>) => {
 
   return (
     <div className='flex min-h-dvh flex-col bg-[repeating-linear-gradient(45deg,color-mix(in_oklab,var(--border)40%,transparent)0,color-mix(in_oklab,var(--border)40%,transparent)1px,transparent_0,transparent_50%)] bg-size-[12px_12px] bg-fixed'>
-      <div className='mx-auto h-full w-full max-w-350 px-4 sm:px-6 lg:px-8' lang={language}>
-        <div className='bg-background h-full w-full max-w-7xl border-x'>
+      <div className='mx-auto flex min-h-dvh w-full max-w-350 flex-col px-4 sm:px-6 lg:px-8' lang={language}>
+        <div className='bg-background flex min-h-dvh w-full max-w-7xl flex-col border-x'>
           {/* Header Section */}
           <Header navigationData={translatedNavigationData} language={language} loginLabel={copy.login} />
 

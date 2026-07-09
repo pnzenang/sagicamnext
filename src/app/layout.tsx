@@ -142,7 +142,7 @@ const RootLayout = ({ children }: Readonly<{ children: ReactNode }>) => {
           <body className='flex min-h-dvh w-full max-w-full flex-auto flex-col overflow-x-hidden'>
             <ThemeProvider attribute='class' enableSystem={false} disableTransitionOnChange>
               <TooltipProvider>
-                <main className='min-w-0 max-w-full overflow-x-hidden'>{children}</main>
+                <main className='flex min-h-dvh min-w-0 max-w-full flex-1 flex-col overflow-x-hidden'>{children}</main>
                 <Toaster />
               </TooltipProvider>
             </ThemeProvider>
