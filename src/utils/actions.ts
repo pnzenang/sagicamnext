@@ -96,6 +96,15 @@ const allowedDeceasedMemberDocumentExtensions = new Set(['.heic', '.heif', '.jpe
 
 const formatRegistrationDate = (date: Date) => registrationDateFormatter.format(date)
 
+const memberStatusActionLabels: Record<memberStatus, string> = {
+  [memberStatus.Awaiting]: 'Awaiting Publication',
+  [memberStatus.Delinquent]: 'Delinquent',
+  [memberStatus.Pending]: 'Pending',
+  [memberStatus.Vested]: 'Vested'
+}
+
+const getMemberStatusActionLabel = (status: string) => memberStatusActionLabels[status as memberStatus] ?? status
+
 const createPendingRegistrationUsage = async ({
   memberMatriculationNumber,
   sponsorCode
@@ -238,7 +247,7 @@ const syncVestedContributionCredit = async ({
   sponsorCode: string
   memberMatriculationNumber: string
 }) => {
-  if (previousStatus === memberStatus.Awaiting && nextStatus === memberStatus.Vested) {
+  if (previousStatus !== memberStatus.Vested && nextStatus === memberStatus.Vested) {
     await createVestedContributionCredit({ memberMatriculationNumber, sponsorCode })
 
     return
@@ -2547,6 +2556,90 @@ export const updateMemberDetailsActionForAdmin = async (prevState: any, formData
   }
 
   redirect('/admin-members')
+}
+
+export const updateMemberStatusForAdminAction = async (
+  prevState: any,
+  formData: FormData
+): Promise<{ message: string }> => {
+  await assertAdminUser()
+
+  try {
+    const memberId = formData.get('memberId')?.toString()
+    const nextStatus = formData.get('memberStatus')?.toString()
+
+    if (!memberId) {
+      throw new Error('Member id is required.')
+    }
+
+    if (!nextStatus || !Object.values(memberStatus).includes(nextStatus as memberStatus)) {
+      throw new Error('Please select a valid member status.')
+    }
+
+    const currentMember = await db.member.findUnique({
+      select: {
+        firstName: true,
+        lastAndMiddleNames: true,
+        memberMatriculationNumber: true,
+        memberStatus: true,
+        sponsorCode: true
+      },
+      where: {
+        id: memberId
+      }
+    })
+
+    if (!currentMember) {
+      throw new Error('Member not found.')
+    }
+
+    if (currentMember.memberStatus === nextStatus) {
+      return {
+        message: `${currentMember.firstName} ${currentMember.lastAndMiddleNames} is already ${getMemberStatusActionLabel(
+          nextStatus
+        )}.`
+      }
+    }
+
+    await preserveContributionReserveDeficitForSponsors([currentMember.sponsorCode], async () => {
+      await db.member.update({
+        data: {
+          memberStatus: nextStatus
+        },
+        where: {
+          id: memberId
+        }
+      })
+
+      await syncPendingRegistrationUsage({
+        memberMatriculationNumber: currentMember.memberMatriculationNumber,
+        nextStatus,
+        previousMatriculationNumber: currentMember.memberMatriculationNumber,
+        previousStatus: currentMember.memberStatus,
+        sponsorCode: currentMember.sponsorCode
+      })
+
+      await syncVestedContributionCredit({
+        memberMatriculationNumber: currentMember.memberMatriculationNumber,
+        nextStatus,
+        previousMatriculationNumber: currentMember.memberMatriculationNumber,
+        previousStatus: currentMember.memberStatus,
+        sponsorCode: currentMember.sponsorCode
+      })
+    })
+
+    revalidateMemberPaymentViews()
+    revalidatePath('/admin-users-contacts')
+    revalidatePath('/new-additions')
+
+    return {
+      message: `${currentMember.firstName} ${currentMember.lastAndMiddleNames} moved to ${getMemberStatusActionLabel(
+        nextStatus
+      )}.`
+    }
+  } catch (error) {
+    return renderError(error)
+  }
 }
 
 export const vestEligibleAwaitingPublicationMembersAction = async (): Promise<{ message: string }> => {
