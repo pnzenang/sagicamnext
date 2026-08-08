@@ -96,6 +96,37 @@ const allowedDeceasedMemberDocumentExtensions = new Set(['.heic', '.heif', '.jpe
 
 const formatRegistrationDate = (date: Date) => registrationDateFormatter.format(date)
 
+const memberStatusActionLabels: Record<memberStatus, string> = {
+  [memberStatus.Awaiting]: 'Awaiting Publication',
+  [memberStatus.Delinquent]: 'Delinquent',
+  [memberStatus.Pending]: 'Pending',
+  [memberStatus.Vested]: 'Vested'
+}
+
+const getMemberStatusActionLabel = (status: string) => memberStatusActionLabels[status as memberStatus] ?? status
+
+const parseSelectedMemberIds = (rawMemberIds: string | undefined) => {
+  if (!rawMemberIds) {
+    throw new Error('Please select at least one member.')
+  }
+
+  const parsedMemberIds = JSON.parse(rawMemberIds) as unknown
+
+  if (!Array.isArray(parsedMemberIds)) {
+    throw new Error('Please select at least one member.')
+  }
+
+  const memberIds = Array.from(
+    new Set(parsedMemberIds.filter((memberId): memberId is string => typeof memberId === 'string' && Boolean(memberId)))
+  )
+
+  if (memberIds.length === 0) {
+    throw new Error('Please select at least one member.')
+  }
+
+  return memberIds
+}
+
 const createPendingRegistrationUsage = async ({
   memberMatriculationNumber,
   sponsorCode
@@ -2547,6 +2578,203 @@ export const updateMemberDetailsActionForAdmin = async (prevState: any, formData
   }
 
   redirect('/admin-members')
+}
+
+export const updateSelectedMembersStatusForAdminAction = async (
+  prevState: any,
+  formData: FormData
+): Promise<{ message: string }> => {
+  await assertAdminUser()
+
+  try {
+    const rawMemberIds = formData.get('memberIds')?.toString()
+    const nextStatus = formData.get('memberStatus')?.toString()
+
+    if (!nextStatus || !Object.values(memberStatus).includes(nextStatus as memberStatus)) {
+      throw new Error('Please select a valid member status.')
+    }
+
+    const memberIds = parseSelectedMemberIds(rawMemberIds)
+
+    const selectedMembers = await db.member.findMany({
+      select: {
+        id: true,
+        memberMatriculationNumber: true,
+        memberStatus: true,
+        sponsorCode: true
+      },
+      where: {
+        id: {
+          in: memberIds
+        }
+      }
+    })
+
+    if (selectedMembers.length === 0) {
+      throw new Error('No selected members were found.')
+    }
+
+    const affectedSponsorCodes = Array.from(new Set(selectedMembers.map(member => member.sponsorCode)))
+    let updatedCount = 0
+
+    await preserveContributionReserveDeficitForSponsors(affectedSponsorCodes, async () => {
+      await db.$transaction(async tx => {
+        for (const member of selectedMembers) {
+          if (member.memberStatus === nextStatus) {
+            continue
+          }
+
+          const updatedMember = await tx.member.updateMany({
+            data: {
+              memberStatus: nextStatus
+            },
+            where: {
+              id: member.id,
+              memberStatus: member.memberStatus
+            }
+          })
+
+          if (updatedMember.count === 0) {
+            continue
+          }
+
+          if (member.memberStatus !== memberStatus.Vested && nextStatus === memberStatus.Vested) {
+            await tx.sponsorContributionCredit.upsert({
+              create: {
+                amountCredited: contributionCreditPerVestedMember,
+                memberMatriculationNumber: member.memberMatriculationNumber,
+                sponsorCode: member.sponsorCode
+              },
+              update: {
+                amountCredited: contributionCreditPerVestedMember,
+                sponsorCode: member.sponsorCode
+              },
+              where: {
+                memberMatriculationNumber: member.memberMatriculationNumber
+              }
+            })
+          }
+
+          if (
+            member.memberStatus === memberStatus.Vested &&
+            nextStatus !== memberStatus.Vested &&
+            nextStatus !== memberStatus.Delinquent
+          ) {
+            await tx.sponsorContributionCredit.deleteMany({
+              where: {
+                memberMatriculationNumber: member.memberMatriculationNumber
+              }
+            })
+          }
+
+          updatedCount += updatedMember.count
+        }
+      })
+    })
+
+    revalidateMemberPaymentViews()
+    revalidatePath('/admin-users-contacts')
+    revalidatePath('/new-additions')
+
+    if (updatedCount === 0) {
+      return {
+        message: `No selected members were moved to ${getMemberStatusActionLabel(nextStatus)}.`
+      }
+    }
+
+    return {
+      message: `${updatedCount} selected member${updatedCount === 1 ? '' : 's'} moved to ${getMemberStatusActionLabel(
+        nextStatus
+      )}.`
+    }
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      return { message: 'Please select at least one member.' }
+    }
+
+    return renderError(error)
+  }
+}
+
+export const removeSelectedOverduePendingMembersAction = async (
+  prevState: any,
+  formData: FormData
+): Promise<{ message: string }> => {
+  await assertAdminUser()
+
+  try {
+    const memberIds = parseSelectedMemberIds(formData.get('memberIds')?.toString())
+    const overdueCutoff = getOverdueRegistrationPaymentCreatedAtCutoff()
+
+    const overdueMembers = await db.member.findMany({
+      where: {
+        createdAt: {
+          lt: overdueCutoff
+        },
+        id: {
+          in: memberIds
+        },
+        memberStatus: memberStatus.Pending
+      }
+    })
+
+    if (overdueMembers.length === 0) {
+      return { message: 'No selected overdue pending members were found.' }
+    }
+
+    const overdueMemberIds = overdueMembers.map(member => member.id)
+    const overdueMemberMatriculationNumbers = overdueMembers.map(member => member.memberMatriculationNumber)
+
+    await db.$transaction(async tx => {
+      await tx.removedMember.createMany({
+        data: overdueMembers.map(member => ({
+          clerkId: member.clerkId,
+          countryOfBirth: member.countryOfBirth,
+          dateOfBirth: member.dateOfBirth,
+          delegateRecommendation: member.delegateRecommendation,
+          firstName: member.firstName,
+          lastAndMiddleNames: member.lastAndMiddleNames,
+          memberMatriculationNumber: member.memberMatriculationNumber,
+          memberStatus: member.memberStatus,
+          nameOfBeneficiary: member.nameOfBeneficiary,
+          originalMemberCreatedAt: member.createdAt,
+          originalMemberId: member.id,
+          reasonForLeaving: reasonForLeaving.NoReason,
+          sponsorCode: member.sponsorCode
+        }))
+      })
+
+      await tx.sponsorRegistrationUsage.deleteMany({
+        where: {
+          memberMatriculationNumber: {
+            in: overdueMemberMatriculationNumbers
+          }
+        }
+      })
+
+      await tx.member.deleteMany({
+        where: {
+          id: {
+            in: overdueMemberIds
+          }
+        }
+      })
+    })
+
+    revalidateMemberPaymentViews()
+
+    return {
+      message: `${overdueMembers.length} selected overdue pending member${
+        overdueMembers.length === 1 ? '' : 's'
+      } moved to Removed Members.`
+    }
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      return { message: 'Please select at least one member.' }
+    }
+
+    return renderError(error)
+  }
 }
 
 export const vestEligibleAwaitingPublicationMembersAction = async (): Promise<{ message: string }> => {

@@ -1,5 +1,5 @@
 'use client'
-import { useActionState, useId, useMemo, useState } from 'react'
+import { useActionState, useEffect, useId, useMemo, useState } from 'react'
 
 import { useFormStatus } from 'react-dom'
 
@@ -11,10 +11,12 @@ import * as XLSX from 'xlsx'
 day.extend(advancedFormat)
 
 import {
+  AlertCircle,
   AlertTriangle,
   ArrowDown,
   ArrowUp,
   ArrowUpDown,
+  Clock3,
   Ellipsis,
   Trash2,
   FileSpreadsheetIcon,
@@ -27,8 +29,16 @@ import {
   ShieldCheck,
   Pencil
 } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 
-import type { Column, ColumnDef, ColumnFiltersState, PaginationState, RowData } from '@tanstack/react-table'
+import type {
+  Column,
+  ColumnDef,
+  ColumnFiltersState,
+  PaginationState,
+  RowData,
+  RowSelectionState
+} from '@tanstack/react-table'
 import {
   flexRender,
   getCoreRowModel,
@@ -42,9 +52,11 @@ import {
 } from '@tanstack/react-table'
 
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 
 import {
   AlertDialog,
@@ -86,7 +98,11 @@ import {
 } from '@/utils/registration-payment-deadline'
 import { awaitingPublicationVestingLongevityDays } from '@/utils/sagicam-member-longevity'
 import { getNameSearchValue, nameSearchColumnId, normalizeNameColumnFilters } from '@/utils/table-filters'
-import { vestEligibleAwaitingPublicationMembersAction } from '@/utils/actions'
+import {
+  removeSelectedOverduePendingMembersAction,
+  updateSelectedMembersStatusForAdminAction,
+  vestEligibleAwaitingPublicationMembersAction
+} from '@/utils/actions'
 import { memberStatus, type MemberType } from '@/utils/types'
 
 declare module '@tanstack/react-table' {
@@ -128,6 +144,28 @@ const RegistrationPaymentWarningCell = ({ member }: { member: MemberType }) => {
 }
 
 const columns: ColumnDef<MemberType>[] = [
+  {
+    id: 'select',
+    header: ({ table }) => (
+      <Checkbox
+        aria-label='Select all visible members'
+        checked={
+          table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && 'indeterminate')
+        }
+        onCheckedChange={value => table.toggleAllPageRowsSelected(Boolean(value))}
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        aria-label='Select member'
+        checked={row.getIsSelected()}
+        onCheckedChange={value => row.toggleSelected(Boolean(value))}
+      />
+    ),
+    enableHiding: false,
+    enableSorting: false,
+    size: 40
+  },
   {
     id: nameSearchColumnId,
     header: 'Names',
@@ -326,6 +364,17 @@ const MembersDataTable = ({
     message: ''
   })
 
+  const [bulkStatusState, bulkStatusFormAction] = useActionState(updateSelectedMembersStatusForAdminAction, {
+    message: ''
+  })
+
+  const [bulkRemoveOverdueState, bulkRemoveOverdueFormAction] = useActionState(
+    removeSelectedOverduePendingMembersAction,
+    {
+      message: ''
+    }
+  )
+
   const pageSize = 100
 
   const [pagination, setPagination] = useState<PaginationState>({
@@ -333,12 +382,17 @@ const MembersDataTable = ({
     pageSize: pageSize
   })
 
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({})
+  const router = useRouter()
+
   const table = useReactTable({
     data,
     columns,
+    getRowId: row => row.id,
     state: {
       columnFilters: normalizedColumnFilters,
-      pagination
+      pagination,
+      rowSelection
     },
     initialState: {
       columnVisibility: {
@@ -352,10 +406,31 @@ const MembersDataTable = ({
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
     getFacetedMinMaxValues: getFacetedMinMaxValues(),
+    enableRowSelection: true,
     enableSortingRemoval: false,
     getPaginationRowModel: getPaginationRowModel(),
+    onRowSelectionChange: setRowSelection,
     onPaginationChange: setPagination
   })
+
+  const selectedMembers = table.getSelectedRowModel().rows.map(row => row.original)
+  const selectedMemberIds = selectedMembers.map(member => member.id)
+  const selectedMembersPayload = JSON.stringify(selectedMemberIds)
+  const selectedMembersCount = selectedMemberIds.length
+  const selectedOverdueCutoffTime = getOverdueRegistrationPaymentCreatedAtCutoff().getTime()
+
+  const selectedOverduePendingCount = selectedMembers.filter(
+    member =>
+      member.memberStatus === memberStatus.Pending &&
+      new Date(member.createdAt).getTime() < selectedOverdueCutoffTime
+  ).length
+
+  useEffect(() => {
+    if (bulkStatusState.message || bulkRemoveOverdueState.message) {
+      setRowSelection({})
+      router.refresh()
+    }
+  }, [bulkRemoveOverdueState.message, bulkStatusState.message, router])
 
   const eligibleAutoVestCount = useMemo(() => {
     const now = day()
@@ -503,6 +578,49 @@ const MembersDataTable = ({
                 showRightEllipsis={showRightEllipsis}
                 className='mx-0 w-auto justify-start md:justify-end'
               />
+              {selectedMembersCount > 0 ? (
+                <>
+                  <BulkStatusActionButton
+                    className='bg-blue-700 text-white hover:bg-blue-800 focus-visible:ring-blue-700/30'
+                    disabled={false}
+                    formAction={bulkStatusFormAction}
+                    icon={Clock3}
+                    memberIdsPayload={selectedMembersPayload}
+                    selectedCount={selectedMembersCount}
+                    status={memberStatus.Awaiting}
+                    text='Make Awaiting'
+                  />
+                  <BulkStatusActionButton
+                    className='bg-emerald-700 text-white hover:bg-emerald-800 focus-visible:ring-emerald-700/30'
+                    disabled={false}
+                    formAction={bulkStatusFormAction}
+                    icon={ShieldCheck}
+                    memberIdsPayload={selectedMembersPayload}
+                    selectedCount={selectedMembersCount}
+                    status={memberStatus.Vested}
+                    text='Make Vested'
+                  />
+                  <BulkStatusActionButton
+                    className='bg-red-700 text-white hover:bg-red-800 focus-visible:ring-red-700/30'
+                    disabled={false}
+                    formAction={bulkStatusFormAction}
+                    icon={AlertCircle}
+                    memberIdsPayload={selectedMembersPayload}
+                    selectedCount={selectedMembersCount}
+                    status={memberStatus.Delinquent}
+                    text='Make Delinquent'
+                  />
+                  <BulkRemoveOverdueActionButton
+                    className='bg-zinc-900 text-white hover:bg-zinc-950 focus-visible:ring-zinc-900/30'
+                    disabled={selectedOverduePendingCount === 0}
+                    formAction={bulkRemoveOverdueFormAction}
+                    icon={Trash2}
+                    memberIdsPayload={selectedMembersPayload}
+                    selectedCount={selectedOverduePendingCount}
+                    text='Remove Overdue'
+                  />
+                </>
+              ) : null}
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button
@@ -566,6 +684,16 @@ const MembersDataTable = ({
           {autoVestState.message ? (
             <p className='text-primary text-sm font-semibold' aria-live='polite'>
               {autoVestState.message}
+            </p>
+          ) : null}
+          {bulkStatusState.message ? (
+            <p className='text-primary text-sm font-semibold' aria-live='polite'>
+              {bulkStatusState.message}
+            </p>
+          ) : null}
+          {bulkRemoveOverdueState.message ? (
+            <p className='text-primary text-sm font-semibold' aria-live='polite'>
+              {bulkRemoveOverdueState.message}
             </p>
           ) : null}
           <div className='grid grid-cols-1 gap-6 max-md:*:last:col-span-full sm:grid-cols-2 md:grid-cols-3'>
@@ -735,6 +863,98 @@ function AutoVestSubmitButton({ disabled }: { disabled: boolean }) {
       ) : (
         'Move to Vested'
       )}
+    </Button>
+  )
+}
+
+function BulkStatusActionButton({
+  className,
+  disabled,
+  formAction,
+  icon: Icon,
+  memberIdsPayload,
+  selectedCount,
+  status,
+  text
+}: {
+  className: string
+  disabled: boolean
+  formAction: (formData: FormData) => void
+  icon: LucideIcon
+  memberIdsPayload: string
+  selectedCount: number
+  status: memberStatus
+  text: string
+}) {
+  return (
+    <form action={formAction} className='contents'>
+      <input type='hidden' name='memberIds' value={memberIdsPayload} />
+      <input type='hidden' name='memberStatus' value={status} />
+      <BulkStatusSubmitButton
+        className={className}
+        disabled={disabled}
+        icon={Icon}
+        selectedCount={selectedCount}
+        text={text}
+      />
+    </form>
+  )
+}
+
+function BulkRemoveOverdueActionButton({
+  className,
+  disabled,
+  formAction,
+  icon: Icon,
+  memberIdsPayload,
+  selectedCount,
+  text
+}: {
+  className: string
+  disabled: boolean
+  formAction: (formData: FormData) => void
+  icon: LucideIcon
+  memberIdsPayload: string
+  selectedCount: number
+  text: string
+}) {
+  return (
+    <form action={formAction} className='contents'>
+      <input type='hidden' name='memberIds' value={memberIdsPayload} />
+      <BulkStatusSubmitButton
+        className={className}
+        disabled={disabled}
+        icon={Icon}
+        selectedCount={selectedCount}
+        text={text}
+      />
+    </form>
+  )
+}
+
+function BulkStatusSubmitButton({
+  className,
+  disabled,
+  icon: Icon,
+  selectedCount,
+  text
+}: {
+  className: string
+  disabled: boolean
+  icon: LucideIcon
+  selectedCount: number
+  text: string
+}) {
+  const { pending } = useFormStatus()
+
+  return (
+    <Button
+      type='submit'
+      disabled={disabled || pending}
+      className={cn('shrink-0 max-md:flex-1 max-md:justify-center', className)}
+    >
+      {pending ? <Loader className='animate-spin' /> : <Icon />}
+      {pending ? 'Updating...' : `${text} (${selectedCount})`}
     </Button>
   )
 }
