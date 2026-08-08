@@ -578,49 +578,6 @@ const MembersDataTable = ({
                 showRightEllipsis={showRightEllipsis}
                 className='mx-0 w-auto justify-start md:justify-end'
               />
-              {selectedMembersCount > 0 ? (
-                <>
-                  <BulkStatusActionButton
-                    className='bg-blue-700 text-white hover:bg-blue-800 focus-visible:ring-blue-700/30'
-                    disabled={false}
-                    formAction={bulkStatusFormAction}
-                    icon={Clock3}
-                    memberIdsPayload={selectedMembersPayload}
-                    selectedCount={selectedMembersCount}
-                    status={memberStatus.Awaiting}
-                    text='Make Awaiting'
-                  />
-                  <BulkStatusActionButton
-                    className='bg-emerald-700 text-white hover:bg-emerald-800 focus-visible:ring-emerald-700/30'
-                    disabled={false}
-                    formAction={bulkStatusFormAction}
-                    icon={ShieldCheck}
-                    memberIdsPayload={selectedMembersPayload}
-                    selectedCount={selectedMembersCount}
-                    status={memberStatus.Vested}
-                    text='Make Vested'
-                  />
-                  <BulkStatusActionButton
-                    className='bg-red-700 text-white hover:bg-red-800 focus-visible:ring-red-700/30'
-                    disabled={false}
-                    formAction={bulkStatusFormAction}
-                    icon={AlertCircle}
-                    memberIdsPayload={selectedMembersPayload}
-                    selectedCount={selectedMembersCount}
-                    status={memberStatus.Delinquent}
-                    text='Make Delinquent'
-                  />
-                  <BulkRemoveOverdueActionButton
-                    className='bg-zinc-900 text-white hover:bg-zinc-950 focus-visible:ring-zinc-900/30'
-                    disabled={selectedOverduePendingCount === 0}
-                    formAction={bulkRemoveOverdueFormAction}
-                    icon={Trash2}
-                    memberIdsPayload={selectedMembersPayload}
-                    selectedCount={selectedOverduePendingCount}
-                    text='Remove Overdue'
-                  />
-                </>
-              ) : null}
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button
@@ -681,6 +638,49 @@ const MembersDataTable = ({
               </DropdownMenu>
             </div>
           </div>
+          {selectedMembersCount > 0 ? (
+            <div className='flex w-full max-w-full min-w-0 flex-wrap items-center justify-start gap-2 overflow-hidden rounded-md border bg-background/60 p-2'>
+              <BulkStatusActionButton
+                className='bg-blue-700 text-white hover:bg-blue-800 focus-visible:ring-blue-700/30'
+                disabled={false}
+                formAction={bulkStatusFormAction}
+                icon={Clock3}
+                memberIdsPayload={selectedMembersPayload}
+                selectedCount={selectedMembersCount}
+                status={memberStatus.Awaiting}
+                text='Make Awaiting'
+              />
+              <BulkStatusActionButton
+                className='bg-emerald-700 text-white hover:bg-emerald-800 focus-visible:ring-emerald-700/30'
+                disabled={false}
+                formAction={bulkStatusFormAction}
+                icon={ShieldCheck}
+                memberIdsPayload={selectedMembersPayload}
+                selectedCount={selectedMembersCount}
+                status={memberStatus.Vested}
+                text='Make Vested'
+              />
+              <BulkStatusActionButton
+                className='bg-red-700 text-white hover:bg-red-800 focus-visible:ring-red-700/30'
+                disabled={false}
+                formAction={bulkStatusFormAction}
+                icon={AlertCircle}
+                memberIdsPayload={selectedMembersPayload}
+                selectedCount={selectedMembersCount}
+                status={memberStatus.Delinquent}
+                text='Make Delinquent'
+              />
+              <BulkRemoveOverdueActionButton
+                className='bg-zinc-900 text-white hover:bg-zinc-950 focus-visible:ring-zinc-900/30'
+                disabled={selectedOverduePendingCount === 0}
+                formAction={bulkRemoveOverdueFormAction}
+                icon={Trash2}
+                memberIdsPayload={selectedMembersPayload}
+                selectedCount={selectedOverduePendingCount}
+                text='Remove Overdue'
+              />
+            </div>
+          ) : null}
           {autoVestState.message ? (
             <p className='text-primary text-sm font-semibold' aria-live='polite'>
               {autoVestState.message}
