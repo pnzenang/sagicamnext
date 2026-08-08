@@ -55,9 +55,7 @@ const selectionColumnWidth = 5
 const pageSizeOptions = [10, 25, 50, 100]
 
 const dateFormatter = new Intl.DateTimeFormat('en-US', {
-  day: '2-digit',
-  month: 'short',
-  year: 'numeric'
+  dateStyle: 'medium'
 })
 
 const getSortIcon = (isActive: boolean, direction: SortDirection) => {
