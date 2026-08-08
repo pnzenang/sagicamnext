@@ -59,16 +59,6 @@ import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 
 import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger
-} from '@/components/ui/alert-dialog'
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
@@ -86,7 +76,6 @@ import { usePagination } from '@/hooks/use-pagination'
 import { usePersistentState } from '@/hooks/use-persistent-state'
 
 import MembershipSummaryCards from '@/components/dashboard/MembershipSummaryCards'
-import RemoveOverduePendingMembersButton from '@/components/global/RemoveOverduePendingMembersButton'
 import ResponsiveTableCards from '@/components/dashboard/ResponsiveTableCards'
 import { TablePaginationControls } from '@/components/dashboard/TablePaginationControls'
 import { cn } from '@/lib/utils'
@@ -96,12 +85,10 @@ import {
   getRegistrationPaymentCountdownLabel,
   registrationPaymentDeadlineDays
 } from '@/utils/registration-payment-deadline'
-import { awaitingPublicationVestingLongevityDays } from '@/utils/sagicam-member-longevity'
 import { getNameSearchValue, nameSearchColumnId, normalizeNameColumnFilters } from '@/utils/table-filters'
 import {
   removeSelectedOverduePendingMembersAction,
-  updateSelectedMembersStatusForAdminAction,
-  vestEligibleAwaitingPublicationMembersAction
+  updateSelectedMembersStatusForAdminAction
 } from '@/utils/actions'
 import { memberStatus, type MemberType } from '@/utils/types'
 
@@ -360,10 +347,6 @@ const MembersDataTable = ({
 
   const normalizedColumnFilters = useMemo(() => normalizeNameColumnFilters(columnFilters), [columnFilters])
 
-  const [autoVestState, autoVestFormAction] = useActionState(vestEligibleAwaitingPublicationMembersAction, {
-    message: ''
-  })
-
   const [bulkStatusState, bulkStatusFormAction] = useActionState(updateSelectedMembersStatusForAdminAction, {
     message: ''
   })
@@ -417,6 +400,13 @@ const MembersDataTable = ({
   const selectedMemberIds = selectedMembers.map(member => member.id)
   const selectedMembersPayload = JSON.stringify(selectedMemberIds)
   const selectedMembersCount = selectedMemberIds.length
+  const selectedPendingMembersCount = selectedMembers.filter(member => member.memberStatus === memberStatus.Pending).length
+
+  const selectedVestableMembersCount = selectedMembers.filter(
+    member => member.memberStatus === memberStatus.Awaiting || member.memberStatus === memberStatus.Delinquent
+  ).length
+
+  const selectedVestedMembersCount = selectedMembers.filter(member => member.memberStatus === memberStatus.Vested).length
   const selectedOverdueCutoffTime = getOverdueRegistrationPaymentCreatedAtCutoff().getTime()
 
   const selectedOverduePendingCount = selectedMembers.filter(
@@ -431,24 +421,6 @@ const MembersDataTable = ({
       router.refresh()
     }
   }, [bulkRemoveOverdueState.message, bulkStatusState.message, router])
-
-  const eligibleAutoVestCount = useMemo(() => {
-    const now = day()
-
-    return data.filter(
-      member =>
-        member.memberStatus === memberStatus.Awaiting &&
-        now.diff(day(member.createdAt), 'days') >= awaitingPublicationVestingLongevityDays
-    ).length
-  }, [data])
-
-  const overduePendingMembersCount = useMemo(() => {
-    const overdueCutoffTime = getOverdueRegistrationPaymentCreatedAtCutoff().getTime()
-
-    return data.filter(
-      member => member.memberStatus === memberStatus.Pending && new Date(member.createdAt).getTime() < overdueCutoffTime
-    ).length
-  }, [data])
 
   const exportToCSV = () => {
     const selectedRows = table.getSelectedRowModel().rows
@@ -578,34 +550,6 @@ const MembersDataTable = ({
                 showRightEllipsis={showRightEllipsis}
                 className='mx-0 w-auto justify-start md:justify-end'
               />
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    className='shrink-0 bg-emerald-700 text-white hover:bg-emerald-800 focus-visible:ring-emerald-700/30 max-md:flex-1 max-md:justify-center'
-                    disabled={eligibleAutoVestCount === 0}
-                  >
-                    <ShieldCheck />
-                    Vest 30+ Days ({eligibleAutoVestCount})
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Move eligible loved ones to Vested?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This will move {eligibleAutoVestCount} loved one
-                      {eligibleAutoVestCount === 1 ? '' : 's'} from Awaiting Publication to Vested and apply the $30
-                      contribution credit to each related sponsor.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <form action={autoVestFormAction}>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel type='button'>Cancel</AlertDialogCancel>
-                      <AutoVestSubmitButton disabled={eligibleAutoVestCount === 0} />
-                    </AlertDialogFooter>
-                  </form>
-                </AlertDialogContent>
-              </AlertDialog>
-              <RemoveOverduePendingMembersButton overdueCount={overduePendingMembersCount} />
               <Button
                 className='bg-primary/10 text-primary hover:bg-primary/20 focus-visible:ring-primary/20 dark:focus-visible:ring-primary/40 shrink-0 max-md:flex-1 max-md:justify-center'
                 onClick={exportFilteredPageToExcel}
@@ -642,31 +586,31 @@ const MembersDataTable = ({
             <div className='flex w-full max-w-full min-w-0 flex-wrap items-center justify-start gap-2 overflow-hidden rounded-md border bg-background/60 p-2'>
               <BulkStatusActionButton
                 className='bg-blue-700 text-white hover:bg-blue-800 focus-visible:ring-blue-700/30'
-                disabled={false}
+                disabled={selectedPendingMembersCount === 0}
                 formAction={bulkStatusFormAction}
                 icon={Clock3}
                 memberIdsPayload={selectedMembersPayload}
-                selectedCount={selectedMembersCount}
+                selectedCount={selectedPendingMembersCount}
                 status={memberStatus.Awaiting}
                 text='Make Awaiting'
               />
               <BulkStatusActionButton
                 className='bg-emerald-700 text-white hover:bg-emerald-800 focus-visible:ring-emerald-700/30'
-                disabled={false}
+                disabled={selectedVestableMembersCount === 0}
                 formAction={bulkStatusFormAction}
                 icon={ShieldCheck}
                 memberIdsPayload={selectedMembersPayload}
-                selectedCount={selectedMembersCount}
+                selectedCount={selectedVestableMembersCount}
                 status={memberStatus.Vested}
                 text='Make Vested'
               />
               <BulkStatusActionButton
                 className='bg-red-700 text-white hover:bg-red-800 focus-visible:ring-red-700/30'
-                disabled={false}
+                disabled={selectedVestedMembersCount === 0}
                 formAction={bulkStatusFormAction}
                 icon={AlertCircle}
                 memberIdsPayload={selectedMembersPayload}
-                selectedCount={selectedMembersCount}
+                selectedCount={selectedVestedMembersCount}
                 status={memberStatus.Delinquent}
                 text='Make Delinquent'
               />
@@ -680,11 +624,6 @@ const MembersDataTable = ({
                 text='Remove Overdue'
               />
             </div>
-          ) : null}
-          {autoVestState.message ? (
-            <p className='text-primary text-sm font-semibold' aria-live='polite'>
-              {autoVestState.message}
-            </p>
           ) : null}
           {bulkStatusState.message ? (
             <p className='text-primary text-sm font-semibold' aria-live='polite'>
@@ -845,27 +784,6 @@ const MembersDataTable = ({
 }
 
 export default MembersDataTable
-
-function AutoVestSubmitButton({ disabled }: { disabled: boolean }) {
-  const { pending } = useFormStatus()
-
-  return (
-    <Button
-      type='submit'
-      disabled={disabled || pending}
-      className='bg-emerald-700 text-white hover:bg-emerald-800 focus-visible:ring-emerald-700/30'
-    >
-      {pending ? (
-        <>
-          <Loader className='animate-spin' />
-          Please wait...
-        </>
-      ) : (
-        'Move to Vested'
-      )}
-    </Button>
-  )
-}
 
 function BulkStatusActionButton({
   className,

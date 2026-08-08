@@ -2614,12 +2614,43 @@ export const updateSelectedMembersStatusForAdminAction = async (
       throw new Error('No selected members were found.')
     }
 
-    const affectedSponsorCodes = Array.from(new Set(selectedMembers.map(member => member.sponsorCode)))
+    const membersToUpdate = selectedMembers.filter(member => {
+      if (nextStatus === memberStatus.Awaiting) {
+        return member.memberStatus === memberStatus.Pending
+      }
+
+      if (nextStatus === memberStatus.Vested) {
+        return member.memberStatus === memberStatus.Awaiting || member.memberStatus === memberStatus.Delinquent
+      }
+
+      if (nextStatus === memberStatus.Delinquent) {
+        return member.memberStatus === memberStatus.Vested
+      }
+
+      return true
+    })
+
+    if (membersToUpdate.length === 0) {
+      const message =
+        nextStatus === memberStatus.Awaiting
+          ? 'No selected Pending members were found to move to Awaiting Publication.'
+          : nextStatus === memberStatus.Vested
+            ? 'No selected Awaiting Publication or Delinquent members were found to move to Vested.'
+            : nextStatus === memberStatus.Delinquent
+              ? 'No selected Vested members were found to move to Delinquent.'
+              : `No selected members were moved to ${getMemberStatusActionLabel(nextStatus)}.`
+
+      return {
+        message
+      }
+    }
+
+    const affectedSponsorCodes = Array.from(new Set(membersToUpdate.map(member => member.sponsorCode)))
     let updatedCount = 0
 
     await preserveContributionReserveDeficitForSponsors(affectedSponsorCodes, async () => {
       await db.$transaction(async tx => {
-        for (const member of selectedMembers) {
+        for (const member of membersToUpdate) {
           if (member.memberStatus === nextStatus) {
             continue
           }
