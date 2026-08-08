@@ -1,5 +1,5 @@
 'use client'
-import { useActionState, useEffect, useId, useMemo, useState } from 'react'
+import { useActionState, useId, useMemo, useState } from 'react'
 
 import { useFormStatus } from 'react-dom'
 
@@ -11,12 +11,10 @@ import * as XLSX from 'xlsx'
 day.extend(advancedFormat)
 
 import {
-  AlertCircle,
   AlertTriangle,
   ArrowDown,
   ArrowUp,
   ArrowUpDown,
-  Clock3,
   Ellipsis,
   Trash2,
   FileSpreadsheetIcon,
@@ -29,7 +27,6 @@ import {
   ShieldCheck,
   Pencil
 } from 'lucide-react'
-import type { LucideIcon } from 'lucide-react'
 
 import type { Column, ColumnDef, ColumnFiltersState, PaginationState, RowData } from '@tanstack/react-table'
 import {
@@ -45,8 +42,6 @@ import {
 } from '@tanstack/react-table'
 
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { toast } from 'sonner'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -79,17 +74,19 @@ import { usePagination } from '@/hooks/use-pagination'
 import { usePersistentState } from '@/hooks/use-persistent-state'
 
 import MembershipSummaryCards from '@/components/dashboard/MembershipSummaryCards'
+import RemoveOverduePendingMembersButton from '@/components/global/RemoveOverduePendingMembersButton'
 import ResponsiveTableCards from '@/components/dashboard/ResponsiveTableCards'
 import { TablePaginationControls } from '@/components/dashboard/TablePaginationControls'
 import { cn } from '@/lib/utils'
 import {
+  getOverdueRegistrationPaymentCreatedAtCutoff,
   getRegistrationPaymentCountdown,
   getRegistrationPaymentCountdownLabel,
   registrationPaymentDeadlineDays
 } from '@/utils/registration-payment-deadline'
 import { awaitingPublicationVestingLongevityDays } from '@/utils/sagicam-member-longevity'
 import { getNameSearchValue, nameSearchColumnId, normalizeNameColumnFilters } from '@/utils/table-filters'
-import { updateMemberStatusForAdminAction, vestEligibleAwaitingPublicationMembersAction } from '@/utils/actions'
+import { vestEligibleAwaitingPublicationMembersAction } from '@/utils/actions'
 import { memberStatus, type MemberType } from '@/utils/types'
 
 declare module '@tanstack/react-table' {
@@ -295,7 +292,7 @@ const columns: ColumnDef<MemberType>[] = [
       // Destructuring 'id' directly from the row data
       const { id } = original
 
-      return <RowActions currentStatus={original.memberStatus} memberId={id} />
+      return <RowActions memberId={id} />
     },
     size: 65
   }
@@ -367,6 +364,14 @@ const MembersDataTable = ({
       member =>
         member.memberStatus === memberStatus.Awaiting &&
         now.diff(day(member.createdAt), 'days') >= awaitingPublicationVestingLongevityDays
+    ).length
+  }, [data])
+
+  const overduePendingMembersCount = useMemo(() => {
+    const overdueCutoffTime = getOverdueRegistrationPaymentCreatedAtCutoff().getTime()
+
+    return data.filter(
+      member => member.memberStatus === memberStatus.Pending && new Date(member.createdAt).getTime() < overdueCutoffTime
     ).length
   }, [data])
 
@@ -525,6 +530,7 @@ const MembersDataTable = ({
                   </form>
                 </AlertDialogContent>
               </AlertDialog>
+              <RemoveOverduePendingMembersButton overdueCount={overduePendingMembersCount} />
               <Button
                 className='bg-primary/10 text-primary hover:bg-primary/20 focus-visible:ring-primary/20 dark:focus-visible:ring-primary/40 shrink-0 max-md:flex-1 max-md:justify-center'
                 onClick={exportFilteredPageToExcel}
@@ -815,19 +821,9 @@ function Filter({ column }: { column: Column<any, unknown> }) {
   )
 }
 
-function RowActions({ currentStatus, memberId }: { currentStatus: string; memberId: string }) {
-  const router = useRouter()
-
-  const [statusState, statusFormAction] = useActionState(updateMemberStatusForAdminAction, {
-    message: ''
-  })
-
-  useEffect(() => {
-    if (statusState.message) {
-      toast(statusState.message)
-      router.refresh()
-    }
-  }, [router, statusState.message])
+function RowActions({ memberId }: { memberId: string }) {
+  const currentDay = new Date().getDate()
+  const shouldShow = currentDay >= 12
 
   return (
     <DropdownMenu>
@@ -865,91 +861,8 @@ function RowActions({ currentStatus, memberId }: { currentStatus: string; member
               </span>
             </Link>
           </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <MemberStatusActionForm
-            className='text-blue-500'
-            currentStatus={currentStatus}
-            formAction={statusFormAction}
-            icon={Clock3}
-            memberId={memberId}
-            nextStatus={memberStatus.Awaiting}
-            text='Make Awaiting'
-          />
-          <MemberStatusActionForm
-            className='text-green-600'
-            currentStatus={currentStatus}
-            formAction={statusFormAction}
-            icon={ShieldCheck}
-            memberId={memberId}
-            nextStatus={memberStatus.Vested}
-            text='Make Vested'
-          />
-          <MemberStatusActionForm
-            className='text-red-600'
-            currentStatus={currentStatus}
-            formAction={statusFormAction}
-            icon={AlertCircle}
-            memberId={memberId}
-            nextStatus={memberStatus.Delinquent}
-            text='Make Delinquent'
-          />
         </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
-  )
-}
-
-function MemberStatusActionForm({
-  className,
-  currentStatus,
-  formAction,
-  icon,
-  memberId,
-  nextStatus,
-  text
-}: {
-  className: string
-  currentStatus: string
-  formAction: (formData: FormData) => void
-  icon: LucideIcon
-  memberId: string
-  nextStatus: memberStatus
-  text: string
-}) {
-  const disabled = currentStatus === nextStatus
-
-  return (
-    <form action={formAction}>
-      <input type='hidden' name='memberId' value={memberId} />
-      <input type='hidden' name='memberStatus' value={nextStatus} />
-      <DropdownMenuItem asChild disabled={disabled}>
-        <MemberStatusSubmitButton className={className} disabled={disabled} icon={icon} text={text} />
-      </DropdownMenuItem>
-    </form>
-  )
-}
-
-function MemberStatusSubmitButton({
-  className,
-  disabled,
-  icon: Icon,
-  text
-}: {
-  className: string
-  disabled: boolean
-  icon: LucideIcon
-  text: string
-}) {
-  const { pending } = useFormStatus()
-
-  return (
-    <button
-      type='submit'
-      disabled={disabled || pending}
-      className={cn('flex w-full items-center gap-3 text-left disabled:opacity-50', className)}
-    >
-      {pending ? <Loader className='animate-spin' /> : <Icon />}
-      {pending ? 'Updating...' : text}
-    </button>
   )
 }
