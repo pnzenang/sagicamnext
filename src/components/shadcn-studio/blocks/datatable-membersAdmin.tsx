@@ -21,6 +21,7 @@ import {
   Trash2,
   FileSpreadsheetIcon,
   FileTextIcon,
+  PrinterIcon,
   SearchIcon,
   UploadIcon,
   XIcon,
@@ -36,6 +37,7 @@ import type {
   ColumnDef,
   ColumnFiltersState,
   PaginationState,
+  Row,
   RowData,
   RowSelectionState
 } from '@tanstack/react-table'
@@ -79,6 +81,12 @@ import MembershipSummaryCards from '@/components/dashboard/MembershipSummaryCard
 import ResponsiveTableCards from '@/components/dashboard/ResponsiveTableCards'
 import { TablePaginationControls } from '@/components/dashboard/TablePaginationControls'
 import { cn } from '@/lib/utils'
+import {
+  getMemberTableExportRow,
+  getMemberTablePrintableDocument,
+  memberTableExportColumns,
+  memberTableWorksheetColumnWidths
+} from '@/utils/member-table-export-print'
 import {
   getOverdueRegistrationPaymentCreatedAtCutoff,
   getRegistrationPaymentCountdown,
@@ -396,7 +404,8 @@ const MembersDataTable = ({
     onPaginationChange: setPagination
   })
 
-  const selectedMembers = table.getSelectedRowModel().rows.map(row => row.original)
+  const selectedMemberRows = table.getSelectedRowModel().rows
+  const selectedMembers = selectedMemberRows.map(row => row.original)
   const selectedMemberIds = selectedMembers.map(member => member.id)
   const selectedMembersPayload = JSON.stringify(selectedMemberIds)
   const selectedMembersCount = selectedMemberIds.length
@@ -422,13 +431,17 @@ const MembersDataTable = ({
     }
   }, [bulkRemoveOverdueState.message, bulkStatusState.message, router])
 
-  const exportToCSV = () => {
-    const selectedRows = table.getSelectedRowModel().rows
+  const getMemberExportRows = (rowsToExport: Row<MemberType>[]) =>
+    rowsToExport.map(row =>
+      getMemberTableExportRow({
+        member: row.original,
+        recommendation: row.getValue('delegateRecommendation'),
+        registrationDues: getRegistrationPaymentWarning(row.original)
+      })
+    )
 
-    const dataToExport =
-      selectedRows.length > 0
-        ? selectedRows.map(row => row.original)
-        : table.getFilteredRowModel().rows.map(row => row.original)
+  const exportToCSV = () => {
+    const dataToExport = table.getFilteredRowModel().rows.map(row => row.original)
 
     const csv = Papa.unparse(dataToExport, {
       header: true
@@ -447,12 +460,7 @@ const MembersDataTable = ({
   }
 
   const exportToExcel = () => {
-    const selectedRows = table.getSelectedRowModel().rows
-
-    const dataToExport =
-      selectedRows.length > 0
-        ? selectedRows.map(row => row.original)
-        : table.getFilteredRowModel().rows.map(row => row.original)
+    const dataToExport = table.getFilteredRowModel().rows.map(row => row.original)
 
     const worksheet = XLSX.utils.json_to_sheet(dataToExport)
     const workbook = XLSX.utils.book_new()
@@ -466,48 +474,56 @@ const MembersDataTable = ({
     XLSX.writeFile(workbook, `payments-export-${new Date().toISOString().split('T')[0]}.xlsx`)
   }
 
-  const exportFilteredPageToExcel = () => {
-    const dataToExport = table.getFilteredRowModel().rows.map(row => {
-      const member = row.original
+  const exportMemberRowsToExcel = (rowsToExport: Row<MemberType>[], fileScope: string) => {
+    const dataToExport = getMemberExportRows(rowsToExport)
 
-      return {
-        Code: member.sponsorCode,
-        Matriculation: member.memberMatriculationNumber,
-        'Last Names': member.lastAndMiddleNames,
-        'First Name': member.firstName,
-        'Longevity(Days)': day(Date.now()).diff(day(member.createdAt), 'days'),
-        Recommendation: row.getValue('delegateRecommendation'),
-        Status: member.memberStatus,
-        [`Registration Dues (${registrationPaymentDeadlineDays} days)`]: getRegistrationPaymentWarning(member)
-      }
-    })
-
-    const worksheet = XLSX.utils.json_to_sheet(dataToExport)
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport, { header: [...memberTableExportColumns] })
     const workbook = XLSX.utils.book_new()
 
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Loved Ones')
 
-    worksheet['!cols'] = [
-      { wch: 14 },
-      { wch: 18 },
-      { wch: 24 },
-      { wch: 18 },
-      { wch: 14 },
-      { wch: 18 },
-      { wch: 18 },
-      { wch: 28 }
-    ]
+    worksheet['!cols'] = memberTableWorksheetColumnWidths
 
-    XLSX.writeFile(workbook, `loved-ones-filtered-export-${new Date().toISOString().split('T')[0]}.xlsx`)
+    XLSX.writeFile(workbook, `loved-ones-${fileScope}-export-${new Date().toISOString().split('T')[0]}.xlsx`)
+  }
+
+  const exportFilteredPageToExcel = () => {
+    exportMemberRowsToExcel(table.getFilteredRowModel().rows, 'filtered')
+  }
+
+  const exportSelectedRowsToExcel = () => {
+    exportMemberRowsToExcel(selectedMemberRows, 'selected')
+  }
+
+  const printMemberRows = (rowsToPrint: Row<MemberType>[], title: string) => {
+    const printWindow = window.open('', '_blank', 'width=1100,height=800')
+
+    if (!printWindow) return
+
+    printWindow.document.write(
+      getMemberTablePrintableDocument({
+        generatedAt: new Date().toLocaleString(),
+        rows: getMemberExportRows(rowsToPrint),
+        title
+      })
+    )
+    printWindow.document.close()
+    printWindow.focus()
+    window.setTimeout(() => {
+      printWindow.print()
+    }, 250)
+  }
+
+  const printFilteredRows = () => {
+    printMemberRows(table.getFilteredRowModel().rows, 'All Registered Loved Ones (Admin)')
+  }
+
+  const printSelectedRows = () => {
+    printMemberRows(selectedMemberRows, 'Selected Registered Loved Ones (Admin)')
   }
 
   const exportToJSON = () => {
-    const selectedRows = table.getSelectedRowModel().rows
-
-    const dataToExport =
-      selectedRows.length > 0
-        ? selectedRows.map(row => row.original)
-        : table.getFilteredRowModel().rows.map(row => row.original)
+    const dataToExport = table.getFilteredRowModel().rows.map(row => row.original)
 
     const json = JSON.stringify(dataToExport, null, 2)
     const blob = new Blob([json], { type: 'application/json' })
@@ -553,9 +569,39 @@ const MembersDataTable = ({
               <Button
                 className='bg-primary/10 text-primary hover:bg-primary/20 focus-visible:ring-primary/20 dark:focus-visible:ring-primary/40 shrink-0 max-md:flex-1 max-md:justify-center'
                 onClick={exportFilteredPageToExcel}
+                disabled={table.getFilteredRowModel().rows.length === 0}
               >
                 <FileSpreadsheetIcon />
                 Export Page
+              </Button>
+              {selectedMembersCount > 0 ? (
+                <Badge variant='secondary' className='h-10 shrink-0 rounded-md px-3 text-sm font-semibold'>
+                  {selectedMembersCount} selected
+                </Badge>
+              ) : null}
+              <Button
+                className='bg-primary/10 text-primary hover:bg-primary/20 focus-visible:ring-primary/20 dark:focus-visible:ring-primary/40 shrink-0 max-md:flex-1 max-md:justify-center'
+                onClick={exportSelectedRowsToExcel}
+                disabled={selectedMembersCount === 0}
+              >
+                <FileSpreadsheetIcon />
+                Export Selected
+              </Button>
+              <Button
+                className='bg-primary/10 text-primary hover:bg-primary/20 focus-visible:ring-primary/20 dark:focus-visible:ring-primary/40 shrink-0 max-md:flex-1 max-md:justify-center'
+                onClick={printFilteredRows}
+                disabled={table.getFilteredRowModel().rows.length === 0}
+              >
+                <PrinterIcon />
+                Print PDF
+              </Button>
+              <Button
+                className='bg-primary/10 text-primary hover:bg-primary/20 focus-visible:ring-primary/20 dark:focus-visible:ring-primary/40 shrink-0 max-md:flex-1 max-md:justify-center'
+                onClick={printSelectedRows}
+                disabled={selectedMembersCount === 0}
+              >
+                <PrinterIcon />
+                Print Selected
               </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

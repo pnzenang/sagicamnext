@@ -9,12 +9,14 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   FileSpreadsheetIcon,
+  PrinterIcon,
   SearchIcon
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem } from '@/components/ui/pagination'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -43,11 +45,12 @@ type NewAdditionColumn = {
 const columns: NewAdditionColumn[] = [
   { key: 'sponsorCode', label: 'Code', width: 8 },
   { key: 'memberMatriculationNumber', label: 'Matriculation', width: 14 },
-  { key: 'firstName', label: 'First name', width: 16 },
-  { key: 'lastAndMiddleNames', label: 'Last and middle names', width: 34 },
-  { key: 'vestedAt', label: 'Vested date', width: 28 }
+  { key: 'firstName', label: 'First name', width: 15 },
+  { key: 'lastAndMiddleNames', label: 'Last and middle names', width: 32 },
+  { key: 'vestedAt', label: 'Vested date', width: 26 }
 ]
 
+const selectionColumnWidth = 5
 const pageSizeOptions = [10, 25, 50, 100]
 
 const dateFormatter = new Intl.DateTimeFormat('en-US', {
@@ -68,6 +71,83 @@ const compareValues = (firstValue: NewAdditionRow[SortKey], secondValue: NewAddi
 
 const formatDate = (date: string) => dateFormatter.format(new Date(date))
 
+const escapeHtml = (value: string) =>
+  value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+
+const getWorksheetRows = (exportRows: NewAdditionRow[]) => [
+  columns.map(column => column.label),
+  ...exportRows.map(row => [
+    row.sponsorCode,
+    row.memberMatriculationNumber,
+    row.firstName,
+    row.lastAndMiddleNames,
+    formatDate(row.vestedAt)
+  ])
+]
+
+const getPrintableDocument = ({
+  generatedAt,
+  printRows,
+  title
+}: {
+  generatedAt: string
+  printRows: NewAdditionRow[]
+  title: string
+}) => {
+  const headerCells = columns.map(column => `<th>${escapeHtml(column.label)}</th>`).join('')
+
+  const bodyRows = printRows
+    .map(
+      row => `
+        <tr>
+          <td>${escapeHtml(row.sponsorCode)}</td>
+          <td>${escapeHtml(row.memberMatriculationNumber)}</td>
+          <td>${escapeHtml(row.firstName)}</td>
+          <td>${escapeHtml(row.lastAndMiddleNames)}</td>
+          <td>${escapeHtml(formatDate(row.vestedAt))}</td>
+        </tr>
+      `
+    )
+    .join('')
+
+  return `<!doctype html>
+    <html>
+      <head>
+        <meta charset="utf-8" />
+        <title>${escapeHtml(title)}</title>
+        <style>
+          @page { size: landscape; margin: 0.45in; }
+          * { box-sizing: border-box; }
+          body { color: #111827; font-family: Arial, Helvetica, sans-serif; font-size: 11px; margin: 0; }
+          h1 { font-size: 20px; margin: 0 0 6px; }
+          p { margin: 0 0 14px; }
+          table { border-collapse: collapse; table-layout: fixed; width: 100%; }
+          th, td { border: 1px solid #d1d5db; padding: 7px 8px; text-align: left; vertical-align: top; word-break: break-word; }
+          th { background: #e5e7eb; font-weight: 700; }
+          tbody tr:nth-child(even) { background: #f9fafb; }
+          .meta { color: #4b5563; font-size: 10px; }
+        </style>
+      </head>
+      <body>
+        <h1>${escapeHtml(title)}</h1>
+        <p class="meta">${printRows.length} loved one${printRows.length === 1 ? '' : 's'} | Generated ${escapeHtml(
+          generatedAt
+        )}</p>
+        <table>
+          <thead>
+            <tr>${headerCells}</tr>
+          </thead>
+          <tbody>${bodyRows}</tbody>
+        </table>
+      </body>
+    </html>`
+}
+
 const MobileValue = ({ label, value }: { label: string; value: string }) => (
   <div className='grid grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] items-start gap-2'>
     <span className='text-muted-foreground min-w-0 text-xs leading-snug font-semibold uppercase'>{label}</span>
@@ -83,6 +163,7 @@ const NewAdditionsTable = ({ monthKey, rows }: { monthKey: string; rows: NewAddi
   const [search, setSearch] = usePersistentState(`sagicam:new-additions:${monthKey}:search`, '')
   const [pageSize, setPageSize] = usePersistentState('sagicam:new-additions:page-size', 25)
   const [currentPage, setCurrentPage] = useState(1)
+  const [selectedRowIds, setSelectedRowIds] = useState<Record<string, boolean>>({})
 
   const normalizedSearch = search.trim().toLowerCase()
 
@@ -111,6 +192,10 @@ const NewAdditionsTable = ({ monthKey, rows }: { monthKey: string; rows: NewAddi
   const pageEndIndex = Math.min(pageStartIndex + pageSize, sortedRows.length)
   const paginatedRows = sortedRows.slice(pageStartIndex, pageEndIndex)
   const showingStart = sortedRows.length > 0 ? pageStartIndex + 1 : 0
+  const selectedRows = sortedRows.filter(row => selectedRowIds[row.id])
+  const selectedPageRowsCount = paginatedRows.filter(row => selectedRowIds[row.id]).length
+  const areAllPageRowsSelected = paginatedRows.length > 0 && selectedPageRowsCount === paginatedRows.length
+  const areSomePageRowsSelected = selectedPageRowsCount > 0 && !areAllPageRowsSelected
 
   const { pages, showLeftEllipsis, showRightEllipsis } = usePagination({
     currentPage: effectiveCurrentPage,
@@ -145,26 +230,80 @@ const NewAdditionsTable = ({ monthKey, rows }: { monthKey: string; rows: NewAddi
     setCurrentPage(Math.min(Math.max(nextPage, 1), totalPages))
   }
 
-  const handleExportFilteredRows = () => {
-    const worksheetRows = [
-      columns.map(column => column.label),
-      ...sortedRows.map(row => [
-        row.sponsorCode,
-        row.memberMatriculationNumber,
-        row.firstName,
-        row.lastAndMiddleNames,
-        formatDate(row.vestedAt)
-      ])
-    ]
+  const handleRowSelectionChange = (rowId: string, selected: boolean) => {
+    setSelectedRowIds(currentSelection => {
+      const nextSelection = { ...currentSelection }
 
-    const worksheet = XLSX.utils.aoa_to_sheet(worksheetRows)
+      if (selected) {
+        nextSelection[rowId] = true
+      } else {
+        delete nextSelection[rowId]
+      }
+
+      return nextSelection
+    })
+  }
+
+  const handlePageSelectionChange = (selected: boolean) => {
+    setSelectedRowIds(currentSelection => {
+      const nextSelection = { ...currentSelection }
+
+      paginatedRows.forEach(row => {
+        if (selected) {
+          nextSelection[row.id] = true
+        } else {
+          delete nextSelection[row.id]
+        }
+      })
+
+      return nextSelection
+    })
+  }
+
+  const handleExportRows = (exportRows: NewAdditionRow[], fileScope: string) => {
+    const worksheet = XLSX.utils.aoa_to_sheet(getWorksheetRows(exportRows))
 
     worksheet['!cols'] = [{ wch: 14 }, { wch: 18 }, { wch: 18 }, { wch: 28 }, { wch: 16 }]
 
     const workbook = XLSX.utils.book_new()
 
     XLSX.utils.book_append_sheet(workbook, worksheet, 'New Additions')
-    XLSX.writeFile(workbook, `new-additions-${monthKey}-filtered-${new Date().toISOString().split('T')[0]}.xlsx`)
+    XLSX.writeFile(workbook, `new-additions-${monthKey}-${fileScope}-${new Date().toISOString().split('T')[0]}.xlsx`)
+  }
+
+  const handleExportFilteredRows = () => {
+    handleExportRows(sortedRows, 'filtered')
+  }
+
+  const handleExportSelectedRows = () => {
+    handleExportRows(selectedRows, 'selected')
+  }
+
+  const handlePrintRows = (printRows: NewAdditionRow[], title: string) => {
+    const printWindow = window.open('', '_blank', 'width=1100,height=800')
+
+    if (!printWindow) return
+
+    printWindow.document.write(
+      getPrintableDocument({
+        generatedAt: new Date().toLocaleString(),
+        printRows,
+        title
+      })
+    )
+    printWindow.document.close()
+    printWindow.focus()
+    window.setTimeout(() => {
+      printWindow.print()
+    }, 250)
+  }
+
+  const handlePrintFilteredRows = () => {
+    handlePrintRows(sortedRows, `New Additions - ${monthKey}`)
+  }
+
+  const handlePrintSelectedRows = () => {
+    handlePrintRows(selectedRows, `Selected New Additions - ${monthKey}`)
   }
 
   return (
@@ -192,6 +331,11 @@ const NewAdditionsTable = ({ monthKey, rows }: { monthKey: string; rows: NewAddi
           <Badge variant='outline' className='h-10 w-fit rounded-md px-3 text-sm font-semibold'>
             {sortedRows.length} vested
           </Badge>
+          {selectedRows.length > 0 ? (
+            <Badge variant='secondary' className='h-10 w-fit rounded-md px-3 text-sm font-semibold'>
+              {selectedRows.length} selected
+            </Badge>
+          ) : null}
           <Button
             type='button'
             className='h-10'
@@ -201,6 +345,33 @@ const NewAdditionsTable = ({ monthKey, rows }: { monthKey: string; rows: NewAddi
             <FileSpreadsheetIcon />
             Export Page
           </Button>
+          <Button
+            type='button'
+            className='h-10'
+            onClick={handleExportSelectedRows}
+            disabled={selectedRows.length === 0}
+          >
+            <FileSpreadsheetIcon />
+            Export Selected
+          </Button>
+          <Button
+            type='button'
+            className='h-10'
+            onClick={handlePrintFilteredRows}
+            disabled={sortedRows.length === 0}
+          >
+            <PrinterIcon />
+            Print PDF
+          </Button>
+          <Button
+            type='button'
+            className='h-10'
+            onClick={handlePrintSelectedRows}
+            disabled={selectedRows.length === 0}
+          >
+            <PrinterIcon />
+            Print Selected
+          </Button>
         </div>
       </div>
 
@@ -208,12 +379,20 @@ const NewAdditionsTable = ({ monthKey, rows }: { monthKey: string; rows: NewAddi
         <div className='hidden overflow-x-auto md:block'>
           <Table className='[[&_td]:wrap-break-word table-fixed [&_td]:whitespace-normal [&_th]:wrap-break-word [&_th]:whitespace-normal'>
             <colgroup>
+              <col style={{ width: `${selectionColumnWidth}%` }} />
               {columns.map(column => (
                 <col key={column.key} style={{ width: `${column.width}%` }} />
               ))}
             </colgroup>
             <TableHeader>
               <TableRow className='bg-primary hover:bg-primary'>
+                <TableHead className='text-primary-foreground' title='Select'>
+                  <Checkbox
+                    aria-label='Select all visible new additions'
+                    checked={areAllPageRowsSelected || (areSomePageRowsSelected && 'indeterminate')}
+                    onCheckedChange={value => handlePageSelectionChange(Boolean(value))}
+                  />
+                </TableHead>
                 {columns.map(column => {
                   const isActive = sortKey === column.key
 
@@ -240,7 +419,7 @@ const NewAdditionsTable = ({ monthKey, rows }: { monthKey: string; rows: NewAddi
             <TableBody>
               {sortedRows.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={columns.length} className='text-muted-foreground h-24 text-center'>
+                  <TableCell colSpan={columns.length + 1} className='text-muted-foreground h-24 text-center'>
                     {normalizedSearch
                       ? `No vested loved one matching "${search.trim()}" found.`
                       : 'No loved ones vested this month.'}
@@ -249,6 +428,13 @@ const NewAdditionsTable = ({ monthKey, rows }: { monthKey: string; rows: NewAddi
               ) : (
                 paginatedRows.map(row => (
                   <TableRow key={row.id} className='odd:bg-muted/30 even:bg-background'>
+                    <TableCell>
+                      <Checkbox
+                        aria-label={`Select ${row.firstName} ${row.lastAndMiddleNames}`}
+                        checked={Boolean(selectedRowIds[row.id])}
+                        onCheckedChange={value => handleRowSelectionChange(row.id, Boolean(value))}
+                      />
+                    </TableCell>
                     <TableCell>
                       <Badge variant='secondary' className='rounded-md font-mono'>
                         {row.sponsorCode}
@@ -279,12 +465,20 @@ const NewAdditionsTable = ({ monthKey, rows }: { monthKey: string; rows: NewAddi
                 className='bg-background overflow-hidden rounded-md border p-3 shadow-sm sm:p-4'
               >
                 <div className='flex items-start justify-between gap-3'>
-                  <div className='min-w-0'>
-                    <div className='text-base font-extrabold break-words'>
-                      {row.firstName} {row.lastAndMiddleNames}
-                    </div>
-                    <div className='text-muted-foreground mt-1 text-xs font-semibold break-words'>
-                      {row.memberMatriculationNumber}
+                  <div className='flex min-w-0 items-start gap-3'>
+                    <Checkbox
+                      aria-label={`Select ${row.firstName} ${row.lastAndMiddleNames}`}
+                      checked={Boolean(selectedRowIds[row.id])}
+                      onCheckedChange={value => handleRowSelectionChange(row.id, Boolean(value))}
+                      className='mt-1'
+                    />
+                    <div className='min-w-0'>
+                      <div className='text-base font-extrabold break-words'>
+                        {row.firstName} {row.lastAndMiddleNames}
+                      </div>
+                      <div className='text-muted-foreground mt-1 text-xs font-semibold break-words'>
+                        {row.memberMatriculationNumber}
+                      </div>
                     </div>
                   </div>
                   <Badge variant='secondary' className='shrink-0 rounded-md font-mono'>
