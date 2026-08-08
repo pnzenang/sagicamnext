@@ -45,16 +45,19 @@ type NewAdditionColumn = {
 const columns: NewAdditionColumn[] = [
   { key: 'sponsorCode', label: 'Code', width: 8 },
   { key: 'memberMatriculationNumber', label: 'Matriculation', width: 14 },
-  { key: 'firstName', label: 'First name', width: 15 },
-  { key: 'lastAndMiddleNames', label: 'Last and middle names', width: 32 },
-  { key: 'vestedAt', label: 'Vested date', width: 26 }
+  { key: 'firstName', label: 'First name', width: 14 },
+  { key: 'lastAndMiddleNames', label: 'Last and middle names', width: 31 },
+  { key: 'vestedAt', label: 'Vested date', width: 23 }
 ]
 
+const rowNumberColumnWidth = 5
 const selectionColumnWidth = 5
 const pageSizeOptions = [10, 25, 50, 100]
 
 const dateFormatter = new Intl.DateTimeFormat('en-US', {
-  dateStyle: 'medium'
+  day: '2-digit',
+  month: 'short',
+  year: 'numeric'
 })
 
 const getSortIcon = (isActive: boolean, direction: SortDirection) => {
@@ -71,17 +74,18 @@ const compareValues = (firstValue: NewAdditionRow[SortKey], secondValue: NewAddi
 
 const formatDate = (date: string) => dateFormatter.format(new Date(date))
 
-const escapeHtml = (value: string) =>
-  value
+const escapeHtml = (value: number | string) =>
+  String(value)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;')
 
-const getWorksheetRows = (exportRows: NewAdditionRow[]) => [
-  columns.map(column => column.label),
+const getWorksheetRows = (exportRows: NewAdditionRow[], rowNumberById: Record<string, number>) => [
+  ['No.', ...columns.map(column => column.label)],
   ...exportRows.map(row => [
+    rowNumberById[row.id] ?? '',
     row.sponsorCode,
     row.memberMatriculationNumber,
     row.firstName,
@@ -93,18 +97,23 @@ const getWorksheetRows = (exportRows: NewAdditionRow[]) => [
 const getPrintableDocument = ({
   generatedAt,
   printRows,
+  rowNumberById,
   title
 }: {
   generatedAt: string
   printRows: NewAdditionRow[]
+  rowNumberById: Record<string, number>
   title: string
 }) => {
-  const headerCells = columns.map(column => `<th>${escapeHtml(column.label)}</th>`).join('')
+  const headerCells = ['No.', ...columns.map(column => column.label)]
+    .map(column => `<th>${escapeHtml(column)}</th>`)
+    .join('')
 
   const bodyRows = printRows
     .map(
       row => `
         <tr>
+          <td>${escapeHtml(rowNumberById[row.id] ?? '')}</td>
           <td>${escapeHtml(row.sponsorCode)}</td>
           <td>${escapeHtml(row.memberMatriculationNumber)}</td>
           <td>${escapeHtml(row.firstName)}</td>
@@ -128,6 +137,7 @@ const getPrintableDocument = ({
           p { margin: 0 0 14px; }
           table { border-collapse: collapse; table-layout: fixed; width: 100%; }
           th, td { border: 1px solid #d1d5db; padding: 7px 8px; text-align: left; vertical-align: top; word-break: break-word; }
+          th:first-child, td:first-child { text-align: right; width: 42px; }
           th { background: #e5e7eb; font-weight: 700; }
           tbody tr:nth-child(even) { background: #f9fafb; }
           .meta { color: #4b5563; font-size: 10px; }
@@ -185,6 +195,16 @@ const NewAdditionsTable = ({ monthKey, rows }: { monthKey: string; rows: NewAddi
       return sortDirection === 'asc' ? comparison : -comparison
     })
   }, [filteredRows, sortDirection, sortKey])
+
+  const rowNumberById = useMemo(
+    () =>
+      sortedRows.reduce<Record<string, number>>((rowNumbers, row, index) => {
+        rowNumbers[row.id] = index + 1
+
+        return rowNumbers
+      }, {}),
+    [sortedRows]
+  )
 
   const totalPages = Math.max(1, Math.ceil(sortedRows.length / pageSize))
   const effectiveCurrentPage = Math.min(currentPage, totalPages)
@@ -261,9 +281,9 @@ const NewAdditionsTable = ({ monthKey, rows }: { monthKey: string; rows: NewAddi
   }
 
   const handleExportRows = (exportRows: NewAdditionRow[], fileScope: string) => {
-    const worksheet = XLSX.utils.aoa_to_sheet(getWorksheetRows(exportRows))
+    const worksheet = XLSX.utils.aoa_to_sheet(getWorksheetRows(exportRows, rowNumberById))
 
-    worksheet['!cols'] = [{ wch: 14 }, { wch: 18 }, { wch: 18 }, { wch: 28 }, { wch: 16 }]
+    worksheet['!cols'] = [{ wch: 7 }, { wch: 14 }, { wch: 18 }, { wch: 18 }, { wch: 28 }, { wch: 16 }]
 
     const workbook = XLSX.utils.book_new()
 
@@ -291,6 +311,7 @@ const NewAdditionsTable = ({ monthKey, rows }: { monthKey: string; rows: NewAddi
       getPrintableDocument({
         generatedAt: new Date().toLocaleString(),
         printRows,
+        rowNumberById,
         title
       })
     )
@@ -383,6 +404,7 @@ const NewAdditionsTable = ({ monthKey, rows }: { monthKey: string; rows: NewAddi
           <Table className='[[&_td]:wrap-break-word table-fixed [&_td]:whitespace-normal [&_th]:wrap-break-word [&_th]:whitespace-normal'>
             <colgroup>
               <col style={{ width: `${selectionColumnWidth}%` }} />
+              <col style={{ width: `${rowNumberColumnWidth}%` }} />
               {columns.map(column => (
                 <col key={column.key} style={{ width: `${column.width}%` }} />
               ))}
@@ -395,6 +417,9 @@ const NewAdditionsTable = ({ monthKey, rows }: { monthKey: string; rows: NewAddi
                     checked={areAllPageRowsSelected || (areSomePageRowsSelected && 'indeterminate')}
                     onCheckedChange={value => handlePageSelectionChange(Boolean(value))}
                   />
+                </TableHead>
+                <TableHead className='text-primary-foreground text-right' title='Row number'>
+                  No.
                 </TableHead>
                 {columns.map(column => {
                   const isActive = sortKey === column.key
@@ -422,7 +447,7 @@ const NewAdditionsTable = ({ monthKey, rows }: { monthKey: string; rows: NewAddi
             <TableBody>
               {sortedRows.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={columns.length + 1} className='text-muted-foreground h-24 text-center'>
+                  <TableCell colSpan={columns.length + 2} className='text-muted-foreground h-24 text-center'>
                     {normalizedSearch
                       ? `No vested loved one matching "${search.trim()}" found.`
                       : 'No loved ones vested this month.'}
@@ -441,6 +466,9 @@ const NewAdditionsTable = ({ monthKey, rows }: { monthKey: string; rows: NewAddi
                         checked={Boolean(selectedRowIds[row.id])}
                         onCheckedChange={value => handleRowSelectionChange(row.id, Boolean(value))}
                       />
+                    </TableCell>
+                    <TableCell className='text-muted-foreground text-right font-mono text-sm font-semibold'>
+                      {rowNumberById[row.id]}
                     </TableCell>
                     <TableCell>
                       <Badge variant='secondary' className='rounded-md font-mono'>
@@ -466,42 +494,52 @@ const NewAdditionsTable = ({ monthKey, rows }: { monthKey: string; rows: NewAddi
                 : 'No loved ones vested this month.'}
             </div>
           ) : (
-            paginatedRows.map((row, rowIndex) => (
-              <article
-                key={row.id}
-                className={`overflow-hidden rounded-md border p-3 shadow-sm sm:p-4 ${
-                  rowIndex % 2 === 0 ? 'bg-background' : 'bg-muted/45'
-                }`}
-              >
-                <div className='flex items-start justify-between gap-3'>
-                  <div className='flex min-w-0 items-start gap-3'>
-                    <Checkbox
-                      aria-label={`Select ${row.firstName} ${row.lastAndMiddleNames}`}
-                      checked={Boolean(selectedRowIds[row.id])}
-                      onCheckedChange={value => handleRowSelectionChange(row.id, Boolean(value))}
-                      className='mt-1'
-                    />
-                    <div className='min-w-0'>
-                      <div className='text-base font-extrabold break-words'>
-                        {row.firstName} {row.lastAndMiddleNames}
-                      </div>
-                      <div className='text-muted-foreground mt-1 text-xs font-semibold break-words'>
-                        {row.memberMatriculationNumber}
+            paginatedRows.map((row, rowIndex) => {
+              const rowNumber = rowNumberById[row.id] ?? pageStartIndex + rowIndex + 1
+
+              return (
+                <article
+                  key={row.id}
+                  className={`overflow-hidden rounded-md border p-3 shadow-sm sm:p-4 ${
+                    rowIndex % 2 === 0 ? 'bg-background' : 'bg-muted/45'
+                  }`}
+                >
+                  <div className='flex items-start justify-between gap-3'>
+                    <div className='flex min-w-0 items-start gap-3'>
+                      <Checkbox
+                        aria-label={`Select ${row.firstName} ${row.lastAndMiddleNames}`}
+                        checked={Boolean(selectedRowIds[row.id])}
+                        onCheckedChange={value => handleRowSelectionChange(row.id, Boolean(value))}
+                        className='mt-1'
+                      />
+                      <div className='min-w-0'>
+                        <div className='text-base font-extrabold break-words'>
+                          {row.firstName} {row.lastAndMiddleNames}
+                        </div>
+                        <div className='text-muted-foreground mt-1 text-xs font-semibold break-words'>
+                          {row.memberMatriculationNumber}
+                        </div>
                       </div>
                     </div>
+                    <div className='flex shrink-0 flex-col items-end gap-2'>
+                      <Badge variant='outline' className='rounded-md font-mono'>
+                        No. {rowNumber}
+                      </Badge>
+                      <Badge variant='secondary' className='rounded-md font-mono'>
+                        {row.sponsorCode}
+                      </Badge>
+                    </div>
                   </div>
-                  <Badge variant='secondary' className='shrink-0 rounded-md font-mono'>
-                    {row.sponsorCode}
-                  </Badge>
-                </div>
-                <div className='mt-4 grid gap-3'>
-                  <MobileValue label='First name' value={row.firstName} />
-                  <MobileValue label='Last and middle names' value={row.lastAndMiddleNames} />
-                  <MobileValue label='Matriculation' value={row.memberMatriculationNumber} />
-                  <MobileValue label='Vested date' value={formatDate(row.vestedAt)} />
-                </div>
-              </article>
-            ))
+                  <div className='mt-4 grid gap-3'>
+                    <MobileValue label='No.' value={rowNumber.toString()} />
+                    <MobileValue label='First name' value={row.firstName} />
+                    <MobileValue label='Last and middle names' value={row.lastAndMiddleNames} />
+                    <MobileValue label='Matriculation' value={row.memberMatriculationNumber} />
+                    <MobileValue label='Vested date' value={formatDate(row.vestedAt)} />
+                  </div>
+                </article>
+              )
+            })
           )}
         </div>
 
