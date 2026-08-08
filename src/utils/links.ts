@@ -89,7 +89,7 @@ export const pagesItems: MenuItem[] = [
   },
   {
     icon: List,
-    label: 'New Additions  ',
+    label: 'Sagicam New Additions',
     href: '/new-additions'
   },
 

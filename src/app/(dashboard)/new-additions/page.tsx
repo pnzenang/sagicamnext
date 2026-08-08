@@ -110,7 +110,7 @@ const NewAdditions = async () => {
       <div className='flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between'>
         <div className='min-w-0'>
           <h1 className='text-3xl font-semibold tracking-normal sm:text-4xl'>
-            Added This Month of {monthTitleFormatter.format(monthStart)}
+            Sagicam New Additions - {monthTitleFormatter.format(monthStart)}
           </h1>
           <p className='text-muted-foreground mt-2 text-sm'>
             Loved ones marked vested during the current month.

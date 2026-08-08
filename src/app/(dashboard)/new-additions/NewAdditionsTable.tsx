@@ -267,8 +267,11 @@ const NewAdditionsTable = ({ monthKey, rows }: { monthKey: string; rows: NewAddi
 
     const workbook = XLSX.utils.book_new()
 
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'New Additions')
-    XLSX.writeFile(workbook, `new-additions-${monthKey}-${fileScope}-${new Date().toISOString().split('T')[0]}.xlsx`)
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Sagicam New Additions')
+    XLSX.writeFile(
+      workbook,
+      `sagicam-new-additions-${monthKey}-${fileScope}-${new Date().toISOString().split('T')[0]}.xlsx`
+    )
   }
 
   const handleExportFilteredRows = () => {
@@ -299,11 +302,11 @@ const NewAdditionsTable = ({ monthKey, rows }: { monthKey: string; rows: NewAddi
   }
 
   const handlePrintFilteredRows = () => {
-    handlePrintRows(sortedRows, `New Additions - ${monthKey}`)
+    handlePrintRows(sortedRows, `Sagicam New Additions - ${monthKey}`)
   }
 
   const handlePrintSelectedRows = () => {
-    handlePrintRows(selectedRows, `Selected New Additions - ${monthKey}`)
+    handlePrintRows(selectedRows, `Selected Sagicam New Additions - ${monthKey}`)
   }
 
   return (
@@ -311,7 +314,7 @@ const NewAdditionsTable = ({ monthKey, rows }: { monthKey: string; rows: NewAddi
       <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
         <form role='search' onSubmit={event => event.preventDefault()} className='min-w-0 flex-1'>
           <label htmlFor='new-additions-search' className='sr-only'>
-            Search new additions
+            Search Sagicam New Additions
           </label>
           <div className='relative'>
             <Input
@@ -388,7 +391,7 @@ const NewAdditionsTable = ({ monthKey, rows }: { monthKey: string; rows: NewAddi
               <TableRow className='bg-primary hover:bg-primary'>
                 <TableHead className='text-primary-foreground' title='Select'>
                   <Checkbox
-                    aria-label='Select all visible new additions'
+                    aria-label='Select all visible Sagicam New Additions'
                     checked={areAllPageRowsSelected || (areSomePageRowsSelected && 'indeterminate')}
                     onCheckedChange={value => handlePageSelectionChange(Boolean(value))}
                   />
