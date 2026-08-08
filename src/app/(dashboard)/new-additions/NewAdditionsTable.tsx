@@ -427,7 +427,11 @@ const NewAdditionsTable = ({ monthKey, rows }: { monthKey: string; rows: NewAddi
                 </TableRow>
               ) : (
                 paginatedRows.map(row => (
-                  <TableRow key={row.id} className='odd:bg-muted/30 even:bg-background'>
+                  <TableRow
+                    key={row.id}
+                    data-state={selectedRowIds[row.id] ? 'selected' : undefined}
+                    className='odd:bg-background even:bg-muted/45 hover:bg-primary/10 data-[state=selected]:bg-primary/15'
+                  >
                     <TableCell>
                       <Checkbox
                         aria-label={`Select ${row.firstName} ${row.lastAndMiddleNames}`}
@@ -459,10 +463,12 @@ const NewAdditionsTable = ({ monthKey, rows }: { monthKey: string; rows: NewAddi
                 : 'No loved ones vested this month.'}
             </div>
           ) : (
-            paginatedRows.map(row => (
+            paginatedRows.map((row, rowIndex) => (
               <article
                 key={row.id}
-                className='bg-background overflow-hidden rounded-md border p-3 shadow-sm sm:p-4'
+                className={`overflow-hidden rounded-md border p-3 shadow-sm sm:p-4 ${
+                  rowIndex % 2 === 0 ? 'bg-background' : 'bg-muted/45'
+                }`}
               >
                 <div className='flex items-start justify-between gap-3'>
                   <div className='flex min-w-0 items-start gap-3'>
