@@ -13,34 +13,43 @@ const getCachedModels = (client: PrismaClient) =>
 const hasCachedModelField = (client: PrismaClient, modelName: string, fieldName: string) =>
   Boolean(getCachedModels(client)?.[modelName]?.fields?.some(field => field.name === fieldName))
 
+const getCachedInlineSchema = (client: PrismaClient) =>
+  (client as unknown as { _engineConfig?: { inlineSchema?: string } })._engineConfig?.inlineSchema ?? ''
+
+const hasCachedSchemaPattern = (client: PrismaClient, pattern: RegExp) => pattern.test(getCachedInlineSchema(client))
+
 const shouldReuseCachedPrisma = (cachedPrisma?: PrismaClient) =>
   Boolean(
     cachedPrisma &&
-  'contributionAssessmentDeath' in (cachedPrisma as unknown as Record<string, unknown>) &&
-  'contributionAssessment' in (cachedPrisma as unknown as Record<string, unknown>) &&
-  'contributionCalculationAdminFee' in (cachedPrisma as unknown as Record<string, unknown>) &&
-  'contributionCalculationDeath' in (cachedPrisma as unknown as Record<string, unknown>) &&
-  'deceasedMemberDocument' in (cachedPrisma as unknown as Record<string, unknown>) &&
-  'memberTransferRequest' in (cachedPrisma as unknown as Record<string, unknown>) &&
-  'nameChangeRequest' in (cachedPrisma as unknown as Record<string, unknown>) &&
-  hasCachedModelField(cachedPrisma, 'DeceasedMemberDocument', 'cloudinaryPublicId') &&
-  hasCachedModelField(cachedPrisma, 'MemberTransferRequest', 'receivingSponsorCode') &&
-  hasCachedModelField(cachedPrisma, 'NameChangeRequest', 'cloudinaryPublicId') &&
-  hasCachedModelField(cachedPrisma, 'ContributionAssessment', 'deathCount') &&
-  hasCachedModelField(cachedPrisma, 'ContributionAssessment', 'dueDate') &&
-  hasCachedModelField(cachedPrisma, 'RemovedMember', 'memberStatus') &&
-  hasCachedModelField(cachedPrisma, 'DeceasedMember', 'memberStatus') &&
-  hasCachedModelField(cachedPrisma, 'PaymentAlertReset', 'sponsorCode') &&
-  hasCachedModelField(cachedPrisma, 'SponsorContributionPayment', 'lastSubmittedAt') &&
-  hasCachedModelField(cachedPrisma, 'SponsorRegistrationPayment', 'lastSubmittedAt') &&
-  'paymentAlertReset' in (cachedPrisma as unknown as Record<string, unknown>) &&
-  'sponsorBalanceAdjustment' in (cachedPrisma as unknown as Record<string, unknown>) &&
-  'sponsorContributionCredit' in (cachedPrisma as unknown as Record<string, unknown>) &&
-  'sponsorContributionPayment' in (cachedPrisma as unknown as Record<string, unknown>) &&
-  'sponsorContributionUsage' in (cachedPrisma as unknown as Record<string, unknown>) &&
-  'sponsorPaymentLedgerEntry' in (cachedPrisma as unknown as Record<string, unknown>) &&
-  'sponsorRegistrationPayment' in (cachedPrisma as unknown as Record<string, unknown>) &&
-  'sponsorRegistrationUsage' in (cachedPrisma as unknown as Record<string, unknown>)
+    'contributionAssessmentDeath' in (cachedPrisma as unknown as Record<string, unknown>) &&
+    'contributionAssessment' in (cachedPrisma as unknown as Record<string, unknown>) &&
+    'contributionCalculationAdminFee' in (cachedPrisma as unknown as Record<string, unknown>) &&
+    'contributionCalculationDeath' in (cachedPrisma as unknown as Record<string, unknown>) &&
+    'deceasedMemberDocument' in (cachedPrisma as unknown as Record<string, unknown>) &&
+    'memberTransferRequest' in (cachedPrisma as unknown as Record<string, unknown>) &&
+    'nameChangeRequest' in (cachedPrisma as unknown as Record<string, unknown>) &&
+    hasCachedModelField(cachedPrisma, 'DeceasedMemberDocument', 'cloudinaryPublicId') &&
+    hasCachedModelField(cachedPrisma, 'MemberTransferRequest', 'receivingSponsorCode') &&
+    hasCachedModelField(cachedPrisma, 'NameChangeRequest', 'cloudinaryPublicId') &&
+    hasCachedModelField(cachedPrisma, 'ContributionAssessment', 'deathCount') &&
+    hasCachedModelField(cachedPrisma, 'ContributionAssessment', 'dueDate') &&
+    hasCachedModelField(cachedPrisma, 'RemovedMember', 'memberStatus') &&
+    hasCachedModelField(cachedPrisma, 'DeceasedMember', 'memberStatus') &&
+    hasCachedModelField(cachedPrisma, 'PaymentAlertReset', 'sponsorCode') &&
+    hasCachedModelField(cachedPrisma, 'SponsorContributionPayment', 'lastSubmittedAt') &&
+    hasCachedSchemaPattern(
+      cachedPrisma,
+      /model\s+SponsorContributionUsage\s+{[\s\S]*?sponsorCode\s+String\s+@unique[\s\S]*?}/
+    ) &&
+    hasCachedModelField(cachedPrisma, 'SponsorRegistrationPayment', 'lastSubmittedAt') &&
+    'paymentAlertReset' in (cachedPrisma as unknown as Record<string, unknown>) &&
+    'sponsorBalanceAdjustment' in (cachedPrisma as unknown as Record<string, unknown>) &&
+    'sponsorContributionCredit' in (cachedPrisma as unknown as Record<string, unknown>) &&
+    'sponsorContributionPayment' in (cachedPrisma as unknown as Record<string, unknown>) &&
+    'sponsorContributionUsage' in (cachedPrisma as unknown as Record<string, unknown>) &&
+    'sponsorPaymentLedgerEntry' in (cachedPrisma as unknown as Record<string, unknown>) &&
+    'sponsorRegistrationPayment' in (cachedPrisma as unknown as Record<string, unknown>) &&
+    'sponsorRegistrationUsage' in (cachedPrisma as unknown as Record<string, unknown>)
   )
 
 const createPrismaClient = () => {
