@@ -531,7 +531,7 @@ const PublishedContributionTables = ({
       </Card>
 
       <Card data-sponsor-contribution-section className='w-full max-w-full min-w-0 overflow-hidden print:shadow-none'>
-        <CardHeader>
+        <CardHeader className='print:hidden'>
           <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
             <div>
               <CardTitle>Amount Each Sponsor Should Contribute</CardTitle>
@@ -580,6 +580,14 @@ const PublishedContributionTables = ({
               className='min-w-0 table-fixed text-xs md:min-w-max md:text-sm'
             >
               <TableHeader>
+                <TableRow className='hidden print:table-row'>
+                  <TableHead
+                    colSpan={groupSortColumns.length + 1}
+                    className='text-foreground bg-background h-auto px-2 py-2 text-left text-base font-extrabold whitespace-normal'
+                  >
+                    Amount Each Sponsor Should Contribute
+                  </TableHead>
+                </TableRow>
                 <TableRow className='bg-primary hover:bg-primary print:bg-muted print:hover:bg-muted'>
                   <TableHead className='text-primary-foreground w-12 px-1.5 text-right md:px-2' title='No.'>
                     No.
