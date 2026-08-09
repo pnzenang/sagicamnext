@@ -530,7 +530,11 @@ const PublishedContributionTables = ({
         </CardContent>
       </Card>
 
-      <Card data-sponsor-contribution-section className='w-full max-w-full min-w-0 overflow-hidden print:shadow-none'>
+      <Card
+        data-sponsor-contribution-section
+        data-sponsor-contribution-sponsors-section
+        className='w-full max-w-full min-w-0 overflow-hidden print:shadow-none'
+      >
         <CardHeader className='print:hidden'>
           <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
             <div>

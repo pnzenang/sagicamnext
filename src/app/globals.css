@@ -477,6 +477,11 @@
       page-break-inside: auto;
     }
 
+    [data-contribution-table-print] [data-sponsor-contribution-sponsors-section] {
+      break-before: page;
+      page-break-before: always;
+    }
+
     [data-contribution-table-print] [data-slot='card-header'],
     [data-contribution-table-print] [data-slot='card-content'] {
       padding-inline: 0.5rem !important;

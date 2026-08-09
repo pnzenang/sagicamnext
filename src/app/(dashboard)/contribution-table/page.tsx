@@ -82,7 +82,7 @@ const ContributionTable = async () => {
         <PrintButton label='Print PDF' className='w-fit' />
       </div>
 
-      <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-5'>
+      <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-5 print:mb-3'>
         <Card>
           <CardHeader className='space-y-1'>
             <CardTitle className='flex items-center gap-2 text-sm font-semibold'>
