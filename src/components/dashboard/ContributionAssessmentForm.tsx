@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
   createContributionAssessmentFromCalculationAction,
-  resetContributionCalculationAction
+  resetContributionCalculationFormAction
 } from '@/utils/actions'
 
 type ContributionAssessmentFormProps = {
@@ -35,15 +35,14 @@ const ContributionAssessmentForm = ({
   vestedMembersCount
 }: ContributionAssessmentFormProps) => {
   const [state, formAction] = useActionState(createContributionAssessmentFromCalculationAction, initialState)
-  const [resetState, resetFormAction] = useActionState(resetContributionCalculationAction, initialState)
   const router = useRouter()
   const hasContributionCalculation = calculationDeathCount > 0 && monthlyContributionTotal > 0
 
   useEffect(() => {
-    if (state.message || resetState.message) {
+    if (state.message) {
       router.refresh()
     }
-  }, [resetState.message, router, state.message])
+  }, [router, state.message])
 
   return (
     <Card className='border-primary/30 bg-primary/10 w-full max-w-full min-w-0 overflow-hidden py-0'>
@@ -99,8 +98,9 @@ const ContributionAssessmentForm = ({
                 disabled={!hasContributionCalculation}
                 className='h-auto min-h-10 w-full min-w-0 px-3 py-2 text-center leading-tight whitespace-normal'
               />
+            </form>
+            <form action={resetContributionCalculationFormAction} className='min-w-0'>
               <SubmitButton
-                formAction={resetFormAction}
                 formNoValidate
                 text='Reset calculation'
                 className='h-auto min-h-10 w-full min-w-0 bg-red-600 px-3 py-2 whitespace-normal text-white hover:bg-red-700'
@@ -116,7 +116,6 @@ const ContributionAssessmentForm = ({
               </p>
             ) : null}
             {state.message ? <p className='text-primary text-sm font-medium'>{state.message}</p> : null}
-            {resetState.message ? <p className='text-primary text-sm font-medium'>{resetState.message}</p> : null}
           </div>
         </div>
       </CardContent>
