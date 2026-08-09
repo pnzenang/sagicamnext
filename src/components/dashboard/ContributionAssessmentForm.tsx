@@ -1,8 +1,9 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useActionState, useEffect } from 'react'
 
 import { CalendarDays, DollarSign, HeartHandshake } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 
 import { SubmitButton } from '@/components/forms/Buttons'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -35,7 +36,14 @@ const ContributionAssessmentForm = ({
 }: ContributionAssessmentFormProps) => {
   const [state, formAction] = useActionState(createContributionAssessmentFromCalculationAction, initialState)
   const [resetState, resetFormAction] = useActionState(resetContributionCalculationAction, initialState)
+  const router = useRouter()
   const hasContributionCalculation = calculationDeathCount > 0 && monthlyContributionTotal > 0
+
+  useEffect(() => {
+    if (state.message || resetState.message) {
+      router.refresh()
+    }
+  }, [resetState.message, router, state.message])
 
   return (
     <Card className='border-primary/30 bg-primary/10 w-full max-w-full min-w-0 overflow-hidden py-0'>

@@ -2380,6 +2380,13 @@ export const resetContributionCalculationAction = async (
         : []),
       ...(assessmentIds.length > 0
         ? [
+            db.contributionAssessmentDeath.deleteMany({
+              where: {
+                assessmentId: {
+                  in: assessmentIds
+                }
+              }
+            }),
             db.contributionAssessmentGroup.deleteMany({
               where: {
                 assessmentId: {
