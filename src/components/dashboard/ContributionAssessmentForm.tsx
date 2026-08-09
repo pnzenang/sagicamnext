@@ -9,7 +9,7 @@ import { SubmitButton } from '@/components/forms/Buttons'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { createContributionAssessmentFromCalculationAction } from '@/utils/actions'
+import { createContributionAssessmentFromCalculationAction, resetContributionCalculationAction } from '@/utils/actions'
 
 type ContributionAssessmentFormProps = {
   calculationDeathCount: number
@@ -32,14 +32,15 @@ const ContributionAssessmentForm = ({
   vestedMembersCount
 }: ContributionAssessmentFormProps) => {
   const [state, formAction] = useActionState(createContributionAssessmentFromCalculationAction, initialState)
+  const [resetState, resetFormAction] = useActionState(resetContributionCalculationAction, initialState)
   const router = useRouter()
   const hasContributionCalculation = calculationDeathCount > 0 && monthlyContributionTotal > 0
 
   useEffect(() => {
-    if (state.message) {
+    if (state.message || resetState.message) {
       router.refresh()
     }
-  }, [router, state.message])
+  }, [resetState.message, router, state.message])
 
   return (
     <Card className='border-primary/30 bg-primary/10 w-full max-w-full min-w-0 overflow-hidden py-0'>
@@ -96,6 +97,13 @@ const ContributionAssessmentForm = ({
                 className='h-auto min-h-10 w-full min-w-0 px-3 py-2 text-center leading-tight whitespace-normal'
               />
             </form>
+            <form action={resetFormAction} className='min-w-0'>
+              <SubmitButton
+                formNoValidate
+                text='Reset Calculation'
+                className='h-auto min-h-10 w-full min-w-0 bg-red-600 px-3 py-2 text-center leading-tight whitespace-normal text-white hover:bg-red-700'
+              />
+            </form>
           </div>
 
           <div className='grid min-w-0 gap-2'>
@@ -106,6 +114,7 @@ const ContributionAssessmentForm = ({
               </p>
             ) : null}
             {state.message ? <p className='text-primary text-sm font-medium'>{state.message}</p> : null}
+            {resetState.message ? <p className='text-primary text-sm font-medium'>{resetState.message}</p> : null}
           </div>
         </div>
       </CardContent>

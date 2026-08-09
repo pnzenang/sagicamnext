@@ -990,6 +990,228 @@ export const createContributionAssessmentFromCalculationAction = async (
   }
 }
 
+export const resetContributionCalculationAction = async (
+  _prevState: { message: string },
+  _formData: FormData
+): Promise<{ message: string }> => {
+  const user = await assertAdminUser()
+
+  try {
+    const [
+      contributionAssessments,
+      sponsorContributionPayments,
+      calculationDeathCount,
+      calculationAdminFeeCount,
+      contributionUsages,
+      contributionCredits,
+      balanceAdjustments,
+      vestedMemberCounts,
+      deceasedVestedMemberCounts
+    ] = await Promise.all([
+      db.contributionAssessment.findMany({
+        include: {
+          groups: true
+        }
+      }),
+      db.sponsorContributionPayment.findMany(),
+      db.contributionCalculationDeath.count(),
+      db.contributionCalculationAdminFee.count(),
+      db.sponsorContributionUsage.findMany({
+        select: {
+          sponsorCode: true
+        }
+      }),
+      db.sponsorContributionCredit.findMany({
+        distinct: ['sponsorCode'],
+        select: {
+          sponsorCode: true
+        }
+      }),
+      db.sponsorBalanceAdjustment.findMany({
+        select: {
+          sponsorCode: true
+        },
+        where: {
+          balanceType: contributionBalanceAdjustmentType
+        }
+      }),
+      db.member.groupBy({
+        _count: {
+          _all: true
+        },
+        by: ['sponsorCode'],
+        where: {
+          memberStatus: memberStatus.Vested
+        }
+      }),
+      db.deceasedMember.groupBy({
+        _count: {
+          _all: true
+        },
+        by: ['sponsorCode'],
+        where: {
+          memberStatus: memberStatus.Vested
+        }
+      })
+    ])
+
+    const nonZeroSponsorContributionPayments = sponsorContributionPayments.filter(
+      payment => decimalToNumber(payment.amountSent) > 0 || decimalToNumber(payment.amountVerified) > 0
+    )
+
+    if (
+      contributionAssessments.length === 0 &&
+      nonZeroSponsorContributionPayments.length === 0 &&
+      calculationDeathCount === 0 &&
+      calculationAdminFeeCount === 0
+    ) {
+      return { message: 'No contribution values found to reset.' }
+    }
+
+    const assessedAmountByCode = contributionAssessments.reduce((amountsByCode, assessment) => {
+      assessment.groups.forEach(group => {
+        const currentAmount = amountsByCode.get(group.sponsorCode) ?? 0
+        const nextAmount = roundCurrencyAmount(currentAmount + decimalToNumber(group.amountOwed))
+
+        amountsByCode.set(group.sponsorCode, nextAmount)
+      })
+
+      return amountsByCode
+    }, new Map<string, number>())
+
+    const affectedSponsorCodes = Array.from(
+      new Set(
+        [
+          ...assessedAmountByCode.keys(),
+          ...sponsorContributionPayments.map(payment => payment.sponsorCode),
+          ...contributionUsages.map(usage => usage.sponsorCode),
+          ...contributionCredits.map(credit => credit.sponsorCode),
+          ...balanceAdjustments.map(adjustment => adjustment.sponsorCode),
+          ...vestedMemberCounts.map(count => count.sponsorCode),
+          ...deceasedVestedMemberCounts.map(count => count.sponsorCode)
+        ]
+          .map(sponsorCode => sponsorCode?.trim())
+          .filter((sponsorCode): sponsorCode is string => Boolean(sponsorCode))
+      )
+    )
+
+    const contributionSummaries = await Promise.all(
+      affectedSponsorCodes.map(sponsorCode => fetchSponsorContributionSummary(sponsorCode))
+    )
+
+    const preservedBalanceAdjustments = contributionSummaries.map(summary => {
+      const totalAmountUsedAfterReset = roundCurrencyAmount(
+        summary.totalAmountUsed - (assessedAmountByCode.get(summary.sponsorCode) ?? 0)
+      )
+
+      return {
+        amount: getPreservedContributionBalanceAdjustment({
+          ...summary,
+          totalAmountUsed: totalAmountUsedAfterReset
+        }),
+        sponsorCode: summary.sponsorCode
+      }
+    })
+
+    const resetLedgerEntries = contributionSummaries.map(summary => ({
+      amount: 0,
+      createdBy: user.id,
+      eventType: sponsorPaymentLedgerEventTypes.reset,
+      note: 'Contribution calculation reset. Contribution owed, sent, and verified values were cleared; reserve/deficit was preserved.',
+      paymentType: sponsorPaymentTypes.contribution,
+      sponsorCode: summary.sponsorCode
+    }))
+
+    const assessmentIds = contributionAssessments.map(assessment => assessment.id)
+
+    const resetOperations: Prisma.PrismaPromise<unknown>[] = [
+      ...(sponsorContributionPayments.length > 0
+        ? [
+            db.sponsorContributionPayment.updateMany({
+              data: {
+                amountSent: 0,
+                amountVerified: 0,
+                lastSubmittedAt: null,
+                verifiedAt: null
+              }
+            })
+          ]
+        : []),
+      ...preservedBalanceAdjustments.map(adjustment =>
+        db.sponsorBalanceAdjustment.upsert({
+          create: {
+            amount: adjustment.amount,
+            balanceType: contributionBalanceAdjustmentType,
+            sponsorCode: adjustment.sponsorCode
+          },
+          update: {
+            amount: adjustment.amount
+          },
+          where: {
+            sponsorCode_balanceType: {
+              balanceType: contributionBalanceAdjustmentType,
+              sponsorCode: adjustment.sponsorCode
+            }
+          }
+        })
+      ),
+      ...(resetLedgerEntries.length > 0
+        ? [
+            db.sponsorPaymentLedgerEntry.createMany({
+              data: resetLedgerEntries
+            })
+          ]
+        : []),
+      ...(assessmentIds.length > 0
+        ? [
+            db.contributionAssessmentDeath.deleteMany({
+              where: {
+                assessmentId: {
+                  in: assessmentIds
+                }
+              }
+            }),
+            db.contributionAssessmentGroup.deleteMany({
+              where: {
+                assessmentId: {
+                  in: assessmentIds
+                }
+              }
+            }),
+            db.contributionAssessment.deleteMany({
+              where: {
+                id: {
+                  in: assessmentIds
+                }
+              }
+            })
+          ]
+        : []),
+      db.contributionCalculationDeath.deleteMany(),
+      db.contributionCalculationAdminFee.deleteMany()
+    ]
+
+    await db.$transaction(resetOperations)
+
+    revalidatePath('/admin-count')
+    revalidatePath('/admin-contribution-calculation')
+    revalidatePath('/admin-payment-history')
+    revalidatePath('/admin-payment-update')
+    revalidatePath('/admin-members')
+    revalidatePath('/admin-sagicam-payments')
+    revalidatePath('/all-members')
+    revalidatePath('/contribution-table')
+    revalidateSponsorPaymentPages()
+
+    return {
+      message:
+        'Contribution calculation reset. Contribution owed, sent, and verified are now zero while reserve/deficit was preserved.'
+    }
+  } catch (error) {
+    return renderError(error)
+  }
+}
+
 const getSponsorDisplayName = (profile: {
   sponsorCode: string
   sponsorFirstName: string
