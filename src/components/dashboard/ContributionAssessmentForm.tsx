@@ -9,7 +9,7 @@ import { SubmitButton } from '@/components/forms/Buttons'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { createContributionAssessmentFromCalculationAction } from '@/utils/actions'
+import { createContributionAssessmentFromCalculationAction, resetContributionCalculationAction } from '@/utils/actions'
 
 type ContributionAssessmentFormProps = {
   calculationDeathCount: number
@@ -32,14 +32,15 @@ const ContributionAssessmentForm = ({
   vestedMembersCount
 }: ContributionAssessmentFormProps) => {
   const [state, formAction] = useActionState(createContributionAssessmentFromCalculationAction, initialState)
+  const [resetState, resetFormAction] = useActionState(resetContributionCalculationAction, initialState)
   const router = useRouter()
   const hasContributionCalculation = calculationDeathCount > 0 && monthlyContributionTotal > 0
 
   useEffect(() => {
-    if (state.message) {
+    if (state.message || resetState.message) {
       router.refresh()
     }
-  }, [router, state.message])
+  }, [resetState.message, router, state.message])
 
   return (
     <Card className='border-primary/30 bg-primary/10 w-full max-w-full min-w-0 overflow-hidden py-0'>
@@ -47,8 +48,8 @@ const ContributionAssessmentForm = ({
         <CardTitle className='text-xl leading-tight break-words'>Amount to be contributed this month</CardTitle>
         <CardDescription className='break-words'>
           The monthly contribution total comes from Contribution Calculation. Publish Contribution saves the death table
-          and divides the total by all vested loved ones, then multiplies that amount by each sponsor&apos;s vested loved
-          ones.
+          and divides the total by all vested loved ones, then multiplies that amount by each sponsor&apos;s vested
+          loved ones.
         </CardDescription>
       </CardHeader>
       <CardContent className='min-w-0 py-5'>
@@ -96,7 +97,7 @@ const ContributionAssessmentForm = ({
                 className='h-auto min-h-10 w-full min-w-0 px-3 py-2 text-center leading-tight whitespace-normal'
               />
             </form>
-            <form action='/admin-sagicam-payments/reset-calculation' method='post' className='min-w-0'>
+            <form action={resetFormAction} className='min-w-0'>
               <SubmitButton
                 formNoValidate
                 text='Reset calculation'
@@ -113,6 +114,7 @@ const ContributionAssessmentForm = ({
               </p>
             ) : null}
             {state.message ? <p className='text-primary text-sm font-medium'>{state.message}</p> : null}
+            {resetState.message ? <p className='text-primary text-sm font-medium'>{resetState.message}</p> : null}
           </div>
         </div>
       </CardContent>

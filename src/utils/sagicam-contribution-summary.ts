@@ -76,8 +76,14 @@ export const fetchSponsorContributionSummary = async (
     noStore()
   }
 
+  const normalizedSponsorCode = String(sponsorCode ?? '').trim()
+
+  if (!normalizedSponsorCode) {
+    throw new Error('Sponsor code is required to load contribution summary.')
+  }
+
   const latestAssessment = await fetchLatestContributionAssessment()
-  const contributionGroup = latestAssessment?.groups.find(group => group.sponsorCode === sponsorCode)
+  const contributionGroup = latestAssessment?.groups.find(group => group.sponsorCode === normalizedSponsorCode)
   const amountPerVestedMember = decimalToNumber(latestAssessment?.amountPerVestedMember)
 
   const [
@@ -91,7 +97,7 @@ export const fetchSponsorContributionSummary = async (
   ] = await Promise.all([
     db.sponsorContributionPayment.findUnique({
       where: {
-        sponsorCode
+        sponsorCode: normalizedSponsorCode
       }
     }),
     db.contributionAssessmentGroup.findMany({
@@ -104,12 +110,12 @@ export const fetchSponsorContributionSummary = async (
         }
       },
       where: {
-        sponsorCode
+        sponsorCode: normalizedSponsorCode
       }
     }),
-    db.sponsorContributionUsage.findUnique({
+    db.sponsorContributionUsage.findFirst({
       where: {
-        sponsorCode
+        sponsorCode: normalizedSponsorCode
       }
     }),
     db.sponsorContributionCredit.aggregate({
@@ -117,27 +123,27 @@ export const fetchSponsorContributionSummary = async (
         amountCredited: true
       },
       where: {
-        sponsorCode
+        sponsorCode: normalizedSponsorCode
       }
     }),
     db.sponsorBalanceAdjustment.findUnique({
       where: {
         sponsorCode_balanceType: {
           balanceType: contributionBalanceAdjustmentType,
-          sponsorCode
+          sponsorCode: normalizedSponsorCode
         }
       }
     }),
     db.member.count({
       where: {
         memberStatus: memberStatus.Vested,
-        sponsorCode
+        sponsorCode: normalizedSponsorCode
       }
     }),
     db.deceasedMember.count({
       where: {
         memberStatus: memberStatus.Vested,
-        sponsorCode
+        sponsorCode: normalizedSponsorCode
       }
     })
   ])
@@ -207,7 +213,7 @@ export const fetchSponsorContributionSummary = async (
     lastSubmittedAt: payment?.lastSubmittedAt?.toISOString() ?? null,
     manualBalanceAdjustment,
     reserveDeficitAdjustmentMembersCount,
-    sponsorCode,
+    sponsorCode: normalizedSponsorCode,
     totalAmountUsed,
     verifiedAt: payment?.verifiedAt?.toISOString() ?? null,
     vestedContributionCredit,

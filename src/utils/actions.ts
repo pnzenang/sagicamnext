@@ -2355,16 +2355,20 @@ export const resetContributionCalculationAction = async (
     }, new Map<string, number>())
 
     const affectedSponsorCodes = Array.from(
-      new Set([
-        ...profiles.map(profile => profile.sponsorCode),
-        ...assessedAmountByCode.keys(),
-        ...sponsorContributionPayments.map(payment => payment.sponsorCode),
-        ...contributionUsages.map(usage => usage.sponsorCode),
-        ...contributionCredits.map(credit => credit.sponsorCode),
-        ...balanceAdjustments.map(adjustment => adjustment.sponsorCode),
-        ...vestedMemberCounts.map(count => count.sponsorCode),
-        ...deceasedVestedMemberCounts.map(count => count.sponsorCode)
-      ])
+      new Set(
+        [
+          ...profiles.map(profile => profile.sponsorCode),
+          ...assessedAmountByCode.keys(),
+          ...sponsorContributionPayments.map(payment => payment.sponsorCode),
+          ...contributionUsages.map(usage => usage.sponsorCode),
+          ...contributionCredits.map(credit => credit.sponsorCode),
+          ...balanceAdjustments.map(adjustment => adjustment.sponsorCode),
+          ...vestedMemberCounts.map(count => count.sponsorCode),
+          ...deceasedVestedMemberCounts.map(count => count.sponsorCode)
+        ]
+          .map(sponsorCode => sponsorCode?.trim())
+          .filter((sponsorCode): sponsorCode is string => Boolean(sponsorCode))
+      )
     )
 
     const contributionSummaries = await Promise.all(
