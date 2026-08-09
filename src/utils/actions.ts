@@ -2266,25 +2266,77 @@ export const resetContributionCalculationAction = async (
   const user = await assertAdminUser()
 
   try {
-    const [contributionAssessments, sponsorContributionPayments, calculationDeathCount, calculationAdminFeeCount] =
-      await Promise.all([
-        db.contributionAssessment.findMany({
-          include: {
-            groups: true
-          }
-        }),
-        db.sponsorContributionPayment.findMany({
-          where: {
-            OR: [{ amountSent: { gt: 0 } }, { amountVerified: { gt: 0 } }]
-          }
-        }),
-        db.contributionCalculationDeath.count(),
-        db.contributionCalculationAdminFee.count()
-      ])
+    const [
+      contributionAssessments,
+      sponsorContributionPayments,
+      calculationDeathCount,
+      calculationAdminFeeCount,
+      profiles,
+      contributionUsages,
+      contributionCredits,
+      balanceAdjustments,
+      vestedMemberCounts,
+      deceasedVestedMemberCounts
+    ] = await Promise.all([
+      db.contributionAssessment.findMany({
+        include: {
+          groups: true
+        }
+      }),
+      db.sponsorContributionPayment.findMany(),
+      db.contributionCalculationDeath.count(),
+      db.contributionCalculationAdminFee.count(),
+      db.profile.findMany({
+        select: {
+          sponsorCode: true
+        }
+      }),
+      db.sponsorContributionUsage.findMany({
+        select: {
+          sponsorCode: true
+        }
+      }),
+      db.sponsorContributionCredit.findMany({
+        distinct: ['sponsorCode'],
+        select: {
+          sponsorCode: true
+        }
+      }),
+      db.sponsorBalanceAdjustment.findMany({
+        select: {
+          sponsorCode: true
+        },
+        where: {
+          balanceType: contributionBalanceAdjustmentType
+        }
+      }),
+      db.member.groupBy({
+        _count: {
+          _all: true
+        },
+        by: ['sponsorCode'],
+        where: {
+          memberStatus: memberStatus.Vested
+        }
+      }),
+      db.deceasedMember.groupBy({
+        _count: {
+          _all: true
+        },
+        by: ['sponsorCode'],
+        where: {
+          memberStatus: memberStatus.Vested
+        }
+      })
+    ])
+
+    const nonZeroSponsorContributionPayments = sponsorContributionPayments.filter(
+      payment => decimalToNumber(payment.amountSent) > 0 || decimalToNumber(payment.amountVerified) > 0
+    )
 
     if (
       contributionAssessments.length === 0 &&
-      sponsorContributionPayments.length === 0 &&
+      nonZeroSponsorContributionPayments.length === 0 &&
       calculationDeathCount === 0 &&
       calculationAdminFeeCount === 0
     ) {
@@ -2303,14 +2355,23 @@ export const resetContributionCalculationAction = async (
     }, new Map<string, number>())
 
     const affectedSponsorCodes = Array.from(
-      new Set([...assessedAmountByCode.keys(), ...sponsorContributionPayments.map(payment => payment.sponsorCode)])
+      new Set([
+        ...profiles.map(profile => profile.sponsorCode),
+        ...assessedAmountByCode.keys(),
+        ...sponsorContributionPayments.map(payment => payment.sponsorCode),
+        ...contributionUsages.map(usage => usage.sponsorCode),
+        ...contributionCredits.map(credit => credit.sponsorCode),
+        ...balanceAdjustments.map(adjustment => adjustment.sponsorCode),
+        ...vestedMemberCounts.map(count => count.sponsorCode),
+        ...deceasedVestedMemberCounts.map(count => count.sponsorCode)
+      ])
     )
 
     const contributionSummaries = await Promise.all(
       affectedSponsorCodes.map(sponsorCode => fetchSponsorContributionSummary(sponsorCode))
     )
 
-    const balanceAdjustments = contributionSummaries.map(summary => {
+    const preservedBalanceAdjustments = contributionSummaries.map(summary => {
       const assessedAmount = assessedAmountByCode.get(summary.sponsorCode) ?? 0
       const totalAmountUsedAfterReset = Number((summary.totalAmountUsed - assessedAmount).toFixed(2))
 
@@ -2333,10 +2394,9 @@ export const resetContributionCalculationAction = async (
     }))
 
     const assessmentIds = contributionAssessments.map(assessment => assessment.id)
-    const paymentSponsorCodes = sponsorContributionPayments.map(payment => payment.sponsorCode)
 
     const resetOperations: Prisma.PrismaPromise<unknown>[] = [
-      ...(paymentSponsorCodes.length > 0
+      ...(sponsorContributionPayments.length > 0
         ? [
             db.sponsorContributionPayment.updateMany({
               data: {
@@ -2344,16 +2404,11 @@ export const resetContributionCalculationAction = async (
                 amountVerified: 0,
                 lastSubmittedAt: null,
                 verifiedAt: null
-              },
-              where: {
-                sponsorCode: {
-                  in: paymentSponsorCodes
-                }
               }
             })
           ]
         : []),
-      ...balanceAdjustments.map(adjustment =>
+      ...preservedBalanceAdjustments.map(adjustment =>
         db.sponsorBalanceAdjustment.upsert({
           create: {
             amount: adjustment.amount,
