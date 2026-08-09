@@ -253,8 +253,7 @@ const ContributionTableDocumentLink = ({ document, label }: { document: Contribu
           aria-label={tooltipTitle}
         >
           <Download className='size-3.5 print:hidden' />
-          <span className='hidden sm:inline print:hidden'>Download</span>
-          <span className='hidden print:inline'>{document.fileName}</span>
+          <span className='hidden sm:inline print:inline'>Download</span>
         </a>
       </TooltipTrigger>
       <TooltipContent side='top' sideOffset={4}>
