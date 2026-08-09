@@ -2482,19 +2482,6 @@ export const resetContributionCalculationAction = async (
   }
 }
 
-export const resetContributionCalculationFormAction = async (formData: FormData): Promise<void> => {
-  const result = await resetContributionCalculationAction({ message: '' }, formData)
-
-  if (
-    result.message === 'No contribution values found to reset.' ||
-    result.message.startsWith('Contribution reset successfully.')
-  ) {
-    redirect('/admin-sagicam-payments')
-  }
-
-  throw new Error(result.message)
-}
-
 export const fetchSingleMemberDetails = async (memberId: string) => {
   const user = await getAuthUser()
 

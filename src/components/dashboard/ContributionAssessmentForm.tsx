@@ -9,10 +9,7 @@ import { SubmitButton } from '@/components/forms/Buttons'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import {
-  createContributionAssessmentFromCalculationAction,
-  resetContributionCalculationFormAction
-} from '@/utils/actions'
+import { createContributionAssessmentFromCalculationAction } from '@/utils/actions'
 
 type ContributionAssessmentFormProps = {
   calculationDeathCount: number
@@ -99,7 +96,7 @@ const ContributionAssessmentForm = ({
                 className='h-auto min-h-10 w-full min-w-0 px-3 py-2 text-center leading-tight whitespace-normal'
               />
             </form>
-            <form action={resetContributionCalculationFormAction} className='min-w-0'>
+            <form action='/admin-sagicam-payments/reset-calculation' method='post' className='min-w-0'>
               <SubmitButton
                 formNoValidate
                 text='Reset calculation'
