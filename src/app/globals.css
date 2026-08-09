@@ -557,7 +557,7 @@
       page-break-after: avoid;
     }
 
-    [data-contribution-table-print] [data-sponsor-contribution-screen-header] {
+    [data-contribution-table-print] [data-sponsor-contribution-table] [data-sponsor-contribution-screen-header] {
       display: none !important;
     }
 
