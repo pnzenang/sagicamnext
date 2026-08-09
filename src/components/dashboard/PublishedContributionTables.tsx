@@ -584,14 +584,32 @@ const PublishedContributionTables = ({
               className='min-w-0 table-fixed text-xs md:min-w-max md:text-sm'
             >
               <TableHeader>
-                <TableRow data-sponsor-contribution-print-title-row className='hidden'>
-                  <TableHead
+                <tr data-sponsor-contribution-print-title-row className='hidden'>
+                  <th
                     colSpan={groupSortColumns.length + 1}
-                    className='text-foreground bg-background h-auto px-2 py-2 text-left text-base font-extrabold whitespace-normal'
+                    className='bg-background h-auto px-2 py-2 text-left text-base font-extrabold whitespace-normal'
                   >
                     Amount Each Sponsor Should Contribute
-                  </TableHead>
-                </TableRow>
+                  </th>
+                </tr>
+                <tr data-sponsor-contribution-print-column-header className='hidden'>
+                  <th scope='col' className='w-12 px-1.5 text-right md:px-2'>
+                    No.
+                  </th>
+                  {groupSortColumns.map(column => (
+                    <th
+                      key={column.key}
+                      scope='col'
+                      className={cn(
+                        column.className,
+                        column.align === 'center' && 'text-center',
+                        column.align === 'right' && 'text-right'
+                      )}
+                    >
+                      {column.label}
+                    </th>
+                  ))}
+                </tr>
                 <TableRow
                   data-sponsor-contribution-screen-header
                   className='bg-primary hover:bg-primary print:bg-muted print:hover:bg-muted'

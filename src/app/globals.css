@@ -550,10 +550,15 @@
       color: var(--foreground) !important;
     }
 
-    [data-contribution-table-print] [data-sponsor-contribution-print-title-row] {
+    [data-contribution-table-print] [data-sponsor-contribution-print-title-row],
+    [data-contribution-table-print] [data-sponsor-contribution-print-column-header] {
       break-after: avoid;
       display: table-row !important;
       page-break-after: avoid;
+    }
+
+    [data-contribution-table-print] [data-sponsor-contribution-screen-header] {
+      display: none !important;
     }
 
     [data-contribution-table-print] [data-sponsor-contribution-table] {
