@@ -592,25 +592,6 @@ const PublishedContributionTables = ({
                     Amount Each Sponsor Should Contribute
                   </TableHead>
                 </TableRow>
-                <TableRow data-sponsor-contribution-print-column-header className='bg-primary hover:bg-primary hidden'>
-                  <TableHead className='text-primary-foreground w-12 px-1.5 text-right md:px-2' title='No.'>
-                    No.
-                  </TableHead>
-                  {groupSortColumns.map(column => (
-                    <TableHead
-                      key={column.key}
-                      className={cn(
-                        'text-primary-foreground',
-                        column.className,
-                        column.align === 'center' && 'text-center',
-                        column.align === 'right' && 'text-right'
-                      )}
-                      title={column.label}
-                    >
-                      {column.label}
-                    </TableHead>
-                  ))}
-                </TableRow>
                 <TableRow
                   data-sponsor-contribution-screen-header
                   className='bg-primary hover:bg-primary print:bg-muted print:hover:bg-muted'

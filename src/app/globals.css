@@ -442,11 +442,16 @@
     }
 
     [data-contribution-table-print] {
+      color: black !important;
       display: block !important;
       height: auto !important;
       max-height: none !important;
       overflow: visible !important;
       page: contribution-table-page;
+    }
+
+    [data-contribution-table-print] * {
+      color: black !important;
     }
 
     body:has([data-contribution-table-print]) main,
@@ -545,15 +550,10 @@
       color: var(--foreground) !important;
     }
 
-    [data-contribution-table-print] [data-sponsor-contribution-print-title-row],
-    [data-contribution-table-print] [data-sponsor-contribution-print-column-header] {
+    [data-contribution-table-print] [data-sponsor-contribution-print-title-row] {
       break-after: avoid;
       display: table-row !important;
       page-break-after: avoid;
-    }
-
-    [data-contribution-table-print] [data-sponsor-contribution-screen-header] {
-      display: none !important;
     }
 
     [data-contribution-table-print] [data-sponsor-contribution-table] {
