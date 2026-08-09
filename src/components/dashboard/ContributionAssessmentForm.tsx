@@ -99,10 +99,9 @@ const ContributionAssessmentForm = ({
                 disabled={!hasContributionCalculation}
                 className='h-auto min-h-10 w-full min-w-0 px-3 py-2 text-center leading-tight whitespace-normal'
               />
-            </form>
-
-            <form action={resetFormAction} className='min-w-0'>
               <SubmitButton
+                formAction={resetFormAction}
+                formNoValidate
                 text='Reset calculation'
                 className='h-auto min-h-10 w-full min-w-0 bg-red-600 px-3 py-2 whitespace-normal text-white hover:bg-red-700'
               />
