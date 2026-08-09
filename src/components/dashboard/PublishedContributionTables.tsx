@@ -425,6 +425,10 @@ const PublishedContributionTables = ({
     setGroupCurrentPage(1)
   }
 
+  const sponsorContributionDescription = `Each Sponsor amount is based on ${totalVestedMembers} vested loved one${
+    totalVestedMembers === 1 ? '' : 's'
+  } at ${currencyFormatter.format(amountPerVestedMember)} per vested loved one.`
+
   return (
     <>
       <Card data-sponsor-contribution-section className='w-full max-w-full min-w-0 overflow-hidden print:shadow-none'>
@@ -539,11 +543,7 @@ const PublishedContributionTables = ({
           <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
             <div>
               <CardTitle>Amount Each Sponsor Should Contribute</CardTitle>
-              <CardDescription>
-                Each sponsor amount is based on {totalVestedMembers} vested loved one
-                {totalVestedMembers === 1 ? '' : 's'} at {currencyFormatter.format(amountPerVestedMember)} per vested
-                loved one.
-              </CardDescription>
+              <CardDescription>{sponsorContributionDescription}</CardDescription>
             </div>
             <div className='flex flex-col gap-3 sm:items-end print:hidden'>
               <div className='flex items-center justify-between gap-2 sm:justify-end'>
@@ -589,7 +589,8 @@ const PublishedContributionTables = ({
                     colSpan={groupSortColumns.length + 1}
                     className='bg-background h-auto px-2 py-2 text-left text-base font-extrabold whitespace-normal'
                   >
-                    Amount Each Sponsor Should Contribute
+                    <span className='block'>Amount Each Sponsor Should Contribute</span>
+                    <span className='block pt-1 text-sm font-semibold'>{sponsorContributionDescription}</span>
                   </th>
                 </tr>
                 <tr data-sponsor-contribution-print-column-header className='hidden'>
