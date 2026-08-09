@@ -100,8 +100,8 @@ const deathSortColumns: SortColumn<DeathSortKey>[] = [
     shortLabel: 'Matric.',
     className: 'w-24 px-1.5 md:w-28 md:px-2'
   },
-  { key: 'firstName', label: 'First Name', className: 'w-24 px-1.5 md:w-28 md:px-2' },
-  { key: 'lastAndMiddleNames', label: 'Last Name', className: 'hidden w-32 sm:table-cell md:w-36' },
+  { key: 'firstName', label: 'First Name', className: 'w-32 px-1.5 md:w-44 md:px-2 xl:w-52' },
+  { key: 'lastAndMiddleNames', label: 'Last Name', className: 'hidden w-44 sm:table-cell md:w-64 xl:w-72' },
   { key: 'registrationDate', label: 'Registration Date', className: 'hidden lg:table-cell' },
   { key: 'dateOfDeath', label: 'Date of Death', shortLabel: 'Death', className: 'px-1.5 md:min-w-40 md:px-2' },
   {
@@ -120,11 +120,11 @@ const deathSortColumns: SortColumn<DeathSortKey>[] = [
   },
   {
     align: 'right',
-    className: 'px-1.5 md:min-w-36 md:px-2',
+    className: 'w-24 px-1 md:w-28 md:px-2',
     key: 'amountToContribute',
     label: 'Amount'
   },
-  { key: 'sponsorCode', label: 'Sponsor Code', className: 'hidden min-w-24 md:table-cell' }
+  { key: 'sponsorCode', label: 'Sponsor Code', className: 'hidden w-20 px-1 md:table-cell md:w-24 md:px-2' }
 ]
 
 const groupSortColumns: SortColumn<GroupSortKey>[] = [
@@ -491,11 +491,11 @@ const PublishedContributionTables = ({
                       </TableCell>
                       <TableCell
                         data-label='First Name'
-                        className='w-24 px-1.5 font-semibold break-words whitespace-normal md:w-28 md:px-2'
+                        className='w-32 px-1.5 font-semibold break-words whitespace-normal md:w-44 md:px-2 xl:w-52'
                       >
                         {death.firstName}
                       </TableCell>
-                      <TableCell data-label='Last Name' className='w-32 font-semibold md:w-36'>
+                      <TableCell data-label='Last Name' className='w-44 font-semibold md:w-64 xl:w-72'>
                         {death.lastAndMiddleNames}
                       </TableCell>
                       <TableCell data-label='Registration Date' className='hidden whitespace-nowrap lg:table-cell'>
@@ -515,12 +515,12 @@ const PublishedContributionTables = ({
                       </TableCell>
                       <TableCell
                         data-label='Amount'
-                        className='px-1.5 text-right font-semibold whitespace-nowrap md:min-w-36 md:px-2'
+                        className='w-24 px-1 text-right font-semibold whitespace-nowrap md:w-28 md:px-2'
                       >
                         {currencyFormatter.format(death.amountToContribute)}
                       </TableCell>
-                      <TableCell data-label='Sponsor Code' className='hidden min-w-24 md:table-cell'>
-                        <span className='block font-mono font-semibold'>{death.sponsorCode}</span>
+                      <TableCell data-label='Sponsor Code' className='hidden w-20 px-1 md:table-cell md:w-24 md:px-2'>
+                        <span className='block truncate font-mono font-semibold'>{death.sponsorCode}</span>
                       </TableCell>
                     </TableRow>
                   ))
