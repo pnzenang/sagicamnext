@@ -482,10 +482,6 @@
       page-break-inside: auto;
     }
 
-    [data-contribution-table-print] [data-sponsor-contribution-sponsors-section] {
-      break-before: page;
-    }
-
     [data-contribution-table-print] [data-slot='card-header'],
     [data-contribution-table-print] [data-slot='card-content'] {
       padding-inline: 0.5rem !important;
@@ -555,6 +551,10 @@
       break-after: avoid;
       display: table-row !important;
       page-break-after: avoid;
+    }
+
+    [data-contribution-table-print] [data-sponsor-contribution-print-title-row] {
+      break-before: page;
     }
 
     [data-contribution-table-print] [data-sponsor-contribution-table] [data-sponsor-contribution-screen-header] {
