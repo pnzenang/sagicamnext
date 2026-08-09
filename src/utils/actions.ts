@@ -1002,11 +1002,8 @@ export const resetContributionCalculationAction = async (
       sponsorContributionPayments,
       calculationDeathCount,
       calculationAdminFeeCount,
-      contributionUsages,
-      contributionCredits,
       balanceAdjustments,
-      vestedMemberCounts,
-      deceasedVestedMemberCounts
+      unresetContributionVerifiedLedgerTotals
     ] = await Promise.all([
       db.contributionAssessment.findMany({
         include: {
@@ -1016,43 +1013,32 @@ export const resetContributionCalculationAction = async (
       db.sponsorContributionPayment.findMany(),
       db.contributionCalculationDeath.count(),
       db.contributionCalculationAdminFee.count(),
-      db.sponsorContributionUsage.findMany({
-        select: {
-          sponsorCode: true
-        }
-      }),
-      db.sponsorContributionCredit.findMany({
-        distinct: ['sponsorCode'],
-        select: {
-          sponsorCode: true
-        }
-      }),
       db.sponsorBalanceAdjustment.findMany({
         select: {
+          amount: true,
           sponsorCode: true
         },
         where: {
           balanceType: contributionBalanceAdjustmentType
         }
       }),
-      db.member.groupBy({
-        _count: {
-          _all: true
-        },
-        by: ['sponsorCode'],
-        where: {
-          memberStatus: memberStatus.Vested
-        }
-      }),
-      db.deceasedMember.groupBy({
-        _count: {
-          _all: true
-        },
-        by: ['sponsorCode'],
-        where: {
-          memberStatus: memberStatus.Vested
-        }
-      })
+      db.$queryRaw<{ amountVerified: unknown; sponsorCode: string }[]>(Prisma.sql`
+        WITH latest_reset AS (
+          SELECT "sponsorCode", MAX("createdAt") AS "resetAt"
+          FROM "SponsorPaymentLedgerEntry"
+          WHERE "paymentType" = ${sponsorPaymentTypes.contribution}
+            AND "eventType" = ${sponsorPaymentLedgerEventTypes.reset}
+          GROUP BY "sponsorCode"
+        )
+        SELECT ledger."sponsorCode", COALESCE(SUM(ledger."amount"), 0) AS "amountVerified"
+        FROM "SponsorPaymentLedgerEntry" ledger
+        LEFT JOIN latest_reset
+          ON latest_reset."sponsorCode" = ledger."sponsorCode"
+        WHERE ledger."paymentType" = ${sponsorPaymentTypes.contribution}
+          AND ledger."eventType" = ${sponsorPaymentLedgerEventTypes.verified}
+          AND (latest_reset."resetAt" IS NULL OR ledger."createdAt" > latest_reset."resetAt")
+        GROUP BY ledger."sponsorCode"
+      `)
     ])
 
     const nonZeroSponsorContributionPayments = sponsorContributionPayments.filter(
@@ -1063,7 +1049,8 @@ export const resetContributionCalculationAction = async (
       contributionAssessments.length === 0 &&
       nonZeroSponsorContributionPayments.length === 0 &&
       calculationDeathCount === 0 &&
-      calculationAdminFeeCount === 0
+      calculationAdminFeeCount === 0 &&
+      unresetContributionVerifiedLedgerTotals.length === 0
     ) {
       return { message: 'No contribution values found to reset.' }
     }
@@ -1079,47 +1066,59 @@ export const resetContributionCalculationAction = async (
       return amountsByCode
     }, new Map<string, number>())
 
+    const contributionPaymentByCode = new Map(
+      sponsorContributionPayments.map(payment => [payment.sponsorCode, payment])
+    )
+
+    const balanceAdjustmentByCode = new Map(
+      balanceAdjustments.map(adjustment => [adjustment.sponsorCode, decimalToNumber(adjustment.amount)])
+    )
+
+    const verifiedLedgerAmountByCode = new Map(
+      unresetContributionVerifiedLedgerTotals.map(total => [
+        total.sponsorCode,
+        roundCurrencyAmount(decimalToNumber(total.amountVerified))
+      ])
+    )
+
     const affectedSponsorCodes = Array.from(
       new Set(
         [
           ...assessedAmountByCode.keys(),
           ...sponsorContributionPayments.map(payment => payment.sponsorCode),
-          ...contributionUsages.map(usage => usage.sponsorCode),
-          ...contributionCredits.map(credit => credit.sponsorCode),
           ...balanceAdjustments.map(adjustment => adjustment.sponsorCode),
-          ...vestedMemberCounts.map(count => count.sponsorCode),
-          ...deceasedVestedMemberCounts.map(count => count.sponsorCode)
+          ...unresetContributionVerifiedLedgerTotals.map(total => total.sponsorCode)
         ]
           .map(sponsorCode => sponsorCode?.trim())
           .filter((sponsorCode): sponsorCode is string => Boolean(sponsorCode))
       )
     )
 
-    const contributionSummaries = await Promise.all(
-      affectedSponsorCodes.map(sponsorCode => fetchSponsorContributionSummary(sponsorCode))
-    )
+    const preservedBalanceAdjustments = affectedSponsorCodes.map(sponsorCode => {
+      const payment = contributionPaymentByCode.get(sponsorCode)
 
-    const preservedBalanceAdjustments = contributionSummaries.map(summary => {
-      const totalAmountUsedAfterReset = roundCurrencyAmount(
-        summary.totalAmountUsed - (assessedAmountByCode.get(summary.sponsorCode) ?? 0)
+      const amountVerifiedBeforeReset = Math.max(
+        decimalToNumber(payment?.amountVerified),
+        verifiedLedgerAmountByCode.get(sponsorCode) ?? 0
       )
 
       return {
-        amount: getPreservedContributionBalanceAdjustment({
-          ...summary,
-          totalAmountUsed: totalAmountUsedAfterReset
-        }),
-        sponsorCode: summary.sponsorCode
+        amount: roundCurrencyAmount(
+          (balanceAdjustmentByCode.get(sponsorCode) ?? 0) +
+            amountVerifiedBeforeReset -
+            (assessedAmountByCode.get(sponsorCode) ?? 0)
+        ),
+        sponsorCode
       }
     })
 
-    const resetLedgerEntries = contributionSummaries.map(summary => ({
+    const resetLedgerEntries = affectedSponsorCodes.map(sponsorCode => ({
       amount: 0,
       createdBy: user.id,
       eventType: sponsorPaymentLedgerEventTypes.reset,
       note: 'Contribution calculation reset. Contribution owed, sent, and verified values were cleared; reserve/deficit was preserved.',
       paymentType: sponsorPaymentTypes.contribution,
-      sponsorCode: summary.sponsorCode
+      sponsorCode
     }))
 
     const assessmentIds = contributionAssessments.map(assessment => assessment.id)
