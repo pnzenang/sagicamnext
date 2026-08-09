@@ -584,7 +584,7 @@ const PublishedContributionTables = ({
               className='min-w-0 table-fixed text-xs md:min-w-max md:text-sm'
             >
               <TableHeader>
-                <TableRow className='hidden print:table-row'>
+                <TableRow data-sponsor-contribution-print-title-row className='hidden'>
                   <TableHead
                     colSpan={groupSortColumns.length + 1}
                     className='text-foreground bg-background h-auto px-2 py-2 text-left text-base font-extrabold whitespace-normal'
@@ -592,7 +592,29 @@ const PublishedContributionTables = ({
                     Amount Each Sponsor Should Contribute
                   </TableHead>
                 </TableRow>
-                <TableRow className='bg-primary hover:bg-primary print:bg-muted print:hover:bg-muted'>
+                <TableRow data-sponsor-contribution-print-column-header className='bg-primary hover:bg-primary hidden'>
+                  <TableHead className='text-primary-foreground w-12 px-1.5 text-right md:px-2' title='No.'>
+                    No.
+                  </TableHead>
+                  {groupSortColumns.map(column => (
+                    <TableHead
+                      key={column.key}
+                      className={cn(
+                        'text-primary-foreground',
+                        column.className,
+                        column.align === 'center' && 'text-center',
+                        column.align === 'right' && 'text-right'
+                      )}
+                      title={column.label}
+                    >
+                      {column.label}
+                    </TableHead>
+                  ))}
+                </TableRow>
+                <TableRow
+                  data-sponsor-contribution-screen-header
+                  className='bg-primary hover:bg-primary print:bg-muted print:hover:bg-muted'
+                >
                   <TableHead className='text-primary-foreground w-12 px-1.5 text-right md:px-2' title='No.'>
                     No.
                   </TableHead>
