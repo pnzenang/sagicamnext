@@ -20,7 +20,7 @@ export const defaultHeroSectionCopy: HeroSectionCopy = {
   titleLead: 'SAGICAM Connects',
   flipWords: ['Friends.', 'Families.', 'Generations.', 'Promotions.', 'Communities.'],
   description:
-    "By sponsoring your loved ones living in Cameroon in SAGICAM, you make their eventual passing a SAGI problem, the whole SAGICAM community will come together to support you in the trying time. At SAGICAM.\nwe the camerooninan solidarity, making one family's problem the problem of the whole community. Making it a little easier for any of us, to face up to the adversity of financially taking care of expenses related to the funeral of a loved one.",
+    "By sponsoring your loved ones living in Cameroon in SAGICAM, you make their eventual passing a SAGI problem, the whole SAGICAM community will come together to support you in the trying time.\nMaking one family's problem the problem of the whole community. Making it a little easier for any of us, to face up to the adversity of financially taking care of expenses related to the funeral of a loved one.",
   imageAlt: 'SAGICAM family support illustration'
 }
 
