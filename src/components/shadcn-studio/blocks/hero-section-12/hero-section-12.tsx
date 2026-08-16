@@ -1,6 +1,6 @@
 import Link from 'next/link'
 
-import { RocketIcon } from 'lucide-react'
+import { ExternalLinkIcon, RocketIcon } from 'lucide-react'
 
 import { MotionPreset } from '@/components/ui/motion-preset'
 import { Button } from '@/components/ui/button'
@@ -16,6 +16,8 @@ export type HeroSectionCopy = {
   description: string
   imageAlt: string
   joinLabel?: string
+  sagiHref?: string
+  sagiLabel?: string
 }
 
 export const defaultHeroSectionCopy: HeroSectionCopy = {
@@ -25,7 +27,9 @@ export const defaultHeroSectionCopy: HeroSectionCopy = {
   description:
     "By sponsoring your loved ones living in Cameroon in SAGICAM, you make their eventual passing a SAGI problem, the whole SAGICAM community will come together to support you in the trying time.\nMaking one family's problem the problem of the whole community. Making it a little easier for any of us, to face up to the adversity of financially taking care of expenses related to the funeral of a loved one.",
   imageAlt: 'SAGICAM family support illustration',
-  joinLabel: 'Join SAGICAM'
+  joinLabel: 'Join SAGICAM',
+  sagiHref: 'https://mysagi.org',
+  sagiLabel: 'Visit SAGI'
 }
 
 const HeroSection = ({ copy = defaultHeroSectionCopy }: { copy?: HeroSectionCopy }) => {
@@ -116,6 +120,12 @@ const HeroSection = ({ copy = defaultHeroSectionCopy }: { copy?: HeroSectionCopy
                   <RocketIcon />
                   {copy.joinLabel ?? 'Join SAGICAM'}
                 </Link>
+              </Button>
+              <Button asChild size='lg' variant='outline'>
+                <a href={copy.sagiHref ?? 'https://mysagi.org'} target='_blank' rel='noopener noreferrer'>
+                  <ExternalLinkIcon />
+                  {copy.sagiLabel ?? 'Visit SAGI'}
+                </a>
               </Button>
             </MotionPreset>
           </div>

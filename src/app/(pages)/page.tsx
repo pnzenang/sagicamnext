@@ -163,6 +163,7 @@ const homeContent: Record<AppLanguage, HomeContent> = {
       flipWords: ['Amis.', 'Familles.', 'Générations.', 'Promotions.', 'Communautés.'],
       imageAlt: 'Illustration du soutien familial SAGICAM',
       joinLabel: 'Rejoindre SAGICAM',
+      sagiLabel: 'Visiter SAGI',
       titleLead: 'SAGICAM relie'
     },
     mission: {
