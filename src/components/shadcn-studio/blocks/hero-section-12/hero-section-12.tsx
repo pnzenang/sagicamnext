@@ -124,10 +124,10 @@ const HeroSection = ({ copy = defaultHeroSectionCopy }: { copy?: HeroSectionCopy
               <Button asChild size='lg' variant='outline'>
                 <a href={copy.sagiHref ?? 'https://mysagi.org'} target='_blank' rel='noopener noreferrer'>
                   <ExternalLinkIcon />
-                  <span role='img' aria-label='United States flag' className='text-base leading-none'>
+                  {copy.sagiLabel ?? 'Visit SAGI'}
+                  <span role='img' aria-label='United States flag' className='text-xl leading-none'>
                     🇺🇸
                   </span>
-                  {copy.sagiLabel ?? 'Visit SAGI'}
                 </a>
               </Button>
             </MotionPreset>
