@@ -1,4 +1,6 @@
-import { PlayIcon, RocketIcon } from 'lucide-react'
+import Link from 'next/link'
+
+import { RocketIcon } from 'lucide-react'
 
 import { MotionPreset } from '@/components/ui/motion-preset'
 import { Button } from '@/components/ui/button'
@@ -13,6 +15,7 @@ export type HeroSectionCopy = {
   flipWords: string[]
   description: string
   imageAlt: string
+  joinLabel?: string
 }
 
 export const defaultHeroSectionCopy: HeroSectionCopy = {
@@ -21,7 +24,8 @@ export const defaultHeroSectionCopy: HeroSectionCopy = {
   flipWords: ['Friends.', 'Families.', 'Generations.', 'Promotions.', 'Communities.'],
   description:
     "By sponsoring your loved ones living in Cameroon in SAGICAM, you make their eventual passing a SAGI problem, the whole SAGICAM community will come together to support you in the trying time.\nMaking one family's problem the problem of the whole community. Making it a little easier for any of us, to face up to the adversity of financially taking care of expenses related to the funeral of a loved one.",
-  imageAlt: 'SAGICAM family support illustration'
+  imageAlt: 'SAGICAM family support illustration',
+  joinLabel: 'Join SAGICAM'
 }
 
 const HeroSection = ({ copy = defaultHeroSectionCopy }: { copy?: HeroSectionCopy }) => {
@@ -106,7 +110,14 @@ const HeroSection = ({ copy = defaultHeroSectionCopy }: { copy?: HeroSectionCopy
               transition={{ type: 'spring', stiffness: 150, damping: 20 }}
               delay={0.6}
               className='flex flex-wrap items-center gap-4'
-            ></MotionPreset>
+            >
+              <Button asChild size='lg'>
+                <Link href='/sign-up'>
+                  <RocketIcon />
+                  {copy.joinLabel ?? 'Join SAGICAM'}
+                </Link>
+              </Button>
+            </MotionPreset>
           </div>
           <MotionPreset
             component='div'

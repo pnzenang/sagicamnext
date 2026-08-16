@@ -162,6 +162,7 @@ const homeContent: Record<AppLanguage, HomeContent> = {
         "En parrainant vos proches vivant au Cameroun avec SAGICAM, leur éventuel décès devient une responsabilité de solidarité SAGI: toute la communauté SAGICAM se mobilise pour vous soutenir dans ce moment difficile.\nSAGICAM transforme l'épreuve d'une famille en responsabilité partagée par toute la communauté, afin d'alléger les charges financières liées aux funérailles d'un proche.",
       flipWords: ['Amis.', 'Familles.', 'Générations.', 'Promotions.', 'Communautés.'],
       imageAlt: 'Illustration du soutien familial SAGICAM',
+      joinLabel: 'Rejoindre SAGICAM',
       titleLead: 'SAGICAM relie'
     },
     mission: {
