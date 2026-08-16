@@ -121,7 +121,12 @@ const HeroSection = ({ copy = defaultHeroSectionCopy }: { copy?: HeroSectionCopy
                   {copy.joinLabel ?? 'Join SAGICAM'}
                 </Link>
               </Button>
-              <Button asChild size='lg' variant='outline'>
+              <Button
+                asChild
+                size='lg'
+                variant='outline'
+                className='border-emerald-600/60 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800 dark:border-emerald-400/60 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-900/60 dark:hover:text-emerald-200'
+              >
                 <a href={copy.sagiHref ?? 'https://mysagi.org'} target='_blank' rel='noopener noreferrer'>
                   <ExternalLinkIcon />
                   {copy.sagiLabel ?? 'Visit SAGI'}
