@@ -15,7 +15,7 @@ import { usePersistentState } from '@/hooks/use-persistent-state'
 import { cn } from '@/lib/utils'
 import type { DashboardActivityLogRow } from '@/utils/types'
 
-type SortKey = 'action' | 'actorLabel' | 'createdAt' | 'entityType' | 'sponsorLabel' | 'summary'
+type SortKey = 'action' | 'actorEmail' | 'createdAt' | 'entityType' | 'sponsorLabel' | 'summary'
 type SortDirection = 'asc' | 'desc'
 
 type ActivityColumn = {
@@ -33,7 +33,7 @@ const dateFormatter = new Intl.DateTimeFormat('en-US', {
 
 const baseColumns: ActivityColumn[] = [
   { key: 'createdAt', label: 'When', width: 16 },
-  { key: 'actorLabel', label: 'Who', width: 20 },
+  { key: 'actorEmail', label: 'Who', width: 20 },
   { key: 'action', label: 'Action', width: 15 },
   { key: 'entityType', label: 'Area', width: 13 },
   { key: 'summary', label: 'Details', width: 36 }
@@ -67,6 +67,8 @@ const getEntityLabel = (entityType: string) =>
     .map(part => part.charAt(0).toUpperCase() + part.slice(1))
     .join(' ')
 
+const getActorEmailLabel = (row: DashboardActivityLogRow) => row.actorEmail || 'Email unavailable'
+
 const compareValues = (firstValue: string, secondValue: string) =>
   firstValue.localeCompare(secondValue, undefined, {
     numeric: true,
@@ -76,6 +78,7 @@ const compareValues = (firstValue: string, secondValue: string) =>
 const getSortValue = (row: DashboardActivityLogRow, key: SortKey) => {
   if (key === 'createdAt') return row.createdAt
   if (key === 'action') return getActionLabel(row.action)
+  if (key === 'actorEmail') return getActorEmailLabel(row)
   if (key === 'entityType') return getEntityLabel(row.entityType)
 
   return row[key]
@@ -116,9 +119,7 @@ const DashboardActivityLogTable = ({
     return rows.filter(row =>
       [
         getCreatedAtLabel(row.createdAt),
-        row.actorLabel,
-        row.actorEmail,
-        row.actorClerkId,
+        getActorEmailLabel(row),
         row.sponsorLabel,
         row.sponsorCode,
         getActionLabel(row.action),
@@ -247,17 +248,7 @@ const DashboardActivityLogTable = ({
                       {getCreatedAtLabel(row.createdAt)}
                     </TableCell>
                     <TableCell>
-                      <div className='font-semibold break-words'>{row.actorLabel}</div>
-                      {row.actorEmail ? (
-                        <div className='text-muted-foreground mt-1 text-xs font-semibold break-all'>
-                          {row.actorEmail}
-                        </div>
-                      ) : null}
-                      {row.actorLabel !== row.actorClerkId ? (
-                        <div className='text-muted-foreground mt-1 text-xs font-medium break-all'>
-                          {row.actorClerkId}
-                        </div>
-                      ) : null}
+                      <div className='font-semibold break-all'>{getActorEmailLabel(row)}</div>
                     </TableCell>
                     {showSponsor ? (
                       <TableCell>
@@ -296,17 +287,7 @@ const DashboardActivityLogTable = ({
               <article key={row.id} className='bg-background overflow-hidden rounded-md border p-3 shadow-sm sm:p-4'>
                 <div className='flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between'>
                   <div className='min-w-0'>
-                    <div className='text-sm font-extrabold break-words'>{row.actorLabel}</div>
-                    {row.actorEmail ? (
-                      <div className='text-muted-foreground mt-1 text-xs font-semibold break-all'>
-                        {row.actorEmail}
-                      </div>
-                    ) : null}
-                    {row.actorLabel !== row.actorClerkId ? (
-                      <div className='text-muted-foreground mt-1 text-xs font-medium break-all'>
-                        {row.actorClerkId}
-                      </div>
-                    ) : null}
+                    <div className='text-sm font-extrabold break-all'>{getActorEmailLabel(row)}</div>
                     <div className='text-muted-foreground mt-1 text-xs font-semibold'>
                       {getCreatedAtLabel(row.createdAt)}
                     </div>

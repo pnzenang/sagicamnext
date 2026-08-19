@@ -208,11 +208,7 @@ export const memberTransferRequestStatusLabels: Record<MemberTransferRequestStat
 
 export type DashboardActivityLogRow = {
   action: string
-  actorClerkId: string
   actorEmail: string
-  actorLabel: string
-  actorName: string
-  actorSponsorCode: string
   createdAt: string
   dashboardScope: string
   entityId: string

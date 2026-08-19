@@ -175,7 +175,6 @@ const recordDashboardActivity = async ({
   const actorProfile = await tx.profile
     .findUnique({
       select: {
-        sponsorEmail: true,
         sponsorCode: true,
         sponsorFirstName: true,
         sponsorLastAndMiddleName: true
@@ -186,7 +185,7 @@ const recordDashboardActivity = async ({
     })
     .catch(() => null)
 
-  const actorEmail = (await fetchCurrentActorEmail(actorClerkId)) ?? actorProfile?.sponsorEmail ?? null
+  const actorEmail = await fetchCurrentActorEmail(actorClerkId)
 
   await tx.dashboardActivityLog.create({
     data: {
@@ -224,9 +223,7 @@ const fetchDashboardActivityLogs = async (
     where
   })
 
-  const sponsorCodes = Array.from(
-    new Set(logs.flatMap(log => [log.sponsorCode, log.actorSponsorCode]).filter((code): code is string => Boolean(code)))
-  )
+  const sponsorCodes = Array.from(new Set(logs.map(log => log.sponsorCode).filter((code): code is string => Boolean(code))))
 
   const sponsors =
     sponsorCodes.length > 0
@@ -248,18 +245,11 @@ const fetchDashboardActivityLogs = async (
 
   return logs.map(log => {
     const sponsor = log.sponsorCode ? sponsorsByCode.get(log.sponsorCode) : null
-    const actorSponsor = log.actorSponsorCode ? sponsorsByCode.get(log.actorSponsorCode) : null
-    const actorName = log.actorName || (actorSponsor ? getSponsorDisplayName(actorSponsor) : '')
-    const actorSponsorCode = log.actorSponsorCode ?? ''
     const sponsorName = sponsor ? getSponsorDisplayName(sponsor) : ''
 
     return {
       action: log.action,
-      actorClerkId: log.actorClerkId,
       actorEmail: log.actorEmail ?? '',
-      actorLabel: [actorName, actorSponsorCode].filter(Boolean).join(' - ') || log.actorClerkId,
-      actorName,
-      actorSponsorCode,
       createdAt: log.createdAt.toISOString(),
       dashboardScope: log.dashboardScope,
       entityId: log.entityId ?? '',
