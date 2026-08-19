@@ -112,6 +112,12 @@ const getSortIcon = (isActive: boolean, direction: SortDirection) => {
   return direction === 'asc' ? <ArrowUp className='size-3.5' /> : <ArrowDown className='size-3.5' />
 }
 
+const isNonZeroAdjustmentValue = (value: string) => {
+  const amount = Number(value.replace(/[$,]/g, '').trim())
+
+  return Number.isFinite(amount) && amount !== 0
+}
+
 const compareValues = (
   firstValue: AdminSagicamRegistrationsRow[SortKey],
   secondValue: AdminSagicamRegistrationsRow[SortKey]
@@ -194,12 +200,18 @@ const SentAmountAdjustmentForm = ({
 }) => {
   const inputId = `registration-sent-adjustment-${sponsorCode}`
   const reasonId = `registration-sent-adjustment-reason-${sponsorCode}`
+  const [registrationAmountSentAdjustment, setRegistrationAmountSentAdjustment] = useState('')
+  const [adjustmentReason, setAdjustmentReason] = useState('')
+  const shouldShowReason = isNonZeroAdjustmentValue(registrationAmountSentAdjustment)
+
+  const handleAction = async (formData: FormData) => {
+    setRegistrationAmountSentAdjustment('')
+    setAdjustmentReason('')
+    await adjustSponsorRegistrationAmountSentAction(formData)
+  }
 
   return (
-    <form
-      action={adjustSponsorRegistrationAmountSentAction}
-      className={cn('grid gap-1.5', layout === 'card' ? '' : 'w-28 justify-items-end')}
-    >
+    <form action={handleAction} className={cn('grid gap-1.5', layout === 'card' ? '' : 'w-28 justify-items-end')}>
       <input type='hidden' name='sponsorCode' value={sponsorCode} />
       <label htmlFor={inputId} className='sr-only'>
         Amount to adjust registration sent
@@ -211,27 +223,35 @@ const SentAmountAdjustmentForm = ({
         inputMode='decimal'
         step='0.01'
         placeholder='+/- 0.00'
+        value={registrationAmountSentAdjustment}
+        onChange={event => setRegistrationAmountSentAdjustment(event.target.value)}
         className={cn(
           'bg-background text-foreground placeholder:text-muted-foreground text-center text-[11px]',
           layout === 'card' ? 'h-8 px-2 text-xs' : 'h-7 w-full px-1.5'
         )}
         required
       />
-      <label htmlFor={reasonId} className='sr-only'>
-        Reason for registration sent adjustment
-      </label>
-      <Input
-        id={reasonId}
-        name='adjustmentReason'
-        type='text'
-        maxLength={160}
-        placeholder='Reason'
-        className={cn(
-          'bg-background text-foreground placeholder:text-muted-foreground text-[11px]',
-          layout === 'card' ? 'h-8 px-2 text-xs' : 'h-7 w-full px-1.5'
-        )}
-        required
-      />
+      {shouldShowReason ? (
+        <>
+          <label htmlFor={reasonId} className='sr-only'>
+            Reason for registration sent adjustment
+          </label>
+          <Input
+            id={reasonId}
+            name='adjustmentReason'
+            type='text'
+            maxLength={160}
+            placeholder='Reason'
+            value={adjustmentReason}
+            onChange={event => setAdjustmentReason(event.target.value)}
+            className={cn(
+              'bg-background text-foreground placeholder:text-muted-foreground text-[11px]',
+              layout === 'card' ? 'h-8 px-2 text-xs' : 'h-7 w-full px-1.5'
+            )}
+            required
+          />
+        </>
+      ) : null}
       <Button
         type='submit'
         size='xs'
@@ -254,10 +274,19 @@ const ManualBalanceAdjustmentForm = ({
 }) => {
   const inputId = `registration-balance-amount-${sponsorCode}`
   const reasonId = `registration-balance-adjustment-reason-${sponsorCode}`
+  const [balanceAmount, setBalanceAmount] = useState('')
+  const [adjustmentReason, setAdjustmentReason] = useState('')
+  const shouldShowReason = isNonZeroAdjustmentValue(balanceAmount)
+
+  const handleAction = async (formData: FormData) => {
+    setBalanceAmount('')
+    setAdjustmentReason('')
+    await addSponsorRegistrationBalanceAdjustmentAction(formData)
+  }
 
   return (
     <form
-      action={addSponsorRegistrationBalanceAdjustmentAction}
+      action={handleAction}
       className={cn(
         'grid gap-1.5',
         layout === 'card' ? '' : 'col-start-2 row-span-2 row-start-1 w-28 justify-items-end'
@@ -274,27 +303,35 @@ const ManualBalanceAdjustmentForm = ({
         inputMode='decimal'
         step='0.01'
         placeholder='+/- 0.00'
+        value={balanceAmount}
+        onChange={event => setBalanceAmount(event.target.value)}
         className={cn(
           'bg-background text-foreground placeholder:text-muted-foreground text-center text-[11px]',
           layout === 'card' ? 'h-8 px-2 text-xs' : 'h-7 w-full px-1.5'
         )}
         required
       />
-      <label htmlFor={reasonId} className='sr-only'>
-        Reason for registration balance adjustment
-      </label>
-      <Input
-        id={reasonId}
-        name='adjustmentReason'
-        type='text'
-        maxLength={160}
-        placeholder='Reason'
-        className={cn(
-          'bg-background text-foreground placeholder:text-muted-foreground text-[11px]',
-          layout === 'card' ? 'h-8 px-2 text-xs' : 'h-7 w-full px-1.5'
-        )}
-        required
-      />
+      {shouldShowReason ? (
+        <>
+          <label htmlFor={reasonId} className='sr-only'>
+            Reason for registration balance adjustment
+          </label>
+          <Input
+            id={reasonId}
+            name='adjustmentReason'
+            type='text'
+            maxLength={160}
+            placeholder='Reason'
+            value={adjustmentReason}
+            onChange={event => setAdjustmentReason(event.target.value)}
+            className={cn(
+              'bg-background text-foreground placeholder:text-muted-foreground text-[11px]',
+              layout === 'card' ? 'h-8 px-2 text-xs' : 'h-7 w-full px-1.5'
+            )}
+            required
+          />
+        </>
+      ) : null}
       <Button
         type='submit'
         size='xs'
