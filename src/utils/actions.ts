@@ -659,6 +659,16 @@ const getSignedDollarAdjustmentFromForm = (formData: FormData, fieldName: string
   return Number(amount.toFixed(2))
 }
 
+const getAdjustmentReasonFromForm = (formData: FormData) => {
+  const reason = String(formData.get('adjustmentReason') ?? '').trim()
+
+  if (!reason) {
+    throw new Error('Enter a reason for this adjustment.')
+  }
+
+  return reason
+}
+
 const fetchLatestContributionAssessment = async () => {
   return db.contributionAssessment.findFirst({
     include: {
@@ -2026,6 +2036,7 @@ export const adjustSponsorContributionAmountSentAction = async (formData: FormDa
   try {
     const sponsorCode = getRequiredFormValue(formData, 'sponsorCode')
     const amountAdjustment = getSignedDollarAdjustmentFromForm(formData, 'amountSentAdjustment')
+    const adjustmentReason = getAdjustmentReasonFromForm(formData)
 
     const currentPayment = await db.sponsorContributionPayment.findUnique({
       where: {
@@ -2067,7 +2078,7 @@ export const adjustSponsorContributionAmountSentAction = async (formData: FormDa
           amount: amountAdjustment,
           createdBy: user.id,
           eventType: sponsorPaymentLedgerEventTypes.submitted,
-          note: 'Contribution amount sent manually adjusted by SAGICAM.',
+          note: `Contribution amount sent manually adjusted by SAGICAM. Reason: ${adjustmentReason}`,
           paymentType: sponsorPaymentTypes.contribution,
           sponsorCode
         }
@@ -2079,7 +2090,7 @@ export const adjustSponsorContributionAmountSentAction = async (formData: FormDa
             amount: verifiedAmountAdjustment,
             createdBy: user.id,
             eventType: sponsorPaymentLedgerEventTypes.verified,
-            note: 'Contribution verified amount adjusted by SAGICAM to match sent correction.',
+            note: `Contribution verified amount adjusted by SAGICAM to match sent correction. Reason: ${adjustmentReason}`,
             paymentType: sponsorPaymentTypes.contribution,
             sponsorCode
           }
@@ -2102,6 +2113,7 @@ const addSponsorBalanceAdjustment = async (formData: FormData, balanceType: stri
   try {
     const sponsorCode = getRequiredFormValue(formData, 'sponsorCode')
     const amount = getSignedDollarAdjustmentFromForm(formData, 'balanceAmount')
+    const adjustmentReason = getAdjustmentReasonFromForm(formData)
 
     await db.$transaction(async tx => {
       await tx.sponsorBalanceAdjustment.upsert({
@@ -2128,7 +2140,7 @@ const addSponsorBalanceAdjustment = async (formData: FormData, balanceType: stri
           amount,
           createdBy: user.id,
           eventType: sponsorPaymentLedgerEventTypes.manualAdjustment,
-          note: `${balanceType} balance manually adjusted by SAGICAM.`,
+          note: `${balanceType} balance manually adjusted by SAGICAM. Reason: ${adjustmentReason}`,
           paymentType: balanceType,
           sponsorCode
         }
@@ -2355,6 +2367,7 @@ export const adjustSponsorRegistrationAmountSentAction = async (formData: FormDa
   try {
     const sponsorCode = getRequiredFormValue(formData, 'sponsorCode')
     const amountAdjustment = getSignedDollarAdjustmentFromForm(formData, 'registrationAmountSentAdjustment')
+    const adjustmentReason = getAdjustmentReasonFromForm(formData)
 
     const currentPayment = await db.sponsorRegistrationPayment.findUnique({
       where: {
@@ -2391,7 +2404,7 @@ export const adjustSponsorRegistrationAmountSentAction = async (formData: FormDa
           amount: amountAdjustment,
           createdBy: user.id,
           eventType: sponsorPaymentLedgerEventTypes.submitted,
-          note: 'Registration amount sent manually adjusted by SAGICAM.',
+          note: `Registration amount sent manually adjusted by SAGICAM. Reason: ${adjustmentReason}`,
           paymentType: sponsorPaymentTypes.registration,
           sponsorCode
         }

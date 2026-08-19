@@ -193,11 +193,12 @@ const SentAmountAdjustmentForm = ({
   sponsorCode: string
 }) => {
   const inputId = `registration-sent-adjustment-${sponsorCode}`
+  const reasonId = `registration-sent-adjustment-reason-${sponsorCode}`
 
   return (
     <form
       action={adjustSponsorRegistrationAmountSentAction}
-      className={cn('grid gap-1.5', layout === 'card' ? '' : 'w-20 justify-items-end')}
+      className={cn('grid gap-1.5', layout === 'card' ? '' : 'w-28 justify-items-end')}
     >
       <input type='hidden' name='sponsorCode' value={sponsorCode} />
       <label htmlFor={inputId} className='sr-only'>
@@ -212,7 +213,22 @@ const SentAmountAdjustmentForm = ({
         placeholder='+/- 0.00'
         className={cn(
           'bg-background text-foreground placeholder:text-muted-foreground text-center text-[11px]',
-          layout === 'card' ? 'h-8 px-2 text-xs' : 'h-7 w-20 px-1.5'
+          layout === 'card' ? 'h-8 px-2 text-xs' : 'h-7 w-full px-1.5'
+        )}
+        required
+      />
+      <label htmlFor={reasonId} className='sr-only'>
+        Reason for registration sent adjustment
+      </label>
+      <Input
+        id={reasonId}
+        name='adjustmentReason'
+        type='text'
+        maxLength={160}
+        placeholder='Reason'
+        className={cn(
+          'bg-background text-foreground placeholder:text-muted-foreground text-[11px]',
+          layout === 'card' ? 'h-8 px-2 text-xs' : 'h-7 w-full px-1.5'
         )}
         required
       />
@@ -220,7 +236,7 @@ const SentAmountAdjustmentForm = ({
         type='submit'
         size='xs'
         variant='secondary'
-        className={cn('justify-center px-2 text-[11px]', layout === 'card' ? 'h-8 w-full' : 'h-7 w-20')}
+        className={cn('justify-center px-2 text-[11px]', layout === 'card' ? 'h-8 w-full' : 'h-7 w-full')}
       >
         <ArrowUpDown className='size-3' />
         Apply
@@ -237,11 +253,15 @@ const ManualBalanceAdjustmentForm = ({
   sponsorCode: string
 }) => {
   const inputId = `registration-balance-amount-${sponsorCode}`
+  const reasonId = `registration-balance-adjustment-reason-${sponsorCode}`
 
   return (
     <form
       action={addSponsorRegistrationBalanceAdjustmentAction}
-      className={layout === 'card' ? 'grid gap-1.5' : 'contents'}
+      className={cn(
+        'grid gap-1.5',
+        layout === 'card' ? '' : 'col-start-2 row-span-2 row-start-1 w-28 justify-items-end'
+      )}
     >
       <input type='hidden' name='sponsorCode' value={sponsorCode} />
       <label htmlFor={inputId} className='sr-only'>
@@ -256,7 +276,22 @@ const ManualBalanceAdjustmentForm = ({
         placeholder='+/- 0.00'
         className={cn(
           'bg-background text-foreground placeholder:text-muted-foreground text-center text-[11px]',
-          layout === 'card' ? 'h-8 px-2 text-xs' : 'col-start-2 row-start-1 h-7 w-20 px-1.5'
+          layout === 'card' ? 'h-8 px-2 text-xs' : 'h-7 w-full px-1.5'
+        )}
+        required
+      />
+      <label htmlFor={reasonId} className='sr-only'>
+        Reason for registration balance adjustment
+      </label>
+      <Input
+        id={reasonId}
+        name='adjustmentReason'
+        type='text'
+        maxLength={160}
+        placeholder='Reason'
+        className={cn(
+          'bg-background text-foreground placeholder:text-muted-foreground text-[11px]',
+          layout === 'card' ? 'h-8 px-2 text-xs' : 'h-7 w-full px-1.5'
         )}
         required
       />
@@ -264,10 +299,7 @@ const ManualBalanceAdjustmentForm = ({
         type='submit'
         size='xs'
         variant='secondary'
-        className={cn(
-          'justify-center px-2 text-[11px]',
-          layout === 'card' ? 'h-8 w-full' : 'col-start-2 row-start-2 h-7 w-20'
-        )}
+        className={cn('justify-center px-2 text-[11px]', layout === 'card' ? 'h-8 w-full' : 'h-7 w-full')}
       >
         <ArrowUpDown className='size-3' />
         Apply
