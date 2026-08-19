@@ -110,10 +110,23 @@ const dashboardActivityScopes = {
 
 type DashboardActivityScope = (typeof dashboardActivityScopes)[keyof typeof dashboardActivityScopes]
 type DashboardActivityLogClient = Prisma.TransactionClient | typeof db
+let dashboardActivityLogTableAvailable: boolean | undefined
 
 const revalidateDashboardActivityLogs = () => {
   revalidatePath('/activity-log')
   revalidatePath('/admin-activity-log')
+}
+
+const hasDashboardActivityLogTable = async (client: DashboardActivityLogClient) => {
+  if (dashboardActivityLogTableAvailable) return true
+
+  const [result] = await client.$queryRaw<{ exists: boolean }[]>(
+    Prisma.sql`SELECT to_regclass('public."DashboardActivityLog"') IS NOT NULL AS "exists"`
+  )
+
+  dashboardActivityLogTableAvailable = Boolean(result?.exists)
+
+  return dashboardActivityLogTableAvailable
 }
 
 const recordDashboardActivity = async ({
@@ -137,6 +150,12 @@ const recordDashboardActivity = async ({
   summary: string
   tx?: DashboardActivityLogClient
 }) => {
+  if (!(await hasDashboardActivityLogTable(tx))) {
+    console.warn('DashboardActivityLog table is not available. Skipping activity log write.')
+
+    return
+  }
+
   const actorProfile = await tx.profile
     .findUnique({
       select: {
@@ -170,6 +189,12 @@ const fetchDashboardActivityLogs = async (
   where: Prisma.DashboardActivityLogWhereInput
 ): Promise<DashboardActivityLogRow[]> => {
   noStore()
+
+  if (!(await hasDashboardActivityLogTable(db))) {
+    console.warn('DashboardActivityLog table is not available. Returning an empty activity log.')
+
+    return []
+  }
 
   const logs = await db.dashboardActivityLog.findMany({
     orderBy: {
