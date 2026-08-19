@@ -2,7 +2,7 @@
 
 import { randomUUID } from 'crypto'
 
-import { auth } from '@clerk/nextjs/server'
+import { auth, currentUser } from '@clerk/nextjs/server'
 
 import { redirect } from 'next/navigation'
 
@@ -110,7 +110,7 @@ const dashboardActivityScopes = {
 
 type DashboardActivityScope = (typeof dashboardActivityScopes)[keyof typeof dashboardActivityScopes]
 type DashboardActivityLogClient = Prisma.TransactionClient | typeof db
-let dashboardActivityLogTableAvailable: boolean | undefined
+let dashboardActivityLogSchemaAvailable: boolean | undefined
 
 const revalidateDashboardActivityLogs = () => {
   revalidatePath('/activity-log')
@@ -118,15 +118,31 @@ const revalidateDashboardActivityLogs = () => {
 }
 
 const hasDashboardActivityLogTable = async (client: DashboardActivityLogClient) => {
-  if (dashboardActivityLogTableAvailable) return true
+  if (dashboardActivityLogSchemaAvailable) return true
 
   const [result] = await client.$queryRaw<{ exists: boolean }[]>(
-    Prisma.sql`SELECT to_regclass('public."DashboardActivityLog"') IS NOT NULL AS "exists"`
+    Prisma.sql`
+      SELECT EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name = 'DashboardActivityLog'
+          AND column_name = 'actorEmail'
+      ) AS "exists"
+    `
   )
 
-  dashboardActivityLogTableAvailable = Boolean(result?.exists)
+  dashboardActivityLogSchemaAvailable = Boolean(result?.exists)
 
-  return dashboardActivityLogTableAvailable
+  return dashboardActivityLogSchemaAvailable
+}
+
+const fetchCurrentActorEmail = async (actorClerkId: string) => {
+  const actor = await currentUser().catch(() => null)
+
+  if (actor?.id !== actorClerkId) return null
+
+  return actor.primaryEmailAddress?.emailAddress ?? actor.emailAddresses[0]?.emailAddress ?? null
 }
 
 const recordDashboardActivity = async ({
@@ -159,6 +175,7 @@ const recordDashboardActivity = async ({
   const actorProfile = await tx.profile
     .findUnique({
       select: {
+        sponsorEmail: true,
         sponsorCode: true,
         sponsorFirstName: true,
         sponsorLastAndMiddleName: true
@@ -169,10 +186,13 @@ const recordDashboardActivity = async ({
     })
     .catch(() => null)
 
+  const actorEmail = (await fetchCurrentActorEmail(actorClerkId)) ?? actorProfile?.sponsorEmail ?? null
+
   await tx.dashboardActivityLog.create({
     data: {
       action,
       actorClerkId,
+      actorEmail,
       actorName: actorProfile ? getSponsorDisplayName(actorProfile) : null,
       actorSponsorCode: actorProfile?.sponsorCode ?? null,
       dashboardScope,
@@ -236,6 +256,7 @@ const fetchDashboardActivityLogs = async (
     return {
       action: log.action,
       actorClerkId: log.actorClerkId,
+      actorEmail: log.actorEmail ?? '',
       actorLabel: [actorName, actorSponsorCode].filter(Boolean).join(' - ') || log.actorClerkId,
       actorName,
       actorSponsorCode,

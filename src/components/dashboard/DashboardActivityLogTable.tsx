@@ -117,6 +117,7 @@ const DashboardActivityLogTable = ({
       [
         getCreatedAtLabel(row.createdAt),
         row.actorLabel,
+        row.actorEmail,
         row.actorClerkId,
         row.sponsorLabel,
         row.sponsorCode,
@@ -247,6 +248,11 @@ const DashboardActivityLogTable = ({
                     </TableCell>
                     <TableCell>
                       <div className='font-semibold break-words'>{row.actorLabel}</div>
+                      {row.actorEmail ? (
+                        <div className='text-muted-foreground mt-1 text-xs font-semibold break-all'>
+                          {row.actorEmail}
+                        </div>
+                      ) : null}
                       {row.actorLabel !== row.actorClerkId ? (
                         <div className='text-muted-foreground mt-1 text-xs font-medium break-all'>
                           {row.actorClerkId}
@@ -291,6 +297,11 @@ const DashboardActivityLogTable = ({
                 <div className='flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between'>
                   <div className='min-w-0'>
                     <div className='text-sm font-extrabold break-words'>{row.actorLabel}</div>
+                    {row.actorEmail ? (
+                      <div className='text-muted-foreground mt-1 text-xs font-semibold break-all'>
+                        {row.actorEmail}
+                      </div>
+                    ) : null}
                     {row.actorLabel !== row.actorClerkId ? (
                       <div className='text-muted-foreground mt-1 text-xs font-medium break-all'>
                         {row.actorClerkId}

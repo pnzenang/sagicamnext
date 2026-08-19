@@ -359,6 +359,7 @@ model DashboardActivityLog {
   dashboardScope   String
   sponsorCode      String?
   actorClerkId     String
+  actorEmail       String?
   actorSponsorCode String?
   actorName        String?
   action           String
