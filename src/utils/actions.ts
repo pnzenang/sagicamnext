@@ -137,6 +137,8 @@ const hasDashboardActivityLogTable = async (client: DashboardActivityLogClient) 
   return dashboardActivityLogSchemaAvailable
 }
 
+const defaultAdminActivityEmail = 'info@sagicam.org'
+
 const findEmailClaim = (claims: unknown) => {
   if (!claims || typeof claims !== 'object') return null
 
@@ -154,6 +156,14 @@ const findEmailClaim = (claims: unknown) => {
   return null
 }
 
+const getAdminActivityEmail = (actorClerkId: string) => {
+  if (actorClerkId !== process.env.ADMIN_USER_ID) return null
+
+  const adminActivityEmail = process.env.ADMIN_ACTIVITY_EMAIL?.trim() || defaultAdminActivityEmail
+
+  return adminActivityEmail.includes('@') ? adminActivityEmail : null
+}
+
 const fetchCurrentActorEmail = async (actorClerkId: string) => {
   const currentAuth = await auth().catch(() => null)
 
@@ -161,11 +171,19 @@ const fetchCurrentActorEmail = async (actorClerkId: string) => {
 
   const sessionEmail = findEmailClaim(currentAuth.sessionClaims)
 
-  if (sessionEmail) return sessionEmail
-
   const actor = await currentUser().catch(() => null)
 
   if (actor?.id !== actorClerkId) return null
+
+  const adminActivityEmail = getAdminActivityEmail(actorClerkId)
+
+  const matchingAdminActivityEmail = adminActivityEmail
+    ? actor.emailAddresses.find(email => email.emailAddress.toLowerCase() === adminActivityEmail.toLowerCase())
+        ?.emailAddress
+    : null
+
+  if (matchingAdminActivityEmail) return matchingAdminActivityEmail
+  if (sessionEmail) return sessionEmail
 
   return actor.primaryEmailAddress?.emailAddress ?? actor.emailAddresses[0]?.emailAddress ?? null
 }
