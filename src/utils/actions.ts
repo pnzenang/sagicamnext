@@ -137,7 +137,32 @@ const hasDashboardActivityLogTable = async (client: DashboardActivityLogClient) 
   return dashboardActivityLogSchemaAvailable
 }
 
+const findEmailClaim = (claims: unknown) => {
+  if (!claims || typeof claims !== 'object') return null
+
+  const record = claims as Record<string, unknown>
+  const emailClaimNames = ['email', 'email_address', 'login_email', 'identifier']
+
+  for (const claimName of emailClaimNames) {
+    const value = record[claimName]
+
+    if (typeof value === 'string' && value.includes('@')) {
+      return value
+    }
+  }
+
+  return null
+}
+
 const fetchCurrentActorEmail = async (actorClerkId: string) => {
+  const currentAuth = await auth().catch(() => null)
+
+  if (currentAuth?.userId !== actorClerkId) return null
+
+  const sessionEmail = findEmailClaim(currentAuth.sessionClaims)
+
+  if (sessionEmail) return sessionEmail
+
   const actor = await currentUser().catch(() => null)
 
   if (actor?.id !== actorClerkId) return null
