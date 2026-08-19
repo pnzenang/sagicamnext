@@ -28,6 +28,7 @@ import {
   reasonForLeaving,
   type DeceasedMemberDocumentStatus,
   type DeceasedMemberDocumentType,
+  type DashboardActivityLogRow,
   type MemberTransferRequestStatus,
   type NameChangeRequestStatus
 } from './types'
@@ -95,6 +96,135 @@ const allowedDeceasedMemberDocumentMimeTypes = new Set([
 const allowedDeceasedMemberDocumentExtensions = new Set(['.heic', '.heif', '.jpeg', '.jpg', '.pdf', '.png', '.webp'])
 
 const formatRegistrationDate = (date: Date) => registrationDateFormatter.format(date)
+
+const getSponsorDisplayName = (profile: {
+  sponsorCode: string
+  sponsorFirstName: string
+  sponsorLastAndMiddleName: string
+}) => `${profile.sponsorFirstName} ${profile.sponsorLastAndMiddleName}`.trim() || profile.sponsorCode
+
+const dashboardActivityScopes = {
+  admin: 'admin',
+  sponsor: 'sponsor'
+} as const
+
+type DashboardActivityScope = (typeof dashboardActivityScopes)[keyof typeof dashboardActivityScopes]
+type DashboardActivityLogClient = Prisma.TransactionClient | typeof db
+
+const revalidateDashboardActivityLogs = () => {
+  revalidatePath('/activity-log')
+  revalidatePath('/admin-activity-log')
+}
+
+const recordDashboardActivity = async ({
+  action,
+  actorClerkId,
+  dashboardScope,
+  entityId,
+  entityType,
+  metadata,
+  sponsorCode,
+  summary,
+  tx = db
+}: {
+  action: string
+  actorClerkId: string
+  dashboardScope: DashboardActivityScope
+  entityId?: string | null
+  entityType: string
+  metadata?: Prisma.InputJsonValue
+  sponsorCode?: string | null
+  summary: string
+  tx?: DashboardActivityLogClient
+}) => {
+  const actorProfile = await tx.profile
+    .findUnique({
+      select: {
+        sponsorCode: true,
+        sponsorFirstName: true,
+        sponsorLastAndMiddleName: true
+      },
+      where: {
+        clerkId: actorClerkId
+      }
+    })
+    .catch(() => null)
+
+  await tx.dashboardActivityLog.create({
+    data: {
+      action,
+      actorClerkId,
+      actorName: actorProfile ? getSponsorDisplayName(actorProfile) : null,
+      actorSponsorCode: actorProfile?.sponsorCode ?? null,
+      dashboardScope,
+      entityId: entityId ?? null,
+      entityType,
+      ...(metadata === undefined ? {} : { metadata }),
+      sponsorCode: sponsorCode ?? null,
+      summary
+    }
+  })
+}
+
+const fetchDashboardActivityLogs = async (
+  where: Prisma.DashboardActivityLogWhereInput
+): Promise<DashboardActivityLogRow[]> => {
+  noStore()
+
+  const logs = await db.dashboardActivityLog.findMany({
+    orderBy: {
+      createdAt: 'desc'
+    },
+    take: 500,
+    where
+  })
+
+  const sponsorCodes = Array.from(
+    new Set(logs.flatMap(log => [log.sponsorCode, log.actorSponsorCode]).filter((code): code is string => Boolean(code)))
+  )
+
+  const sponsors =
+    sponsorCodes.length > 0
+      ? await db.profile.findMany({
+          select: {
+            sponsorCode: true,
+            sponsorFirstName: true,
+            sponsorLastAndMiddleName: true
+          },
+          where: {
+            sponsorCode: {
+              in: sponsorCodes
+            }
+          }
+        })
+      : []
+
+  const sponsorsByCode = new Map(sponsors.map(sponsor => [sponsor.sponsorCode, sponsor]))
+
+  return logs.map(log => {
+    const sponsor = log.sponsorCode ? sponsorsByCode.get(log.sponsorCode) : null
+    const actorSponsor = log.actorSponsorCode ? sponsorsByCode.get(log.actorSponsorCode) : null
+    const actorName = log.actorName || (actorSponsor ? getSponsorDisplayName(actorSponsor) : '')
+    const actorSponsorCode = log.actorSponsorCode ?? ''
+    const sponsorName = sponsor ? getSponsorDisplayName(sponsor) : ''
+
+    return {
+      action: log.action,
+      actorClerkId: log.actorClerkId,
+      actorLabel: [actorName, actorSponsorCode].filter(Boolean).join(' - ') || log.actorClerkId,
+      actorName,
+      actorSponsorCode,
+      createdAt: log.createdAt.toISOString(),
+      dashboardScope: log.dashboardScope,
+      entityId: log.entityId ?? '',
+      entityType: log.entityType,
+      id: log.id,
+      sponsorCode: log.sponsorCode ?? '',
+      sponsorLabel: [sponsorName, log.sponsorCode].filter(Boolean).join(' - '),
+      summary: log.summary
+    }
+  })
+}
 
 const memberStatusActionLabels: Record<memberStatus, string> = {
   [memberStatus.Awaiting]: 'Awaiting Publication',
@@ -314,6 +444,7 @@ const revalidateSponsorPaymentPages = () => {
   revalidatePath('/admin-payment-history')
   revalidatePath('/contributions-payments')
   revalidatePath('/registration-payments')
+  revalidateDashboardActivityLogs()
 }
 
 const upsertPaymentAlertReset = async (alertType: string, sponsorCode = allPaymentAlertSponsorsCode) => {
@@ -346,6 +477,7 @@ const revalidateMemberPaymentViews = () => {
   revalidateSponsorPaymentPages()
   revalidatePath('/deceased-members')
   revalidatePath('/removed-members')
+  revalidateDashboardActivityLogs()
 }
 
 const revalidateDeathDocumentationViews = () => {
@@ -353,6 +485,7 @@ const revalidateDeathDocumentationViews = () => {
   revalidatePath('/admin-death-documentations')
   revalidatePath('/death-documentations')
   revalidatePath('/deceased-members')
+  revalidateDashboardActivityLogs()
 }
 
 const revalidateNameChangeDocumentationViews = () => {
@@ -360,11 +493,13 @@ const revalidateNameChangeDocumentationViews = () => {
   revalidatePath('/admin-name-changes')
   revalidatePath('/all-members')
   revalidatePath('/name-change-documents-upload')
+  revalidateDashboardActivityLogs()
 }
 
 const revalidateMemberTransferViews = () => {
   revalidatePath('/admin-member-transfers')
   revalidatePath('/member-transfer')
+  revalidateDashboardActivityLogs()
 }
 
 const fetchSponsorByCode = async (sponsorCode: string) => {
@@ -830,6 +965,15 @@ export const saveContributionCalculationAdminFeeAction = async (
       }
     })
 
+    await recordDashboardActivity({
+      action: 'contribution_admin_fee_saved',
+      actorClerkId: user.id,
+      dashboardScope: dashboardActivityScopes.admin,
+      entityId: 'current',
+      entityType: 'contribution_calculation',
+      summary: `Saved contribution calculation admin fee at ${currencyFormatter.format(adminFee)}.`
+    })
+
     revalidatePath('/admin-contribution-calculation')
     revalidatePath('/admin-sagicam-payments')
 
@@ -868,7 +1012,8 @@ export const addContributionCalculationDeathAction = async (
         firstName: true,
         id: true,
         lastAndMiddleNames: true,
-        memberMatriculationNumber: true
+        memberMatriculationNumber: true,
+        sponsorCode: true
       }
     })
 
@@ -893,6 +1038,16 @@ export const addContributionCalculationDeathAction = async (
       }
     })
 
+    await recordDashboardActivity({
+      action: 'contribution_calculation_death_added',
+      actorClerkId: user.id,
+      dashboardScope: dashboardActivityScopes.admin,
+      entityId: deceasedMember.id,
+      entityType: 'contribution_calculation',
+      sponsorCode: deceasedMember.sponsorCode,
+      summary: `Added ${deceasedMember.firstName} ${deceasedMember.lastAndMiddleNames} (${deceasedMember.memberMatriculationNumber}) to contribution calculation for ${currencyFormatter.format(roundCurrencyAmount(amountToContribute))}.`
+    })
+
     revalidatePath('/admin-contribution-calculation')
 
     return {
@@ -904,17 +1059,45 @@ export const addContributionCalculationDeathAction = async (
 }
 
 export const deleteContributionCalculationDeathAction = async (formData: FormData): Promise<void> => {
-  await assertAdminUser()
+  const user = await assertAdminUser()
 
   const contributionCalculationDeathId = String(formData.get('contributionCalculationDeathId') ?? '')
 
   if (!contributionCalculationDeathId) return
+
+  const contributionCalculationDeath = await db.contributionCalculationDeath.findUnique({
+    include: {
+      deceasedMember: {
+        select: {
+          firstName: true,
+          lastAndMiddleNames: true,
+          memberMatriculationNumber: true,
+          sponsorCode: true
+        }
+      }
+    },
+    where: {
+      id: contributionCalculationDeathId
+    }
+  })
 
   await db.contributionCalculationDeath.delete({
     where: {
       id: contributionCalculationDeathId
     }
   })
+
+  if (contributionCalculationDeath) {
+    await recordDashboardActivity({
+      action: 'contribution_calculation_death_removed',
+      actorClerkId: user.id,
+      dashboardScope: dashboardActivityScopes.admin,
+      entityId: contributionCalculationDeath.deceasedMemberId,
+      entityType: 'contribution_calculation',
+      sponsorCode: contributionCalculationDeath.deceasedMember.sponsorCode,
+      summary: `Removed ${contributionCalculationDeath.deceasedMember.firstName} ${contributionCalculationDeath.deceasedMember.lastAndMiddleNames} (${contributionCalculationDeath.memberMatriculationNumber}) from contribution calculation.`
+    })
+  }
 
   revalidatePath('/admin-contribution-calculation')
   revalidatePath('/admin-sagicam-payments')
@@ -1004,6 +1187,25 @@ export const createContributionAssessmentFromCalculationAction = async (
         }))
       })
     })
+
+    await recordDashboardActivity({
+      action: 'contribution_table_published',
+      actorClerkId: user.id,
+      dashboardScope: dashboardActivityScopes.admin,
+      entityType: 'contribution_assessment',
+      summary: `Published contribution table for ${deathCount} death${deathCount === 1 ? '' : 's'} and ${currencyFormatter.format(totalAmount)} across ${vestedMembers.length} vested loved ones.`
+    })
+
+    for (const group of groupEntries) {
+      await recordDashboardActivity({
+        action: 'contribution_table_published',
+        actorClerkId: user.id,
+        dashboardScope: dashboardActivityScopes.admin,
+        entityType: 'contribution_assessment',
+        sponsorCode: group.sponsorCode,
+        summary: `Published contribution due of ${currencyFormatter.format(group.amountOwed)} for ${group.vestedMembersCount} vested loved one${group.vestedMembersCount === 1 ? '' : 's'}.`
+      })
+    }
 
     revalidatePath('/admin-contribution-calculation')
     revalidatePath('/admin-payment-update')
@@ -1222,6 +1424,25 @@ export const resetContributionCalculationAction = async (
 
     await db.$transaction(resetOperations)
 
+    await recordDashboardActivity({
+      action: 'contribution_calculation_reset',
+      actorClerkId: user.id,
+      dashboardScope: dashboardActivityScopes.admin,
+      entityType: 'contribution_calculation',
+      summary: 'Reset contribution calculation and cleared contribution owed, sent, and verified totals while preserving reserve/deficit.'
+    })
+
+    for (const sponsorCode of affectedSponsorCodes) {
+      await recordDashboardActivity({
+        action: 'contribution_calculation_reset',
+        actorClerkId: user.id,
+        dashboardScope: dashboardActivityScopes.admin,
+        entityType: 'contribution_calculation',
+        sponsorCode,
+        summary: 'Reset contribution calculation values for this sponsor while preserving reserve/deficit.'
+      })
+    }
+
     revalidatePath('/admin-count')
     revalidatePath('/admin-contribution-calculation')
     revalidatePath('/admin-payment-history')
@@ -1240,12 +1461,6 @@ export const resetContributionCalculationAction = async (
     return renderError(error)
   }
 }
-
-const getSponsorDisplayName = (profile: {
-  sponsorCode: string
-  sponsorFirstName: string
-  sponsorLastAndMiddleName: string
-}) => `${profile.sponsorFirstName} ${profile.sponsorLastAndMiddleName}`.trim() || profile.sponsorCode
 
 const contributionTableDeathCertificateDocumentTypes = ['death_certificate']
 const contributionTableDocumentTypes = [...contributionTableDeathCertificateDocumentTypes, 'deceased_picture']
@@ -1614,11 +1829,23 @@ export const createProfileAction = async (prevState: any, formData: FormData) =>
     const rawData = Object.fromEntries(formData)
     const validatedFields = validateWithZodSchema(profileSchema, rawData)
 
-    await db.profile.create({
-      data: {
-        clerkId: userId,
-        ...validatedFields
-      }
+    await db.$transaction(async tx => {
+      await tx.profile.create({
+        data: {
+          clerkId: userId,
+          ...validatedFields
+        }
+      })
+
+      await recordDashboardActivity({
+        action: 'profile_created',
+        actorClerkId: userId,
+        dashboardScope: dashboardActivityScopes.sponsor,
+        entityType: 'profile',
+        sponsorCode: validatedFields.sponsorCode,
+        summary: `Created sponsor profile ${validatedFields.sponsorCode}.`,
+        tx
+      })
     })
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -1655,13 +1882,38 @@ export const updateProfileAction = async (prevState: any, formData: FormData): P
 
     const validatedFields = validateWithZodSchema(profileSchema, rawData)
 
-    await db.profile.update({
+    const currentProfile = await db.profile.findUnique({
+      select: {
+        sponsorCode: true
+      },
       where: {
         clerkId: user.id
-      },
-      data: validatedFields
+      }
+    })
+
+    await db.$transaction(async tx => {
+      await tx.profile.update({
+        where: {
+          clerkId: user.id
+        },
+        data: validatedFields
+      })
+
+      await recordDashboardActivity({
+        action: 'profile_updated',
+        actorClerkId: user.id,
+        dashboardScope: dashboardActivityScopes.sponsor,
+        entityType: 'profile',
+        sponsorCode: validatedFields.sponsorCode,
+        summary:
+          currentProfile?.sponsorCode && currentProfile.sponsorCode !== validatedFields.sponsorCode
+            ? `Updated sponsor profile from ${currentProfile.sponsorCode} to ${validatedFields.sponsorCode}.`
+            : `Updated sponsor profile ${validatedFields.sponsorCode}.`,
+        tx
+      })
     })
     revalidatePath('/profile')
+    revalidateDashboardActivityLogs()
 
     return { message: 'Profile updated successfully' }
   } catch (error) {
@@ -1694,6 +1946,16 @@ export const createMemberAction = async (provState: any, formData: FormData): Pr
           sponsorCode: validatedFields.sponsorCode
         })
       }
+    })
+
+    await recordDashboardActivity({
+      action: 'member_created',
+      actorClerkId: user.id,
+      dashboardScope: dashboardActivityScopes.sponsor,
+      entityId: memberMatriculationNumber,
+      entityType: 'member',
+      sponsorCode: validatedFields.sponsorCode,
+      summary: `Added loved one ${validatedFields.firstName} ${validatedFields.lastAndMiddleNames} (${memberMatriculationNumber}).`
     })
 
     await sendLovedOneConfirmationEmail({
@@ -1744,6 +2006,20 @@ export const fetchCurrentSponsorRegistrationPayment = async () => {
   const profile = await fetchProfile()
 
   return fetchSponsorRegistrationSummary(profile.sponsorCode, { noStore: true })
+}
+
+export const fetchSponsorDashboardActivityLogsAction = async () => {
+  const profile = await fetchProfile()
+
+  return fetchDashboardActivityLogs({
+    sponsorCode: profile.sponsorCode
+  })
+}
+
+export const fetchAdminDashboardActivityLogsAction = async () => {
+  await assertAdminUser()
+
+  return fetchDashboardActivityLogs({})
 }
 
 export const fetchAdminSponsorDashboardPreviewAction = async (sponsorCodeInput: string) => {
@@ -1890,6 +2166,25 @@ export const createContributionAssessmentAction = async (
       })
     })
 
+    await recordDashboardActivity({
+      action: 'contribution_assessment_created',
+      actorClerkId: user.id,
+      dashboardScope: dashboardActivityScopes.admin,
+      entityType: 'contribution_assessment',
+      summary: `Distributed ${currencyFormatter.format(totalAmount)} across ${vestedMembers.length} vested loved ones.`
+    })
+
+    for (const group of groupEntries) {
+      await recordDashboardActivity({
+        action: 'contribution_assessment_created',
+        actorClerkId: user.id,
+        dashboardScope: dashboardActivityScopes.admin,
+        entityType: 'contribution_assessment',
+        sponsorCode: group.sponsorCode,
+        summary: `Created contribution due of ${currencyFormatter.format(group.amountOwed)} for ${group.vestedMembersCount} vested loved one${group.vestedMembersCount === 1 ? '' : 's'}.`
+      })
+    }
+
     revalidatePath('/admin-members')
     revalidatePath('/admin-count')
     revalidatePath('/admin-sagicam-payments')
@@ -1959,6 +2254,15 @@ export const saveSponsorContributionPaymentAction = async (
       return payment
     })
 
+    await recordDashboardActivity({
+      action: 'contribution_payment_submitted',
+      actorClerkId: user.id,
+      dashboardScope: dashboardActivityScopes.sponsor,
+      entityType: 'payment',
+      sponsorCode: profile.sponsorCode,
+      summary: `Submitted contribution payment of ${currencyFormatter.format(amountSent)}.`
+    })
+
     revalidatePath('/admin-count')
     revalidatePath('/admin-sagicam-payments')
     revalidatePath('/all-members')
@@ -1973,7 +2277,7 @@ export const saveSponsorContributionPaymentAction = async (
 }
 
 export const verifySponsorContributionPaymentAction = async (formData: FormData): Promise<void> => {
-  const user = await getAuthUser()
+  const user = await assertAdminUser()
 
   try {
     const sponsorCode = getRequiredFormValue(formData, 'sponsorCode')
@@ -2019,6 +2323,15 @@ export const verifySponsorContributionPaymentAction = async (formData: FormData)
       })
     })
 
+    await recordDashboardActivity({
+      action: 'contribution_payment_verified',
+      actorClerkId: user.id,
+      dashboardScope: dashboardActivityScopes.admin,
+      entityType: 'payment',
+      sponsorCode,
+      summary: `Verified contribution payment of ${currencyFormatter.format(amountToVerify)} for sponsor ${sponsorCode}.`
+    })
+
     await upsertPaymentAlertReset(contributionPaymentAlertType, sponsorCode)
 
     revalidatePath('/admin-sagicam-payments')
@@ -2031,7 +2344,7 @@ export const verifySponsorContributionPaymentAction = async (formData: FormData)
 }
 
 export const adjustSponsorContributionAmountSentAction = async (formData: FormData): Promise<void> => {
-  const user = await getAuthUser()
+  const user = await assertAdminUser()
 
   try {
     const sponsorCode = getRequiredFormValue(formData, 'sponsorCode')
@@ -2098,6 +2411,15 @@ export const adjustSponsorContributionAmountSentAction = async (formData: FormDa
       }
     })
 
+    await recordDashboardActivity({
+      action: 'contribution_payment_adjusted',
+      actorClerkId: user.id,
+      dashboardScope: dashboardActivityScopes.admin,
+      entityType: 'payment',
+      sponsorCode,
+      summary: `Adjusted contribution amount sent by ${currencyFormatter.format(amountAdjustment)} for sponsor ${sponsorCode}. Reason: ${adjustmentReason}`
+    })
+
     revalidatePath('/admin-count')
     revalidatePath('/admin-sagicam-payments')
     revalidatePath('/all-members')
@@ -2108,7 +2430,7 @@ export const adjustSponsorContributionAmountSentAction = async (formData: FormDa
 }
 
 const addSponsorBalanceAdjustment = async (formData: FormData, balanceType: string): Promise<void> => {
-  const user = await getAuthUser()
+  const user = await assertAdminUser()
 
   try {
     const sponsorCode = getRequiredFormValue(formData, 'sponsorCode')
@@ -2147,6 +2469,15 @@ const addSponsorBalanceAdjustment = async (formData: FormData, balanceType: stri
       })
     })
 
+    await recordDashboardActivity({
+      action: `${balanceType}_balance_adjusted`,
+      actorClerkId: user.id,
+      dashboardScope: dashboardActivityScopes.admin,
+      entityType: 'payment',
+      sponsorCode,
+      summary: `Adjusted ${balanceType} balance by ${currencyFormatter.format(amount)} for sponsor ${sponsorCode}. Reason: ${adjustmentReason}`
+    })
+
     revalidatePath('/admin-sagicam-payments')
     revalidatePath('/admin-sagicam-registrations')
     revalidatePath('/all-members')
@@ -2161,7 +2492,7 @@ export const addSponsorContributionBalanceAdjustmentAction = async (formData: Fo
 }
 
 export const resetSponsorContributionPaymentAction = async (formData: FormData): Promise<void> => {
-  const user = await getAuthUser()
+  const user = await assertAdminUser()
 
   try {
     const sponsorCode = getRequiredFormValue(formData, 'sponsorCode')
@@ -2222,6 +2553,15 @@ export const resetSponsorContributionPaymentAction = async (formData: FormData):
           sponsorCode
         }
       })
+    })
+
+    await recordDashboardActivity({
+      action: 'contribution_payment_reset',
+      actorClerkId: user.id,
+      dashboardScope: dashboardActivityScopes.admin,
+      entityType: 'payment',
+      sponsorCode,
+      summary: `Reset contribution payment totals for sponsor ${sponsorCode}.`
     })
 
     revalidatePath('/admin-sagicam-payments')
@@ -2288,6 +2628,15 @@ export const saveSponsorRegistrationPaymentAction = async (
       return payment
     })
 
+    await recordDashboardActivity({
+      action: 'registration_payment_submitted',
+      actorClerkId: user.id,
+      dashboardScope: dashboardActivityScopes.sponsor,
+      entityType: 'payment',
+      sponsorCode: profile.sponsorCode,
+      summary: `Submitted registration payment of ${currencyFormatter.format(amountSent)}.`
+    })
+
     revalidatePath('/admin-count')
     revalidatePath('/admin-sagicam-payments')
     revalidatePath('/admin-sagicam-registrations')
@@ -2303,7 +2652,7 @@ export const saveSponsorRegistrationPaymentAction = async (
 }
 
 export const verifySponsorRegistrationPaymentAction = async (formData: FormData): Promise<void> => {
-  const user = await getAuthUser()
+  const user = await assertAdminUser()
 
   try {
     const sponsorCode = getRequiredFormValue(formData, 'sponsorCode')
@@ -2350,6 +2699,15 @@ export const verifySponsorRegistrationPaymentAction = async (formData: FormData)
       })
     })
 
+    await recordDashboardActivity({
+      action: 'registration_payment_verified',
+      actorClerkId: user.id,
+      dashboardScope: dashboardActivityScopes.admin,
+      entityType: 'payment',
+      sponsorCode,
+      summary: `Verified registration payment of ${currencyFormatter.format(amountSent)} for sponsor ${sponsorCode}.`
+    })
+
     await upsertPaymentAlertReset(registrationPaymentAlertType, sponsorCode)
 
     revalidatePath('/admin-sagicam-payments')
@@ -2362,7 +2720,7 @@ export const verifySponsorRegistrationPaymentAction = async (formData: FormData)
 }
 
 export const adjustSponsorRegistrationAmountSentAction = async (formData: FormData): Promise<void> => {
-  const user = await getAuthUser()
+  const user = await assertAdminUser()
 
   try {
     const sponsorCode = getRequiredFormValue(formData, 'sponsorCode')
@@ -2411,6 +2769,15 @@ export const adjustSponsorRegistrationAmountSentAction = async (formData: FormDa
       })
     })
 
+    await recordDashboardActivity({
+      action: 'registration_payment_adjusted',
+      actorClerkId: user.id,
+      dashboardScope: dashboardActivityScopes.admin,
+      entityType: 'payment',
+      sponsorCode,
+      summary: `Adjusted registration amount sent by ${currencyFormatter.format(amountAdjustment)} for sponsor ${sponsorCode}. Reason: ${adjustmentReason}`
+    })
+
     revalidatePath('/admin-count')
     revalidatePath('/admin-sagicam-payments')
     revalidatePath('/admin-sagicam-registrations')
@@ -2426,7 +2793,7 @@ export const addSponsorRegistrationBalanceAdjustmentAction = async (formData: Fo
 }
 
 export const resetSponsorRegistrationPaymentAction = async (formData: FormData): Promise<void> => {
-  const user = await getAuthUser()
+  const user = await assertAdminUser()
 
   try {
     const sponsorCode = getRequiredFormValue(formData, 'sponsorCode')
@@ -2484,6 +2851,15 @@ export const resetSponsorRegistrationPaymentAction = async (formData: FormData):
         }
       })
     ])
+
+    await recordDashboardActivity({
+      action: 'registration_payment_reset',
+      actorClerkId: user.id,
+      dashboardScope: dashboardActivityScopes.admin,
+      entityType: 'payment',
+      sponsorCode,
+      summary: `Reset registration payment totals for sponsor ${sponsorCode}.`
+    })
 
     revalidatePath('/admin-sagicam-payments')
     revalidatePath('/admin-sagicam-registrations')
@@ -2545,6 +2921,8 @@ export const fetchSingleMemberDetailsForAdmin = async (memberId: string) => {
 }
 
 export const updateMemberDetailsAction = async (prevState: any, formData: FormData) => {
+  const user = await getAuthUser()
+
   try {
     const memberId = formData.get('id') as string
     const rawData = Object.fromEntries(formData)
@@ -2555,11 +2933,22 @@ export const updateMemberDetailsAction = async (prevState: any, formData: FormDa
         id: memberId
       },
       select: {
+        clerkId: true,
+        firstName: true,
+        lastAndMiddleNames: true,
         memberMatriculationNumber: true,
         memberStatus: true,
         sponsorCode: true
       }
     })
+
+    if (!currentMember) {
+      throw new Error('Loved one not found.')
+    }
+
+    if (currentMember.clerkId !== user.id) {
+      throw new Error('You can only update loved ones from your own account.')
+    }
 
     await preserveContributionReserveDeficitForSponsors(
       [currentMember?.sponsorCode, validatedFields.sponsorCode],
@@ -2593,6 +2982,16 @@ export const updateMemberDetailsAction = async (prevState: any, formData: FormDa
       }
     )
 
+    await recordDashboardActivity({
+      action: 'member_updated',
+      actorClerkId: user.id,
+      dashboardScope: dashboardActivityScopes.sponsor,
+      entityId: memberId,
+      entityType: 'member',
+      sponsorCode: validatedFields.sponsorCode,
+      summary: `Updated loved one ${validatedFields.firstName} ${validatedFields.lastAndMiddleNames} (${currentMember.memberMatriculationNumber}).`
+    })
+
     revalidatePath(`all-members/${memberId}/edit`)
     revalidateMemberPaymentViews()
 
@@ -2605,6 +3004,8 @@ export const updateMemberDetailsAction = async (prevState: any, formData: FormDa
 }
 
 export const updateMemberDetailsActionForAdmin = async (prevState: any, formData: FormData) => {
+  const user = await assertAdminUser()
+
   try {
     const memberId = formData.get('id') as string
     const rawData = Object.fromEntries(formData)
@@ -2615,11 +3016,17 @@ export const updateMemberDetailsActionForAdmin = async (prevState: any, formData
         id: memberId
       },
       select: {
+        firstName: true,
+        lastAndMiddleNames: true,
         memberMatriculationNumber: true,
         memberStatus: true,
         sponsorCode: true
       }
     })
+
+    if (!currentMember) {
+      throw new Error('Loved one not found.')
+    }
 
     await preserveContributionReserveDeficitForSponsors(
       [currentMember?.sponsorCode, validatedFields.sponsorCode],
@@ -2659,6 +3066,16 @@ export const updateMemberDetailsActionForAdmin = async (prevState: any, formData
       }
     )
 
+    await recordDashboardActivity({
+      action: 'member_updated',
+      actorClerkId: user.id,
+      dashboardScope: dashboardActivityScopes.admin,
+      entityId: memberId,
+      entityType: 'member',
+      sponsorCode: validatedFields.sponsorCode,
+      summary: `Updated loved one ${validatedFields.firstName} ${validatedFields.lastAndMiddleNames} (${currentMember.memberMatriculationNumber}).`
+    })
+
     revalidatePath(`admin-members/${memberId}/edit`)
     revalidateMemberPaymentViews()
 
@@ -2683,7 +3100,7 @@ export const updateSelectedMembersStatusForAdminAction = async (
   prevState: any,
   formData: FormData
 ): Promise<{ message: string }> => {
-  await assertAdminUser()
+  const user = await assertAdminUser()
 
   try {
     const rawMemberIds = formData.get('memberIds')?.toString()
@@ -2774,6 +3191,19 @@ export const updateSelectedMembersStatusForAdminAction = async (
             continue
           }
 
+          await recordDashboardActivity({
+            action: 'member_status_updated',
+            actorClerkId: user.id,
+            dashboardScope: dashboardActivityScopes.admin,
+            entityId: member.id,
+            entityType: 'member',
+            sponsorCode: member.sponsorCode,
+            summary: `Moved loved one ${member.memberMatriculationNumber} from ${getMemberStatusActionLabel(
+              member.memberStatus
+            )} to ${getMemberStatusActionLabel(nextStatus)}.`,
+            tx
+          })
+
           if (member.memberStatus !== memberStatus.Vested && nextStatus === memberStatus.Vested) {
             await tx.sponsorContributionCredit.upsert({
               create: {
@@ -2836,7 +3266,7 @@ export const removeSelectedOverduePendingMembersAction = async (
   prevState: any,
   formData: FormData
 ): Promise<{ message: string }> => {
-  await assertAdminUser()
+  const user = await assertAdminUser()
 
   try {
     const memberIds = parseSelectedMemberIds(formData.get('memberIds')?.toString())
@@ -2895,6 +3325,19 @@ export const removeSelectedOverduePendingMembersAction = async (
           }
         }
       })
+
+      for (const member of overdueMembers) {
+        await recordDashboardActivity({
+          action: 'member_removed_overdue',
+          actorClerkId: user.id,
+          dashboardScope: dashboardActivityScopes.admin,
+          entityId: member.id,
+          entityType: 'member',
+          sponsorCode: member.sponsorCode,
+          summary: `Moved overdue pending loved one ${member.firstName} ${member.lastAndMiddleNames} (${member.memberMatriculationNumber}) to Removed Members.`,
+          tx
+        })
+      }
     })
 
     revalidateMemberPaymentViews()
@@ -2914,7 +3357,7 @@ export const removeSelectedOverduePendingMembersAction = async (
 }
 
 export const vestEligibleAwaitingPublicationMembersAction = async (): Promise<{ message: string }> => {
-  await assertAdminUser()
+  const user = await assertAdminUser()
 
   try {
     const cutoffAt = getAwaitingPublicationVestingCutoff()
@@ -2978,6 +3421,17 @@ export const vestEligibleAwaitingPublicationMembersAction = async (): Promise<{ 
             where: {
               memberMatriculationNumber: member.memberMatriculationNumber
             }
+          })
+
+          await recordDashboardActivity({
+            action: 'member_auto_vested',
+            actorClerkId: user.id,
+            dashboardScope: dashboardActivityScopes.admin,
+            entityId: member.id,
+            entityType: 'member',
+            sponsorCode: member.sponsorCode,
+            summary: `Moved eligible loved one ${member.memberMatriculationNumber} to Vested.`,
+            tx
           })
 
           vestedCount += updatedMember.count
@@ -3088,6 +3542,7 @@ export const submitNameChangeRequestAction = async (
         firstName: true,
         id: true,
         lastAndMiddleNames: true,
+        memberMatriculationNumber: true,
         sponsorCode: true
       },
       where: {
@@ -3143,6 +3598,16 @@ export const submitNameChangeRequestAction = async (
       }
     })
 
+    await recordDashboardActivity({
+      action: 'name_change_requested',
+      actorClerkId: user.id,
+      dashboardScope: isAdminUser ? dashboardActivityScopes.admin : dashboardActivityScopes.sponsor,
+      entityId: requestId,
+      entityType: 'name_change',
+      sponsorCode: member.sponsorCode,
+      summary: `Requested name change for ${member.firstName} ${member.lastAndMiddleNames} (${member.memberMatriculationNumber}) to ${requestedFirstName} ${requestedLastAndMiddleNames}.`
+    })
+
     revalidateNameChangeDocumentationViews()
 
     return { message: 'Name change request submitted for admin review' }
@@ -3181,7 +3646,16 @@ export const uploadNameChangeDocumentationAction = async (
         cloudinaryPublicId: true,
         cloudinaryResourceType: true,
         cloudinaryVersion: true,
+        currentFirstName: true,
+        currentLastAndMiddleNames: true,
         id: true,
+        member: {
+          select: {
+            memberMatriculationNumber: true
+          }
+        },
+        requestedFirstName: true,
+        requestedLastAndMiddleNames: true,
         secureUrl: true,
         sponsorCode: true,
         status: true
@@ -3247,6 +3721,16 @@ export const uploadNameChangeDocumentationAction = async (
       await deleteStoredCloudinaryDocument(request)
     }
 
+    await recordDashboardActivity({
+      action: 'name_change_document_uploaded',
+      actorClerkId: user.id,
+      dashboardScope: isAdminUser ? dashboardActivityScopes.admin : dashboardActivityScopes.sponsor,
+      entityId: request.id,
+      entityType: 'name_change',
+      sponsorCode: request.sponsorCode,
+      summary: `Uploaded documentation for name change ${request.currentFirstName} ${request.currentLastAndMiddleNames} (${request.member.memberMatriculationNumber}) to ${request.requestedFirstName} ${request.requestedLastAndMiddleNames}.`
+    })
+
     revalidateNameChangeDocumentationViews()
 
     return { message: 'Name change documentation uploaded successfully' }
@@ -3302,6 +3786,16 @@ export const reviewNameChangeRequestAction = async (
         }
       })
 
+      await recordDashboardActivity({
+        action: 'name_change_documentation_requested',
+        actorClerkId: user.id,
+        dashboardScope: dashboardActivityScopes.admin,
+        entityId: request.id,
+        entityType: 'name_change',
+        sponsorCode: request.sponsorCode,
+        summary: `Requested documentation for name change ${request.currentFirstName} ${request.currentLastAndMiddleNames} to ${request.requestedFirstName} ${request.requestedLastAndMiddleNames}.`
+      })
+
       revalidateNameChangeDocumentationViews()
 
       return { message: 'Name change documentation requested' }
@@ -3330,6 +3824,16 @@ export const reviewNameChangeRequestAction = async (
           }
         })
       ])
+
+      await recordDashboardActivity({
+        action: 'name_change_approved',
+        actorClerkId: user.id,
+        dashboardScope: dashboardActivityScopes.admin,
+        entityId: request.id,
+        entityType: 'name_change',
+        sponsorCode: request.sponsorCode,
+        summary: `Approved name change ${request.currentFirstName} ${request.currentLastAndMiddleNames} to ${request.requestedFirstName} ${request.requestedLastAndMiddleNames}.`
+      })
     } else {
       await db.nameChangeRequest.update({
         data: {
@@ -3341,6 +3845,16 @@ export const reviewNameChangeRequestAction = async (
         where: {
           id: request.id
         }
+      })
+
+      await recordDashboardActivity({
+        action: 'name_change_rejected',
+        actorClerkId: user.id,
+        dashboardScope: dashboardActivityScopes.admin,
+        entityId: request.id,
+        entityType: 'name_change',
+        sponsorCode: request.sponsorCode,
+        summary: `Rejected name change ${request.currentFirstName} ${request.currentLastAndMiddleNames} to ${request.requestedFirstName} ${request.requestedLastAndMiddleNames}.`
       })
     }
 
@@ -3385,6 +3899,16 @@ export const deleteNameChangeRequestAction = async (prevState: { requestId: stri
     })
 
     await deleteStoredCloudinaryDocument(request)
+
+    await recordDashboardActivity({
+      action: 'name_change_deleted',
+      actorClerkId: user.id,
+      dashboardScope: isAdminUser ? dashboardActivityScopes.admin : dashboardActivityScopes.sponsor,
+      entityId: request.id,
+      entityType: 'name_change',
+      sponsorCode: request.sponsorCode,
+      summary: `Removed name change request ${request.currentFirstName} ${request.currentLastAndMiddleNames} to ${request.requestedFirstName} ${request.requestedLastAndMiddleNames}.`
+    })
 
     revalidateNameChangeDocumentationViews()
 
@@ -3588,7 +4112,7 @@ export const submitMemberTransferRequestAction = async (
       throw new Error('This loved one already has a member transfer request in progress.')
     }
 
-    await db.memberTransferRequest.create({
+    const transferRequest = await db.memberTransferRequest.create({
       data: {
         currentFirstName: member.firstName,
         currentLastAndMiddleNames: member.lastAndMiddleNames,
@@ -3601,6 +4125,18 @@ export const submitMemberTransferRequestAction = async (
         status: 'receiving_sponsor_pending'
       }
     })
+
+    for (const sponsorCode of [releasingSponsor.sponsorCode, receivingSponsor.sponsorCode]) {
+      await recordDashboardActivity({
+        action: 'member_transfer_requested',
+        actorClerkId: user.id,
+        dashboardScope: dashboardActivityScopes.sponsor,
+        entityId: transferRequest.id,
+        entityType: 'member_transfer',
+        sponsorCode,
+        summary: `Requested transfer of ${member.firstName} ${member.lastAndMiddleNames} (${member.memberMatriculationNumber}) from ${releasingSponsor.sponsorCode} to ${receivingSponsor.sponsorCode}.`
+      })
+    }
 
     revalidateMemberTransferViews()
 
@@ -3662,6 +4198,22 @@ export const reviewIncomingMemberTransferRequestAction = async (
       }
     })
 
+    for (const sponsorCode of [request.initiatingSponsorCode, request.receivingSponsorCode]) {
+      await recordDashboardActivity({
+        action:
+          status === 'receiving_sponsor_approved' ? 'member_transfer_release_approved' : 'member_transfer_rejected',
+        actorClerkId: user.id,
+        dashboardScope: dashboardActivityScopes.sponsor,
+        entityId: request.id,
+        entityType: 'member_transfer',
+        sponsorCode,
+        summary:
+          status === 'receiving_sponsor_approved'
+            ? `Approved release of ${request.currentFirstName} ${request.currentLastAndMiddleNames} (${request.memberMatriculationNumber}) to sponsor ${request.receivingSponsorCode}.`
+            : `Rejected release of ${request.currentFirstName} ${request.currentLastAndMiddleNames} (${request.memberMatriculationNumber}) to sponsor ${request.receivingSponsorCode}.`
+      })
+    }
+
     revalidateMemberTransferViews()
 
     return {
@@ -3711,6 +4263,18 @@ export const cancelMemberTransferRequestAction = async (prevState: { requestId: 
         id: request.id
       }
     })
+
+    for (const sponsorCode of [request.initiatingSponsorCode, request.receivingSponsorCode]) {
+      await recordDashboardActivity({
+        action: 'member_transfer_cancelled',
+        actorClerkId: user.id,
+        dashboardScope: dashboardActivityScopes.sponsor,
+        entityId: request.id,
+        entityType: 'member_transfer',
+        sponsorCode,
+        summary: `Cancelled transfer request for ${request.currentFirstName} ${request.currentLastAndMiddleNames} (${request.memberMatriculationNumber}).`
+      })
+    }
 
     revalidateMemberTransferViews()
 
@@ -3764,6 +4328,18 @@ export const reviewAdminMemberTransferRequestAction = async (
           id: request.id
         }
       })
+
+      for (const sponsorCode of [request.initiatingSponsorCode, request.receivingSponsorCode]) {
+        await recordDashboardActivity({
+          action: 'member_transfer_admin_rejected',
+          actorClerkId: user.id,
+          dashboardScope: dashboardActivityScopes.admin,
+          entityId: request.id,
+          entityType: 'member_transfer',
+          sponsorCode,
+          summary: `SAGICAM rejected transfer of ${request.currentFirstName} ${request.currentLastAndMiddleNames} (${request.memberMatriculationNumber}) from ${request.initiatingSponsorCode} to ${request.receivingSponsorCode}.`
+        })
+      }
 
       revalidateMemberTransferViews()
 
@@ -3846,6 +4422,18 @@ export const reviewAdminMemberTransferRequestAction = async (
       }
     )
 
+    for (const sponsorCode of [request.initiatingSponsorCode, receivingSponsor.sponsorCode]) {
+      await recordDashboardActivity({
+        action: 'member_transfer_admin_approved',
+        actorClerkId: user.id,
+        dashboardScope: dashboardActivityScopes.admin,
+        entityId: request.id,
+        entityType: 'member_transfer',
+        sponsorCode,
+        summary: `SAGICAM approved transfer of ${request.currentFirstName} ${request.currentLastAndMiddleNames} from ${request.initiatingSponsorCode} to ${receivingSponsor.sponsorCode}. New matriculation number: ${nextMemberMatriculationNumber}.`
+      })
+    }
+
     revalidateMemberPaymentViews()
     revalidateMemberTransferViews()
 
@@ -3902,6 +4490,16 @@ export const createRemovedMemberAction = async (provState: any, formData: FormDa
       })
     })
 
+    await recordDashboardActivity({
+      action: 'member_removed',
+      actorClerkId: user.id,
+      dashboardScope: dashboardActivityScopes.sponsor,
+      entityId: member.id,
+      entityType: 'member',
+      sponsorCode: member.sponsorCode,
+      summary: `Moved loved one ${member.firstName} ${member.lastAndMiddleNames} (${member.memberMatriculationNumber}) to Removed Members. Reason: ${validatedFields.reasonForLeaving}`
+    })
+
     await sendLovedOneRemovalConfirmationEmail({
       sponsorEmail: sponsor.sponsorEmail,
       sponsorFirstName: sponsor.sponsorFirstName,
@@ -3924,7 +4522,7 @@ export const createRemovedMemberActionAdmin = async (
   provState: any,
   formData: FormData
 ): Promise<{ message: string }> => {
-  await getAuthUser()
+  const user = await assertAdminUser()
 
   try {
     const memberId = formData.get('id') as string
@@ -3969,6 +4567,16 @@ export const createRemovedMemberActionAdmin = async (
       })
     })
 
+    await recordDashboardActivity({
+      action: 'member_removed',
+      actorClerkId: user.id,
+      dashboardScope: dashboardActivityScopes.admin,
+      entityId: member.id,
+      entityType: 'member',
+      sponsorCode: member.sponsorCode,
+      summary: `Moved loved one ${member.firstName} ${member.lastAndMiddleNames} (${member.memberMatriculationNumber}) to Removed Members. Reason: ${validatedFields.reasonForLeaving}`
+    })
+
     await sendLovedOneRemovalConfirmationEmail({
       sponsorEmail: sponsor.sponsorEmail,
       sponsorFirstName: sponsor.sponsorFirstName,
@@ -3988,7 +4596,7 @@ export const createRemovedMemberActionAdmin = async (
 }
 
 export const removeOverduePendingMembersAction = async (): Promise<{ message: string }> => {
-  await assertAdminUser()
+  const user = await assertAdminUser()
 
   try {
     const overdueCutoff = getOverdueRegistrationPaymentCreatedAtCutoff()
@@ -4043,6 +4651,19 @@ export const removeOverduePendingMembersAction = async (): Promise<{ message: st
           }
         }
       })
+
+      for (const member of overdueMembers) {
+        await recordDashboardActivity({
+          action: 'member_removed_overdue',
+          actorClerkId: user.id,
+          dashboardScope: dashboardActivityScopes.admin,
+          entityId: member.id,
+          entityType: 'member',
+          sponsorCode: member.sponsorCode,
+          summary: `Moved overdue pending loved one ${member.firstName} ${member.lastAndMiddleNames} (${member.memberMatriculationNumber}) to Removed Members.`,
+          tx
+        })
+      }
     })
 
     revalidateMemberPaymentViews()
@@ -4145,6 +4766,16 @@ export const restoreRemovedMemberAction = async (prevState: { removedMemberId: s
       }
     })
 
+    await recordDashboardActivity({
+      action: 'member_restored',
+      actorClerkId: user.id,
+      dashboardScope: isAdminUser ? dashboardActivityScopes.admin : dashboardActivityScopes.sponsor,
+      entityId: removedMember.originalMemberId ?? removedMember.id,
+      entityType: 'member',
+      sponsorCode: removedMember.sponsorCode,
+      summary: `Restored removed loved one ${removedMember.firstName} ${removedMember.lastAndMiddleNames} (${removedMember.memberMatriculationNumber}).`
+    })
+
     revalidateMemberPaymentViews()
 
     return { message: 'Loved one restored successfully' }
@@ -4210,6 +4841,16 @@ export const createDeceasedMemberAction = async (provState: any, formData: FormD
 
     await addDeceasedMemberContributionUsage(member.sponsorCode)
 
+    await recordDashboardActivity({
+      action: 'death_announced',
+      actorClerkId: user.id,
+      dashboardScope: dashboardActivityScopes.sponsor,
+      entityId: member.id,
+      entityType: 'deceased_member',
+      sponsorCode: member.sponsorCode,
+      summary: `Announced death of ${member.firstName} ${member.lastAndMiddleNames} (${member.memberMatriculationNumber}).`
+    })
+
     await sendDeathAnnouncementConfirmationEmail({
       sponsorEmail: sponsor.sponsorEmail,
       sponsorFirstName: sponsor.sponsorFirstName,
@@ -4233,7 +4874,7 @@ export const createDeceasedMemberActionAdmin = async (
   provState: any,
   formData: FormData
 ): Promise<{ message: string }> => {
-  await assertAdminUser()
+  const user = await assertAdminUser()
 
   try {
     const memberId = formData.get('id') as string
@@ -4283,6 +4924,16 @@ export const createDeceasedMemberActionAdmin = async (
     })
 
     await addDeceasedMemberContributionUsage(member.sponsorCode)
+
+    await recordDashboardActivity({
+      action: 'death_announced',
+      actorClerkId: user.id,
+      dashboardScope: dashboardActivityScopes.admin,
+      entityId: member.id,
+      entityType: 'deceased_member',
+      sponsorCode: member.sponsorCode,
+      summary: `Announced death of ${member.firstName} ${member.lastAndMiddleNames} (${member.memberMatriculationNumber}).`
+    })
 
     await sendDeathAnnouncementConfirmationEmail({
       sponsorEmail: sponsor.sponsorEmail,
@@ -4421,7 +5072,10 @@ export const uploadDeceasedMemberDocumentAction = async (
     const deceasedMember = await db.deceasedMember.findUnique({
       select: {
         clerkId: true,
+        firstName: true,
         id: true,
+        lastAndMiddleNames: true,
+        memberMatriculationNumber: true,
         sponsorCode: true
       },
       where: {
@@ -4513,6 +5167,16 @@ export const uploadDeceasedMemberDocumentAction = async (
       await deleteStoredCloudinaryDocument(existingDocument)
     }
 
+    await recordDashboardActivity({
+      action: 'death_document_uploaded',
+      actorClerkId: user.id,
+      dashboardScope: isAdminUser ? dashboardActivityScopes.admin : dashboardActivityScopes.sponsor,
+      entityId: deceasedMemberId,
+      entityType: 'deceased_document',
+      sponsorCode: deceasedMember.sponsorCode,
+      summary: `Uploaded ${deceasedMemberDocumentLabels[documentType]} for ${deceasedMember.firstName} ${deceasedMember.lastAndMiddleNames} (${deceasedMember.memberMatriculationNumber}).`
+    })
+
     revalidateDeathDocumentationViews()
 
     return { message: `${deceasedMemberDocumentLabels[documentType]} uploaded successfully` }
@@ -4534,7 +5198,10 @@ export const deleteDeceasedMemberDocumentAction = async (prevState: { documentId
         cloudinaryPublicId: true,
         cloudinaryResourceType: true,
         cloudinaryVersion: true,
-        id: true
+        documentType: true,
+        fileName: true,
+        id: true,
+        sponsorCode: true
       },
       where: {
         id: documentId
@@ -4557,6 +5224,16 @@ export const deleteDeceasedMemberDocumentAction = async (prevState: { documentId
       }
     })
 
+    await recordDashboardActivity({
+      action: 'death_document_removed',
+      actorClerkId: user.id,
+      dashboardScope: isAdminUser ? dashboardActivityScopes.admin : dashboardActivityScopes.sponsor,
+      entityId: document.id,
+      entityType: 'deceased_document',
+      sponsorCode: document.sponsorCode,
+      summary: `Removed ${deceasedMemberDocumentLabels[document.documentType as DeceasedMemberDocumentType] ?? document.documentType} document ${document.fileName}.`
+    })
+
     await deleteStoredCloudinaryDocument(document)
 
     revalidateDeathDocumentationViews()
@@ -4571,7 +5248,7 @@ export const reviewDeceasedMemberDocumentAction = async (
   provState: any,
   formData: FormData
 ): Promise<{ message: string }> => {
-  await assertAdminUser()
+  const user = await assertAdminUser()
 
   try {
     const documentId = getRequiredFormValue(formData, 'documentId')
@@ -4582,15 +5259,37 @@ export const reviewDeceasedMemberDocumentAction = async (
       throw new Error('Select a valid document review status.')
     }
 
-    await db.deceasedMemberDocument.update({
+    const document = await db.deceasedMemberDocument.update({
       data: {
         rejectionReason:
           status === 'rejected' ? rejectionReason || 'Please upload a clearer or corrected document.' : null,
         status
       },
+      select: {
+        deceasedMember: {
+          select: {
+            firstName: true,
+            lastAndMiddleNames: true,
+            memberMatriculationNumber: true
+          }
+        },
+        documentType: true,
+        id: true,
+        sponsorCode: true
+      },
       where: {
         id: documentId
       }
+    })
+
+    await recordDashboardActivity({
+      action: 'death_document_reviewed',
+      actorClerkId: user.id,
+      dashboardScope: dashboardActivityScopes.admin,
+      entityId: document.id,
+      entityType: 'deceased_document',
+      sponsorCode: document.sponsorCode,
+      summary: `Marked ${deceasedMemberDocumentLabels[document.documentType as DeceasedMemberDocumentType] ?? document.documentType} for ${document.deceasedMember.firstName} ${document.deceasedMember.lastAndMiddleNames} (${document.deceasedMember.memberMatriculationNumber}) as ${status}.`
     })
 
     revalidateDeathDocumentationViews()
@@ -4748,6 +5447,16 @@ export const restoreDeceasedMemberAction = async (prevState: { deceasedMemberId:
 
     await deleteStoredCloudinaryDocuments(documentsToDelete)
 
+    await recordDashboardActivity({
+      action: 'death_announcement_restored',
+      actorClerkId: user.id,
+      dashboardScope: isAdminUser ? dashboardActivityScopes.admin : dashboardActivityScopes.sponsor,
+      entityId: deceasedMember.originalMemberId ?? deceasedMember.id,
+      entityType: 'deceased_member',
+      sponsorCode: deceasedMember.sponsorCode,
+      summary: `Restored death announcement for ${deceasedMember.firstName} ${deceasedMember.lastAndMiddleNames} (${deceasedMember.memberMatriculationNumber}).`
+    })
+
     revalidateMemberPaymentViews()
 
     return { message: 'Death announcement restored successfully' }
@@ -4761,16 +5470,36 @@ export const restoreDeceasedMemberAction = async (prevState: { deceasedMemberId:
 }
 
 export const deleteRemovedMemberAction = async (prevState: { removedMemberId: string }) => {
+  const user = await assertAdminUser()
   const { removedMemberId } = prevState
 
-  // await getAuthUser()
-
   try {
+    const removedMember = await db.removedMember.findUnique({
+      where: {
+        id: removedMemberId
+      }
+    })
+
+    if (!removedMember) {
+      throw new Error('Removed loved one not found.')
+    }
+
     await db.removedMember.delete({
       where: {
         id: removedMemberId
       }
     })
+
+    await recordDashboardActivity({
+      action: 'removed_member_deleted',
+      actorClerkId: user.id,
+      dashboardScope: dashboardActivityScopes.admin,
+      entityId: removedMember.id,
+      entityType: 'member',
+      sponsorCode: removedMember.sponsorCode,
+      summary: `Permanently deleted removed loved one ${removedMember.firstName} ${removedMember.lastAndMiddleNames} (${removedMember.memberMatriculationNumber}).`
+    })
+
     revalidateMemberPaymentViews()
 
     return { message: 'deleted member removed ' }
@@ -4782,9 +5511,19 @@ export const deleteRemovedMemberAction = async (prevState: { removedMemberId: st
 export const deleteDeceasedMemberAction = async (prevState: { deceasedMemberId: string }) => {
   const { deceasedMemberId } = prevState
 
-  await assertAdminUser()
+  const user = await assertAdminUser()
 
   try {
+    const deceasedMember = await db.deceasedMember.findUnique({
+      where: {
+        id: deceasedMemberId
+      }
+    })
+
+    if (!deceasedMember) {
+      throw new Error('Death announcement not found.')
+    }
+
     const documentsToDelete = await db.deceasedMemberDocument.findMany({
       select: {
         cloudinaryDeliveryType: true,
@@ -4803,6 +5542,16 @@ export const deleteDeceasedMemberAction = async (prevState: { deceasedMemberId: 
       where: {
         id: deceasedMemberId
       }
+    })
+
+    await recordDashboardActivity({
+      action: 'deceased_member_deleted',
+      actorClerkId: user.id,
+      dashboardScope: dashboardActivityScopes.admin,
+      entityId: deceasedMember.id,
+      entityType: 'deceased_member',
+      sponsorCode: deceasedMember.sponsorCode,
+      summary: `Permanently deleted deceased loved one ${deceasedMember.firstName} ${deceasedMember.lastAndMiddleNames} (${deceasedMember.memberMatriculationNumber}).`
     })
 
     await deleteStoredCloudinaryDocuments(documentsToDelete)
@@ -4832,14 +5581,14 @@ export const fetchSingleDeceasedMemberDetails = async (deceasedMemberId: string)
 }
 
 export const updateDeceasedMemberDetailsActionAdmin = async (prevState: any, formData: FormData) => {
-  await assertAdminUser()
+  const user = await assertAdminUser()
 
   try {
     const deceasedMemberId = formData.get('id') as string
     const rawData = Object.fromEntries(formData)
     const validatedFields = validateWithZodSchema(DeceasedMemberSchema, rawData)
 
-    await db.deceasedMember.update({
+    const deceasedMember = await db.deceasedMember.update({
       where: {
         id: deceasedMemberId
       },
@@ -4847,6 +5596,17 @@ export const updateDeceasedMemberDetailsActionAdmin = async (prevState: any, for
         ...validatedFields
       }
     })
+
+    await recordDashboardActivity({
+      action: 'deceased_member_updated',
+      actorClerkId: user.id,
+      dashboardScope: dashboardActivityScopes.admin,
+      entityId: deceasedMember.id,
+      entityType: 'deceased_member',
+      sponsorCode: deceasedMember.sponsorCode,
+      summary: `Updated deceased loved one ${deceasedMember.firstName} ${deceasedMember.lastAndMiddleNames} (${deceasedMember.memberMatriculationNumber}).`
+    })
+
     revalidatePath(`admin-deceased/${deceasedMemberId}/edit`)
     revalidateMemberPaymentViews()
 

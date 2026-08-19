@@ -25,6 +25,7 @@ const shouldReuseCachedPrisma = (cachedPrisma?: PrismaClient) =>
     'contributionAssessment' in (cachedPrisma as unknown as Record<string, unknown>) &&
     'contributionCalculationAdminFee' in (cachedPrisma as unknown as Record<string, unknown>) &&
     'contributionCalculationDeath' in (cachedPrisma as unknown as Record<string, unknown>) &&
+    'dashboardActivityLog' in (cachedPrisma as unknown as Record<string, unknown>) &&
     'deceasedMemberDocument' in (cachedPrisma as unknown as Record<string, unknown>) &&
     'memberTransferRequest' in (cachedPrisma as unknown as Record<string, unknown>) &&
     'nameChangeRequest' in (cachedPrisma as unknown as Record<string, unknown>) &&

@@ -353,3 +353,24 @@ model PaymentAlertReset {
   @@unique([alertType, sponsorCode])
   @@index([sponsorCode])
 }
+
+model DashboardActivityLog {
+  id               String   @id @default(uuid())
+  dashboardScope   String
+  sponsorCode      String?
+  actorClerkId     String
+  actorSponsorCode String?
+  actorName        String?
+  action           String
+  entityType       String
+  entityId         String?
+  summary          String
+  metadata         Json?
+  createdAt        DateTime @default(now())
+
+  @@index([dashboardScope, createdAt])
+  @@index([sponsorCode, createdAt])
+  @@index([actorClerkId, createdAt])
+  @@index([action, createdAt])
+  @@index([entityType, entityId])
+}

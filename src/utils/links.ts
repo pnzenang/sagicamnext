@@ -92,6 +92,11 @@ export const pagesItems: MenuItem[] = [
     label: 'Sagicam New Additions',
     href: '/new-additions'
   },
+  {
+    icon: History,
+    label: 'Activity Log',
+    href: '/activity-log'
+  },
 
   // {
   //   icon: Wallet,
@@ -187,6 +192,11 @@ export const pagesItems: MenuItem[] = [
         icon: History,
         label: 'Transaction History',
         href: '/admin-payment-history'
+      },
+      {
+        icon: History,
+        label: 'Admin Activity Log',
+        href: '/admin-activity-log'
       }
     ]
   }

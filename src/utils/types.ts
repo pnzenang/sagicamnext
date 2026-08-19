@@ -205,3 +205,19 @@ export const memberTransferRequestStatusLabels: Record<MemberTransferRequestStat
   receiving_sponsor_pending: 'Release pending',
   receiving_sponsor_rejected: 'Release rejected'
 }
+
+export type DashboardActivityLogRow = {
+  action: string
+  actorClerkId: string
+  actorLabel: string
+  actorName: string
+  actorSponsorCode: string
+  createdAt: string
+  dashboardScope: string
+  entityId: string
+  entityType: string
+  id: string
+  sponsorCode: string
+  sponsorLabel: string
+  summary: string
+}
