@@ -9,22 +9,31 @@ import FormSelect from '@/components/forms/FormSelect'
 import MaskDateInput from '@/components/forms/MaskDateInput'
 import {
   createRemovedMemberAction,
-  fetchProfile,
-  fetchSingleMemberDetails,
-  updateMemberDetailsAction
+  fetchSingleMemberDetails
 } from '@/utils/actions'
-import { reasonForLeaving } from '@/utils/types'
+import { memberStatus as memberStatusValues, reasonForLeaving } from '@/utils/types'
 
 const RemoveMember = async ({ params }: { params: { id: string } }) => {
   const { id } = await params
 
   const member = await fetchSingleMemberDetails(id)
 
-  const { firstName, lastAndMiddleNames, dateOfBirth, countryOfBirth, memberMatriculationNumber, sponsorCode } = member
+  const {
+    firstName,
+    lastAndMiddleNames,
+    dateOfBirth,
+    countryOfBirth,
+    memberMatriculationNumber,
+    sponsorCode,
+    memberStatus
+  } = member
 
-  const profile = await fetchProfile()
   const currentDay = new Date().getDate()
-  const shouldShow = currentDay <= 6 || currentDay >= 25
+
+  const canRemoveAnytime =
+    memberStatus === memberStatusValues.Pending || memberStatus === memberStatusValues.Awaiting
+
+  const canSubmitRemoval = canRemoveAnytime || currentDay <= 6 || currentDay >= 25
 
   return (
     <section className='mt-8 flex max-w-full min-w-0 flex-col sm:mt-16'>
@@ -33,7 +42,7 @@ const RemoveMember = async ({ params }: { params: { id: string } }) => {
         <h1 className='text-3xl font-semibold text-red-600 capitalize sm:text-6xl'> loved one Removal </h1>
       </div>
       <div>
-        {shouldShow ? (
+        {canSubmitRemoval ? (
           <p className='text-xs text-red-500 sm:text-lg'>
             Check your entry well before submission as the process is not reversible once submitted. Sorry to see your
             member go.
@@ -74,16 +83,17 @@ const RemoveMember = async ({ params }: { params: { id: string } }) => {
                 name='reasonForLeaving'
                 defaultValue={reasonForLeaving.NoReason}
               />
-              {shouldShow && (
+              {canSubmitRemoval && (
                 <SubmitButton text='Withdraw Love One' className='mt-4 w-full bg-red-800 hover:bg-red-900' />
               )}
             </div>
-            {!shouldShow && (
+            {!canSubmitRemoval && (
               <div className='mt-10 flex flex-col items-center justify-center gap-1 sm:flex-row'>
                 <BsSignStopFill className='size-8 items-center text-red-500' />{' '}
                 <h1 className='text-center text-sm font-semibold text-red-500 sm:text-lg'>
                   In order to ensure accuracy, SAGICAM prevents withdrawal between the 6th and the 25th of the month.
-                  Please complete your withdrawals between the 25th and the 6th.
+                  Please complete your withdrawals between the 25th and the 6th. Pending and Awaiting Publication loved
+                  ones can be withdrawn any day.
                 </h1>
               </div>
             )}

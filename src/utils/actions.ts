@@ -281,6 +281,11 @@ const memberStatusActionLabels: Record<memberStatus, string> = {
 
 const getMemberStatusActionLabel = (status: string) => memberStatusActionLabels[status as memberStatus] ?? status
 
+const sponsorAnytimeRemovalStatuses = new Set<string>([memberStatus.Awaiting, memberStatus.Pending])
+
+const canSponsorRemoveMemberToday = (status: string, date = new Date()) =>
+  sponsorAnytimeRemovalStatuses.has(status) || date.getDate() <= 6 || date.getDate() >= 25
+
 const parseSelectedMemberIds = (rawMemberIds: string | undefined) => {
   if (!rawMemberIds) {
     throw new Error('Please select at least one member.')
@@ -4505,6 +4510,12 @@ export const createRemovedMemberAction = async (provState: any, formData: FormDa
     })
 
     if (!member) throw new Error('Loved one not found.')
+
+    if (!canSponsorRemoveMemberToday(member.memberStatus)) {
+      throw new Error(
+        'Pending and Awaiting Publication loved ones can be withdrawn any day. Other withdrawals must be completed between the 25th and the 6th.'
+      )
+    }
 
     const sponsor = await fetchSponsorByCode(member.sponsorCode)
 
