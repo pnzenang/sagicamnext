@@ -290,6 +290,26 @@ const syncVestedContributionCredit = async ({
   }
 }
 
+const getManualVestingTimestampUpdate = ({
+  manuallyVestedAt = new Date(),
+  nextStatus,
+  previousStatus
+}: {
+  manuallyVestedAt?: Date
+  nextStatus: string
+  previousStatus: string
+}) => {
+  if (previousStatus === memberStatus.Awaiting && nextStatus === memberStatus.Vested) {
+    return { manuallyVestedAt }
+  }
+
+  if (previousStatus === memberStatus.Vested && nextStatus !== memberStatus.Vested) {
+    return { manuallyVestedAt: null }
+  }
+
+  return {}
+}
+
 const revalidateSponsorPaymentPages = () => {
   revalidatePath('/admin-payment-history')
   revalidatePath('/contributions-payments')
@@ -2596,7 +2616,13 @@ export const updateMemberDetailsActionForAdmin = async (prevState: any, formData
             id: memberId
           },
           data: {
-            ...validatedFields
+            ...validatedFields,
+            ...(currentMember
+              ? getManualVestingTimestampUpdate({
+                  nextStatus: validatedFields.memberStatus,
+                  previousStatus: currentMember.memberStatus
+                })
+              : {})
           }
         })
 
@@ -2706,6 +2732,7 @@ export const updateSelectedMembersStatusForAdminAction = async (
     }
 
     const affectedSponsorCodes = Array.from(new Set(membersToUpdate.map(member => member.sponsorCode)))
+    const manuallyVestedAt = new Date()
     let updatedCount = 0
 
     await preserveContributionReserveDeficitForSponsors(affectedSponsorCodes, async () => {
@@ -2717,7 +2744,12 @@ export const updateSelectedMembersStatusForAdminAction = async (
 
           const updatedMember = await tx.member.updateMany({
             data: {
-              memberStatus: nextStatus
+              memberStatus: nextStatus,
+              ...getManualVestingTimestampUpdate({
+                manuallyVestedAt,
+                nextStatus,
+                previousStatus: member.memberStatus
+              })
             },
             where: {
               id: member.id,

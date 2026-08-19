@@ -50,6 +50,7 @@ export type MemberType = {
   nameOfBeneficiary?: string
   memberStatus: string
   sponsorCode: string
+  manuallyVestedAt?: Date | null
   currentContributionAmountOwed?: number
   currentContributionVestedCount?: number
   currentContributionAmountPerVestedMember?: number

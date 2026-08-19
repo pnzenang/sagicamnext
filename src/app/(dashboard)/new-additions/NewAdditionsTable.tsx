@@ -351,7 +351,7 @@ const NewAdditionsTable = ({ monthKey, rows }: { monthKey: string; rows: NewAddi
         </form>
         <div className='flex flex-wrap items-center gap-2'>
           <Badge variant='outline' className='h-10 w-fit rounded-md px-3 text-sm font-semibold'>
-            {sortedRows.length} vested
+            {sortedRows.length} new addition{sortedRows.length === 1 ? '' : 's'}
           </Badge>
           {selectedRows.length > 0 ? (
             <Badge variant='secondary' className='h-10 w-fit rounded-md px-3 text-sm font-semibold'>
@@ -447,8 +447,8 @@ const NewAdditionsTable = ({ monthKey, rows }: { monthKey: string; rows: NewAddi
                 <TableRow>
                   <TableCell colSpan={columns.length + 2} className='text-muted-foreground h-24 text-center'>
                     {normalizedSearch
-                      ? `No vested loved one matching "${search.trim()}" found.`
-                      : 'No loved ones vested this month.'}
+                      ? `No new addition matching "${search.trim()}" found.`
+                      : 'No loved ones manually moved from Awaiting Publication to Vested this month.'}
                   </TableCell>
                 </TableRow>
               ) : (

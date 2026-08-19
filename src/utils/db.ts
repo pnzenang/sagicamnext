@@ -33,6 +33,7 @@ const shouldReuseCachedPrisma = (cachedPrisma?: PrismaClient) =>
     hasCachedModelField(cachedPrisma, 'NameChangeRequest', 'cloudinaryPublicId') &&
     hasCachedModelField(cachedPrisma, 'ContributionAssessment', 'deathCount') &&
     hasCachedModelField(cachedPrisma, 'ContributionAssessment', 'dueDate') &&
+    hasCachedModelField(cachedPrisma, 'Member', 'manuallyVestedAt') &&
     hasCachedModelField(cachedPrisma, 'RemovedMember', 'memberStatus') &&
     hasCachedModelField(cachedPrisma, 'DeceasedMember', 'memberStatus') &&
     hasCachedModelField(cachedPrisma, 'PaymentAlertReset', 'sponsorCode') &&

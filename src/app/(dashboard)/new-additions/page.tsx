@@ -76,32 +76,39 @@ const NewAdditions = async () => {
   const { monthKey, monthStart, nextMonthStart } = getCurrentMonthRange()
 
   const members = await db.member.findMany({
-    orderBy: [{ updatedAt: 'desc' }, { lastAndMiddleNames: 'asc' }, { firstName: 'asc' }],
+    orderBy: [{ manuallyVestedAt: 'desc' }, { lastAndMiddleNames: 'asc' }, { firstName: 'asc' }],
     select: {
       firstName: true,
       id: true,
       lastAndMiddleNames: true,
+      manuallyVestedAt: true,
       memberMatriculationNumber: true,
-      sponsorCode: true,
-      updatedAt: true
+      sponsorCode: true
     },
     where: {
-      memberStatus: memberStatus.Vested,
-      updatedAt: {
+      manuallyVestedAt: {
         gte: monthStart,
-        lt: nextMonthStart
-      }
+        lt: nextMonthStart,
+        not: null
+      },
+      memberStatus: memberStatus.Vested
     }
   })
 
-  const rows: NewAdditionRow[] = members.map(member => ({
-    firstName: member.firstName,
-    id: member.id,
-    lastAndMiddleNames: member.lastAndMiddleNames,
-    memberMatriculationNumber: member.memberMatriculationNumber,
-    sponsorCode: member.sponsorCode,
-    vestedAt: member.updatedAt.toISOString()
-  }))
+  const rows: NewAdditionRow[] = members.flatMap(member =>
+    member.manuallyVestedAt
+      ? [
+          {
+            firstName: member.firstName,
+            id: member.id,
+            lastAndMiddleNames: member.lastAndMiddleNames,
+            memberMatriculationNumber: member.memberMatriculationNumber,
+            sponsorCode: member.sponsorCode,
+            vestedAt: member.manuallyVestedAt.toISOString()
+          }
+        ]
+      : []
+  )
 
   return (
     <section className='max-w-full min-w-0 space-y-6 py-4 sm:py-10'>
@@ -113,7 +120,7 @@ const NewAdditions = async () => {
             Sagicam New Additions - {monthTitleFormatter.format(monthStart)}
           </h1>
           <p className='text-muted-foreground mt-2 text-sm'>
-            Loved ones marked vested during the current month.
+            Loved ones manually moved from Awaiting Publication to Vested during the current month.
           </p>
         </div>
       </div>

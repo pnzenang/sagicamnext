@@ -39,10 +39,12 @@ model Member {
   sponsorCode               String
   createdAt                 DateTime            @default(now())
   updatedAt                 DateTime            @updatedAt
+  manuallyVestedAt          DateTime?
   nameChangeRequests        NameChangeRequest[]
   memberTransferRequests    MemberTransferRequest[]
 
   @@unique([firstName, lastAndMiddleNames, dateOfBirth, delegateRecommendation])
+  @@index([memberStatus, manuallyVestedAt])
 }
 
 model RemovedMember {
