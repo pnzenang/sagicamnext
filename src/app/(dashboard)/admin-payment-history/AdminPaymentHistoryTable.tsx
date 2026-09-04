@@ -2,9 +2,12 @@
 
 import { useMemo, useState } from 'react'
 
-import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeftIcon, ChevronRightIcon, Download } from 'lucide-react'
+import { useFormStatus } from 'react-dom'
+
+import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeftIcon, ChevronRightIcon, Download, Trash2 } from 'lucide-react'
 import * as XLSX from 'xlsx'
 
+import FormContainer from '@/components/forms/FormContainer'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem } from '@/components/ui/pagination'
@@ -13,6 +16,7 @@ import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, Table
 import { usePagination } from '@/hooks/use-pagination'
 import { usePersistentState } from '@/hooks/use-persistent-state'
 import { cn } from '@/lib/utils'
+import { deleteSponsorPaymentLedgerEntryAction } from '@/utils/actions'
 
 const currencyFormatter = new Intl.NumberFormat('en-US', {
   currency: 'USD',
@@ -23,6 +27,7 @@ export type AdminPaymentHistoryRow = {
   amountAdjusted: number | null
   amountSet: number | null
   amountVerified: number | null
+  canDelete: boolean
   createdAt: string
   createdAtLabel: string
   eventType: string
@@ -42,7 +47,7 @@ export type AdminPaymentHistoryTotals = {
   transactionCount: number
 }
 
-type SortKey = keyof AdminPaymentHistoryRow
+type SortKey = Exclude<keyof AdminPaymentHistoryRow, 'canDelete'>
 type SortDirection = 'asc' | 'desc'
 
 type AdminPaymentHistoryColumn = {
@@ -63,6 +68,7 @@ const columns: AdminPaymentHistoryColumn[] = [
   { key: 'note', label: 'Note' }
 ]
 
+const actionColumnWidth = 6
 const pageSizeOptions = [10, 25, 50, 100]
 
 const exportColumnWidths: Partial<Record<SortKey, number>> = {
@@ -150,6 +156,39 @@ const SummaryStat = ({ label, value }: { label: string; value: string | number }
     <div className='text-muted-foreground text-xs font-semibold uppercase'>{label}</div>
     <div className='mt-2 text-2xl font-extrabold tracking-normal tabular-nums'>{value}</div>
   </div>
+)
+
+const DeleteTransactionHistoryEntryButton = () => {
+  const { pending } = useFormStatus()
+
+  return (
+    <Button
+      type='submit'
+      size='icon'
+      variant='ghost'
+      disabled={pending}
+      aria-label='Delete transaction history entry'
+      className='text-destructive hover:text-destructive h-8 w-8'
+    >
+      <Trash2 className='size-4' aria-hidden='true' />
+    </Button>
+  )
+}
+
+const DeleteTransactionHistoryEntryForm = ({ entryId }: { entryId: string }) => (
+  <FormContainer
+    action={deleteSponsorPaymentLedgerEntryAction}
+    refreshOnMessage
+    className='flex justify-end'
+    onSubmit={event => {
+      if (!window.confirm('Delete this transaction history entry? This cannot be undone.')) {
+        event.preventDefault()
+      }
+    }}
+  >
+    <input type='hidden' name='ledgerEntryId' value={entryId} />
+    <DeleteTransactionHistoryEntryButton />
+  </FormContainer>
 )
 
 const AdminPaymentHistoryTable = ({
@@ -356,6 +395,7 @@ const AdminPaymentHistoryTable = ({
               {columns.map(column => (
                 <col key={column.key} style={getColumnStyle(column.key)} />
               ))}
+              <col style={{ width: `${actionColumnWidth}%` }} />
             </colgroup>
             <TableHeader>
               <TableRow className='bg-primary hover:bg-primary h-16'>
@@ -381,12 +421,13 @@ const AdminPaymentHistoryTable = ({
                     </TableHead>
                   )
                 })}
+                <TableHead className='text-primary-foreground h-16 text-right'>Delete</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {sortedRows.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={columns.length} className='text-muted-foreground h-24 text-center'>
+                  <TableCell colSpan={columns.length + 1} className='text-muted-foreground h-24 text-center'>
                     {normalizedSearch
                       ? `No transaction history matching "${search.trim()}" found.`
                       : 'No transaction history found.'}
@@ -431,6 +472,13 @@ const AdminPaymentHistoryTable = ({
                     <TableCell className='text-muted-foreground text-xs' style={getColumnStyle('note')}>
                       {row.note || '-'}
                     </TableCell>
+                    <TableCell className='text-right'>
+                      {row.canDelete ? (
+                        <DeleteTransactionHistoryEntryForm entryId={row.id} />
+                      ) : (
+                        <span className='text-muted-foreground text-xs font-semibold'>-</span>
+                      )}
+                    </TableCell>
                   </TableRow>
                 ))
               )}
@@ -457,6 +505,7 @@ const AdminPaymentHistoryTable = ({
                     {currencyFormatter.format(visibleTotals.amountVerified)}
                   </TableCell>
                   <TableCell style={getColumnStyle('note')} />
+                  <TableCell />
                 </TableRow>
               </TableFooter>
             )}
@@ -513,6 +562,11 @@ const AdminPaymentHistoryTable = ({
                     <div className='border-t pt-3'>
                       <div className='text-muted-foreground text-xs font-semibold uppercase'>Note</div>
                       <div className='mt-1 text-sm font-semibold break-words'>{row.note}</div>
+                    </div>
+                  ) : null}
+                  {row.canDelete ? (
+                    <div className='flex justify-end border-t pt-3'>
+                      <DeleteTransactionHistoryEntryForm entryId={row.id} />
                     </div>
                   ) : null}
                 </div>

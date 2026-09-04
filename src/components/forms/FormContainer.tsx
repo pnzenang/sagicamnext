@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useEffect, type ReactNode } from 'react'
+import { useActionState, useEffect, type FormEventHandler, type ReactNode } from 'react'
 
 import { useRouter } from 'next/navigation'
 
@@ -16,11 +16,13 @@ const FormContainer = ({
   action,
   children,
   className,
+  onSubmit,
   refreshOnMessage = false
 }: {
   action: actionFunction
   children: ReactNode
   className?: string
+  onSubmit?: FormEventHandler<HTMLFormElement>
   refreshOnMessage?: boolean
 }) => {
   const router = useRouter()
@@ -37,7 +39,7 @@ const FormContainer = ({
   }, [refreshOnMessage, router, state])
 
   return (
-    <form action={formAction} className={className}>
+    <form action={formAction} className={className} onSubmit={onSubmit}>
       {children}
     </form>
   )

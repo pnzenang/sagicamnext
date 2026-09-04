@@ -39,7 +39,9 @@ import {
 } from './email'
 import { contributionCreditPerVestedMember } from './sagicam-contribution-constants'
 import {
+  fetchCurrentContributionPaymentTotalsByCode,
   fetchSponsorContributionSummary,
+  getCurrentContributionAssessmentWhere,
   getContributionReserveDeficitBalance,
   getContributionReserveDeficitAdjustment
 } from './sagicam-contribution-summary'
@@ -895,24 +897,17 @@ const fetchLatestContributionAssessment = async () => {
     },
     orderBy: {
       createdAt: 'desc'
-    }
+    },
+    where: getCurrentContributionAssessmentWhere()
   })
 }
 
 const fetchContributionPaymentsByCode = async (sponsorCodes: string[]) => {
-  if (sponsorCodes.length === 0) {
-    return new Map<string, number>()
-  }
+  const paymentsByCode = await fetchCurrentContributionPaymentTotalsByCode(sponsorCodes)
 
-  const payments = await db.sponsorContributionPayment.findMany({
-    where: {
-      sponsorCode: {
-        in: sponsorCodes
-      }
-    }
-  })
-
-  return new Map(payments.map(payment => [payment.sponsorCode, decimalToNumber(payment.amountSent)]))
+  return new Map(
+    Array.from(paymentsByCode.entries()).map(([sponsorCode, payment]) => [sponsorCode, payment.amountSent])
+  )
 }
 
 const attachContributionAmounts = async <T extends { sponsorCode: string }>(members: T[]) => {
@@ -1608,6 +1603,7 @@ export const fetchPublishedContributionTableAction = async () => {
       createdAt: 'desc'
     },
     where: {
+      ...getCurrentContributionAssessmentWhere(),
       deaths: {
         some: {}
       }
@@ -2278,6 +2274,258 @@ export const createContributionAssessmentAction = async (
     return {
       message: `Distributed ${currencyFormatter.format(totalAmount)} across ${vestedMembers.length} vested loved ones. Each vested loved one is ${currencyFormatter.format(amountPerVestedMember)}.`
     }
+  } catch (error) {
+    return renderError(error)
+  }
+}
+
+const paymentLedgerAmountEventTypes = [
+  sponsorPaymentLedgerEventTypes.submitted,
+  sponsorPaymentLedgerEventTypes.verified
+]
+
+const deletableSponsorPaymentLedgerEventTypes = new Set<string>([
+  sponsorPaymentLedgerEventTypes.manualAdjustment,
+  sponsorPaymentLedgerEventTypes.submitted,
+  sponsorPaymentLedgerEventTypes.verified
+])
+
+const getPaymentLedgerEventLabel = (eventType: string) => {
+  if (eventType === sponsorPaymentLedgerEventTypes.manualAdjustment) return 'manual adjustment'
+  if (eventType === sponsorPaymentLedgerEventTypes.submitted) return 'amount set by sponsor'
+  if (eventType === sponsorPaymentLedgerEventTypes.verified) return 'amount verified'
+
+  return eventType
+}
+
+const assertValidRecalculatedPaymentTotal = ({
+  amountSent,
+  amountVerified,
+  paymentType
+}: {
+  amountSent: number
+  amountVerified: number
+  paymentType: string
+}) => {
+  if (amountSent < 0 || amountVerified < 0) {
+    throw new Error('This transaction cannot be deleted because it would make a sponsor payment total negative.')
+  }
+
+  if (paymentType === sponsorPaymentTypes.contribution && amountVerified > amountSent) {
+    throw new Error('Delete or adjust the related verified contribution entry before deleting this submitted entry.')
+  }
+}
+
+const recalculateSponsorPaymentTotalsFromLedger = async ({
+  paymentType,
+  sponsorCode,
+  tx
+}: {
+  paymentType: string
+  sponsorCode: string
+  tx: Prisma.TransactionClient
+}) => {
+  const latestReset = await tx.sponsorPaymentLedgerEntry.findFirst({
+    orderBy: {
+      createdAt: 'desc'
+    },
+    select: {
+      createdAt: true
+    },
+    where: {
+      eventType: sponsorPaymentLedgerEventTypes.reset,
+      paymentType,
+      sponsorCode
+    }
+  })
+
+  const ledgerWindowWhere = {
+    eventType: {
+      in: paymentLedgerAmountEventTypes
+    },
+    paymentType,
+    sponsorCode,
+    ...(latestReset ? { createdAt: { gt: latestReset.createdAt } } : {})
+  }
+
+  const [ledgerTotals, latestSubmittedEntry, latestVerifiedEntry] = await Promise.all([
+    tx.sponsorPaymentLedgerEntry.groupBy({
+      _sum: {
+        amount: true
+      },
+      by: ['eventType'],
+      where: ledgerWindowWhere
+    }),
+    tx.sponsorPaymentLedgerEntry.findFirst({
+      orderBy: {
+        createdAt: 'desc'
+      },
+      select: {
+        createdAt: true
+      },
+      where: {
+        ...ledgerWindowWhere,
+        eventType: sponsorPaymentLedgerEventTypes.submitted
+      }
+    }),
+    tx.sponsorPaymentLedgerEntry.findFirst({
+      orderBy: {
+        createdAt: 'desc'
+      },
+      select: {
+        createdAt: true
+      },
+      where: {
+        ...ledgerWindowWhere,
+        eventType: sponsorPaymentLedgerEventTypes.verified
+      }
+    })
+  ])
+
+  const submittedTotal = roundCurrencyAmount(
+    ledgerTotals.reduce(
+      (total, entry) =>
+        entry.eventType === sponsorPaymentLedgerEventTypes.submitted
+          ? total + decimalToNumber(entry._sum.amount)
+          : total,
+      0
+    )
+  )
+
+  const verifiedTotal = roundCurrencyAmount(
+    ledgerTotals.reduce(
+      (total, entry) =>
+        entry.eventType === sponsorPaymentLedgerEventTypes.verified
+          ? total + decimalToNumber(entry._sum.amount)
+          : total,
+      0
+    )
+  )
+
+  const amountSent =
+    paymentType === sponsorPaymentTypes.registration
+      ? roundCurrencyAmount(submittedTotal - verifiedTotal)
+      : submittedTotal
+
+  const amountVerified = verifiedTotal
+
+  assertValidRecalculatedPaymentTotal({
+    amountSent,
+    amountVerified,
+    paymentType
+  })
+
+  const paymentData = {
+    amountSent,
+    amountVerified,
+    lastSubmittedAt: amountSent > 0 ? latestSubmittedEntry?.createdAt : null,
+    verifiedAt: amountVerified > 0 ? latestVerifiedEntry?.createdAt : null
+  }
+
+  if (paymentType === sponsorPaymentTypes.registration) {
+    await tx.sponsorRegistrationPayment.upsert({
+      create: {
+        ...paymentData,
+        sponsorCode
+      },
+      update: paymentData,
+      where: {
+        sponsorCode
+      }
+    })
+
+    return
+  }
+
+  await tx.sponsorContributionPayment.upsert({
+    create: {
+      ...paymentData,
+      sponsorCode
+    },
+    update: paymentData,
+    where: {
+      sponsorCode
+    }
+  })
+}
+
+export const deleteSponsorPaymentLedgerEntryAction = async (
+  _prevState: { message: string },
+  formData: FormData
+): Promise<{ message: string }> => {
+  const user = await assertAdminUser()
+
+  try {
+    const ledgerEntryId = getRequiredFormValue(formData, 'ledgerEntryId')
+
+    const ledgerEntry = await db.sponsorPaymentLedgerEntry.findUnique({
+      where: {
+        id: ledgerEntryId
+      }
+    })
+
+    if (!ledgerEntry) {
+      throw new Error('Transaction history entry not found.')
+    }
+
+    if (!deletableSponsorPaymentLedgerEventTypes.has(ledgerEntry.eventType)) {
+      throw new Error('This transaction history entry cannot be deleted.')
+    }
+
+    await db.$transaction(async tx => {
+      await tx.sponsorPaymentLedgerEntry.delete({
+        where: {
+          id: ledgerEntry.id
+        }
+      })
+
+      if (ledgerEntry.eventType === sponsorPaymentLedgerEventTypes.manualAdjustment) {
+        await tx.sponsorBalanceAdjustment.upsert({
+          create: {
+            amount: -decimalToNumber(ledgerEntry.amount),
+            balanceType: ledgerEntry.paymentType,
+            sponsorCode: ledgerEntry.sponsorCode
+          },
+          update: {
+            amount: {
+              decrement: ledgerEntry.amount
+            }
+          },
+          where: {
+            sponsorCode_balanceType: {
+              balanceType: ledgerEntry.paymentType,
+              sponsorCode: ledgerEntry.sponsorCode
+            }
+          }
+        })
+
+        return
+      }
+
+      await recalculateSponsorPaymentTotalsFromLedger({
+        paymentType: ledgerEntry.paymentType,
+        sponsorCode: ledgerEntry.sponsorCode,
+        tx
+      })
+    })
+
+    await recordDashboardActivity({
+      action: 'payment_transaction_history_deleted',
+      actorClerkId: user.id,
+      dashboardScope: dashboardActivityScopes.admin,
+      entityId: ledgerEntry.id,
+      entityType: 'payment',
+      sponsorCode: ledgerEntry.sponsorCode,
+      summary: `Deleted ${ledgerEntry.paymentType} transaction history entry for sponsor ${ledgerEntry.sponsorCode}: ${getPaymentLedgerEventLabel(ledgerEntry.eventType)} ${currencyFormatter.format(decimalToNumber(ledgerEntry.amount))}.`
+    })
+
+    revalidatePath('/admin-count')
+    revalidatePath('/admin-sagicam-payments')
+    revalidatePath('/admin-sagicam-registrations')
+    revalidatePath('/all-members')
+    revalidateSponsorPaymentPages()
+
+    return { message: 'Transaction history entry deleted.' }
   } catch (error) {
     return renderError(error)
   }

@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button'
 import { fetchContributionCalculationSummaryAction, resetContributionPaymentAlertAction } from '@/utils/actions'
 import {
   contributionBalanceAdjustmentType,
+  fetchCurrentContributionPaymentTotalsByCode,
+  getCurrentContributionAssessmentWhere,
   getContributionReserveDeficitBalance
 } from '@/utils/sagicam-contribution-summary'
 import { memberStatus } from '@/utils/types'
@@ -112,7 +114,8 @@ const AdminSagicamPayments = async () => {
     },
     orderBy: {
       createdAt: 'desc'
-    }
+    },
+    where: getCurrentContributionAssessmentWhere()
   })
 
   const sponsorContributionPayments = await db.sponsorContributionPayment.findMany({
@@ -278,6 +281,7 @@ const AdminSagicamPayments = async () => {
   )
 
   const contributionPaymentByCode = new Map(sponsorContributionPayments.map(payment => [payment.sponsorCode, payment]))
+  const currentContributionPaymentTotalsByCode = await fetchCurrentContributionPaymentTotalsByCode(sponsorCodes)
 
   const balanceAdjustmentByCode = new Map(
     sponsorBalanceAdjustments.map(adjustment => [adjustment.sponsorCode, decimalToNumber(adjustment.amount)])
@@ -295,7 +299,9 @@ const AdminSagicamPayments = async () => {
       : Number((amountPerVestedMember * latestVestedMembersCount).toFixed(2))
 
     const contributionPayment = contributionPaymentByCode.get(sponsorCode)
-    const amountVerified = decimalToNumber(contributionPayment?.amountVerified)
+    const currentContributionPaymentTotals = currentContributionPaymentTotalsByCode.get(sponsorCode)
+    const amountVerified = currentContributionPaymentTotals?.amountVerified ?? 0
+    const totalAmountVerified = decimalToNumber(contributionPayment?.amountVerified)
     const vestedContributionCredit = contributionCreditByCode.get(sponsorCode) ?? 0
 
     const totalAmountUsed = Number(
@@ -311,14 +317,14 @@ const AdminSagicamPayments = async () => {
       amountReceived: amountVerified,
       balance: getContributionReserveDeficitBalance({
         amountUsed: totalAmountUsed,
-        amountVerified,
+        amountVerified: totalAmountVerified,
         manualBalanceAdjustment,
         vestedContributionCredit,
         vestedMembersCount: reserveDeficitAdjustmentMembers
       }),
       contributionCredit: vestedContributionCredit,
       contributionAmountUsed: totalAmountUsed,
-      contributionAmountSent: decimalToNumber(contributionPayment?.amountSent),
+      contributionAmountSent: currentContributionPaymentTotals?.amountSent ?? 0,
       cemail: sponsor?.sponsorEmail ?? '',
       sponsorCode,
       vestedMembers

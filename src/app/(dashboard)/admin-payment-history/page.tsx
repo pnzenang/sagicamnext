@@ -86,6 +86,7 @@ const AdminPaymentHistory = async () => {
       amountSet:
         entry.eventType === sponsorPaymentLedgerEventTypes.submitted && !wasManuallyAdjustedAmountSent ? amount : null,
       amountVerified: entry.eventType === sponsorPaymentLedgerEventTypes.verified ? amount : null,
+      canDelete: entry.eventType !== sponsorPaymentLedgerEventTypes.reset,
       createdAt: entry.createdAt.toISOString(),
       createdAtLabel: dateTimeFormatter.format(entry.createdAt),
       eventType: wasManuallyAdjustedAmountSent

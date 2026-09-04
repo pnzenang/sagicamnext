@@ -3,6 +3,7 @@ import { Prisma } from '@/generated/prisma/client'
 import db from '@/utils/db'
 import {
   contributionBalanceAdjustmentType,
+  fetchCurrentContributionPaymentTotalsByCode,
   fetchLatestContributionAssessment,
   getContributionReserveDeficitBalance
 } from '@/utils/sagicam-contribution-summary'
@@ -184,7 +185,10 @@ export const fetchAdminContributionPaymentUpdateRows = async () => {
     })
   )
 
-  const verifiedLedgerTotalsByCode = await fetchContributionVerifiedLedgerTotalsByCode(sponsorCodes)
+  const [verifiedLedgerTotalsByCode, currentContributionPaymentTotalsByCode] = await Promise.all([
+    fetchContributionVerifiedLedgerTotalsByCode(sponsorCodes),
+    fetchCurrentContributionPaymentTotalsByCode(sponsorCodes)
+  ])
 
   const amountPerVestedMember = decimalToNumber(latestContributionAssessment?.amountPerVestedMember)
 
@@ -193,10 +197,11 @@ export const fetchAdminContributionPaymentUpdateRows = async () => {
     const profile = profilesByCode.get(sponsorCode)
     const vestedMembers = vestedCountsByCode.get(sponsorCode) ?? 0
     const reserveDeficitAdjustmentMembers = vestedMembers + (deceasedVestedCountsByCode.get(sponsorCode) ?? 0)
-    const currentAmountSent = decimalToNumber(payment?.amountSent)
     const currentAmountVerified = decimalToNumber(payment?.amountVerified)
     const recordedAmountVerified = verifiedLedgerTotalsByCode.get(sponsorCode) ?? 0
-    const amountVerified = roundCurrencyAmount(Math.max(recordedAmountVerified, currentAmountVerified))
+    const totalAmountVerified = roundCurrencyAmount(Math.max(recordedAmountVerified, currentAmountVerified))
+    const currentContributionPaymentTotals = currentContributionPaymentTotalsByCode.get(sponsorCode)
+    const amountVerified = currentContributionPaymentTotals?.amountVerified ?? 0
 
     const contributionDue = roundCurrencyAmount(
       latestContributionGroupsByCode.has(sponsorCode)
@@ -208,7 +213,10 @@ export const fetchAdminContributionPaymentUpdateRows = async () => {
       contributionDue + (contributionUsagesByCode.get(sponsorCode) ?? 0)
     )
 
-    const amountSent = roundCurrencyAmount(Math.max(currentAmountSent - currentAmountVerified, 0))
+    const amountSent = roundCurrencyAmount(
+      Math.max((currentContributionPaymentTotals?.amountSent ?? 0) - amountVerified, 0)
+    )
+
     const manualBalanceAdjustment = balanceAdjustmentsByCode.get(sponsorCode) ?? 0
     const sponsorName = getSponsorName(profile) || sponsorCode
     const vestedContributionCredit = contributionCreditsByCode.get(sponsorCode) ?? 0
@@ -218,7 +226,7 @@ export const fetchAdminContributionPaymentUpdateRows = async () => {
       amountVerified,
       balance: getContributionReserveDeficitBalance({
         amountUsed: contributionAmountUsed,
-        amountVerified,
+        amountVerified: totalAmountVerified,
         manualBalanceAdjustment,
         vestedContributionCredit,
         vestedMembersCount: reserveDeficitAdjustmentMembers
