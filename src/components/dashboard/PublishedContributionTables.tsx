@@ -263,6 +263,25 @@ const ContributionTableDocumentLink = ({ document, label }: { document: Contribu
   )
 }
 
+const OverflowTooltipText = ({ className, value }: { className?: string; value: string }) => (
+  <Tooltip>
+    <TooltipTrigger asChild>
+      <span
+        className={cn(
+          'block max-w-full min-w-0 truncate whitespace-nowrap print:max-w-none print:overflow-visible print:whitespace-normal',
+          className
+        )}
+        aria-label={value}
+      >
+        {value}
+      </span>
+    </TooltipTrigger>
+    <TooltipContent side='top' sideOffset={4} className='max-w-xs text-left break-words'>
+      {value}
+    </TooltipContent>
+  </Tooltip>
+)
+
 function SortHeader<T extends string>({
   align = 'left',
   children,
@@ -484,49 +503,64 @@ const PublishedContributionTables = ({
                     </TableCell>
                   </TableRow>
                 ) : (
-                  sortedDeaths.map(death => (
-                    <TableRow key={death.id} className='odd:bg-muted/30 even:bg-background'>
-                      <TableCell
-                        data-label='Matriculation'
-                        className='w-24 px-1.5 font-mono font-semibold break-all whitespace-normal md:w-28 md:px-2 md:text-sm md:whitespace-nowrap'
-                      >
-                        {death.memberMatriculationNumber}
-                      </TableCell>
-                      <TableCell
-                        data-label='First Name'
-                        className='w-32 px-1.5 font-semibold break-words whitespace-normal md:w-44 md:px-2 xl:w-52'
-                      >
-                        {death.firstName}
-                      </TableCell>
-                      <TableCell data-label='Last Name' className='w-44 font-semibold md:w-64 xl:w-72'>
-                        {death.lastAndMiddleNames}
-                      </TableCell>
-                      <TableCell data-label='Registration Date' className='hidden whitespace-nowrap lg:table-cell'>
-                        {formatDate(death.registrationDate)}
-                      </TableCell>
-                      <TableCell
-                        data-label='Date of Death'
-                        className='px-1.5 break-words whitespace-normal md:min-w-40 md:px-2 md:whitespace-nowrap'
-                      >
-                        {formatDate(death.dateOfDeath)}
-                      </TableCell>
-                      <TableCell data-label='Death Certificate' className='px-1.5 text-center md:min-w-36 md:px-2'>
-                        <ContributionTableDocumentLink document={death.deathCertificate} label='Death certificate' />
-                      </TableCell>
-                      <TableCell data-label='Deceased Picture' className='px-1.5 text-center md:min-w-36 md:px-2'>
-                        <ContributionTableDocumentLink document={death.deceasedPicture} label='Deceased picture' />
-                      </TableCell>
-                      <TableCell
-                        data-label='Amount'
-                        className='w-24 px-1 text-right font-semibold whitespace-nowrap md:w-28 md:px-2'
-                      >
-                        {currencyFormatter.format(death.amountToContribute)}
-                      </TableCell>
-                      <TableCell data-label='Sponsor Code' className='hidden w-20 px-1 md:table-cell md:w-24 md:px-2'>
-                        <span className='block truncate font-mono font-semibold'>{death.sponsorCode}</span>
-                      </TableCell>
-                    </TableRow>
-                  ))
+                  sortedDeaths.map(death => {
+                    const amountToContribute = currencyFormatter.format(death.amountToContribute)
+                    const dateOfDeath = formatDate(death.dateOfDeath)
+                    const registrationDate = formatDate(death.registrationDate)
+
+                    return (
+                      <TableRow key={death.id} className='odd:bg-muted/30 even:bg-background'>
+                        <TableCell
+                          data-label='Matriculation'
+                          className='w-24 overflow-hidden px-1.5 font-mono font-semibold whitespace-nowrap md:w-28 md:px-2 md:text-sm'
+                        >
+                          <OverflowTooltipText value={death.memberMatriculationNumber} />
+                        </TableCell>
+                        <TableCell
+                          data-label='First Name'
+                          className='w-32 overflow-hidden px-1.5 font-semibold whitespace-nowrap md:w-44 md:px-2 xl:w-52'
+                        >
+                          <OverflowTooltipText value={death.firstName} />
+                        </TableCell>
+                        <TableCell
+                          data-label='Last Name'
+                          className='w-44 overflow-hidden font-semibold whitespace-nowrap md:w-64 xl:w-72'
+                        >
+                          <OverflowTooltipText value={death.lastAndMiddleNames} />
+                        </TableCell>
+                        <TableCell
+                          data-label='Registration Date'
+                          className='hidden overflow-hidden whitespace-nowrap lg:table-cell'
+                        >
+                          <OverflowTooltipText value={registrationDate} />
+                        </TableCell>
+                        <TableCell
+                          data-label='Date of Death'
+                          className='overflow-hidden px-1.5 whitespace-nowrap md:min-w-40 md:px-2'
+                        >
+                          <OverflowTooltipText value={dateOfDeath} />
+                        </TableCell>
+                        <TableCell data-label='Death Certificate' className='px-1.5 text-center md:min-w-36 md:px-2'>
+                          <ContributionTableDocumentLink document={death.deathCertificate} label='Death certificate' />
+                        </TableCell>
+                        <TableCell data-label='Deceased Picture' className='px-1.5 text-center md:min-w-36 md:px-2'>
+                          <ContributionTableDocumentLink document={death.deceasedPicture} label='Deceased picture' />
+                        </TableCell>
+                        <TableCell
+                          data-label='Amount'
+                          className='w-24 overflow-hidden px-1 text-right font-semibold whitespace-nowrap md:w-28 md:px-2'
+                        >
+                          <OverflowTooltipText className='text-right tabular-nums' value={amountToContribute} />
+                        </TableCell>
+                        <TableCell
+                          data-label='Sponsor Code'
+                          className='hidden w-20 overflow-hidden px-1 md:table-cell md:w-24 md:px-2'
+                        >
+                          <OverflowTooltipText className='font-mono font-semibold' value={death.sponsorCode} />
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })
                 )}
               </TableBody>
             </Table>
@@ -642,8 +676,14 @@ const PublishedContributionTables = ({
               </TableHeader>
               <TableBody>
                 {sortedGroups.map((group, index) => {
+                  const accountAfterContribution = currencyFormatter.format(group.accountAfterContribution)
+                  const accountBeforeContribution = currencyFormatter.format(group.accountBeforeContribution)
+                  const amountOwed = currencyFormatter.format(group.amountOwed)
+
                   const isPageVisible =
                     index >= (activeGroupPage - 1) * groupRowsPerPage && index < activeGroupPage * groupRowsPerPage
+
+                  const vestedMembersCount = group.vestedMembersCount.toLocaleString('en-US')
 
                   return (
                     <TableRow
@@ -660,33 +700,33 @@ const PublishedContributionTables = ({
                       </TableCell>
                       <TableCell
                         data-label='Code'
-                        className='px-1.5 font-mono text-sm font-semibold md:min-w-20 md:px-2'
+                        className='overflow-hidden px-1.5 font-mono text-sm font-semibold whitespace-nowrap md:min-w-20 md:px-2'
                       >
-                        {group.sponsorCode}
+                        <OverflowTooltipText value={group.sponsorCode} />
                       </TableCell>
                       <TableCell
                         data-label='Vested Loved Ones'
-                        className='px-1.5 text-right font-semibold tabular-nums md:min-w-40 md:px-2'
+                        className='overflow-hidden px-1.5 text-right font-semibold whitespace-nowrap tabular-nums md:min-w-40 md:px-2'
                       >
-                        {group.vestedMembersCount}
+                        <OverflowTooltipText className='text-right tabular-nums' value={vestedMembersCount} />
                       </TableCell>
                       <TableCell
                         data-label='Account Before Contribution'
-                        className='px-1.5 text-right font-semibold whitespace-nowrap tabular-nums md:min-w-44 md:px-2'
+                        className='overflow-hidden px-1.5 text-right font-semibold whitespace-nowrap tabular-nums md:min-w-44 md:px-2'
                       >
-                        {currencyFormatter.format(group.accountBeforeContribution)}
+                        <OverflowTooltipText className='text-right tabular-nums' value={accountBeforeContribution} />
                       </TableCell>
                       <TableCell
                         data-label='Amount'
-                        className='px-1.5 text-right font-semibold whitespace-nowrap md:min-w-48 md:px-2'
+                        className='overflow-hidden px-1.5 text-right font-semibold whitespace-nowrap md:min-w-48 md:px-2'
                       >
-                        {currencyFormatter.format(group.amountOwed)}
+                        <OverflowTooltipText className='text-right tabular-nums' value={amountOwed} />
                       </TableCell>
                       <TableCell
                         data-label='Account After Contribution'
-                        className='px-1.5 text-right font-semibold whitespace-nowrap tabular-nums md:min-w-44 md:px-2'
+                        className='overflow-hidden px-1.5 text-right font-semibold whitespace-nowrap tabular-nums md:min-w-44 md:px-2'
                       >
-                        {currencyFormatter.format(group.accountAfterContribution)}
+                        <OverflowTooltipText className='text-right tabular-nums' value={accountAfterContribution} />
                       </TableCell>
                     </TableRow>
                   )

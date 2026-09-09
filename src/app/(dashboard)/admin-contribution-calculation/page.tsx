@@ -58,7 +58,10 @@ const ContributionCalculationPage = async () => {
           </CardDescription>
         </CardHeader>
         <CardContent className='min-w-0 py-5'>
-          <FormContainer action={addContributionCalculationDeathAction} className='grid gap-4 md:grid-cols-3 md:items-end'>
+          <FormContainer
+            action={addContributionCalculationDeathAction}
+            className='grid gap-4 md:grid-cols-3 md:items-end'
+          >
             <div className='grid min-w-0 gap-2'>
               <Label htmlFor='memberMatriculationNumber'>Matriculation number</Label>
               <div className='relative'>
@@ -158,36 +161,58 @@ const ContributionCalculationPage = async () => {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  calculationDeaths.map(death => (
-                    <TableRow key={death.id} className='odd:bg-muted/30 even:bg-background'>
-                      <TableCell className='w-28 font-mono text-sm font-semibold'>
-                        {death.memberMatriculationNumber}
-                      </TableCell>
-                      <TableCell className='w-28 font-semibold'>{death.firstName}</TableCell>
-                      <TableCell className='w-40 font-semibold'>{death.lastAndMiddleNames}</TableCell>
-                      <TableCell className='whitespace-nowrap'>{formatDate(death.registrationDate)}</TableCell>
-                      <TableCell className='whitespace-nowrap'>{formatDate(death.dateOfDeath)}</TableCell>
-                      <TableCell className='font-semibold whitespace-nowrap'>
-                        {currencyFormatter.format(death.amountToContribute)}
-                      </TableCell>
-                      <TableCell className='font-mono font-semibold'>{death.sponsorCode}</TableCell>
-                      <TableCell>
-                        <form action={deleteContributionCalculationDeathAction}>
-                          <input type='hidden' name='contributionCalculationDeathId' value={death.id} />
-                          <Button type='submit' variant='outline' size='sm' className='text-destructive'>
-                            <Trash2 />
-                            Remove
-                          </Button>
-                        </form>
-                      </TableCell>
-                    </TableRow>
-                  ))
+                  calculationDeaths.map(death => {
+                    const amountToContribute = currencyFormatter.format(death.amountToContribute)
+                    const dateOfDeath = formatDate(death.dateOfDeath)
+                    const registrationDate = formatDate(death.registrationDate)
+
+                    return (
+                      <TableRow key={death.id} className='odd:bg-muted/30 even:bg-background'>
+                        <TableCell
+                          className='w-28 overflow-hidden font-mono text-sm font-semibold'
+                          title={death.memberMatriculationNumber}
+                        >
+                          <span className='block truncate whitespace-nowrap'>{death.memberMatriculationNumber}</span>
+                        </TableCell>
+                        <TableCell className='w-28 overflow-hidden font-semibold' title={death.firstName}>
+                          <span className='block truncate whitespace-nowrap'>{death.firstName}</span>
+                        </TableCell>
+                        <TableCell className='w-40 overflow-hidden font-semibold' title={death.lastAndMiddleNames}>
+                          <span className='block truncate whitespace-nowrap'>{death.lastAndMiddleNames}</span>
+                        </TableCell>
+                        <TableCell className='overflow-hidden whitespace-nowrap' title={registrationDate}>
+                          <span className='block truncate whitespace-nowrap'>{registrationDate}</span>
+                        </TableCell>
+                        <TableCell className='overflow-hidden whitespace-nowrap' title={dateOfDeath}>
+                          <span className='block truncate whitespace-nowrap'>{dateOfDeath}</span>
+                        </TableCell>
+                        <TableCell
+                          className='overflow-hidden font-semibold whitespace-nowrap'
+                          title={amountToContribute}
+                        >
+                          <span className='block truncate whitespace-nowrap'>{amountToContribute}</span>
+                        </TableCell>
+                        <TableCell className='overflow-hidden font-mono font-semibold' title={death.sponsorCode}>
+                          <span className='block truncate whitespace-nowrap'>{death.sponsorCode}</span>
+                        </TableCell>
+                        <TableCell>
+                          <form action={deleteContributionCalculationDeathAction}>
+                            <input type='hidden' name='contributionCalculationDeathId' value={death.id} />
+                            <Button type='submit' variant='outline' size='sm' className='text-destructive'>
+                              <Trash2 />
+                              Remove
+                            </Button>
+                          </form>
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })
                 )}
               </TableBody>
             </Table>
           </div>
 
-          <div className='mt-5 flex max-w-full flex-col gap-3 rounded-lg border bg-muted/30 p-4 lg:flex-row lg:items-end lg:justify-between'>
+          <div className='bg-muted/30 mt-5 flex max-w-full flex-col gap-3 rounded-lg border p-4 lg:flex-row lg:items-end lg:justify-between'>
             <FormContainer
               action={saveContributionCalculationAdminFeeAction}
               className='flex max-w-full flex-col gap-2 sm:flex-row sm:items-end lg:w-auto'
@@ -218,8 +243,8 @@ const ContributionCalculationPage = async () => {
             </Badge>
 
             <Badge variant='secondary' className='h-9 w-fit rounded-md px-3 text-sm font-semibold'>
-              Admin: {currencyFormatter.format(calculationSummary.adminFee)} x{' '}
-              {calculationSummary.vestedMembersCount} = {currencyFormatter.format(calculationSummary.adminFeeTotal)}
+              Admin: {currencyFormatter.format(calculationSummary.adminFee)} x {calculationSummary.vestedMembersCount} ={' '}
+              {currencyFormatter.format(calculationSummary.adminFeeTotal)}
             </Badge>
           </div>
         </CardContent>
