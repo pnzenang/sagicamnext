@@ -56,6 +56,7 @@ import {
   getAwaitingPublicationVestingCutoff
 } from './sagicam-member-longevity'
 import { getOverdueRegistrationPaymentCreatedAtCutoff } from './registration-payment-deadline'
+import { hasAllApprovedDeceasedMemberDocuments } from './deceased-member-documents'
 import {
   deleteDeathDocumentationFromCloudinary,
   isSameCloudinaryDocument,
@@ -85,6 +86,7 @@ const allPaymentAlertSponsorsCode = '__all__'
 const MEMBER_REMOVAL_RESTORE_WINDOW_MS = 48 * 60 * 60 * 1000
 const maxDocumentationFileSize = 20 * 1024 * 1024
 const blockedDeceasedRestoreStatuses = new Set<string>([contributionStatus.underway, contributionStatus.completed])
+const contributionCreditMemberStatuses = new Set<string>([memberStatus.Vested, memberStatus.Delinquent])
 
 const allowedDeceasedMemberDocumentMimeTypes = new Set([
   'application/pdf',
@@ -268,7 +270,9 @@ const fetchDashboardActivityLogs = async (
     where
   })
 
-  const sponsorCodes = Array.from(new Set(logs.map(log => log.sponsorCode).filter((code): code is string => Boolean(code))))
+  const sponsorCodes = Array.from(
+    new Set(logs.map(log => log.sponsorCode).filter((code): code is string => Boolean(code)))
+  )
 
   const sponsors =
     sponsorCodes.length > 0
@@ -485,23 +489,22 @@ const syncVestedContributionCredit = async ({
   sponsorCode: string
   memberMatriculationNumber: string
 }) => {
-  if (previousStatus === memberStatus.Awaiting && nextStatus === memberStatus.Vested) {
+  const previouslyHadCredit = contributionCreditMemberStatuses.has(previousStatus)
+  const shouldHaveCredit = contributionCreditMemberStatuses.has(nextStatus)
+
+  if (!previouslyHadCredit && shouldHaveCredit) {
     await createVestedContributionCredit({ memberMatriculationNumber, sponsorCode })
 
     return
   }
 
-  if (previousStatus === memberStatus.Vested && nextStatus === memberStatus.Vested) {
+  if (previouslyHadCredit && shouldHaveCredit) {
     await updateVestedContributionCredit({ memberMatriculationNumber, previousMatriculationNumber, sponsorCode })
 
     return
   }
 
-  if (previousStatus === memberStatus.Vested && nextStatus === memberStatus.Delinquent) {
-    return
-  }
-
-  if (previousStatus === memberStatus.Vested && nextStatus !== memberStatus.Vested) {
+  if (previouslyHadCredit && !shouldHaveCredit) {
     await removeVestedContributionCredit(previousMatriculationNumber)
   }
 }
@@ -645,7 +648,8 @@ const roundCurrencyAmount = (amount: number) => Number(amount.toFixed(2))
 
 const preserveContributionReserveDeficitForSponsors = async (
   sponsorCodes: (string | null | undefined)[],
-  action: () => Promise<void>
+  action: () => Promise<void>,
+  options: { allowContributionCreditChanges?: boolean } = {}
 ) => {
   const uniqueSponsorCodes = Array.from(
     new Set(
@@ -667,6 +671,10 @@ const preserveContributionReserveDeficitForSponsors = async (
 
   const beforeBalanceByCode = new Map(beforeSummaries.map(summary => [summary.sponsorCode, summary.balance]))
 
+  const beforeContributionCreditByCode = new Map(
+    beforeSummaries.map(summary => [summary.sponsorCode, summary.vestedContributionCredit])
+  )
+
   await action()
 
   const afterSummaries = await Promise.all(
@@ -676,7 +684,14 @@ const preserveContributionReserveDeficitForSponsors = async (
   const adjustmentUpdates = afterSummaries
     .map(summary => {
       const beforeBalance = beforeBalanceByCode.get(summary.sponsorCode) ?? 0
-      const balanceDifference = roundCurrencyAmount(beforeBalance - summary.balance)
+
+      const contributionCreditDelta = options.allowContributionCreditChanges
+        ? roundCurrencyAmount(
+            summary.vestedContributionCredit - (beforeContributionCreditByCode.get(summary.sponsorCode) ?? 0)
+          )
+        : 0
+
+      const balanceDifference = roundCurrencyAmount(beforeBalance + contributionCreditDelta - summary.balance)
 
       return {
         amount: roundCurrencyAmount(summary.manualBalanceAdjustment + balanceDifference),
@@ -1508,7 +1523,8 @@ export const resetContributionCalculationAction = async (
       actorClerkId: user.id,
       dashboardScope: dashboardActivityScopes.admin,
       entityType: 'contribution_calculation',
-      summary: 'Reset contribution calculation and cleared contribution owed, sent, and verified totals while preserving reserve/deficit.'
+      summary:
+        'Reset contribution calculation and cleared contribution owed, sent, and verified totals while preserving reserve/deficit.'
     })
 
     for (const sponsorCode of affectedSponsorCodes) {
@@ -2011,22 +2027,33 @@ export const createMemberAction = async (provState: any, formData: FormData): Pr
     const sponsor = await fetchSponsorByCode(validatedFields.sponsorCode)
     const memberMatriculationNumber = `SC${validatedFields.sponsorCode}${randomMatriculation()}`
 
-    await preserveContributionReserveDeficitForSponsors([validatedFields.sponsorCode], async () => {
-      await db.member.create({
-        data: {
-          ...validatedFields,
-          clerkId: user.id,
-          memberMatriculationNumber
-        }
-      })
-
-      if (validatedFields.memberStatus === memberStatus.Pending) {
-        await createPendingRegistrationUsage({
-          memberMatriculationNumber,
-          sponsorCode: validatedFields.sponsorCode
+    await preserveContributionReserveDeficitForSponsors(
+      [validatedFields.sponsorCode],
+      async () => {
+        await db.member.create({
+          data: {
+            ...validatedFields,
+            clerkId: user.id,
+            memberMatriculationNumber
+          }
         })
-      }
-    })
+
+        if (validatedFields.memberStatus === memberStatus.Pending) {
+          await createPendingRegistrationUsage({
+            memberMatriculationNumber,
+            sponsorCode: validatedFields.sponsorCode
+          })
+        }
+
+        if (contributionCreditMemberStatuses.has(validatedFields.memberStatus)) {
+          await createVestedContributionCredit({
+            memberMatriculationNumber,
+            sponsorCode: validatedFields.sponsorCode
+          })
+        }
+      },
+      { allowContributionCreditChanges: true }
+    )
 
     await recordDashboardActivity({
       action: 'member_created',
@@ -3311,7 +3338,8 @@ export const updateMemberDetailsAction = async (prevState: any, formData: FormDa
             sponsorCode: validatedFields.sponsorCode
           })
         }
-      }
+      },
+      { allowContributionCreditChanges: true }
     )
 
     await recordDashboardActivity({
@@ -3395,7 +3423,8 @@ export const updateMemberDetailsActionForAdmin = async (prevState: any, formData
             sponsorCode: validatedFields.sponsorCode
           })
         }
-      }
+      },
+      { allowContributionCreditChanges: true }
     )
 
     await recordDashboardActivity({
@@ -3497,78 +3526,81 @@ export const updateSelectedMembersStatusForAdminAction = async (
     const manuallyVestedAt = new Date()
     let updatedCount = 0
 
-    await preserveContributionReserveDeficitForSponsors(affectedSponsorCodes, async () => {
-      await db.$transaction(async tx => {
-        for (const member of membersToUpdate) {
-          if (member.memberStatus === nextStatus) {
-            continue
-          }
-
-          const updatedMember = await tx.member.updateMany({
-            data: {
-              memberStatus: nextStatus,
-              ...getManualVestingTimestampUpdate({
-                manuallyVestedAt,
-                nextStatus,
-                previousStatus: member.memberStatus
-              })
-            },
-            where: {
-              id: member.id,
-              memberStatus: member.memberStatus
+    await preserveContributionReserveDeficitForSponsors(
+      affectedSponsorCodes,
+      async () => {
+        await db.$transaction(async tx => {
+          for (const member of membersToUpdate) {
+            if (member.memberStatus === nextStatus) {
+              continue
             }
-          })
 
-          if (updatedMember.count === 0) {
-            continue
-          }
-
-          await recordDashboardActivity({
-            action: 'member_status_updated',
-            actorClerkId: user.id,
-            dashboardScope: dashboardActivityScopes.admin,
-            entityId: member.id,
-            entityType: 'member',
-            sponsorCode: member.sponsorCode,
-            summary: `Moved loved one ${member.memberMatriculationNumber} from ${getMemberStatusActionLabel(
-              member.memberStatus
-            )} to ${getMemberStatusActionLabel(nextStatus)}.`,
-            tx
-          })
-
-          if (member.memberStatus !== memberStatus.Vested && nextStatus === memberStatus.Vested) {
-            await tx.sponsorContributionCredit.upsert({
-              create: {
-                amountCredited: contributionCreditPerVestedMember,
-                memberMatriculationNumber: member.memberMatriculationNumber,
-                sponsorCode: member.sponsorCode
-              },
-              update: {
-                amountCredited: contributionCreditPerVestedMember,
-                sponsorCode: member.sponsorCode
+            const updatedMember = await tx.member.updateMany({
+              data: {
+                memberStatus: nextStatus,
+                ...getManualVestingTimestampUpdate({
+                  manuallyVestedAt,
+                  nextStatus,
+                  previousStatus: member.memberStatus
+                })
               },
               where: {
-                memberMatriculationNumber: member.memberMatriculationNumber
+                id: member.id,
+                memberStatus: member.memberStatus
               }
             })
-          }
 
-          if (
-            member.memberStatus === memberStatus.Vested &&
-            nextStatus !== memberStatus.Vested &&
-            nextStatus !== memberStatus.Delinquent
-          ) {
-            await tx.sponsorContributionCredit.deleteMany({
-              where: {
-                memberMatriculationNumber: member.memberMatriculationNumber
-              }
+            if (updatedMember.count === 0) {
+              continue
+            }
+
+            await recordDashboardActivity({
+              action: 'member_status_updated',
+              actorClerkId: user.id,
+              dashboardScope: dashboardActivityScopes.admin,
+              entityId: member.id,
+              entityType: 'member',
+              sponsorCode: member.sponsorCode,
+              summary: `Moved loved one ${member.memberMatriculationNumber} from ${getMemberStatusActionLabel(
+                member.memberStatus
+              )} to ${getMemberStatusActionLabel(nextStatus)}.`,
+              tx
             })
-          }
 
-          updatedCount += updatedMember.count
-        }
-      })
-    })
+            const previouslyHadCredit = contributionCreditMemberStatuses.has(member.memberStatus)
+            const shouldHaveCredit = contributionCreditMemberStatuses.has(nextStatus)
+
+            if (shouldHaveCredit) {
+              await tx.sponsorContributionCredit.upsert({
+                create: {
+                  amountCredited: contributionCreditPerVestedMember,
+                  memberMatriculationNumber: member.memberMatriculationNumber,
+                  sponsorCode: member.sponsorCode
+                },
+                update: {
+                  amountCredited: contributionCreditPerVestedMember,
+                  sponsorCode: member.sponsorCode
+                },
+                where: {
+                  memberMatriculationNumber: member.memberMatriculationNumber
+                }
+              })
+            }
+
+            if (previouslyHadCredit && !shouldHaveCredit) {
+              await tx.sponsorContributionCredit.deleteMany({
+                where: {
+                  memberMatriculationNumber: member.memberMatriculationNumber
+                }
+              })
+            }
+
+            updatedCount += updatedMember.count
+          }
+        })
+      },
+      { allowContributionCreditChanges: true }
+    )
 
     revalidateMemberPaymentViews()
     revalidatePath('/admin-users-contacts')
@@ -3720,56 +3752,60 @@ export const vestEligibleAwaitingPublicationMembersAction = async (): Promise<{ 
     let vestedCount = 0
     const affectedSponsorCodes = Array.from(new Set(eligibleMembers.map(member => member.sponsorCode)))
 
-    await preserveContributionReserveDeficitForSponsors(affectedSponsorCodes, async () => {
-      await db.$transaction(async tx => {
-        for (const member of eligibleMembers) {
-          const updatedMember = await tx.member.updateMany({
-            data: {
-              memberStatus: memberStatus.Vested
-            },
-            where: {
-              createdAt: {
-                lte: cutoffAt
+    await preserveContributionReserveDeficitForSponsors(
+      affectedSponsorCodes,
+      async () => {
+        await db.$transaction(async tx => {
+          for (const member of eligibleMembers) {
+            const updatedMember = await tx.member.updateMany({
+              data: {
+                memberStatus: memberStatus.Vested
               },
-              id: member.id,
-              memberStatus: memberStatus.Awaiting
-            }
-          })
+              where: {
+                createdAt: {
+                  lte: cutoffAt
+                },
+                id: member.id,
+                memberStatus: memberStatus.Awaiting
+              }
+            })
 
-          if (updatedMember.count === 0) {
-            continue
+            if (updatedMember.count === 0) {
+              continue
+            }
+
+            await tx.sponsorContributionCredit.upsert({
+              create: {
+                amountCredited: contributionCreditPerVestedMember,
+                memberMatriculationNumber: member.memberMatriculationNumber,
+                sponsorCode: member.sponsorCode
+              },
+              update: {
+                amountCredited: contributionCreditPerVestedMember,
+                sponsorCode: member.sponsorCode
+              },
+              where: {
+                memberMatriculationNumber: member.memberMatriculationNumber
+              }
+            })
+
+            await recordDashboardActivity({
+              action: 'member_auto_vested',
+              actorClerkId: user.id,
+              dashboardScope: dashboardActivityScopes.admin,
+              entityId: member.id,
+              entityType: 'member',
+              sponsorCode: member.sponsorCode,
+              summary: `Moved eligible loved one ${member.memberMatriculationNumber} to Vested.`,
+              tx
+            })
+
+            vestedCount += updatedMember.count
           }
-
-          await tx.sponsorContributionCredit.upsert({
-            create: {
-              amountCredited: contributionCreditPerVestedMember,
-              memberMatriculationNumber: member.memberMatriculationNumber,
-              sponsorCode: member.sponsorCode
-            },
-            update: {
-              amountCredited: contributionCreditPerVestedMember,
-              sponsorCode: member.sponsorCode
-            },
-            where: {
-              memberMatriculationNumber: member.memberMatriculationNumber
-            }
-          })
-
-          await recordDashboardActivity({
-            action: 'member_auto_vested',
-            actorClerkId: user.id,
-            dashboardScope: dashboardActivityScopes.admin,
-            entityId: member.id,
-            entityType: 'member',
-            sponsorCode: member.sponsorCode,
-            summary: `Moved eligible loved one ${member.memberMatriculationNumber} to Vested.`,
-            tx
-          })
-
-          vestedCount += updatedMember.count
-        }
-      })
-    })
+        })
+      },
+      { allowContributionCreditChanges: true }
+    )
 
     revalidateMemberPaymentViews()
     revalidatePath('/admin-users-contacts')
@@ -4751,7 +4787,8 @@ export const reviewAdminMemberTransferRequestAction = async (
             }
           })
         ])
-      }
+      },
+      { allowContributionCreditChanges: true }
     )
 
     for (const sponsorCode of [request.initiatingSponsorCode, receivingSponsor.sponsorCode]) {
@@ -5071,38 +5108,49 @@ export const restoreRemovedMemberAction = async (prevState: { removedMemberId: s
     const restoredMemberStatus = removedMember.memberStatus
     const restoredNameOfBeneficiary = removedMember.nameOfBeneficiary
 
-    await preserveContributionReserveDeficitForSponsors([removedMember.sponsorCode], async () => {
-      await db.$transaction([
-        db.member.create({
-          data: {
-            ...(removedMember.originalMemberId ? { id: removedMember.originalMemberId } : {}),
-            clerkId: removedMember.clerkId,
-            countryOfBirth: removedMember.countryOfBirth,
-            dateOfBirth: removedMember.dateOfBirth,
-            delegateRecommendation: restoredDelegateRecommendation,
-            firstName: removedMember.firstName,
-            lastAndMiddleNames: removedMember.lastAndMiddleNames,
-            memberMatriculationNumber: removedMember.memberMatriculationNumber,
-            memberStatus: restoredMemberStatus,
-            nameOfBeneficiary: restoredNameOfBeneficiary,
-            sponsorCode: removedMember.sponsorCode,
-            ...(removedMember.originalMemberCreatedAt ? { createdAt: removedMember.originalMemberCreatedAt } : {})
-          }
-        }),
-        db.removedMember.delete({
-          where: {
-            id: removedMember.id
-          }
-        })
-      ])
+    await preserveContributionReserveDeficitForSponsors(
+      [removedMember.sponsorCode],
+      async () => {
+        await db.$transaction([
+          db.member.create({
+            data: {
+              ...(removedMember.originalMemberId ? { id: removedMember.originalMemberId } : {}),
+              clerkId: removedMember.clerkId,
+              countryOfBirth: removedMember.countryOfBirth,
+              dateOfBirth: removedMember.dateOfBirth,
+              delegateRecommendation: restoredDelegateRecommendation,
+              firstName: removedMember.firstName,
+              lastAndMiddleNames: removedMember.lastAndMiddleNames,
+              memberMatriculationNumber: removedMember.memberMatriculationNumber,
+              memberStatus: restoredMemberStatus,
+              nameOfBeneficiary: restoredNameOfBeneficiary,
+              sponsorCode: removedMember.sponsorCode,
+              ...(removedMember.originalMemberCreatedAt ? { createdAt: removedMember.originalMemberCreatedAt } : {})
+            }
+          }),
+          db.removedMember.delete({
+            where: {
+              id: removedMember.id
+            }
+          })
+        ])
 
-      if (restoredMemberStatus === memberStatus.Pending) {
-        await createPendingRegistrationUsage({
-          memberMatriculationNumber: removedMember.memberMatriculationNumber,
-          sponsorCode: removedMember.sponsorCode
-        })
-      }
-    })
+        if (restoredMemberStatus === memberStatus.Pending) {
+          await createPendingRegistrationUsage({
+            memberMatriculationNumber: removedMember.memberMatriculationNumber,
+            sponsorCode: removedMember.sponsorCode
+          })
+        }
+
+        if (contributionCreditMemberStatuses.has(restoredMemberStatus)) {
+          await createVestedContributionCredit({
+            memberMatriculationNumber: removedMember.memberMatriculationNumber,
+            sponsorCode: removedMember.sponsorCode
+          })
+        }
+      },
+      { allowContributionCreditChanges: true }
+    )
 
     await recordDashboardActivity({
       action: 'member_restored',
@@ -5295,27 +5343,49 @@ export const createDeceasedMemberActionAdmin = async (
 export const fetchDeceasedMembersAction = async () => {
   const user = await getAuthUser()
 
-  const deceasedMember = await db.deceasedMember.findMany({
+  const deceasedMembers = await db.deceasedMember.findMany({
+    include: {
+      documents: {
+        select: {
+          documentType: true,
+          status: true
+        }
+      }
+    },
     where: {
       clerkId: user.id
     },
     orderBy: { createdAt: 'desc' }
   })
 
-  return deceasedMember
+  return deceasedMembers.map(({ documents, ...deceasedMember }) => ({
+    ...deceasedMember,
+    deathDocumentsApproved: hasAllApprovedDeceasedMemberDocuments(documents)
+  }))
 }
 
 export const fetchDeceasedMembersActionAdmin = async () => {
   await assertAdminUser()
 
-  const deceasedMember = await db.deceasedMember.findMany({
+  const deceasedMembers = await db.deceasedMember.findMany({
+    include: {
+      documents: {
+        select: {
+          documentType: true,
+          status: true
+        }
+      }
+    },
     where: {
       // clerkId: user.id
     },
     orderBy: { createdAt: 'desc' }
   })
 
-  return deceasedMember
+  return deceasedMembers.map(({ documents, ...deceasedMember }) => ({
+    ...deceasedMember,
+    deathDocumentsApproved: hasAllApprovedDeceasedMemberDocuments(documents)
+  }))
 }
 
 const fetchDeathDocumentationCases = async (where: Prisma.DeceasedMemberWhereInput = {}) => {

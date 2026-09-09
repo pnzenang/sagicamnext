@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { usePagination } from '@/hooks/use-pagination'
 import { cn } from '@/lib/utils'
+import { hasAllApprovedDeceasedMemberDocuments } from '@/utils/deceased-member-documents'
 import {
   deleteDeceasedMemberDocumentAction,
   reviewDeceasedMemberDocumentAction,
@@ -133,7 +134,7 @@ const ReviewDocumentControls = ({ uploadedDocument }: { uploadedDocument: DeathD
         <Input
           name='rejectionReason'
           placeholder='Reason if rejected'
-          defaultValue={uploadedDocument.status === 'rejected' ? uploadedDocument.rejectionReason ?? '' : ''}
+          defaultValue={uploadedDocument.status === 'rejected' ? (uploadedDocument.rejectionReason ?? '') : ''}
           className='h-8 text-xs'
         />
         <SubmitButton
@@ -165,7 +166,7 @@ const DocumentationSlot = ({
     : null
 
   return (
-    <div className='grid min-w-0 gap-4 rounded-md border bg-muted/20 p-4'>
+    <div className='bg-muted/20 grid min-w-0 gap-4 rounded-md border p-4'>
       <div className='flex min-w-0 items-start justify-between gap-3'>
         <div className='min-w-0'>
           <div className='flex items-center gap-2 text-sm font-extrabold'>
@@ -181,7 +182,10 @@ const DocumentationSlot = ({
           )}
         </div>
         {uploadedDocument ? (
-          <Badge variant='outline' className={cn('shrink-0 capitalize', getDocumentStatusClassName(uploadedDocument.status))}>
+          <Badge
+            variant='outline'
+            className={cn('shrink-0 capitalize', getDocumentStatusClassName(uploadedDocument.status))}
+          >
             {uploadedDocument.status === 'approved' ? <CheckCircle2 /> : null}
             {uploadedDocument.status === 'rejected' ? <XCircle /> : null}
             {getDocumentStatusLabel(uploadedDocument.status)}
@@ -206,10 +210,7 @@ const DocumentationSlot = ({
             </Button>
             {canManageUploads && deleteDocument ? (
               <FormContainer action={deleteDocument} refreshOnMessage>
-                <SubmitButton
-                  text='Remove'
-                  className='h-8 bg-red-700 px-3 text-xs normal-case hover:bg-red-800'
-                />
+                <SubmitButton text='Remove' className='h-8 bg-red-700 px-3 text-xs normal-case hover:bg-red-800' />
               </FormContainer>
             ) : null}
           </div>
@@ -217,11 +218,7 @@ const DocumentationSlot = ({
       ) : null}
 
       {canManageUploads ? (
-        <FormContainer
-          action={uploadDeceasedMemberDocumentAction}
-          className='grid gap-2'
-          refreshOnMessage
-        >
+        <FormContainer action={uploadDeceasedMemberDocumentAction} className='grid gap-2' refreshOnMessage>
           <input type='hidden' name='deceasedMemberId' value={deceasedMember.id} />
           <input type='hidden' name='documentType' value={documentType} />
           <Label htmlFor={inputId}>{uploadedDocument ? 'Replace file' : 'Choose file'}</Label>
@@ -251,10 +248,19 @@ const DeceasedMemberDocumentationCard = ({
   slotGridClassName?: string
 }) => {
   const uploadedCount = getUploadedDocumentCount(deceasedMember)
-  const documentsByType = new Map(deceasedMember.documents.map(uploadedDocument => [uploadedDocument.documentType, uploadedDocument]))
+  const allDocumentsApproved = hasAllApprovedDeceasedMemberDocuments(deceasedMember.documents)
+
+  const documentsByType = new Map(
+    deceasedMember.documents.map(uploadedDocument => [uploadedDocument.documentType, uploadedDocument])
+  )
 
   return (
-    <Card className='rounded-lg py-0'>
+    <Card
+      className={cn(
+        'rounded-lg py-0',
+        allDocumentsApproved && 'border-green-200 bg-green-50/80 dark:border-green-900/60 dark:bg-green-950/30'
+      )}
+    >
       <CardHeader className='border-b px-4 py-4 sm:px-6'>
         <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
           <div className='min-w-0'>
@@ -268,7 +274,10 @@ const DeceasedMemberDocumentationCard = ({
               <span>Place of death: {deceasedMember.placeOfDeath}</span>
             </div>
           </div>
-          <Badge variant={uploadedCount === deceasedMemberDocumentTypes.length ? 'default' : 'secondary'} className='shrink-0'>
+          <Badge
+            variant={uploadedCount === deceasedMemberDocumentTypes.length ? 'default' : 'secondary'}
+            className='shrink-0'
+          >
             {uploadedCount} / {deceasedMemberDocumentTypes.length} uploaded
           </Badge>
         </div>
@@ -314,7 +323,12 @@ const DeathDocumentationCases = ({
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(pageSizeOptions[0])
   const totalRequiredDocuments = deceasedMembers.length * deceasedMemberDocumentTypes.length
-  const uploadedDocuments = deceasedMembers.reduce((total, deceasedMember) => total + getUploadedDocumentCount(deceasedMember), 0)
+
+  const uploadedDocuments = deceasedMembers.reduce(
+    (total, deceasedMember) => total + getUploadedDocumentCount(deceasedMember),
+    0
+  )
+
   const normalizedSearchQuery = searchQuery.trim().toLowerCase()
 
   const filteredDeceasedMembers = useMemo(() => {
@@ -351,9 +365,7 @@ const DeathDocumentationCases = ({
       <div className='flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between'>
         <div>
           <h1 className='text-2xl font-extrabold tracking-normal sm:text-3xl'>{title}</h1>
-          <p className='text-muted-foreground mt-1 text-sm'>
-            {description}
-          </p>
+          <p className='text-muted-foreground mt-1 text-sm'>{description}</p>
         </div>
         <Badge variant='outline' className='w-fit text-sm'>
           {uploadedDocuments} / {totalRequiredDocuments} documents uploaded
@@ -365,9 +377,7 @@ const DeathDocumentationCases = ({
           <CardContent className='py-8 text-center'>
             <Upload className='text-muted-foreground mx-auto mb-3 size-8' />
             <p className='font-semibold'>{emptyTitle}</p>
-            <p className='text-muted-foreground mt-1 text-sm'>
-              {emptyDescription}
-            </p>
+            <p className='text-muted-foreground mt-1 text-sm'>{emptyDescription}</p>
           </CardContent>
         </Card>
       ) : (
@@ -386,7 +396,9 @@ const DeathDocumentationCases = ({
                   />
                 </div>
                 <div className='flex items-center gap-2'>
-                  <span className='text-muted-foreground text-sm font-semibold whitespace-nowrap'>Entries per page</span>
+                  <span className='text-muted-foreground text-sm font-semibold whitespace-nowrap'>
+                    Entries per page
+                  </span>
                   <Select value={pageSize.toString()} onValueChange={handlePageSizeChange}>
                     <SelectTrigger className='bg-background h-10 w-24'>
                       <SelectValue />
@@ -418,7 +430,9 @@ const DeathDocumentationCases = ({
                 <Search className='text-muted-foreground mx-auto mb-3 size-8' />
                 <p className='font-semibold'>No matching death documentation cases found.</p>
                 <p className='text-muted-foreground mt-1 text-sm'>
-                  {hasSearchQuery ? 'Search by deceased name, sponsor code, matriculation code, or place of death.' : emptyDescription}
+                  {hasSearchQuery
+                    ? 'Search by deceased name, sponsor code, matriculation code, or place of death.'
+                    : emptyDescription}
                 </p>
               </CardContent>
             </Card>
@@ -437,7 +451,7 @@ const DeathDocumentationCases = ({
           )}
 
           {filteredDeceasedMembers.length > 0 ? (
-            <div className='flex max-w-full flex-col items-center justify-between gap-3 rounded-lg border bg-background px-3 py-3 sm:flex-row'>
+            <div className='bg-background flex max-w-full flex-col items-center justify-between gap-3 rounded-lg border px-3 py-3 sm:flex-row'>
               <p className='text-muted-foreground text-sm font-semibold' aria-live='polite'>
                 Page {activePage} of {totalPages}
               </p>
@@ -445,7 +459,9 @@ const DeathDocumentationCases = ({
                 activePage={activePage}
                 canNext={activePage < totalPages}
                 canPrevious={activePage > 1}
-                getPageButtonClassName={isActive => (isActive ? undefined : 'bg-primary/10 text-primary hover:bg-primary/20')}
+                getPageButtonClassName={isActive =>
+                  isActive ? undefined : 'bg-primary/10 text-primary hover:bg-primary/20'
+                }
                 iconClassName='text-primary'
                 onNext={() => setCurrentPage(Math.min(totalPages, activePage + 1))}
                 onPageChange={setCurrentPage}

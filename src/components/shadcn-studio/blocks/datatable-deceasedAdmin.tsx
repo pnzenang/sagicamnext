@@ -95,6 +95,10 @@ import { deleteDeceasedMemberAction } from '@/utils/actions'
 import FormContainer from '@/components/forms/FormContainer'
 import RestoreDeceasedMemberButton from '@/components/global/RestoreDeceasedMemberButton'
 
+type DeceasedMemberTableRow = DeceasedMemberType & {
+  deathDocumentsApproved?: boolean
+}
+
 declare module '@tanstack/react-table' {
   interface ColumnMeta<TData extends RowData, TValue> {
     filterVariant?: 'text' | 'range' | 'select'
@@ -102,7 +106,13 @@ declare module '@tanstack/react-table' {
   }
 }
 
-const columns: ColumnDef<DeceasedMemberType>[] = [
+const approvedDeathDocumentsBackgroundClassName =
+  'border-green-200 bg-green-50/80 hover:bg-green-100/80 dark:border-green-900/60 dark:bg-green-950/30 dark:hover:bg-green-900/30'
+
+const getDeathDocumentsApprovalBackgroundClassName = (deceasedMember: DeceasedMemberTableRow) =>
+  deceasedMember.deathDocumentsApproved ? approvedDeathDocumentsBackgroundClassName : undefined
+
+const columns: ColumnDef<DeceasedMemberTableRow>[] = [
   {
     id: nameSearchColumnId,
     header: 'Names',
@@ -275,7 +285,7 @@ const DeceasedMembersDataTable = ({
   data,
   deceasedSummary
 }: {
-  data: DeceasedMemberType[]
+  data: DeceasedMemberTableRow[]
   deceasedSummary: DeceasedSummary
 }) => {
   const [columnFilters, setColumnFilters] = usePersistentState<ColumnFiltersState>(
@@ -583,7 +593,10 @@ const DeceasedMembersDataTable = ({
                     <TableRow
                       key={row.id}
                       data-state={row.getIsSelected() && 'selected'}
-                      className='hover:bg-purple-300/30'
+                      className={cn(
+                        'hover:bg-purple-300/30',
+                        getDeathDocumentsApprovalBackgroundClassName(row.original)
+                      )}
                     >
                       {visibleCells.map(cell => (
                         <TableCell
@@ -611,6 +624,7 @@ const DeceasedMembersDataTable = ({
           table={table}
           emptyMessage='No Deceased Loved Ones Found.'
           accentClassName='border-purple-200 dark:border-purple-900/60'
+          getCardClassName={row => getDeathDocumentsApprovalBackgroundClassName(row.original)}
           getCardTitle={row => {
             const member = row.original
 

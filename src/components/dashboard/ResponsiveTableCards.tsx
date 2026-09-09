@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils'
 type ResponsiveTableCardsProps<TData> = {
   accentClassName?: string
   emptyMessage: string
+  getCardClassName?: (row: Row<TData>) => string | undefined
   getCardSubtitle?: (row: Row<TData>) => ReactNode
   getCardTitle?: (row: Row<TData>) => ReactNode
   keepColumnsOnMobile?: boolean
@@ -30,6 +31,7 @@ const getCellLabel = <TData, TValue>(cell: Cell<TData, TValue>) => {
 const ResponsiveTableCards = <TData,>({
   accentClassName,
   emptyMessage,
+  getCardClassName,
   getCardSubtitle,
   getCardTitle,
   keepColumnsOnMobile = true,
@@ -52,7 +54,11 @@ const ResponsiveTableCards = <TData,>({
       {rows.map(row => (
         <article
           key={row.id}
-          className={cn('bg-background overflow-hidden rounded-md border shadow-sm', accentClassName)}
+          className={cn(
+            'bg-background overflow-hidden rounded-md border shadow-sm',
+            accentClassName,
+            getCardClassName?.(row)
+          )}
         >
           {(getCardTitle || getCardSubtitle) && (
             <div className='border-b px-3 py-3 sm:px-4'>
