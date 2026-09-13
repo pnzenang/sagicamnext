@@ -88,6 +88,14 @@ const maxDocumentationFileSize = 20 * 1024 * 1024
 const blockedDeceasedRestoreStatuses = new Set<string>([contributionStatus.underway, contributionStatus.completed])
 const contributionCreditMemberStatuses = new Set<string>([memberStatus.Vested, memberStatus.Delinquent])
 
+const shouldGrantVestedContributionCredit = ({
+  nextStatus,
+  previousStatus
+}: {
+  nextStatus: string
+  previousStatus: string
+}) => previousStatus === memberStatus.Awaiting && nextStatus === memberStatus.Vested
+
 const allowedDeceasedMemberDocumentMimeTypes = new Set([
   'application/pdf',
   'image/heic',
@@ -492,7 +500,7 @@ const syncVestedContributionCredit = async ({
   const previouslyHadCredit = contributionCreditMemberStatuses.has(previousStatus)
   const shouldHaveCredit = contributionCreditMemberStatuses.has(nextStatus)
 
-  if (!previouslyHadCredit && shouldHaveCredit) {
+  if (shouldGrantVestedContributionCredit({ nextStatus, previousStatus })) {
     await createVestedContributionCredit({ memberMatriculationNumber, sponsorCode })
 
     return
@@ -2044,13 +2052,6 @@ export const createMemberAction = async (provState: any, formData: FormData): Pr
             sponsorCode: validatedFields.sponsorCode
           })
         }
-
-        if (contributionCreditMemberStatuses.has(validatedFields.memberStatus)) {
-          await createVestedContributionCredit({
-            memberMatriculationNumber,
-            sponsorCode: validatedFields.sponsorCode
-          })
-        }
       },
       { allowContributionCreditChanges: true }
     )
@@ -3570,7 +3571,12 @@ export const updateSelectedMembersStatusForAdminAction = async (
             const previouslyHadCredit = contributionCreditMemberStatuses.has(member.memberStatus)
             const shouldHaveCredit = contributionCreditMemberStatuses.has(nextStatus)
 
-            if (shouldHaveCredit) {
+            if (
+              shouldGrantVestedContributionCredit({
+                nextStatus,
+                previousStatus: member.memberStatus
+              })
+            ) {
               await tx.sponsorContributionCredit.upsert({
                 create: {
                   amountCredited: contributionCreditPerVestedMember,
@@ -3585,9 +3591,17 @@ export const updateSelectedMembersStatusForAdminAction = async (
                   memberMatriculationNumber: member.memberMatriculationNumber
                 }
               })
-            }
-
-            if (previouslyHadCredit && !shouldHaveCredit) {
+            } else if (previouslyHadCredit && shouldHaveCredit) {
+              await tx.sponsorContributionCredit.updateMany({
+                data: {
+                  amountCredited: contributionCreditPerVestedMember,
+                  sponsorCode: member.sponsorCode
+                },
+                where: {
+                  memberMatriculationNumber: member.memberMatriculationNumber
+                }
+              })
+            } else if (previouslyHadCredit && !shouldHaveCredit) {
               await tx.sponsorContributionCredit.deleteMany({
                 where: {
                   memberMatriculationNumber: member.memberMatriculationNumber
@@ -5143,8 +5157,9 @@ export const restoreRemovedMemberAction = async (prevState: { removedMemberId: s
         }
 
         if (contributionCreditMemberStatuses.has(restoredMemberStatus)) {
-          await createVestedContributionCredit({
+          await updateVestedContributionCredit({
             memberMatriculationNumber: removedMember.memberMatriculationNumber,
+            previousMatriculationNumber: removedMember.memberMatriculationNumber,
             sponsorCode: removedMember.sponsorCode
           })
         }
@@ -5836,13 +5851,8 @@ export const restoreDeceasedMemberAction = async (prevState: { deceasedMemberId:
       }
 
       if (restoredMemberStatus === memberStatus.Vested) {
-        await tx.sponsorContributionCredit.upsert({
-          create: {
-            amountCredited: contributionCreditPerVestedMember,
-            memberMatriculationNumber: deceasedMember.memberMatriculationNumber,
-            sponsorCode: deceasedMember.sponsorCode
-          },
-          update: {
+        await tx.sponsorContributionCredit.updateMany({
+          data: {
             amountCredited: contributionCreditPerVestedMember,
             sponsorCode: deceasedMember.sponsorCode
           },
