@@ -86,7 +86,7 @@ import {
   getRegistrationPaymentCountdownLabel,
   registrationPaymentDeadlineDays
 } from '@/utils/registration-payment-deadline'
-import { getMemberLongevityDays } from '@/utils/sagicam-member-longevity'
+import { formatMemberLongevity, getMemberLongevityDays } from '@/utils/sagicam-member-longevity'
 import { getNameSearchValue, nameSearchColumnId, normalizeNameColumnFilters } from '@/utils/table-filters'
 import { memberStatus, type MemberType } from '@/utils/types'
 
@@ -111,11 +111,6 @@ const getRegistrationPaymentSortValue = (member: MemberType) => {
 
   return getRegistrationPaymentCountdown(member.createdAt).daysRemaining
 }
-
-const longevityNumberFormatter = new Intl.NumberFormat('en-US', {
-  maximumFractionDigits: 2,
-  style: 'decimal'
-})
 
 const RegistrationPaymentWarningCell = ({ member }: { member: MemberType }) => {
   const warning = getRegistrationPaymentWarning(member)
@@ -223,16 +218,14 @@ const columns: ColumnDef<MemberType>[] = [
   {
     id: 'longevityDays',
     accessorFn: row => getMemberLongevityDays(row),
-    header: 'Days',
+    header: 'Longevity',
     cell: ({ row }) => {
-      const longevityDays = row.getValue('longevityDays') as number
-
-      return <div>{longevityNumberFormatter.format(longevityDays)}</div>
+      return <div className='min-w-32 whitespace-normal'>{formatMemberLongevity(row.original)}</div>
     },
     meta: {
-      headerTitle: 'Longevity (Days)'
+      headerTitle: 'Longevity'
     },
-    size: 80
+    size: 130
   },
   {
     header: 'Rec.',

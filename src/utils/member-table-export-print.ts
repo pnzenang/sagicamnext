@@ -1,5 +1,5 @@
 import { registrationPaymentDeadlineDays } from '@/utils/registration-payment-deadline'
-import { getMemberLongevityDays } from '@/utils/sagicam-member-longevity'
+import { formatMemberLongevity } from '@/utils/sagicam-member-longevity'
 import type { MemberType } from '@/utils/types'
 
 const registrationDuesColumn = `Registration Dues (${registrationPaymentDeadlineDays} days)` as const
@@ -9,7 +9,7 @@ export const memberTableExportColumns = [
   'Matriculation',
   'Last Names',
   'First Name',
-  'Longevity(Days)',
+  'Longevity',
   'Recommendation',
   'Status',
   registrationDuesColumn
@@ -22,7 +22,7 @@ export const memberTableWorksheetColumnWidths = [
   { wch: 18 },
   { wch: 24 },
   { wch: 18 },
-  { wch: 14 },
+  { wch: 26 },
   { wch: 18 },
   { wch: 18 },
   { wch: 28 }
@@ -43,7 +43,7 @@ export const getMemberTableExportRow = ({
   Matriculation: member.memberMatriculationNumber,
   'Last Names': member.lastAndMiddleNames,
   'First Name': member.firstName,
-  'Longevity(Days)': getMemberLongevityDays(member),
+  Longevity: formatMemberLongevity(member),
   Recommendation: getTextValue(recommendation),
   Status: member.memberStatus,
   [registrationDuesColumn]: registrationDues
