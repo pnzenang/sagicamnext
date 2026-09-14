@@ -56,9 +56,14 @@ export const getMemberLongevityDuration = (
 export const formatMemberLongevity = (member: MemberLongevityFields, now = new Date()) => {
   const { days, months, years } = getMemberLongevityDuration(member, now)
 
-  return [
-    pluralizeDurationUnit(years, 'year'),
-    pluralizeDurationUnit(months, 'month'),
-    pluralizeDurationUnit(days, 'day')
-  ].join(', ')
+  const durationParts = [
+    { unit: 'year', value: years },
+    { unit: 'month', value: months },
+    { unit: 'day', value: days }
+  ]
+
+  return durationParts
+    .filter(({ value }) => value > 0)
+    .map(({ unit, value }) => pluralizeDurationUnit(value, unit))
+    .join(', ')
 }
