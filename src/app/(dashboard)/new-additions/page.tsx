@@ -120,7 +120,7 @@ const NewAdditions = async () => {
             Sagicam New Additions - {monthTitleFormatter.format(monthStart)}
           </h1>
           <p className='text-muted-foreground mt-2 text-sm'>
-            Loved ones manually moved from Awaiting Publication to Vested during the current month.
+            Loved ones moved from Awaiting Publication to Vested during the current month.
           </p>
         </div>
       </div>

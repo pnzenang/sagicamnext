@@ -53,7 +53,8 @@ import {
 import { sponsorPaymentLedgerEventTypes, sponsorPaymentTypes } from './sagicam-payment-ledger'
 import {
   awaitingPublicationVestingLongevityDays,
-  getAwaitingPublicationVestingCutoff
+  getAwaitingPublicationVestingCutoff,
+  getMemberLongevityStartDate
 } from './sagicam-member-longevity'
 import { getOverdueRegistrationPaymentCreatedAtCutoff } from './registration-payment-deadline'
 import { hasAllApprovedDeceasedMemberDocuments } from './deceased-member-documents'
@@ -526,7 +527,7 @@ const getManualVestingTimestampUpdate = ({
   nextStatus: string
   previousStatus: string
 }) => {
-  if (previousStatus === memberStatus.Awaiting && nextStatus === memberStatus.Vested) {
+  if (previousStatus !== memberStatus.Vested && nextStatus === memberStatus.Vested) {
     return { manuallyVestedAt }
   }
 
@@ -2195,6 +2196,7 @@ export const fetchMembersForAdmin = async () => {
       firstName: true,
       id: true,
       lastAndMiddleNames: true,
+      manuallyVestedAt: true,
       memberMatriculationNumber: true,
       memberStatus: true,
       nameOfBeneficiary: true,
@@ -3765,6 +3767,7 @@ export const vestEligibleAwaitingPublicationMembersAction = async (): Promise<{ 
 
     let vestedCount = 0
     const affectedSponsorCodes = Array.from(new Set(eligibleMembers.map(member => member.sponsorCode)))
+    const manuallyVestedAt = new Date()
 
     await preserveContributionReserveDeficitForSponsors(
       affectedSponsorCodes,
@@ -3773,6 +3776,7 @@ export const vestEligibleAwaitingPublicationMembersAction = async (): Promise<{ 
           for (const member of eligibleMembers) {
             const updatedMember = await tx.member.updateMany({
               data: {
+                manuallyVestedAt,
                 memberStatus: memberStatus.Vested
               },
               where: {
@@ -5230,7 +5234,7 @@ export const createDeceasedMemberAction = async (provState: any, formData: FormD
         originalMemberCreatedAt: member.createdAt,
         originalMemberId: member.id,
         placeOfDeath: validatedFields.placeOfDeath,
-        registrationDate: formatRegistrationDate(member.createdAt),
+        registrationDate: formatRegistrationDate(getMemberLongevityStartDate(member)),
         sponsorCode: member.sponsorCode
       }
     })
@@ -5314,7 +5318,7 @@ export const createDeceasedMemberActionAdmin = async (
         originalMemberCreatedAt: member.createdAt,
         originalMemberId: member.id,
         placeOfDeath: validatedFields.placeOfDeath,
-        registrationDate: formatRegistrationDate(member.createdAt),
+        registrationDate: formatRegistrationDate(getMemberLongevityStartDate(member)),
         sponsorCode: member.sponsorCode
       }
     })

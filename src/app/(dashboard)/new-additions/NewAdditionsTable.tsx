@@ -448,7 +448,7 @@ const NewAdditionsTable = ({ monthKey, rows }: { monthKey: string; rows: NewAddi
                   <TableCell colSpan={columns.length + 2} className='text-muted-foreground h-24 text-center'>
                     {normalizedSearch
                       ? `No new addition matching "${search.trim()}" found.`
-                      : 'No loved ones manually moved from Awaiting Publication to Vested this month.'}
+                      : 'No loved ones moved from Awaiting Publication to Vested this month.'}
                   </TableCell>
                 </TableRow>
               ) : (

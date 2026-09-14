@@ -3,12 +3,8 @@ import { useActionState, useEffect, useId, useMemo, useState } from 'react'
 
 import { useFormStatus } from 'react-dom'
 
-import day from 'dayjs'
-import advancedFormat from 'dayjs/plugin/advancedFormat'
 import Papa from 'papaparse'
 import * as XLSX from 'xlsx'
-
-day.extend(advancedFormat)
 
 import {
   AlertCircle,
@@ -93,11 +89,9 @@ import {
   getRegistrationPaymentCountdownLabel,
   registrationPaymentDeadlineDays
 } from '@/utils/registration-payment-deadline'
+import { getMemberLongevityDays } from '@/utils/sagicam-member-longevity'
 import { getNameSearchValue, nameSearchColumnId, normalizeNameColumnFilters } from '@/utils/table-filters'
-import {
-  removeSelectedOverduePendingMembersAction,
-  updateSelectedMembersStatusForAdminAction
-} from '@/utils/actions'
+import { removeSelectedOverduePendingMembersAction, updateSelectedMembersStatusForAdminAction } from '@/utils/actions'
 import { memberStatus, type MemberType } from '@/utils/types'
 
 declare module '@tanstack/react-table' {
@@ -122,6 +116,11 @@ const getRegistrationPaymentSortValue = (member: MemberType) => {
   return getRegistrationPaymentCountdown(member.createdAt).daysRemaining
 }
 
+const longevityNumberFormatter = new Intl.NumberFormat('en-US', {
+  maximumFractionDigits: 2,
+  style: 'decimal'
+})
+
 const RegistrationPaymentWarningCell = ({ member }: { member: MemberType }) => {
   const warning = getRegistrationPaymentWarning(member)
 
@@ -144,9 +143,7 @@ const columns: ColumnDef<MemberType>[] = [
     header: ({ table }) => (
       <Checkbox
         aria-label='Select all visible members'
-        checked={
-          table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && 'indeterminate')
-        }
+        checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && 'indeterminate')}
         onCheckedChange={value => table.toggleAllPageRowsSelected(Boolean(value))}
       />
     ),
@@ -229,17 +226,13 @@ const columns: ColumnDef<MemberType>[] = [
   },
 
   {
-    accessorKey: 'createdAt', // The key in your data object
+    id: 'longevityDays',
+    accessorFn: row => getMemberLongevityDays(row),
     header: 'Days',
     cell: ({ row }) => {
-      const field = row.getValue('createdAt') as Date
-      const time = day(Date.now())
+      const longevityDays = row.getValue('longevityDays') as number
 
-      const formattedLongevity = new Intl.NumberFormat('en-US', { style: 'decimal', maximumFractionDigits: 2 }).format(
-        time.diff(field.toDateString(), 'days')
-      )
-
-      return <div>{formattedLongevity}</div>
+      return <div>{longevityNumberFormatter.format(longevityDays)}</div>
     },
     meta: {
       headerTitle: 'Longevity (Days)'
@@ -409,19 +402,24 @@ const MembersDataTable = ({
   const selectedMemberIds = selectedMembers.map(member => member.id)
   const selectedMembersPayload = JSON.stringify(selectedMemberIds)
   const selectedMembersCount = selectedMemberIds.length
-  const selectedPendingMembersCount = selectedMembers.filter(member => member.memberStatus === memberStatus.Pending).length
+
+  const selectedPendingMembersCount = selectedMembers.filter(
+    member => member.memberStatus === memberStatus.Pending
+  ).length
 
   const selectedVestableMembersCount = selectedMembers.filter(
     member => member.memberStatus === memberStatus.Awaiting || member.memberStatus === memberStatus.Delinquent
   ).length
 
-  const selectedVestedMembersCount = selectedMembers.filter(member => member.memberStatus === memberStatus.Vested).length
+  const selectedVestedMembersCount = selectedMembers.filter(
+    member => member.memberStatus === memberStatus.Vested
+  ).length
+
   const selectedOverdueCutoffTime = getOverdueRegistrationPaymentCreatedAtCutoff().getTime()
 
   const selectedOverduePendingCount = selectedMembers.filter(
     member =>
-      member.memberStatus === memberStatus.Pending &&
-      new Date(member.createdAt).getTime() < selectedOverdueCutoffTime
+      member.memberStatus === memberStatus.Pending && new Date(member.createdAt).getTime() < selectedOverdueCutoffTime
   ).length
 
   useEffect(() => {
@@ -629,7 +627,7 @@ const MembersDataTable = ({
             </div>
           </div>
           {selectedMembersCount > 0 ? (
-            <div className='flex w-full max-w-full min-w-0 flex-wrap items-center justify-start gap-2 overflow-hidden rounded-md border bg-background/60 p-2'>
+            <div className='bg-background/60 flex w-full max-w-full min-w-0 flex-wrap items-center justify-start gap-2 overflow-hidden rounded-md border p-2'>
               <BulkStatusActionButton
                 className='bg-blue-700 text-white hover:bg-blue-800 focus-visible:ring-blue-700/30'
                 disabled={selectedPendingMembersCount === 0}

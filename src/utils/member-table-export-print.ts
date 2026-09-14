@@ -1,6 +1,5 @@
-import day from 'dayjs'
-
 import { registrationPaymentDeadlineDays } from '@/utils/registration-payment-deadline'
+import { getMemberLongevityDays } from '@/utils/sagicam-member-longevity'
 import type { MemberType } from '@/utils/types'
 
 const registrationDuesColumn = `Registration Dues (${registrationPaymentDeadlineDays} days)` as const
@@ -44,7 +43,7 @@ export const getMemberTableExportRow = ({
   Matriculation: member.memberMatriculationNumber,
   'Last Names': member.lastAndMiddleNames,
   'First Name': member.firstName,
-  'Longevity(Days)': day(Date.now()).diff(day(member.createdAt), 'days'),
+  'Longevity(Days)': getMemberLongevityDays(member),
   Recommendation: getTextValue(recommendation),
   Status: member.memberStatus,
   [registrationDuesColumn]: registrationDues

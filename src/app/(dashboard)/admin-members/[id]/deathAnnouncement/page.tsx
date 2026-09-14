@@ -8,6 +8,7 @@ import FormInput from '@/components/forms/FormInput'
 import FormSelect from '@/components/forms/FormSelect'
 import MaskDateInput from '@/components/forms/MaskDateInput'
 import { createDeceasedMemberActionAdmin, fetchSingleMemberDetailsForAdmin } from '@/utils/actions'
+import { getMemberLongevityStartDate } from '@/utils/sagicam-member-longevity'
 import { contributionStatus, memberStatus } from '@/utils/types'
 
 const DeathAnnouncement = async ({ params }: { params: { id: string } }) => {
@@ -15,15 +16,10 @@ const DeathAnnouncement = async ({ params }: { params: { id: string } }) => {
 
   const member = await fetchSingleMemberDetailsForAdmin(id)
 
-  const {
-    firstName,
-    lastAndMiddleNames,
-    countryOfBirth,
-    sponsorCode,
-    nameOfBeneficiary,
-    memberMatriculationNumber,
-    createdAt
-  } = member
+  const { firstName, lastAndMiddleNames, countryOfBirth, sponsorCode, nameOfBeneficiary, memberMatriculationNumber } =
+    member
+
+  const registrationDate = getMemberLongevityStartDate(member)
 
   return (
     <section className='mt-8 flex max-w-full min-w-0 flex-col sm:mt-16'>
@@ -60,7 +56,7 @@ const DeathAnnouncement = async ({ params }: { params: { id: string } }) => {
                 type='text'
                 name='registrationDate'
                 label='registration date'
-                defaultValue={createdAt.toLocaleDateString()}
+                defaultValue={registrationDate.toLocaleDateString()}
 
                 // placeholder='MM/DD/YYYY'
               />

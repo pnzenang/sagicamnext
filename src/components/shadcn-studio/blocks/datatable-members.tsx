@@ -1,12 +1,8 @@
 'use client'
 import { useId, useMemo, useState } from 'react'
 
-import day from 'dayjs'
-import advancedFormat from 'dayjs/plugin/advancedFormat'
 import Papa from 'papaparse'
 import * as XLSX from 'xlsx'
-
-day.extend(advancedFormat)
 
 import {
   AlertTriangle,
@@ -90,6 +86,7 @@ import {
   getRegistrationPaymentCountdownLabel,
   registrationPaymentDeadlineDays
 } from '@/utils/registration-payment-deadline'
+import { getMemberLongevityDays } from '@/utils/sagicam-member-longevity'
 import { getNameSearchValue, nameSearchColumnId, normalizeNameColumnFilters } from '@/utils/table-filters'
 import { memberStatus, type MemberType } from '@/utils/types'
 
@@ -115,6 +112,11 @@ const getRegistrationPaymentSortValue = (member: MemberType) => {
   return getRegistrationPaymentCountdown(member.createdAt).daysRemaining
 }
 
+const longevityNumberFormatter = new Intl.NumberFormat('en-US', {
+  maximumFractionDigits: 2,
+  style: 'decimal'
+})
+
 const RegistrationPaymentWarningCell = ({ member }: { member: MemberType }) => {
   const warning = getRegistrationPaymentWarning(member)
 
@@ -137,9 +139,7 @@ const columns: ColumnDef<MemberType>[] = [
     header: ({ table }) => (
       <Checkbox
         aria-label='Select all visible members'
-        checked={
-          table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && 'indeterminate')
-        }
+        checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && 'indeterminate')}
         onCheckedChange={value => table.toggleAllPageRowsSelected(Boolean(value))}
       />
     ),
@@ -221,17 +221,13 @@ const columns: ColumnDef<MemberType>[] = [
   },
 
   {
-    accessorKey: 'createdAt', // The key in your data object
+    id: 'longevityDays',
+    accessorFn: row => getMemberLongevityDays(row),
     header: 'Days',
     cell: ({ row }) => {
-      const field = row.getValue('createdAt') as Date
-      const time = day(Date.now())
+      const longevityDays = row.getValue('longevityDays') as number
 
-      const formattedLongevity = new Intl.NumberFormat('en-US', { style: 'decimal', maximumFractionDigits: 2 }).format(
-        time.diff(field.toDateString(), 'days')
-      )
-
-      return <div>{formattedLongevity}</div>
+      return <div>{longevityNumberFormatter.format(longevityDays)}</div>
     },
     meta: {
       headerTitle: 'Longevity (Days)'
@@ -639,7 +635,7 @@ const MembersDataTable = ({
           </div>
         </div>
         <div className='hidden overflow-x-auto md:block'>
-          <Table className='[&_td]:wrap-break-word w-full min-w-0 table-fixed text-xs [&_td]:whitespace-normal [&_th]:wrap-break-word [&_th]:whitespace-normal'>
+          <Table className='w-full min-w-0 table-fixed text-xs [&_td]:wrap-break-word [&_td]:whitespace-normal [&_th]:wrap-break-word [&_th]:whitespace-normal'>
             <TableHeader>
               {table.getHeaderGroups().map(headerGroup => (
                 <TableRow key={headerGroup.id} className='bg-primary hover:bg-primary/80 h-11 border-t'>
