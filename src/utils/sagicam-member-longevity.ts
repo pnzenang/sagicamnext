@@ -49,6 +49,9 @@ const subtractOneMonthFromDuration = ({ days, months, years }: MemberLongevityDu
   }
 }
 
+const shouldShowLongevityInDaysOnly = (member: MemberLongevityFields) =>
+  member.memberStatus === memberStatus.Pending || member.memberStatus === memberStatus.Awaiting
+
 export const getMemberLongevityDuration = (
   member: MemberLongevityFields,
   now = new Date()
@@ -78,16 +81,19 @@ export const getMemberLongevityDuration = (
 }
 
 export const formatMemberLongevity = (member: MemberLongevityFields, now = new Date()) => {
+  if (shouldShowLongevityInDaysOnly(member)) {
+    return pluralizeDurationUnit(getMemberLongevityDays(member, now), 'day')
+  }
+
   const { days, months, years } = subtractOneMonthFromDuration(getMemberLongevityDuration(member, now))
 
-  const durationParts = [
+  const formattedDurationParts = [
     { unit: 'year', value: years },
     { unit: 'month', value: months },
     { unit: 'day', value: days }
   ]
-
-  return durationParts
     .filter(({ value }) => value > 0)
     .map(({ unit, value }) => pluralizeDurationUnit(value, unit))
-    .join(', ')
+
+  return formattedDurationParts.length > 0 ? formattedDurationParts.join(', ') : '0 days'
 }
