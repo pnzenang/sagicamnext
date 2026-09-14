@@ -23,7 +23,7 @@ export const getMemberLongevityStartDate = (member: MemberLongevityFields) =>
 export const getMemberLongevityDays = (member: MemberLongevityFields, now = new Date()) =>
   Math.max(0, day(now).diff(day(getMemberLongevityStartDate(member)).startOf('day'), 'days'))
 
-const pluralizeDurationUnit = (value: number, unit: string) => `${value} ${unit}${value === 1 ? '' : 's'}`
+const pluralizeDurationUnit = (value: number, unit: string) => `${value} ${unit}${value > 1 ? 's' : ''}`
 
 const subtractOneMonthFromDuration = ({ days, months, years }: MemberLongevityDuration): MemberLongevityDuration => {
   if (months > 0) {
@@ -95,5 +95,5 @@ export const formatMemberLongevity = (member: MemberLongevityFields, now = new D
     .filter(({ value }) => value > 0)
     .map(({ unit, value }) => pluralizeDurationUnit(value, unit))
 
-  return formattedDurationParts.length > 0 ? formattedDurationParts.join(', ') : '0 days'
+  return formattedDurationParts.length > 0 ? formattedDurationParts.join(', ') : pluralizeDurationUnit(0, 'day')
 }
