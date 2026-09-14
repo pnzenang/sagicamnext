@@ -25,6 +25,30 @@ export const getMemberLongevityDays = (member: MemberLongevityFields, now = new 
 
 const pluralizeDurationUnit = (value: number, unit: string) => `${value} ${unit}${value === 1 ? '' : 's'}`
 
+const subtractOneMonthFromDuration = ({ days, months, years }: MemberLongevityDuration): MemberLongevityDuration => {
+  if (months > 0) {
+    return {
+      days,
+      months: months - 1,
+      years
+    }
+  }
+
+  if (years > 0) {
+    return {
+      days,
+      months: 11,
+      years: years - 1
+    }
+  }
+
+  return {
+    days,
+    months,
+    years
+  }
+}
+
 export const getMemberLongevityDuration = (
   member: MemberLongevityFields,
   now = new Date()
@@ -54,7 +78,7 @@ export const getMemberLongevityDuration = (
 }
 
 export const formatMemberLongevity = (member: MemberLongevityFields, now = new Date()) => {
-  const { days, months, years } = getMemberLongevityDuration(member, now)
+  const { days, months, years } = subtractOneMonthFromDuration(getMemberLongevityDuration(member, now))
 
   const durationParts = [
     { unit: 'year', value: years },
