@@ -44,6 +44,7 @@ export type PublishedContributionGroupRow = {
 }
 
 type PublishedContributionTablesProps = {
+  addedMonthAbbreviation: string
   amountPerVestedMember: number
   deaths: PublishedContributionDeathRow[]
   groups: PublishedContributionGroupRow[]
@@ -129,7 +130,7 @@ const deathSortColumns: SortColumn<DeathSortKey>[] = [
   { key: 'sponsorCode', label: 'Sponsor Code', className: 'hidden w-20 px-1 md:table-cell md:w-24 md:px-2' }
 ]
 
-const groupSortColumns: SortColumn<GroupSortKey>[] = [
+const getGroupSortColumns = (amountAddedThisMonthLabel: string): SortColumn<GroupSortKey>[] => [
   { key: 'sponsorCode', label: 'Code', className: 'px-1.5 md:min-w-20 md:px-2' },
   {
     align: 'right',
@@ -156,7 +157,7 @@ const groupSortColumns: SortColumn<GroupSortKey>[] = [
     align: 'right',
     className: 'px-1.5 md:min-w-44 md:px-2',
     key: 'amountAddedThisMonth',
-    label: 'Added This Month',
+    label: amountAddedThisMonthLabel,
     shortLabel: 'Added'
   },
   {
@@ -375,11 +376,15 @@ const SortControl = <T extends string>({
 )
 
 const PublishedContributionTables = ({
+  addedMonthAbbreviation,
   amountPerVestedMember,
   deaths,
   groups,
   totalVestedMembers
 }: PublishedContributionTablesProps) => {
+  const amountAddedThisMonthLabel = `Added in ${addedMonthAbbreviation}`
+  const groupSortColumns = useMemo(() => getGroupSortColumns(amountAddedThisMonthLabel), [amountAddedThisMonthLabel])
+
   const [deathSort, setDeathSort] = useState<SortState<DeathSortKey>>({
     direction: 'asc',
     key: 'lastAndMiddleNames'
@@ -734,7 +739,7 @@ const PublishedContributionTables = ({
                         <OverflowTooltipText className='text-right tabular-nums' value={amountOwed} />
                       </TableCell>
                       <TableCell
-                        data-label='Added This Month'
+                        data-label={amountAddedThisMonthLabel}
                         className='overflow-hidden px-1.5 text-right font-semibold whitespace-nowrap tabular-nums md:min-w-44 md:px-2'
                       >
                         <OverflowTooltipText className='text-right tabular-nums' value={amountAddedThisMonth} />
