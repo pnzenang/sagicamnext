@@ -19,9 +19,10 @@ const dateFormatter = new Intl.DateTimeFormat('en-US', {
   dateStyle: 'medium'
 })
 
-const currentMonthFormatter = new Intl.DateTimeFormat('en-US', {
+const currentMonthYearFormatter = new Intl.DateTimeFormat('en-US', {
   month: 'short',
-  timeZone: 'America/New_York'
+  timeZone: 'America/New_York',
+  year: 'numeric'
 })
 
 const formatDate = (value: string | null) => {
@@ -56,7 +57,7 @@ const ContributionTable = async () => {
     )
   }
 
-  const addedMonthAbbreviation = currentMonthFormatter.format(new Date())
+  const addedMonthYearLabel = currentMonthYearFormatter.format(new Date())
   const contributionTableLabel = getContributionTableLabel(publishedTable.dueDate ?? publishedTable.createdAt)
   const deathAmountTotal = publishedTable.deaths.reduce((total, death) => total + death.amountToContribute, 0)
 
@@ -139,7 +140,7 @@ const ContributionTable = async () => {
       </div>
 
       <PublishedContributionTables
-        addedMonthAbbreviation={addedMonthAbbreviation}
+        addedMonthYearLabel={addedMonthYearLabel}
         amountPerVestedMember={publishedTable.amountPerVestedMember}
         deaths={publishedTable.deaths}
         groups={publishedTable.groups}

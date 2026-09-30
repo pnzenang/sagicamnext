@@ -1810,6 +1810,11 @@ export const fetchPublishedContributionTableAction = async () => {
   ])
 
   const sponsorNamesByCode = new Map(profiles.map(profile => [profile.sponsorCode, getSponsorDisplayName(profile)]))
+
+  const currentContributionVerifiedByCode = new Map(
+    payments.map(payment => [payment.sponsorCode, decimalToNumber(payment.amountVerified)])
+  )
+
   const latestContributionResetByCode = new Map<string, Date>()
 
   contributionLedgerEntries.forEach(entry => {
@@ -1911,6 +1916,11 @@ export const fetchPublishedContributionTableAction = async () => {
         (vestedMemberCountsByCode.get(group.sponsorCode) ?? 0) +
         (deceasedVestedMemberCountsByCode.get(group.sponsorCode) ?? 0)
 
+      const currentContributionVerified =
+        currentContributionVerifiedByCode.get(group.sponsorCode) ??
+        contributionVerifiedBeforePublishedByCode.get(group.sponsorCode) ??
+        0
+
       return {
         accountBeforeContribution: getContributionReserveDeficitBalance({
           amountUsed: contributionAmountUsedBeforeCurrent,
@@ -1921,7 +1931,7 @@ export const fetchPublishedContributionTableAction = async () => {
         }),
         accountAfterContribution: getContributionReserveDeficitBalance({
           amountUsed: contributionAmountUsedAfterCurrent,
-          amountVerified: contributionVerifiedBeforePublishedByCode.get(group.sponsorCode) ?? 0,
+          amountVerified: currentContributionVerified,
           manualBalanceAdjustment: balanceAdjustmentsByCode.get(group.sponsorCode) ?? 0,
           vestedContributionCredit: contributionCreditsByCode.get(group.sponsorCode) ?? 0,
           vestedMembersCount: reserveDeficitAdjustmentMembersCount

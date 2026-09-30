@@ -44,7 +44,7 @@ export type PublishedContributionGroupRow = {
 }
 
 type PublishedContributionTablesProps = {
-  addedMonthAbbreviation: string
+  addedMonthYearLabel: string
   amountPerVestedMember: number
   deaths: PublishedContributionDeathRow[]
   groups: PublishedContributionGroupRow[]
@@ -376,13 +376,13 @@ const SortControl = <T extends string>({
 )
 
 const PublishedContributionTables = ({
-  addedMonthAbbreviation,
+  addedMonthYearLabel,
   amountPerVestedMember,
   deaths,
   groups,
   totalVestedMembers
 }: PublishedContributionTablesProps) => {
-  const amountAddedThisMonthLabel = `Added in ${addedMonthAbbreviation}`
+  const amountAddedThisMonthLabel = `Added in ${addedMonthYearLabel}`
   const groupSortColumns = useMemo(() => getGroupSortColumns(amountAddedThisMonthLabel), [amountAddedThisMonthLabel])
 
   const [deathSort, setDeathSort] = useState<SortState<DeathSortKey>>({
