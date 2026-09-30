@@ -527,8 +527,16 @@ const getManualVestingTimestampUpdate = ({
   nextStatus: string
   previousStatus: string
 }) => {
+  if (previousStatus === memberStatus.Delinquent && nextStatus === memberStatus.Vested) {
+    return {}
+  }
+
   if (previousStatus !== memberStatus.Vested && nextStatus === memberStatus.Vested) {
     return { manuallyVestedAt }
+  }
+
+  if (previousStatus === memberStatus.Vested && nextStatus === memberStatus.Delinquent) {
+    return {}
   }
 
   if (previousStatus === memberStatus.Vested && nextStatus !== memberStatus.Vested) {
@@ -539,7 +547,9 @@ const getManualVestingTimestampUpdate = ({
 }
 
 const revalidateSponsorPaymentPages = () => {
+  revalidatePath('/admin-payment-update')
   revalidatePath('/admin-payment-history')
+  revalidatePath('/contribution-table')
   revalidatePath('/contributions-payments')
   revalidatePath('/registration-payments')
   revalidateDashboardActivityLogs()
@@ -1650,7 +1660,8 @@ export const fetchPublishedContributionTableAction = async () => {
     balanceAdjustments,
     vestedMemberCounts,
     deceasedVestedMemberCounts,
-    contributionLedgerEntries
+    contributionLedgerEntries,
+    currentContributionPaymentTotalsByCode
   ] = await Promise.all([
     db.profile.findMany({
       select: {
@@ -1794,7 +1805,8 @@ export const fetchPublishedContributionTableAction = async () => {
           in: sponsorCodes
         }
       }
-    })
+    }),
+    fetchCurrentContributionPaymentTotalsByCode(sponsorCodes)
   ])
 
   const sponsorNamesByCode = new Map(profiles.map(profile => [profile.sponsorCode, getSponsorDisplayName(profile)]))
@@ -1914,6 +1926,7 @@ export const fetchPublishedContributionTableAction = async () => {
           vestedContributionCredit: contributionCreditsByCode.get(group.sponsorCode) ?? 0,
           vestedMembersCount: reserveDeficitAdjustmentMembersCount
         }),
+        amountAddedThisMonth: currentContributionPaymentTotalsByCode.get(group.sponsorCode)?.amountVerified ?? 0,
         amountOwed,
         sponsorCode: group.sponsorCode,
         sponsorName: sponsorNamesByCode.get(group.sponsorCode) ?? group.sponsorCode,

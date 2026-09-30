@@ -36,6 +36,7 @@ export type PublishedContributionDeathRow = {
 export type PublishedContributionGroupRow = {
   accountAfterContribution: number
   accountBeforeContribution: number
+  amountAddedThisMonth: number
   amountOwed: number
   sponsorCode: string
   sponsorName: string
@@ -64,6 +65,7 @@ type DeathSortKey =
 type GroupSortKey =
   | 'accountAfterContribution'
   | 'accountBeforeContribution'
+  | 'amountAddedThisMonth'
   | 'amountOwed'
   | 'sponsorCode'
   | 'vestedMembersCount'
@@ -153,6 +155,13 @@ const groupSortColumns: SortColumn<GroupSortKey>[] = [
   {
     align: 'right',
     className: 'px-1.5 md:min-w-44 md:px-2',
+    key: 'amountAddedThisMonth',
+    label: 'Added This Month',
+    shortLabel: 'Added'
+  },
+  {
+    align: 'right',
+    className: 'px-1.5 md:min-w-44 md:px-2',
     key: 'accountAfterContribution',
     label: 'Account After Contribution',
     shortLabel: 'Account After'
@@ -219,6 +228,7 @@ const compareGroupRows = (
 ) => {
   if (key === 'accountAfterContribution') return left.accountAfterContribution - right.accountAfterContribution
   if (key === 'accountBeforeContribution') return left.accountBeforeContribution - right.accountBeforeContribution
+  if (key === 'amountAddedThisMonth') return left.amountAddedThisMonth - right.amountAddedThisMonth
   if (key === 'amountOwed') return left.amountOwed - right.amountOwed
   if (key === 'vestedMembersCount') return left.vestedMembersCount - right.vestedMembersCount
 
@@ -678,6 +688,7 @@ const PublishedContributionTables = ({
                 {sortedGroups.map((group, index) => {
                   const accountAfterContribution = currencyFormatter.format(group.accountAfterContribution)
                   const accountBeforeContribution = currencyFormatter.format(group.accountBeforeContribution)
+                  const amountAddedThisMonth = currencyFormatter.format(group.amountAddedThisMonth)
                   const amountOwed = currencyFormatter.format(group.amountOwed)
 
                   const isPageVisible =
@@ -721,6 +732,12 @@ const PublishedContributionTables = ({
                         className='overflow-hidden px-1.5 text-right font-semibold whitespace-nowrap md:min-w-48 md:px-2'
                       >
                         <OverflowTooltipText className='text-right tabular-nums' value={amountOwed} />
+                      </TableCell>
+                      <TableCell
+                        data-label='Added This Month'
+                        className='overflow-hidden px-1.5 text-right font-semibold whitespace-nowrap tabular-nums md:min-w-44 md:px-2'
+                      >
+                        <OverflowTooltipText className='text-right tabular-nums' value={amountAddedThisMonth} />
                       </TableCell>
                       <TableCell
                         data-label='Account After Contribution'
