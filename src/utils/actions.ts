@@ -1647,6 +1647,7 @@ export const fetchPublishedContributionTableAction = async () => {
 
   if (!publishedAssessment) return null
 
+  const contributionPeriodDate = publishedAssessment.dueDate ?? publishedAssessment.createdAt
   const sponsorCodes = publishedAssessment.groups.map(group => group.sponsorCode)
   const deathMatriculationNumbers = publishedAssessment.deaths.map(death => death.memberMatriculationNumber)
 
@@ -1806,7 +1807,7 @@ export const fetchPublishedContributionTableAction = async () => {
         }
       }
     }),
-    fetchCurrentContributionPaymentTotalsByCode(sponsorCodes)
+    fetchCurrentContributionPaymentTotalsByCode(sponsorCodes, contributionPeriodDate)
   ])
 
   const sponsorNamesByCode = new Map(profiles.map(profile => [profile.sponsorCode, getSponsorDisplayName(profile)]))
