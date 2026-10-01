@@ -23,6 +23,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { usePagination } from '@/hooks/use-pagination'
 import { usePersistentState } from '@/hooks/use-persistent-state'
+import { sagicamTimeZone } from '@/utils/sagicam-time-zone'
 
 export type NewAdditionRow = {
   firstName: string
@@ -55,7 +56,8 @@ const selectionColumnWidth = 5
 const pageSizeOptions = [10, 25, 50, 100]
 
 const dateFormatter = new Intl.DateTimeFormat('en-US', {
-  dateStyle: 'medium'
+  dateStyle: 'medium',
+  timeZone: sagicamTimeZone
 })
 
 const getSortIcon = (isActive: boolean, direction: SortDirection) => {
@@ -159,9 +161,7 @@ const getPrintableDocument = ({
 const MobileValue = ({ label, value }: { label: string; value: string }) => (
   <div className='grid grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] items-start gap-2'>
     <span className='text-muted-foreground min-w-0 text-xs leading-snug font-semibold uppercase'>{label}</span>
-    <span className='min-w-0 justify-self-end text-right text-sm leading-snug font-semibold break-words'>
-      {value}
-    </span>
+    <span className='min-w-0 justify-self-end text-right text-sm leading-snug font-semibold break-words'>{value}</span>
   </div>
 )
 
@@ -358,12 +358,7 @@ const NewAdditionsTable = ({ monthKey, rows }: { monthKey: string; rows: NewAddi
               {selectedRows.length} selected
             </Badge>
           ) : null}
-          <Button
-            type='button'
-            className='h-10'
-            onClick={handleExportFilteredRows}
-            disabled={sortedRows.length === 0}
-          >
+          <Button type='button' className='h-10' onClick={handleExportFilteredRows} disabled={sortedRows.length === 0}>
             <FileSpreadsheetIcon />
             Export Page
           </Button>
@@ -376,21 +371,11 @@ const NewAdditionsTable = ({ monthKey, rows }: { monthKey: string; rows: NewAddi
             <FileSpreadsheetIcon />
             Export Selected
           </Button>
-          <Button
-            type='button'
-            className='h-10'
-            onClick={handlePrintFilteredRows}
-            disabled={sortedRows.length === 0}
-          >
+          <Button type='button' className='h-10' onClick={handlePrintFilteredRows} disabled={sortedRows.length === 0}>
             <PrinterIcon />
             Print PDF
           </Button>
-          <Button
-            type='button'
-            className='h-10'
-            onClick={handlePrintSelectedRows}
-            disabled={selectedRows.length === 0}
-          >
+          <Button type='button' className='h-10' onClick={handlePrintSelectedRows} disabled={selectedRows.length === 0}>
             <PrinterIcon />
             Print Selected
           </Button>

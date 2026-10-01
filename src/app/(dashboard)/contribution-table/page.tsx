@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { fetchPublishedContributionTableAction } from '@/utils/actions'
 import { getContributionTableLabel } from '@/utils/contribution-table-label'
+import { sagicamTimeZone } from '@/utils/sagicam-time-zone'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -16,12 +17,13 @@ const currencyFormatter = new Intl.NumberFormat('en-US', {
 })
 
 const dateFormatter = new Intl.DateTimeFormat('en-US', {
-  dateStyle: 'medium'
+  dateStyle: 'medium',
+  timeZone: sagicamTimeZone
 })
 
 const contributionPeriodMonthYearFormatter = new Intl.DateTimeFormat('en-US', {
   month: 'short',
-  timeZone: 'America/New_York',
+  timeZone: sagicamTimeZone,
   year: 'numeric'
 })
 

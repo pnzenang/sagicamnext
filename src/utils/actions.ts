@@ -56,6 +56,7 @@ import {
   getAwaitingPublicationVestingCutoff,
   getMemberLongevityStartDate
 } from './sagicam-member-longevity'
+import { sagicamTimeZone } from './sagicam-time-zone'
 import { getOverdueRegistrationPaymentCreatedAtCutoff } from './registration-payment-deadline'
 import { hasAllApprovedDeceasedMemberDocuments } from './deceased-member-documents'
 import {
@@ -78,6 +79,7 @@ const contributionBalanceAdjustmentType = 'contribution'
 const registrationDateFormatter = new Intl.DateTimeFormat('en-US', {
   day: '2-digit',
   month: '2-digit',
+  timeZone: sagicamTimeZone,
   year: 'numeric'
 })
 

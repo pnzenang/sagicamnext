@@ -5,6 +5,7 @@ import type { Prisma } from '@/generated/prisma/client'
 import db from './db'
 import { contributionReserveDeficitAdjustmentPerVestedMember } from './sagicam-contribution-constants'
 import { sponsorPaymentLedgerEventTypes, sponsorPaymentTypes } from './sagicam-payment-ledger'
+import { getSagicamMonthRange } from './sagicam-time-zone'
 import { memberStatus } from './types'
 
 export const contributionBalanceAdjustmentType = 'contribution'
@@ -55,10 +56,7 @@ type ContributionAssessmentPeriodSource = {
 }
 
 export const getCurrentContributionAssessmentPeriodRange = (periodDate = new Date()) => {
-  const startsAt = new Date(Date.UTC(periodDate.getUTCFullYear(), periodDate.getUTCMonth(), 1))
-  const endsAt = new Date(Date.UTC(periodDate.getUTCFullYear(), periodDate.getUTCMonth() + 1, 1))
-
-  return { endsAt, startsAt }
+  return getSagicamMonthRange(periodDate)
 }
 
 export const getCurrentContributionAssessmentWhere = (
@@ -110,10 +108,7 @@ const getEmptyCurrentContributionPaymentTotals = (): CurrentContributionPaymentT
   verifiedAt: null
 })
 
-export const fetchCurrentContributionPaymentTotalsByCode = async (
-  sponsorCodes: string[],
-  periodDate = new Date()
-) => {
+export const fetchCurrentContributionPaymentTotalsByCode = async (sponsorCodes: string[], periodDate = new Date()) => {
   const normalizedSponsorCodes = Array.from(
     new Set(sponsorCodes.map(sponsorCode => sponsorCode.trim()).filter(Boolean))
   )

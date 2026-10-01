@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
+import { sagicamTimeZone } from '@/utils/sagicam-time-zone'
 import {
   deleteNameChangeRequestAction,
   reviewNameChangeRequestAction,
@@ -37,7 +38,8 @@ const documentAccept = '.pdf,.jpg,.jpeg,.png,.webp,.heic,.heif,application/pdf,i
 
 const dateTimeFormatter = new Intl.DateTimeFormat('en-US', {
   dateStyle: 'medium',
-  timeStyle: 'short'
+  timeStyle: 'short',
+  timeZone: sagicamTimeZone
 })
 
 const formatDateTime = (date: Date) => dateTimeFormatter.format(date)
@@ -135,7 +137,7 @@ const NameChangeRequestCard = ({
   const isApproved = request.status === 'approved'
 
   return (
-    <div className='grid min-w-0 gap-4 rounded-md border bg-muted/20 p-4'>
+    <div className='bg-muted/20 grid min-w-0 gap-4 rounded-md border p-4'>
       <div className='flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
         <div className='min-w-0'>
           <div className='flex items-center gap-2 text-sm font-extrabold'>
@@ -154,14 +156,16 @@ const NameChangeRequestCard = ({
       </div>
 
       <div className='grid gap-2 text-sm sm:grid-cols-2'>
-        <div className='rounded-md border bg-background/70 p-3'>
+        <div className='bg-background/70 rounded-md border p-3'>
           <p className='text-muted-foreground text-xs font-semibold'>{isApproved ? 'Previous name' : 'Current name'}</p>
           <p className='mt-1 font-extrabold break-words'>
             {request.currentFirstName} {request.currentLastAndMiddleNames}
           </p>
         </div>
-        <div className='rounded-md border bg-background/70 p-3'>
-          <p className='text-muted-foreground text-xs font-semibold'>{isApproved ? 'Name approved' : 'Requested name'}</p>
+        <div className='bg-background/70 rounded-md border p-3'>
+          <p className='text-muted-foreground text-xs font-semibold'>
+            {isApproved ? 'Name approved' : 'Requested name'}
+          </p>
           <p className='mt-1 font-extrabold break-words'>
             {request.requestedFirstName} {request.requestedLastAndMiddleNames}
           </p>
@@ -197,7 +201,7 @@ const NameChangeRequestCard = ({
       {canUploadDocumentation ? (
         <FormContainer
           action={uploadNameChangeDocumentationAction}
-          className='grid gap-2 rounded-md border bg-background/70 p-3'
+          className='bg-background/70 grid gap-2 rounded-md border p-3'
           refreshOnMessage
         >
           <input type='hidden' name='requestId' value={request.id} />

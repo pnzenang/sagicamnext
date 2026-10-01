@@ -5,6 +5,7 @@ import { SubmitButton } from '@/components/forms/Buttons'
 import { Badge } from '@/components/ui/badge'
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
+import { sagicamTimeZone } from '@/utils/sagicam-time-zone'
 import {
   cancelMemberTransferRequestAction,
   reviewAdminMemberTransferRequestAction,
@@ -37,7 +38,8 @@ export type MemberTransferRequestCardData = {
 
 const dateTimeFormatter = new Intl.DateTimeFormat('en-US', {
   dateStyle: 'medium',
-  timeStyle: 'short'
+  timeStyle: 'short',
+  timeZone: sagicamTimeZone
 })
 
 export const formatTransferRequestDateTime = (date: Date) => dateTimeFormatter.format(date)

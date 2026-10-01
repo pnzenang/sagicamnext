@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { usePagination } from '@/hooks/use-pagination'
 import { cn } from '@/lib/utils'
 import { hasAllApprovedDeceasedMemberDocuments } from '@/utils/deceased-member-documents'
+import { sagicamTimeZone } from '@/utils/sagicam-time-zone'
 import {
   deleteDeceasedMemberDocumentAction,
   reviewDeceasedMemberDocumentAction,
@@ -63,7 +64,8 @@ const fileSizeFormatter = new Intl.NumberFormat('en-US', {
 
 const dateTimeFormatter = new Intl.DateTimeFormat('en-US', {
   dateStyle: 'medium',
-  timeStyle: 'short'
+  timeStyle: 'short',
+  timeZone: sagicamTimeZone
 })
 
 const pageSizeOptions = [5, 10, 25, 50]

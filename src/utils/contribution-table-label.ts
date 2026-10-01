@@ -1,5 +1,8 @@
+import { sagicamTimeZone } from './sagicam-time-zone'
+
 const monthYearFormatter = new Intl.DateTimeFormat('en-US', {
   month: 'long',
+  timeZone: sagicamTimeZone,
   year: 'numeric'
 })
 

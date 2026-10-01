@@ -6,6 +6,7 @@ import {
   registrationBalanceAdjustmentType,
   registrationFeePerEligibleMember
 } from '@/utils/sagicam-registration-summary'
+import { sagicamTimeZone } from '@/utils/sagicam-time-zone'
 import { memberStatus } from '@/utils/types'
 import db from '@/utils/db'
 import AdminSagicamRegistrationsTable, {
@@ -20,7 +21,8 @@ const defaultPaymentAlertResetAt = new Date(0)
 
 const alertTimeFormatter = new Intl.DateTimeFormat('en-US', {
   dateStyle: 'medium',
-  timeStyle: 'short'
+  timeStyle: 'short',
+  timeZone: sagicamTimeZone
 })
 
 const currencyFormatter = new Intl.NumberFormat('en-US', {

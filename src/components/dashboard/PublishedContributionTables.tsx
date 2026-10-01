@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { usePagination } from '@/hooks/use-pagination'
 import { cn } from '@/lib/utils'
+import { sagicamTimeZone } from '@/utils/sagicam-time-zone'
 
 type ContributionTableDocument = {
   fileName: string
@@ -90,7 +91,8 @@ const currencyFormatter = new Intl.NumberFormat('en-US', {
 })
 
 const dateFormatter = new Intl.DateTimeFormat('en-US', {
-  dateStyle: 'medium'
+  dateStyle: 'medium',
+  timeZone: sagicamTimeZone
 })
 
 const defaultGroupRowsPerPage = 10

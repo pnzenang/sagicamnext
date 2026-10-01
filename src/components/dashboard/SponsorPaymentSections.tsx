@@ -12,6 +12,7 @@ import SponsorRegistrationPaymentCard from '@/components/dashboard/SponsorRegist
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { contributionCreditPerVestedMember } from '@/utils/sagicam-contribution-constants'
+import { sagicamTimeZone } from '@/utils/sagicam-time-zone'
 import type { SponsorPaymentLedgerEntry } from '@/utils/sagicam-payment-ledger'
 
 export type CurrentContributionPayment = {
@@ -61,21 +62,25 @@ const currencyFormatter = new Intl.NumberFormat('en-US', {
 })
 
 const monthFormatter = new Intl.DateTimeFormat('en-US', {
-  month: 'long'
+  month: 'long',
+  timeZone: sagicamTimeZone
 })
 
 const monthYearFormatter = new Intl.DateTimeFormat('en-US', {
   month: 'long',
+  timeZone: sagicamTimeZone,
   year: 'numeric'
 })
 
 const dateFormatter = new Intl.DateTimeFormat('en-US', {
-  dateStyle: 'medium'
+  dateStyle: 'medium',
+  timeZone: sagicamTimeZone
 })
 
 const dateTimeFormatter = new Intl.DateTimeFormat('en-US', {
   dateStyle: 'medium',
-  timeStyle: 'short'
+  timeStyle: 'short',
+  timeZone: sagicamTimeZone
 })
 
 const sagicamPaymentUrl =

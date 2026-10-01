@@ -13,6 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { usePagination } from '@/hooks/use-pagination'
 import { usePersistentState } from '@/hooks/use-persistent-state'
 import { cn } from '@/lib/utils'
+import { sagicamTimeZone } from '@/utils/sagicam-time-zone'
 import type { DashboardActivityLogRow } from '@/utils/types'
 
 type SortKey = 'action' | 'actorEmail' | 'createdAt' | 'entityType' | 'sponsorLabel' | 'summary'
@@ -28,7 +29,8 @@ const pageSizeOptions = [10, 25, 50, 100]
 
 const dateFormatter = new Intl.DateTimeFormat('en-US', {
   dateStyle: 'medium',
-  timeStyle: 'short'
+  timeStyle: 'short',
+  timeZone: sagicamTimeZone
 })
 
 const baseColumns: ActivityColumn[] = [

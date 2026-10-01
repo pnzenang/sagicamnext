@@ -9,6 +9,7 @@ import {
   getCurrentContributionAssessmentWhere,
   getContributionReserveDeficitBalance
 } from '@/utils/sagicam-contribution-summary'
+import { sagicamTimeZone } from '@/utils/sagicam-time-zone'
 import { memberStatus } from '@/utils/types'
 import db from '@/utils/db'
 import AdminSagicamPaymentsTable, {
@@ -17,12 +18,14 @@ import AdminSagicamPaymentsTable, {
 } from './AdminSagicamPaymentsTable'
 
 const dateFormatter = new Intl.DateTimeFormat('en-US', {
-  dateStyle: 'medium'
+  dateStyle: 'medium',
+  timeZone: sagicamTimeZone
 })
 
 const alertTimeFormatter = new Intl.DateTimeFormat('en-US', {
   dateStyle: 'medium',
-  timeStyle: 'short'
+  timeStyle: 'short',
+  timeZone: sagicamTimeZone
 })
 
 const currencyFormatter = new Intl.NumberFormat('en-US', {

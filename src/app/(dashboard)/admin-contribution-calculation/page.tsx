@@ -15,6 +15,7 @@ import {
   fetchContributionCalculationSummaryAction,
   saveContributionCalculationAdminFeeAction
 } from '@/utils/actions'
+import { sagicamTimeZone } from '@/utils/sagicam-time-zone'
 
 const currencyFormatter = new Intl.NumberFormat('en-US', {
   currency: 'USD',
@@ -22,7 +23,8 @@ const currencyFormatter = new Intl.NumberFormat('en-US', {
 })
 
 const dateFormatter = new Intl.DateTimeFormat('en-US', {
-  dateStyle: 'medium'
+  dateStyle: 'medium',
+  timeZone: sagicamTimeZone
 })
 
 const formatDate = (value: string) => {
