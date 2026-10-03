@@ -529,6 +529,7 @@ const getManualVestingTimestampUpdate = ({
   nextStatus: string
   previousStatus: string
 }) => {
+  // Keep the original vesting date when a not-in-good-standing loved one returns to vested.
   if (previousStatus === memberStatus.Delinquent && nextStatus === memberStatus.Vested) {
     return {}
   }
