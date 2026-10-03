@@ -6,7 +6,7 @@ export const awaitingPublicationVestingLongevityDays = 30
 
 const millisecondsPerDay = 24 * 60 * 60 * 1000
 
-type MemberLongevityFields = Pick<MemberType, 'createdAt' | 'memberStatus'>
+type MemberLongevityFields = Pick<MemberType, 'createdAt' | 'manuallyVestedAt' | 'memberStatus'>
 
 type MemberLongevityDuration = {
   days: number
@@ -17,8 +17,13 @@ type MemberLongevityDuration = {
 export const getAwaitingPublicationVestingCutoff = (now = new Date()) =>
   new Date(now.getTime() - awaitingPublicationVestingLongevityDays * millisecondsPerDay)
 
-// Longevity is based on original registration age. The vested timestamp is tracked separately.
-export const getMemberLongevityStartDate = (member: MemberLongevityFields) => member.createdAt
+const shouldUseVestedLongevityStartDate = (member: MemberLongevityFields) =>
+  Boolean(member.manuallyVestedAt) &&
+  (member.memberStatus === memberStatus.Vested || member.memberStatus === memberStatus.Delinquent)
+
+// Pending and awaiting loved ones age from registration. Once vested, longevity starts from the vesting date.
+export const getMemberLongevityStartDate = (member: MemberLongevityFields) =>
+  shouldUseVestedLongevityStartDate(member) ? (member.manuallyVestedAt ?? member.createdAt) : member.createdAt
 
 export const getMemberLongevityDays = (member: MemberLongevityFields, now = new Date()) =>
   Math.max(0, day(now).diff(day(getMemberLongevityStartDate(member)).startOf('day'), 'days'))
