@@ -3,13 +3,10 @@ import day from 'dayjs'
 import { memberStatus, type MemberType } from './types'
 
 export const awaitingPublicationVestingLongevityDays = 30
-export const memberLongevityStartDate = new Date(2026, 9, 1)
 
 const millisecondsPerDay = 24 * 60 * 60 * 1000
 
-type MemberLongevityFields = Pick<MemberType, 'memberStatus'> & {
-  createdAt: Date | string
-}
+type MemberLongevityFields = Pick<MemberType, 'createdAt' | 'memberStatus'>
 
 type MemberLongevityDuration = {
   days: number
@@ -17,18 +14,11 @@ type MemberLongevityDuration = {
   years: number
 }
 
-export const getAwaitingPublicationVestingCutoff = (now = new Date()) => {
-  const cutoffAt = new Date(now.getTime() - awaitingPublicationVestingLongevityDays * millisecondsPerDay)
+export const getAwaitingPublicationVestingCutoff = (now = new Date()) =>
+  new Date(now.getTime() - awaitingPublicationVestingLongevityDays * millisecondsPerDay)
 
-  return cutoffAt < memberLongevityStartDate ? new Date(0) : cutoffAt
-}
-
-// Longevity does not count before October 1, 2026. The vested timestamp is tracked separately.
-export const getMemberLongevityStartDate = (member: MemberLongevityFields) => {
-  const createdAt = member.createdAt instanceof Date ? member.createdAt : new Date(member.createdAt)
-
-  return createdAt < memberLongevityStartDate ? memberLongevityStartDate : createdAt
-}
+// Longevity is based on original registration age. The vested timestamp is tracked separately.
+export const getMemberLongevityStartDate = (member: MemberLongevityFields) => member.createdAt
 
 export const getMemberLongevityDays = (member: MemberLongevityFields, now = new Date()) =>
   Math.max(0, day(now).diff(day(getMemberLongevityStartDate(member)).startOf('day'), 'days'))
