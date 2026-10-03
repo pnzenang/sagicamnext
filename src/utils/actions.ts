@@ -2069,8 +2069,7 @@ export const createMemberAction = async (provState: any, formData: FormData): Pr
           data: {
             ...validatedFields,
             clerkId: user.id,
-            memberMatriculationNumber,
-            ...(validatedFields.memberStatus === memberStatus.Vested ? { manuallyVestedAt: new Date() } : {})
+            memberMatriculationNumber
           }
         })
 
@@ -3347,11 +3346,7 @@ export const updateMemberDetailsAction = async (prevState: any, formData: FormDa
             id: memberId
           },
           data: {
-            ...validatedFields,
-            ...getManualVestingTimestampUpdate({
-              nextStatus: validatedFields.memberStatus,
-              previousStatus: currentMember.memberStatus
-            })
+            ...validatedFields
           }
         })
 
