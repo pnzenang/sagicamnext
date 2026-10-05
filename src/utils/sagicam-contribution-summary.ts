@@ -46,6 +46,7 @@ const decimalToNumber = (value: unknown) => Number(value ?? 0)
 const roundCurrencyAmount = (amount: number) => Number(amount.toFixed(2))
 
 const currentContributionPaymentEventTypes = [
+  sponsorPaymentLedgerEventTypes.reset,
   sponsorPaymentLedgerEventTypes.submitted,
   sponsorPaymentLedgerEventTypes.verified
 ]
@@ -169,6 +170,17 @@ export const fetchCurrentContributionPaymentTotalsByCode = async (sponsorCodes: 
     const totals = totalsByCode.get(entry.sponsorCode)
 
     if (!totals) return
+
+    if (entry.eventType === sponsorPaymentLedgerEventTypes.reset) {
+      totals.amountSent = 0
+      totals.amountVerified = 0
+      totals.lastSubmittedAt = null
+      totals.verifiedAt = null
+      sponsorCodesWithCurrentSubmittedLedger.add(entry.sponsorCode)
+      sponsorCodesWithCurrentVerifiedLedger.add(entry.sponsorCode)
+
+      return
+    }
 
     if (entry.eventType === sponsorPaymentLedgerEventTypes.submitted) {
       sponsorCodesWithCurrentSubmittedLedger.add(entry.sponsorCode)

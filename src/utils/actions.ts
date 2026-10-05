@@ -529,9 +529,9 @@ const getManualVestingTimestampUpdate = ({
   nextStatus: string
   previousStatus: string
 }) => {
-  // Keep the original vesting date when a not-in-good-standing loved one returns to vested.
+  // Restore longevity to the original registration date when a not-in-good-standing loved one returns to vested.
   if (previousStatus === memberStatus.Delinquent && nextStatus === memberStatus.Vested) {
-    return {}
+    return { manuallyVestedAt: null }
   }
 
   if (previousStatus !== memberStatus.Vested && nextStatus === memberStatus.Vested) {
