@@ -56,7 +56,8 @@ const ContributionCalculationPage = async () => {
         <CardHeader className='border-primary/20 min-w-0 border-b py-5'>
           <CardTitle className='text-xl leading-tight break-words'>Add death to contribution calculation</CardTitle>
           <CardDescription className='break-words'>
-            Less than 180 days is $1,000. From 180 to 364 days is $2,000. More than 364 days is $6,000.
+            Less than 180 days is $1,000. From 180 to 364 days is $2,000. More than 364 days is $6,000. If the
+            announcement was made more than 15 days after death, the amount is $1,000.
           </CardDescription>
         </CardHeader>
         <CardContent className='min-w-0 py-5'>

@@ -949,14 +949,17 @@ const fetchContributionPaymentsByCode = async (sponsorCodes: string[]) => {
 }
 
 const getContributionCalculationDeathAmount = ({
+  createdAt,
   dateOfDeath,
   registrationDate
 }: {
+  createdAt: Date
   dateOfDeath: string
   registrationDate: string
 }) =>
   roundCurrencyAmount(
     getContributionDeathAmount({
+      announcedAt: createdAt,
       dateOfDeath,
       registrationDate
     })
@@ -998,6 +1001,7 @@ const fetchContributionCalculationSummary = async () => {
       select: {
         deceasedMember: {
           select: {
+            createdAt: true,
             dateOfDeath: true,
             registrationDate: true
           }
@@ -1047,6 +1051,7 @@ const fetchContributionCalculationDeaths = async () => {
     include: {
       deceasedMember: {
         select: {
+          createdAt: true,
           dateOfDeath: true,
           firstName: true,
           lastAndMiddleNames: true,
@@ -1142,6 +1147,7 @@ export const addContributionCalculationDeathAction = async (
         memberMatriculationNumber
       },
       select: {
+        createdAt: true,
         dateOfDeath: true,
         firstName: true,
         id: true,
@@ -1157,6 +1163,7 @@ export const addContributionCalculationDeathAction = async (
     }
 
     const amountToContribute = getContributionCalculationDeathAmount({
+      createdAt: deceasedMember.createdAt,
       dateOfDeath: deceasedMember.dateOfDeath,
       registrationDate: deceasedMember.registrationDate
     })

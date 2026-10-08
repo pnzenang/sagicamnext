@@ -1,6 +1,11 @@
+import { getSagicamTimeZoneParts } from './sagicam-time-zone'
+
 const millisecondsPerDay = 24 * 60 * 60 * 1000
+const lateAnnouncementReductionAmount = 1000
+const lateAnnouncementDaysLimit = 15
 
 type ContributionDeathDates = {
+  announcedAt?: Date | string | null
   dateOfDeath: string
   registrationDate: string
 }
@@ -15,7 +20,15 @@ const createUtcDate = (year: number, month: number, day: number) => {
   return date
 }
 
-const parseDateOnly = (value: string) => {
+const parseDateOnly = (value: Date | string) => {
+  if (value instanceof Date) {
+    if (Number.isNaN(value.getTime())) return null
+
+    const { day, month, year } = getSagicamTimeZoneParts(value)
+
+    return createUtcDate(year, month, day)
+  }
+
   const trimmedValue = value.trim()
   const slashDateMatch = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(trimmedValue)
 
@@ -35,7 +48,11 @@ const parseDateOnly = (value: string) => {
 
   const date = new Date(trimmedValue)
 
-  return Number.isNaN(date.getTime()) ? null : new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
+  if (Number.isNaN(date.getTime())) return null
+
+  const { day, month, year } = getSagicamTimeZoneParts(date)
+
+  return createUtcDate(year, month, day)
 }
 
 export const getContributionDeathLongevityDays = ({ dateOfDeath, registrationDate }: ContributionDeathDates) => {
@@ -55,11 +72,36 @@ export const getContributionDeathLongevityDays = ({ dateOfDeath, registrationDat
   return longevityDays
 }
 
+const getContributionDeathAnnouncementDelayDays = ({
+  announcedAt,
+  dateOfDeath
+}: Pick<ContributionDeathDates, 'announcedAt' | 'dateOfDeath'>) => {
+  if (!announcedAt) return 0
+
+  const announcementDateValue = parseDateOnly(announcedAt)
+  const dateOfDeathValue = parseDateOnly(dateOfDeath)
+
+  if (!announcementDateValue || !dateOfDeathValue) {
+    throw new Error('Unable to calculate the contribution amount because announced date or date of death is invalid.')
+  }
+
+  const announcementDelayDays = Math.floor(
+    (announcementDateValue.getTime() - dateOfDeathValue.getTime()) / millisecondsPerDay
+  )
+
+  if (announcementDelayDays < 0) {
+    throw new Error('Unable to calculate the contribution amount because announced date is before date of death.')
+  }
+
+  return announcementDelayDays
+}
+
 export const getContributionDeathAmount = (dates: ContributionDeathDates) => {
   const longevityDays = getContributionDeathLongevityDays(dates)
+  const calculatedAmount = longevityDays < 180 ? 1000 : longevityDays <= 364 ? 2000 : 6000
+  const announcementDelayDays = getContributionDeathAnnouncementDelayDays(dates)
 
-  if (longevityDays < 180) return 1000
-  if (longevityDays <= 364) return 2000
+  if (announcementDelayDays > lateAnnouncementDaysLimit) return lateAnnouncementReductionAmount
 
-  return 6000
+  return calculatedAmount
 }
