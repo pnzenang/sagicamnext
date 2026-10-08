@@ -47,8 +47,8 @@ const ContributionCalculationPage = async () => {
       <div className='min-w-0'>
         <h1 className='text-xl font-semibold tracking-normal break-words md:text-4xl'>Contribution Calculation</h1>
         <p className='text-muted-foreground mt-2 max-w-4xl text-sm leading-6 break-words sm:text-base'>
-          Add deceased loved ones by matriculation number and enter the amount to be contributed. The table pulls the
-          name, registration date, and date of death from the deceased loved-one records.
+          Add deceased loved ones by matriculation number. The table pulls the name, registration date, and date of
+          death from the deceased loved-one records, then calculates the amount to be contributed automatically.
         </p>
       </div>
 
@@ -56,13 +56,13 @@ const ContributionCalculationPage = async () => {
         <CardHeader className='border-primary/20 min-w-0 border-b py-5'>
           <CardTitle className='text-xl leading-tight break-words'>Add death to contribution calculation</CardTitle>
           <CardDescription className='break-words'>
-            Use the SAGICAM matriculation number from the deceased list, then enter the amount for this death.
+            Less than 180 days is $1,000. From 180 to 364 days is $2,000. More than 364 days is $6,000.
           </CardDescription>
         </CardHeader>
         <CardContent className='min-w-0 py-5'>
           <FormContainer
             action={addContributionCalculationDeathAction}
-            className='grid gap-4 md:grid-cols-3 md:items-end'
+            className='grid gap-4 md:grid-cols-[minmax(0,1fr)_12rem] md:items-end'
           >
             <div className='grid min-w-0 gap-2'>
               <Label htmlFor='memberMatriculationNumber'>Matriculation number</Label>
@@ -73,24 +73,6 @@ const ContributionCalculationPage = async () => {
                   name='memberMatriculationNumber'
                   placeholder='SCABCD123456'
                   className='border-primary/40 bg-background text-foreground pl-9 uppercase'
-                  required
-                />
-              </div>
-            </div>
-
-            <div className='grid min-w-0 gap-2'>
-              <Label htmlFor='amountToContribute'>Amount to be contributed</Label>
-              <div className='relative'>
-                <DollarSign className='text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2' />
-                <Input
-                  id='amountToContribute'
-                  name='amountToContribute'
-                  type='number'
-                  inputMode='decimal'
-                  min='0.01'
-                  step='0.01'
-                  placeholder='0.00'
-                  className='border-primary/40 bg-background text-foreground pl-9'
                   required
                 />
               </div>

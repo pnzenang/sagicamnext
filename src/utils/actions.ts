@@ -59,6 +59,7 @@ import {
 import { sagicamTimeZone } from './sagicam-time-zone'
 import { getOverdueRegistrationPaymentCreatedAtCutoff } from './registration-payment-deadline'
 import { hasAllApprovedDeceasedMemberDocuments } from './deceased-member-documents'
+import { getContributionDeathAmount } from './contribution-death-amount'
 import {
   deleteDeathDocumentationFromCloudinary,
   isSameCloudinaryDocument,
@@ -947,6 +948,20 @@ const fetchContributionPaymentsByCode = async (sponsorCodes: string[]) => {
   )
 }
 
+const getContributionCalculationDeathAmount = ({
+  dateOfDeath,
+  registrationDate
+}: {
+  dateOfDeath: string
+  registrationDate: string
+}) =>
+  roundCurrencyAmount(
+    getContributionDeathAmount({
+      dateOfDeath,
+      registrationDate
+    })
+  )
+
 const attachContributionAmounts = async <T extends { sponsorCode: string }>(members: T[]) => {
   const latestAssessment = await fetchLatestContributionAssessment()
   const sponsorCodes = Array.from(new Set(members.map(member => member.sponsorCode)))
@@ -978,13 +993,15 @@ const attachContributionAmounts = async <T extends { sponsorCode: string }>(memb
 }
 
 const fetchContributionCalculationSummary = async () => {
-  const [summary, adminFee, vestedMembersCount] = await Promise.all([
-    db.contributionCalculationDeath.aggregate({
-      _count: {
-        _all: true
-      },
-      _sum: {
-        amountToContribute: true
+  const [calculationDeaths, adminFee, vestedMembersCount] = await Promise.all([
+    db.contributionCalculationDeath.findMany({
+      select: {
+        deceasedMember: {
+          select: {
+            dateOfDeath: true,
+            registrationDate: true
+          }
+        }
       }
     }),
     db.contributionCalculationAdminFee.findUnique({
@@ -999,7 +1016,13 @@ const fetchContributionCalculationSummary = async () => {
     })
   ])
 
-  const deathAmount = roundCurrencyAmount(decimalToNumber(summary._sum.amountToContribute))
+  const deathAmount = roundCurrencyAmount(
+    calculationDeaths.reduce(
+      (total, calculationDeath) => total + getContributionCalculationDeathAmount(calculationDeath.deceasedMember),
+      0
+    )
+  )
+
   const adminFeeAmount = roundCurrencyAmount(decimalToNumber(adminFee?.amount))
   const adminFeeTotal = roundCurrencyAmount(adminFeeAmount * vestedMembersCount)
 
@@ -1007,7 +1030,7 @@ const fetchContributionCalculationSummary = async () => {
     adminFee: adminFeeAmount,
     adminFeeTotal,
     deathAmount,
-    deathCount: summary._count._all,
+    deathCount: calculationDeaths.length,
     totalAmount: roundCurrencyAmount(deathAmount + adminFeeTotal),
     vestedMembersCount
   }
@@ -1039,7 +1062,7 @@ const fetchContributionCalculationDeaths = async () => {
   })
 
   return calculationDeaths.map(calculationDeath => ({
-    amountToContribute: decimalToNumber(calculationDeath.amountToContribute),
+    amountToContribute: getContributionCalculationDeathAmount(calculationDeath.deceasedMember),
     createdAt: calculationDeath.createdAt.toISOString(),
     dateOfDeath: calculationDeath.deceasedMember.dateOfDeath,
     firstName: calculationDeath.deceasedMember.firstName,
@@ -1110,14 +1133,8 @@ export const addContributionCalculationDeathAction = async (
       .trim()
       .toUpperCase()
 
-    const amountToContribute = Number(formData.get('amountToContribute'))
-
     if (!memberMatriculationNumber) {
       throw new Error('Enter the deceased loved one matriculation number.')
-    }
-
-    if (!Number.isFinite(amountToContribute) || amountToContribute <= 0) {
-      throw new Error('Enter an amount greater than $0.00.')
     }
 
     const deceasedMember = await db.deceasedMember.findFirst({
@@ -1125,10 +1142,12 @@ export const addContributionCalculationDeathAction = async (
         memberMatriculationNumber
       },
       select: {
+        dateOfDeath: true,
         firstName: true,
         id: true,
         lastAndMiddleNames: true,
         memberMatriculationNumber: true,
+        registrationDate: true,
         sponsorCode: true
       }
     })
@@ -1137,15 +1156,20 @@ export const addContributionCalculationDeathAction = async (
       throw new Error('No deceased loved one was found with that matriculation number.')
     }
 
+    const amountToContribute = getContributionCalculationDeathAmount({
+      dateOfDeath: deceasedMember.dateOfDeath,
+      registrationDate: deceasedMember.registrationDate
+    })
+
     await db.contributionCalculationDeath.upsert({
       create: {
-        amountToContribute: roundCurrencyAmount(amountToContribute),
+        amountToContribute,
         createdBy: user.id,
         deceasedMemberId: deceasedMember.id,
         memberMatriculationNumber: deceasedMember.memberMatriculationNumber
       },
       update: {
-        amountToContribute: roundCurrencyAmount(amountToContribute),
+        amountToContribute,
         createdBy: user.id,
         memberMatriculationNumber: deceasedMember.memberMatriculationNumber
       },
@@ -1161,7 +1185,7 @@ export const addContributionCalculationDeathAction = async (
       entityId: deceasedMember.id,
       entityType: 'contribution_calculation',
       sponsorCode: deceasedMember.sponsorCode,
-      summary: `Added ${deceasedMember.firstName} ${deceasedMember.lastAndMiddleNames} (${deceasedMember.memberMatriculationNumber}) to contribution calculation for ${currencyFormatter.format(roundCurrencyAmount(amountToContribute))}.`
+      summary: `Added ${deceasedMember.firstName} ${deceasedMember.lastAndMiddleNames} (${deceasedMember.memberMatriculationNumber}) to contribution calculation for ${currencyFormatter.format(amountToContribute)}.`
     })
 
     revalidatePath('/admin-contribution-calculation')
