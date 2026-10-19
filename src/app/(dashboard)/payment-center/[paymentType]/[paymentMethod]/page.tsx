@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 
 import { fetchProfile } from '@/utils/actions'
-import { isPaymentCenterMethod, parsePaymentCenterTypeSegment } from '@/utils/sagicam-payment-details'
+import { isPaymentCenterMethod, isPaymentCenterType } from '@/utils/sagicam-payment-details'
 
 import PaymentMethodInstructions from '../../PaymentMethodInstructions'
 import ZellePaymentAmountForm from '../../ZellePaymentAmountForm'
@@ -17,10 +17,9 @@ type PaymentMethodPageProps = {
 }
 
 const PaymentMethodPage = async ({ params }: PaymentMethodPageProps) => {
-  const { paymentMethod, paymentType: paymentTypeSegment } = await params
-  const paymentType = parsePaymentCenterTypeSegment(paymentTypeSegment)
+  const { paymentMethod, paymentType } = await params
 
-  if (!paymentType || !isPaymentCenterMethod(paymentMethod)) notFound()
+  if (!isPaymentCenterType(paymentType) || !isPaymentCenterMethod(paymentMethod)) notFound()
 
   const profile = await fetchProfile()
 
