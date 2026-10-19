@@ -711,7 +711,7 @@ export const SponsorPaymentNavigationCards = ({
     <div className='grid w-full min-w-0 grid-cols-1 items-stretch gap-4 lg:grid-cols-2'>
       <PaymentRouteCard
         amount={currentContribution.amountOwed}
-        cta='Go to contribution payment'
+        cta='Go to Payment Center'
         description={
           <>
             {currentContribution.vestedMembersCount} vested loved one(s) x{' '}
@@ -724,12 +724,12 @@ export const SponsorPaymentNavigationCards = ({
             <SummaryRow label='Verified' value={currentContribution.amountVerified} />
           </>
         }
-        href='/contributions-payments'
+        href='/payment-center'
         title={`${currentMonthName}'s Contribution`}
       />
       <PaymentRouteCard
         amount={registrationPaymentAmount}
-        cta='Go to registration payment'
+        cta='Go to Payment Center'
         description={
           <>
             {pendingMembersCount} pending loved one(s) x {formatCurrency(registrationFeePerPendingMember)}
@@ -741,7 +741,7 @@ export const SponsorPaymentNavigationCards = ({
             <SummaryRow label='Verified' value={currentRegistrationPayment.amountVerified} />
           </>
         }
-        href='/registration-payments'
+        href='/payment-center'
         title='Registration Payment'
       />
     </div>
