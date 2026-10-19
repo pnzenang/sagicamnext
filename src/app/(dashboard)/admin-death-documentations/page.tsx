@@ -10,11 +10,11 @@ const AdminDeathDocumentationsPage = async () => {
 
   return (
     <DeathDocumentationCases
-      canManageUploads={false}
+      canManageUploads
       canReviewDocuments
       deceasedMembers={deceasedMembers}
-      description='Review submitted death documents, download files, and approve or reject each document.'
-      emptyDescription='Submitted death documents will appear here after sponsors upload them.'
+      description='Upload, review, and download death documents, and approve or reject each document.'
+      emptyDescription='Death documentation cases will appear here after a death announcement is submitted.'
       emptyTitle='No death documentation cases found.'
       title='Admin Death Documentations'
     />
