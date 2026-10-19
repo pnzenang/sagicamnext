@@ -1,10 +1,7 @@
 import type { ReactNode } from 'react'
 
-import Link from 'next/link'
-
 import {
   AlertTriangle,
-  ArrowLeft,
   Banknote,
   Building2,
   Landmark,
@@ -286,15 +283,7 @@ const PaymentMethodInstructions = ({ paymentForm, paymentMethod, sponsorCode }: 
   const methodLabel = paymentMethodLabels[paymentMethod]
 
   return (
-    <main className='flex min-h-[calc(100vh-8rem)] w-full flex-col items-center px-1 pt-2 pb-8 sm:px-2 sm:pt-4'>
-      <Link
-        href='/payment-center'
-        className='text-primary mb-3 inline-flex w-full max-w-[120rem] items-center gap-1.5 text-sm font-bold underline-offset-4 hover:underline'
-      >
-        <ArrowLeft className='size-4' aria-hidden='true' />
-        Back to Payment Center
-      </Link>
-
+    <main className='flex min-h-[calc(100vh-8rem)] w-full justify-center px-1 pt-2 pb-8 sm:px-2 sm:pt-4'>
       <section className='border-primary/20 bg-primary/10 text-primary w-full max-w-[120rem] rounded-lg border p-3 text-center shadow-sm sm:p-6 lg:p-10'>
         <h1 className='text-[10px] leading-tight font-semibold tracking-normal whitespace-nowrap sm:text-base md:text-xl lg:text-2xl xl:text-3xl'>
           {sponsorCode} Sponsor, Welcome to SAGICAM&apos;s {methodLabel} Payment page.
@@ -314,7 +303,7 @@ const PaymentMethodInstructions = ({ paymentForm, paymentMethod, sponsorCode }: 
 
         <div className='border-primary/30 bg-background mt-8 rounded-lg border p-4 text-center shadow-sm sm:p-6'>
           <p className={stepTitleClassName}>Step2: Complete the form below:</p>
-          <div className='mx-auto mt-6 w-full max-w-3xl text-left'>{paymentForm}</div>
+          {paymentForm}
         </div>
       </section>
     </main>

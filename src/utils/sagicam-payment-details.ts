@@ -23,5 +23,15 @@ export const isPaymentCenterType = (value: string): value is PaymentCenterType =
 export const isPaymentCenterMethod = (value: string): value is PaymentCenterMethod =>
   paymentCenterMethods.includes(value as PaymentCenterMethod)
 
+const paymentTypeSegmentSuffix = '-payment'
+
+export const parsePaymentCenterTypeSegment = (segment: string): PaymentCenterType | null => {
+  if (!segment.endsWith(paymentTypeSegmentSuffix)) return null
+
+  const paymentType = segment.slice(0, -paymentTypeSegmentSuffix.length)
+
+  return isPaymentCenterType(paymentType) ? paymentType : null
+}
+
 export const getPaymentCenterMethodHref = (paymentType: PaymentCenterType, paymentMethod: PaymentCenterMethod) =>
-  `/payment-center/${paymentType}/${paymentMethod}`
+  `/payment-center/${paymentType}${paymentTypeSegmentSuffix}/${paymentMethod}`

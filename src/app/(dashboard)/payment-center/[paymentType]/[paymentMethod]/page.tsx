@@ -1,17 +1,10 @@
 import { notFound } from 'next/navigation'
 
-import SponsorContributionPaymentCard from '@/components/dashboard/SponsorContributionPaymentCard'
-import SponsorRegistrationPaymentCard from '@/components/dashboard/SponsorRegistrationPaymentCard'
-import { getRegistrationPaymentAmount } from '@/components/dashboard/SponsorPaymentSections'
-import {
-  fetchCurrentSponsorContribution,
-  fetchCurrentSponsorRegistrationPayment,
-  fetchMembers
-} from '@/utils/actions'
-import { isPaymentCenterMethod, isPaymentCenterType } from '@/utils/sagicam-payment-details'
-import { memberStatus } from '@/utils/types'
+import { fetchProfile } from '@/utils/actions'
+import { isPaymentCenterMethod, parsePaymentCenterTypeSegment } from '@/utils/sagicam-payment-details'
 
 import PaymentMethodInstructions from '../../PaymentMethodInstructions'
+import ZellePaymentAmountForm from '../../ZellePaymentAmountForm'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -24,44 +17,18 @@ type PaymentMethodPageProps = {
 }
 
 const PaymentMethodPage = async ({ params }: PaymentMethodPageProps) => {
-  const { paymentMethod, paymentType } = await params
+  const { paymentMethod, paymentType: paymentTypeSegment } = await params
+  const paymentType = parsePaymentCenterTypeSegment(paymentTypeSegment)
 
-  if (!isPaymentCenterType(paymentType) || !isPaymentCenterMethod(paymentMethod)) notFound()
+  if (!paymentType || !isPaymentCenterMethod(paymentMethod)) notFound()
 
-  if (paymentType === 'contribution') {
-    const currentContribution = await fetchCurrentSponsorContribution()
-
-    return (
-      <PaymentMethodInstructions
-        paymentForm={
-          <SponsorContributionPaymentCard
-            amountExpected={currentContribution.amountOwed}
-            amountSent={Math.max(currentContribution.amountReceived, currentContribution.amountVerified)}
-          />
-        }
-        paymentMethod={paymentMethod}
-        sponsorCode={currentContribution.sponsorCode}
-      />
-    )
-  }
-
-  const [currentRegistrationPayment, members] = await Promise.all([
-    fetchCurrentSponsorRegistrationPayment(),
-    fetchMembers()
-  ])
-
-  const pendingMembersCount = members.filter(member => member.memberStatus === memberStatus.Pending).length
+  const profile = await fetchProfile()
 
   return (
     <PaymentMethodInstructions
-      paymentForm={
-        <SponsorRegistrationPaymentCard
-          amountExpected={getRegistrationPaymentAmount(pendingMembersCount)}
-          amountSent={Math.max(currentRegistrationPayment.amountReceived, currentRegistrationPayment.amountVerified)}
-        />
-      }
+      paymentForm={<ZellePaymentAmountForm paymentType={paymentType} />}
       paymentMethod={paymentMethod}
-      sponsorCode={currentRegistrationPayment.sponsorCode}
+      sponsorCode={profile.sponsorCode}
     />
   )
 }
