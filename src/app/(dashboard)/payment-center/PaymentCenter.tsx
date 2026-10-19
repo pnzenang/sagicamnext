@@ -88,7 +88,7 @@ const PaymentDetails = ({
 }: PaymentDetailsProps) => {
   if (!hasPaymentDue) {
     return (
-      <div className='border-primary/20 bg-primary/10 text-primary w-full rounded-lg border p-4 shadow-sm sm:p-6'>
+      <div className='border-primary/20 bg-primary/10 text-primary flex w-full flex-col items-center rounded-lg border p-4 text-center shadow-sm sm:p-6'>
         <p className='text-lg font-extrabold break-words sm:text-xl'>{title}</p>
         <p className='text-primary/80 mt-2 text-sm font-semibold break-words'>{emptyMessage}</p>
         <PaymentHistoryLink paymentType={paymentType} />
@@ -165,14 +165,14 @@ const PaymentCenter = ({
   return (
     <section className='mx-auto grid w-full max-w-[90rem] min-w-0 shrink-0 gap-5 overflow-visible px-0 py-4 sm:px-6 sm:py-8 lg:px-8'>
       <div className='bg-primary text-primary-foreground border-primary/30 w-full rounded-lg border p-5 shadow-md sm:p-7'>
-        <div className='flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between'>
-          <div className='flex min-w-0 items-center gap-4'>
+        <div className='flex flex-col items-center gap-5 text-center'>
+          <div className='flex min-w-0 flex-col items-center gap-4'>
             <span className='bg-primary-foreground/15 flex size-14 shrink-0 items-center justify-center rounded-lg'>
               <WalletCards className='size-7' aria-hidden='true' />
             </span>
             <div className='min-w-0'>
               <h1 className='text-3xl font-extrabold tracking-normal sm:text-4xl'>Payment Center</h1>
-              <p className='text-primary-foreground/85 mt-2 max-w-3xl text-base font-medium sm:text-lg'>
+              <p className='text-primary-foreground/85 mx-auto mt-2 max-w-3xl text-base font-medium sm:text-lg'>
                 Choose the payment type, review the amount due, then continue with your preferred payment method.
                 Always add <strong className='font-extrabold'>{getSagicamPaymentMemo(sponsorCode)}</strong> in the
                 memo.
@@ -180,7 +180,7 @@ const PaymentCenter = ({
             </div>
           </div>
 
-          <div className='grid shrink-0 gap-3 sm:grid-cols-2 lg:min-w-[28rem]'>
+          <div className='grid w-full max-w-xl gap-3 sm:grid-cols-2'>
             <div className='bg-primary-foreground/10 ring-primary-foreground/20 rounded-lg p-4 ring-1'>
               <p className='text-primary-foreground/80 text-sm font-semibold'>Registration due</p>
               <p className='mt-1 text-2xl font-extrabold'>{currencyFormatter.format(registrationDues)}</p>
@@ -195,7 +195,7 @@ const PaymentCenter = ({
 
       <div className='grid w-full gap-5 md:grid-cols-2'>
         <div className='border-primary/25 bg-background w-full rounded-lg border p-4 shadow-sm sm:p-6'>
-          <div className='flex items-start gap-3'>
+          <div className='flex h-full flex-col items-center justify-center gap-3 text-center'>
             <span className='bg-primary/10 text-primary flex size-10 shrink-0 items-center justify-center rounded-lg'>
               <CreditCard className='size-5' aria-hidden='true' />
             </span>
@@ -206,8 +206,10 @@ const PaymentCenter = ({
         </div>
 
         <div className='border-primary/25 bg-background w-full rounded-lg border p-4 shadow-sm sm:p-6'>
-          <div className='grid w-full gap-2'>
-            <Label htmlFor='payment-type'>Payment type</Label>
+          <div className='grid h-full w-full content-center gap-2 text-center'>
+            <Label htmlFor='payment-type' className='justify-center'>
+              Payment type
+            </Label>
             <Select value={paymentType} onValueChange={value => setPaymentType(value as PaymentCenterType)}>
               <SelectTrigger id='payment-type' className='w-full'>
                 <SelectValue placeholder='Select payment type' />

@@ -40,7 +40,6 @@ const PaymentMethodPage = async ({ params }: PaymentMethodPageProps) => {
           />
         }
         paymentMethod={paymentMethod}
-        paymentType={paymentType}
         sponsorCode={currentContribution.sponsorCode}
       />
     )
@@ -62,7 +61,6 @@ const PaymentMethodPage = async ({ params }: PaymentMethodPageProps) => {
         />
       }
       paymentMethod={paymentMethod}
-      paymentType={paymentType}
       sponsorCode={currentRegistrationPayment.sponsorCode}
     />
   )

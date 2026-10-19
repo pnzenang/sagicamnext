@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react'
 
-import Image from 'next/image'
 import Link from 'next/link'
 
 import {
@@ -13,7 +12,7 @@ import {
   ReceiptText,
   ShieldCheck,
   Smartphone,
-  type LucideIcon
+  Zap
 } from 'lucide-react'
 
 import {
@@ -21,120 +20,149 @@ import {
   sagicamBankDetails,
   sagicamBusinessName,
   sagicamZelleEmail,
-  sagicamZellePaymentUrl,
-  sagicamZelleQrCodeUrl,
-  type PaymentCenterMethod,
-  type PaymentCenterType
+  type PaymentCenterMethod
 } from '@/utils/sagicam-payment-details'
 
-const highlightClassName = 'font-bold text-green-700 dark:text-green-300'
-const infoCardClassName = 'bg-primary/5 h-full rounded-lg p-3 ring-1 ring-primary/15'
-const stepTextClassName = 'text-primary/80 text-left text-base leading-snug font-normal sm:text-lg lg:text-xl'
+const sagicamInfoClassName = 'font-bold text-green-700 dark:text-green-300'
+const cardClassName = 'bg-primary/5 h-full rounded-lg p-3 ring-1 ring-primary/15'
+const cardTitleClassName = 'text-primary text-base leading-tight font-semibold sm:text-lg lg:text-xl'
+const cardTextClassName = 'text-primary/80 mt-2 text-sm leading-snug font-normal sm:text-base'
+const stepTextClassName = 'text-primary/80 mt-3 text-left text-lg leading-snug font-normal sm:text-xl lg:text-2xl'
+const stepTitleClassName = 'text-[clamp(1rem,3vw,2.25rem)] leading-tight font-semibold whitespace-nowrap'
+const primaryIconClassName = 'bg-primary/10 text-primary flex size-8 shrink-0 items-center justify-center rounded-md'
 
-const paymentTypeLabels: Record<PaymentCenterType, string> = {
-  contribution: 'Contribution',
-  registration: 'Registration'
-}
+const amberIconClassName =
+  'flex size-8 shrink-0 items-center justify-center rounded-md bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300'
+
+const greenIconClassName =
+  'flex size-8 shrink-0 items-center justify-center rounded-md bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-300'
 
 const paymentMethodLabels: Record<PaymentCenterMethod, string> = {
   'bank-deposit': 'Bank Deposit',
   zelle: 'Zelle'
 }
 
-const iconToneClassNames = {
-  amber: 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300',
-  green: 'bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-300',
-  primary: 'bg-primary/10 text-primary'
-} as const
-
-const InfoCard = ({
-  children,
-  icon: Icon,
-  title,
-  tone = 'primary'
-}: {
-  children: ReactNode
-  icon: LucideIcon
-  title: string
-  tone?: keyof typeof iconToneClassNames
-}) => (
-  <div className={infoCardClassName}>
-    <div className='flex items-center gap-2'>
-      <span className={`flex size-8 shrink-0 items-center justify-center rounded-md ${iconToneClassNames[tone]}`}>
-        <Icon className='size-4' aria-hidden='true' />
-      </span>
-      <h2 className='text-primary text-base leading-tight font-semibold sm:text-lg'>{title}</h2>
-    </div>
-    <p className='text-primary/80 mt-2 text-sm leading-snug font-normal break-words sm:text-base'>{children}</p>
+const MemoCard = ({ memo }: { memo: string }) => (
+  <div className={cardClassName}>
+    <span className={primaryIconClassName}>
+      <ReceiptText className='size-4' aria-hidden='true' />
+    </span>
+    <p className={`${cardTitleClassName} mt-2`}>4-letter memo</p>
+    <p className={cardTextClassName}>
+      Add <span className={sagicamInfoClassName}>{memo}</span> in the memo so your payment can be matched to your
+      sponsor account.
+    </p>
   </div>
 )
 
+const zelleFeatures = [
+  {
+    description: 'Money is usually available within minutes when both sides are enrolled with Zelle.',
+    icon: Zap,
+    title: 'Fast transfer'
+  },
+  {
+    description: 'Use the Zelle option inside your bank or credit union app, online portal, or transfer menu.',
+    icon: Smartphone,
+    title: 'Use your bank app'
+  }
+] as const
+
 const ZelleInfoCards = ({ memo }: { memo: string }) => (
   <>
-    <div className='grid gap-3 md:grid-cols-[1fr_1fr_auto]'>
-      <div className='grid gap-3'>
-        <InfoCard icon={Smartphone} title='Use your bank app'>
-          Use the Zelle option inside your bank or credit union app, online portal, or transfer menu.
-        </InfoCard>
-        <InfoCard icon={Mail} title='SAGICAM Zelle email'>
-          Send to <span className={highlightClassName}>{sagicamZelleEmail}</span> after selecting payment to a
-          business. Recipient name: <span className={highlightClassName}>{sagicamBusinessName}</span>.
-        </InfoCard>
+    <div className='grid gap-3 md:grid-cols-2 xl:grid-cols-4'>
+      {zelleFeatures.map(feature => (
+        <div key={feature.title} className={cardClassName}>
+          <span className={primaryIconClassName}>
+            <feature.icon className='size-4' aria-hidden='true' />
+          </span>
+          <p className={`${cardTitleClassName} mt-2`}>{feature.title}</p>
+          <p className={cardTextClassName}>{feature.description}</p>
+        </div>
+      ))}
+
+      <div className={cardClassName}>
+        <span className={primaryIconClassName}>
+          <Mail className='size-4' aria-hidden='true' />
+        </span>
+        <p className={`${cardTitleClassName} mt-2`}>SAGICAM email</p>
+        <p className={cardTextClassName}>
+          Send SAGICAM payments to <span className={sagicamInfoClassName}>{sagicamZelleEmail}</span> after selecting
+          payment to a business.
+        </p>
       </div>
-      <div className='grid gap-3'>
-        <InfoCard icon={ReceiptText} title='4-letter memo'>
-          Add <span className={highlightClassName}>{memo}</span> in the memo so your payment can be matched to your
-          sponsor account.
-        </InfoCard>
-        <InfoCard icon={Banknote} title='Treat Zelle like cash' tone='green'>
-          Money goes directly into the recipient&apos;s bank account. Always double check the email and recipient name
-          before sending.
-        </InfoCard>
-      </div>
-      <Link
-        href={sagicamZellePaymentUrl}
-        aria-label='Open SAGICAM Zelle payment information'
-        className='bg-background hover:border-primary flex items-center justify-center rounded-lg border p-2 transition'
-      >
-        <Image
-          src={sagicamZelleQrCodeUrl}
-          width={220}
-          height={220}
-          alt='SAGICAM Zelle payment QR code'
-          className='h-auto w-full max-w-56'
-        />
-      </Link>
+
+      <MemoCard memo={memo} />
     </div>
-    <div className='mt-3'>
-      <InfoCard icon={AlertTriangle} title='Beware of payment scams' tone='amber'>
-        Zelle is fast, so slow down and watch for signs of a scam. If you notice suspicious activity, contact your bank
-        directly.
-      </InfoCard>
+
+    <div className='mt-3 grid w-full items-stretch gap-3 md:grid-cols-3'>
+      <div className={cardClassName}>
+        <div className='flex items-center gap-2'>
+          <span className={primaryIconClassName}>
+            <ShieldCheck className='size-4' aria-hidden='true' />
+          </span>
+          <h2 className={cardTitleClassName}>Only Send Money to Those You Trust</h2>
+        </div>
+        <p className={cardTextClassName}>
+          With Zelle&reg;, you can send money from your account to someone else&apos;s within minutes<sup>1</sup>.
+          It&apos;s a great way to pay friends, family, your co-workers and others you trust, even if they bank
+          somewhere different than you do<sup>1</sup>.
+        </p>
+      </div>
+
+      <div className={cardClassName}>
+        <div className='flex items-center gap-2'>
+          <span className={amberIconClassName}>
+            <AlertTriangle className='size-4' aria-hidden='true' />
+          </span>
+          <h2 className={cardTitleClassName}>Beware of Payment Scams</h2>
+        </div>
+        <p className={cardTextClassName}>
+          While using Zelle&reg; is a fast way to send money, it&apos;s important to slow down and keep an eye out for
+          signs of a scam. If you detect suspicious activity, contact your financial institution directly.
+        </p>
+      </div>
+
+      <div className={cardClassName}>
+        <div className='flex items-center gap-2'>
+          <span className={greenIconClassName}>
+            <Banknote className='size-4' aria-hidden='true' />
+          </span>
+          <h2 className={cardTitleClassName}>Treat Zelle&reg; Like Cash</h2>
+        </div>
+        <p className={cardTextClassName}>
+          With Zelle&reg;, money goes directly into the enrolled recipient&apos;s bank account. Always double check you
+          have the recipient&apos;s correct U.S. mobile number, email address, or Zelle&reg; Tag so the money goes to
+          the right person or small business.
+        </p>
+      </div>
     </div>
   </>
 )
 
 const ZelleSteps = ({ memo }: { memo: string }) => (
   <>
-    <p className={stepTextClassName}>
-      1. Open your banking app: sign in to your bank or credit union&apos;s mobile app or online portal where Zelle is
-      built in, or scan the QR code above.
+    <p className={stepTitleClassName}>Step1: Register SAGICAM Zelle information.</p>
+    <p className={stepTextClassName.replace('mt-3', 'mt-4')}>
+      1. Open your banking app: Sign in to your bank or credit union&apos;s mobile app or online portal where Zelle is
+      built-in.
     </p>
     <p className={stepTextClassName}>
-      2. Navigate to Zelle: look for a menu labeled &quot;Send Money with Zelle&quot;, &quot;Pay &amp; Transfer&quot;,
+      2. Navigate to Zelle: Look for a menu labeled &quot;Send Money with Zelle&quot;, &quot;Pay &amp; Transfer&quot;,
       or &quot;Move Money&quot;.
     </p>
     <p className={stepTextClassName}>
-      3. Select to send money to a business and enter the SAGICAM email:{' '}
-      <span className={highlightClassName}>{sagicamZelleEmail}</span>.
+      3. Select to send money to a business and enter SAGICAM email:{' '}
+      <span className={sagicamInfoClassName}>{sagicamZelleEmail}</span>.
     </p>
     <p className={stepTextClassName}>
-      4. Verify the recipient name is <span className={highlightClassName}>{sagicamBusinessName}</span>.
+      4. Verify the recipient name: Double-check that the recipient&apos;s is:{' '}
+      <span className={sagicamInfoClassName}>{sagicamBusinessName}.</span>
     </p>
     <p className={stepTextClassName}>
-      5. Enter the amount and memo: type the dollar amount and enter{' '}
-      <span className={highlightClassName}>{memo}</span> as the note or memo. Without the 4-letter code memo, the money
-      won&apos;t be recognizable until you send the receipt including your 4-letter code.
+      5. Enter the amount and memo: Type in the dollar amount you wish to send and enter as note or memo:
+      <span className={sagicamInfoClassName}> {memo}</span>. Without the 4-letter code memo, the money won&apos;t be
+      recognizable until you send the receipt including your 4-letter code.
     </p>
   </>
 )
@@ -142,61 +170,107 @@ const ZelleSteps = ({ memo }: { memo: string }) => (
 const BankDepositInfoCards = ({ memo }: { memo: string }) => (
   <>
     <div className='grid gap-3 md:grid-cols-2 xl:grid-cols-4'>
-      <InfoCard icon={Building2} title='Bank'>
-        Deposit or transfer SAGICAM payments through{' '}
-        <span className={highlightClassName}>{sagicamBankDetails.bankName}</span>. Account number:{' '}
-        <span className={highlightClassName}>{sagicamBankDetails.accountNumber}</span>
-      </InfoCard>
-      <InfoCard icon={Landmark} title='Paper & Electronic'>
-        Routing number: <span className={highlightClassName}>{sagicamBankDetails.paperElectronicRoutingNumber}</span>
-      </InfoCard>
-      <InfoCard icon={Banknote} title='Wires'>
-        Routing number: <span className={highlightClassName}>{sagicamBankDetails.wireRoutingNumber}</span>
-      </InfoCard>
-      <InfoCard icon={ReceiptText} title='4-letter memo'>
-        Add <span className={highlightClassName}>{memo}</span> in the memo so your payment can be matched to your
-        sponsor account.
-      </InfoCard>
+      <div className={cardClassName}>
+        <span className={primaryIconClassName}>
+          <Building2 className='size-4' aria-hidden='true' />
+        </span>
+        <p className={`${cardTitleClassName} mt-2`}>Bank</p>
+        <p className={cardTextClassName}>
+          Deposit or transfer SAGICAM payments through{' '}
+          <span className={sagicamInfoClassName}>{sagicamBankDetails.bankName}</span>. Account number:{' '}
+          <span className={sagicamInfoClassName}>{sagicamBankDetails.accountNumber}</span>
+        </p>
+      </div>
+
+      <div className={cardClassName}>
+        <span className={primaryIconClassName}>
+          <Landmark className='size-4' aria-hidden='true' />
+        </span>
+        <p className={`${cardTitleClassName} mt-2`}>Paper &amp; Electronic</p>
+        <p className={cardTextClassName}>
+          Routing number: <span className={sagicamInfoClassName}>{sagicamBankDetails.paperElectronicRoutingNumber}</span>
+        </p>
+      </div>
+
+      <div className={cardClassName}>
+        <span className={primaryIconClassName}>
+          <Banknote className='size-4' aria-hidden='true' />
+        </span>
+        <p className={`${cardTitleClassName} mt-2`}>Wires</p>
+        <p className={cardTextClassName}>
+          Routing number: <span className={sagicamInfoClassName}>{sagicamBankDetails.wireRoutingNumber}</span>
+        </p>
+      </div>
+
+      <MemoCard memo={memo} />
     </div>
-    <div className='mt-3 grid gap-3 md:grid-cols-3'>
-      <InfoCard icon={ShieldCheck} title='Confirm the account'>
-        Verify the SAGICAM bank account details before sending a bank deposit, ACH transfer, or wire.
-      </InfoCard>
-      <InfoCard icon={AlertTriangle} title='Use the right routing number' tone='amber'>
-        Use <span className={highlightClassName}>{sagicamBankDetails.paperElectronicRoutingNumber}</span> for
-        paper/electronic transfers and <span className={highlightClassName}>{sagicamBankDetails.wireRoutingNumber}</span>{' '}
-        for wires.
-      </InfoCard>
-      <InfoCard icon={ReceiptText} title='Keep your receipt' tone='green'>
-        Save the deposit slip, confirmation, or wire receipt so SAGICAM can verify your payment if needed.
-      </InfoCard>
+
+    <div className='mt-3 grid w-full items-stretch gap-3 md:grid-cols-3'>
+      <div className={cardClassName}>
+        <div className='flex items-center gap-2'>
+          <span className={primaryIconClassName}>
+            <ShieldCheck className='size-4' aria-hidden='true' />
+          </span>
+          <h2 className={cardTitleClassName}>Confirm the account</h2>
+        </div>
+        <p className={cardTextClassName}>
+          Verify the SAGICAM bank account details before sending a bank deposit, ACH transfer, or wire.
+        </p>
+      </div>
+
+      <div className={cardClassName}>
+        <div className='flex items-center gap-2'>
+          <span className={amberIconClassName}>
+            <AlertTriangle className='size-4' aria-hidden='true' />
+          </span>
+          <h2 className={cardTitleClassName}>Use the right routing number</h2>
+        </div>
+        <p className={cardTextClassName}>
+          Use <span className={sagicamInfoClassName}>{sagicamBankDetails.paperElectronicRoutingNumber}</span> for
+          paper/electronic transfers and{' '}
+          <span className={sagicamInfoClassName}>{sagicamBankDetails.wireRoutingNumber}</span> for wires.
+        </p>
+      </div>
+
+      <div className={cardClassName}>
+        <div className='flex items-center gap-2'>
+          <span className={greenIconClassName}>
+            <ReceiptText className='size-4' aria-hidden='true' />
+          </span>
+          <h2 className={cardTitleClassName}>Keep your receipt</h2>
+        </div>
+        <p className={cardTextClassName}>
+          Save the deposit slip, confirmation, or wire receipt so SAGICAM can verify your payment if needed.
+        </p>
+      </div>
     </div>
   </>
 )
 
 const BankDepositSteps = ({ memo }: { memo: string }) => (
   <>
-    <p className={stepTextClassName}>
-      1. Choose your bank payment method: paper/electronic transfer, wire transfer, or deposit at the bank.
+    <p className={stepTitleClassName}>Step1: Register SAGICAM Bank Deposit information.</p>
+    <p className={stepTextClassName.replace('mt-3', 'mt-4')}>
+      1. Choose your bank payment method: Use paper/electronic transfer, wire transfer, or deposit at the bank.
     </p>
     <p className={stepTextClassName}>
-      2. To deposit at the bank, go to a <span className={highlightClassName}>{sagicamBankDetails.bankName}</span>{' '}
-      branch and fill the deposit slip with the business name{' '}
-      <span className={highlightClassName}>{sagicamBankDetails.businessName}</span> and account number{' '}
-      <span className={highlightClassName}>{sagicamBankDetails.accountNumber}</span>.
+      2. If you want to deposit at the bank, go to a{' '}
+      <span className={sagicamInfoClassName}>{sagicamBankDetails.bankName}</span> branch and fill the deposit slip with
+      the business name <span className={sagicamInfoClassName}>{sagicamBankDetails.businessName}</span> and account
+      number <span className={sagicamInfoClassName}>{sagicamBankDetails.accountNumber}</span>.
     </p>
     <p className={stepTextClassName}>
-      3. For a transfer, use routing number{' '}
-      <span className={highlightClassName}>{sagicamBankDetails.paperElectronicRoutingNumber}</span> for paper &amp;
-      electronic, or <span className={highlightClassName}>{sagicamBankDetails.wireRoutingNumber}</span> for wires.
+      3. For Transfer, use the Routing Number:{' '}
+      <span className={sagicamInfoClassName}>{sagicamBankDetails.paperElectronicRoutingNumber}</span> for Paper &amp;
+      Electronic, or <span className={sagicamInfoClassName}>{sagicamBankDetails.wireRoutingNumber}</span> for Wires.
     </p>
     <p className={stepTextClassName}>
-      4. Verify the bank information: double-check the bank name, routing number, account number, and amount before
-      sending.
+      4. Verify the bank information: Double-check the bank name, routing number, account information, and amount
+      before sending.
     </p>
     <p className={stepTextClassName}>
-      5. Add a note or memo: enter <span className={highlightClassName}>{memo}</span>. Without the 4-letter code memo,
-      the money won&apos;t be recognizable until you send the receipt including your 4-letter code.
+      5. Add a note or memo: Enter <span className={sagicamInfoClassName}>{memo}</span>. Without the 4-letter code
+      memo, the money won&apos;t be recognizable until you send the receipt including your 4-letter code.
     </p>
   </>
 )
@@ -204,58 +278,46 @@ const BankDepositSteps = ({ memo }: { memo: string }) => (
 type PaymentMethodInstructionsProps = {
   paymentForm: ReactNode
   paymentMethod: PaymentCenterMethod
-  paymentType: PaymentCenterType
   sponsorCode: string
 }
 
-const PaymentMethodInstructions = ({
-  paymentForm,
-  paymentMethod,
-  paymentType,
-  sponsorCode
-}: PaymentMethodInstructionsProps) => {
+const PaymentMethodInstructions = ({ paymentForm, paymentMethod, sponsorCode }: PaymentMethodInstructionsProps) => {
   const memo = getSagicamPaymentMemo(sponsorCode)
   const methodLabel = paymentMethodLabels[paymentMethod]
 
   return (
-    <section className='mx-auto grid w-full max-w-[90rem] min-w-0 gap-5 px-0 py-4 sm:px-6 sm:py-8 lg:px-8'>
+    <main className='flex min-h-[calc(100vh-8rem)] w-full flex-col items-center px-1 pt-2 pb-8 sm:px-2 sm:pt-4'>
       <Link
         href='/payment-center'
-        className='text-primary inline-flex w-fit items-center gap-1.5 text-sm font-bold underline-offset-4 hover:underline'
+        className='text-primary mb-3 inline-flex w-full max-w-[120rem] items-center gap-1.5 text-sm font-bold underline-offset-4 hover:underline'
       >
         <ArrowLeft className='size-4' aria-hidden='true' />
         Back to Payment Center
       </Link>
 
-      <div className='border-primary/20 bg-primary/10 text-primary rounded-lg border p-3 shadow-sm sm:p-6'>
-        <h1 className='text-center text-xl leading-tight font-semibold break-words sm:text-2xl lg:text-3xl'>
-          {sponsorCode} Sponsor, welcome to SAGICAM&apos;s {methodLabel} {paymentTypeLabels[paymentType]} Payment
-          page.
+      <section className='border-primary/20 bg-primary/10 text-primary w-full max-w-[120rem] rounded-lg border p-3 text-center shadow-sm sm:p-6 lg:p-10'>
+        <h1 className='text-[10px] leading-tight font-semibold tracking-normal whitespace-nowrap sm:text-base md:text-xl lg:text-2xl xl:text-3xl'>
+          {sponsorCode} Sponsor, Welcome to SAGICAM&apos;s {methodLabel} Payment page.
         </h1>
 
         <div className='border-primary/30 bg-background mt-6 rounded-lg border p-3 text-left shadow-sm sm:p-4'>
           {paymentMethod === 'zelle' ? <ZelleInfoCards memo={memo} /> : <BankDepositInfoCards memo={memo} />}
         </div>
 
-        <p className='text-primary/80 mt-6 text-center text-base font-medium break-words sm:text-lg lg:text-xl'>
-          To successfully make a {methodLabel} payment to SAGICAM, follow the two step process below.
+        <p className='text-primary/80 mt-6 text-[8px] leading-snug font-medium whitespace-nowrap sm:text-xs md:text-lg lg:text-2xl xl:text-3xl'>
+          To successfully make {methodLabel} payment to SAGICAM, follow the two step process below.
         </p>
 
-        <div className='border-primary/30 bg-background mt-6 grid gap-3 rounded-lg border p-4 shadow-sm sm:p-6'>
-          <p className='text-center text-xl leading-tight font-semibold break-words sm:text-2xl lg:text-3xl'>
-            Step 1: Send the payment by {methodLabel}.
-          </p>
+        <div className='border-primary/30 bg-background mt-8 rounded-lg border p-4 text-center shadow-sm sm:p-6'>
           {paymentMethod === 'zelle' ? <ZelleSteps memo={memo} /> : <BankDepositSteps memo={memo} />}
         </div>
 
-        <div className='border-primary/30 bg-background mt-6 rounded-lg border p-4 shadow-sm sm:p-6'>
-          <p className='text-center text-xl leading-tight font-semibold break-words sm:text-2xl lg:text-3xl'>
-            Step 2: Record the amount you sent.
-          </p>
-          <div className='mx-auto mt-4 w-full max-w-xl'>{paymentForm}</div>
+        <div className='border-primary/30 bg-background mt-8 rounded-lg border p-4 text-center shadow-sm sm:p-6'>
+          <p className={stepTitleClassName}>Step2: Complete the form below:</p>
+          <div className='mx-auto mt-6 w-full max-w-3xl text-left'>{paymentForm}</div>
         </div>
-      </div>
-    </section>
+      </section>
+    </main>
   )
 }
 

@@ -20,13 +20,15 @@ const PaymentCenterPage = async () => {
   const pendingMembersCount = members.filter(member => member.memberStatus === memberStatus.Pending).length
 
   return (
-    <PaymentCenter
-      contributionAmountOwed={currentContribution.amountOwed}
-      contributionAmountPerVestedMember={currentContribution.amountPerVestedMember}
-      contributionVestedMembersCount={currentContribution.vestedMembersCount}
-      pendingRegistrationMembersCount={pendingMembersCount}
-      sponsorCode={currentContribution.sponsorCode}
-    />
+    <main className='flex min-h-[calc(100vh-8rem)] w-full items-center justify-center'>
+      <PaymentCenter
+        contributionAmountOwed={currentContribution.amountOwed}
+        contributionAmountPerVestedMember={currentContribution.amountPerVestedMember}
+        contributionVestedMembersCount={currentContribution.vestedMembersCount}
+        pendingRegistrationMembersCount={pendingMembersCount}
+        sponsorCode={currentContribution.sponsorCode}
+      />
+    </main>
   )
 }
 
