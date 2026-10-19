@@ -10,6 +10,7 @@ import { revalidatePath, unstable_noStore as noStore } from 'next/cache'
 import { customAlphabet } from 'nanoid'
 
 import db from './db'
+import { documentationFileTooLargeMessage, maxDocumentationFileSize } from './document-upload'
 import {
   DeceasedMemberSchema,
   memberSchema,
@@ -88,7 +89,6 @@ const contributionPaymentAlertType = 'contribution'
 const registrationPaymentAlertType = 'registration'
 const allPaymentAlertSponsorsCode = '__all__'
 const MEMBER_REMOVAL_RESTORE_WINDOW_MS = 48 * 60 * 60 * 1000
-const maxDocumentationFileSize = 20 * 1024 * 1024
 const blockedDeceasedRestoreStatuses = new Set<string>([contributionStatus.underway, contributionStatus.completed])
 const contributionCreditMemberStatuses = new Set<string>([memberStatus.Vested, memberStatus.Delinquent])
 
@@ -4080,7 +4080,7 @@ export const uploadNameChangeDocumentationAction = async (
     }
 
     if (file.size > maxDocumentationFileSize) {
-      throw new Error('The file is too large. Please upload a file that is 20 MB or smaller.')
+      throw new Error(documentationFileTooLargeMessage)
     }
 
     if (!isAllowedDeceasedMemberDocumentFile(file)) {
@@ -5552,7 +5552,7 @@ export const uploadDeceasedMemberDocumentAction = async (
     }
 
     if (file.size > maxDocumentationFileSize) {
-      throw new Error('The file is too large. Please upload a file that is 20 MB or smaller.')
+      throw new Error(documentationFileTooLargeMessage)
     }
 
     if (!isAllowedDeceasedMemberDocumentFile(file)) {

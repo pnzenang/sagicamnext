@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 
 import { CheckCircle2, Download, FileText, Search, ShieldCheck, Upload, XCircle } from 'lucide-react'
 
+import DocumentFileInput from '@/components/forms/DocumentFileInput'
 import FormContainer from '@/components/forms/FormContainer'
 import { SubmitButton } from '@/components/forms/Buttons'
 import PaginationControls from '@/components/global/PaginationControls'
@@ -16,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { usePagination } from '@/hooks/use-pagination'
 import { cn } from '@/lib/utils'
 import { hasAllApprovedDeceasedMemberDocuments } from '@/utils/deceased-member-documents'
+import { maxDocumentationFileSizeMb } from '@/utils/document-upload'
 import { sagicamTimeZone } from '@/utils/sagicam-time-zone'
 import {
   deleteDeceasedMemberDocumentAction,
@@ -224,8 +226,8 @@ const DocumentationSlot = ({
           <input type='hidden' name='deceasedMemberId' value={deceasedMember.id} />
           <input type='hidden' name='documentType' value={documentType} />
           <Label htmlFor={inputId}>{uploadedDocument ? 'Replace file' : 'Choose file'}</Label>
-          <p className='text-muted-foreground text-xs'>PDF or image, up to 20 MB.</p>
-          <Input id={inputId} name='documentFile' type='file' accept={documentAccept} required />
+          <p className='text-muted-foreground text-xs'>PDF or image, up to {maxDocumentationFileSizeMb} MB.</p>
+          <DocumentFileInput id={inputId} name='documentFile' accept={documentAccept} required />
           <SubmitButton
             text={uploadedDocument ? 'Replace document' : 'Upload document'}
             className='h-9 w-full text-sm normal-case'
