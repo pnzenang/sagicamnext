@@ -112,6 +112,7 @@ const dashboardMenuLabelTranslations: Record<string, string> = {
   'Member Transfer': 'Transfert de membre',
   'Name Change & Documentations': 'Changement de nom et documents',
   'New Additions': 'Nouveaux ajouts',
+  'Payment Center': 'Centre de paiement',
   'Payment Update': 'Mise à jour des paiements',
   'Payment Instructions': 'Instructions de paiement',
   'Registration Payments': "Paiements d'inscription",

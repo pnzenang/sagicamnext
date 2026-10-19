@@ -19,7 +19,7 @@ const initialState = {
 }
 
 const zelleReminder =
-  'Please do not enter the amount if you have not sent the Zelle yet. Send the Zelle before you enter the amount in the form.'
+  'Please do not enter the amount if you have not sent the payment yet. Send the Zelle or bank payment before you enter the amount in the form.'
 
 const SponsorRegistrationPaymentCard = ({ amountExpected, amountSent }: SponsorRegistrationPaymentCardProps) => {
   const [state, formAction] = useActionState(saveSponsorRegistrationPaymentAction, initialState)

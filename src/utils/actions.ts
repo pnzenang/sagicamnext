@@ -555,6 +555,7 @@ const revalidateSponsorPaymentPages = () => {
   revalidatePath('/admin-payment-history')
   revalidatePath('/contribution-table')
   revalidatePath('/contributions-payments')
+  revalidatePath('/payment-center', 'layout')
   revalidatePath('/registration-payments')
   revalidateDashboardActivityLogs()
 }

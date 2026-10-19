@@ -14,7 +14,6 @@ import {
   Wallet,
   FileCheck,
   WalletCards,
-  WalletMinimal,
   History,
   List,
   ArrowLeftRight,
@@ -47,15 +46,9 @@ export const pagesItems: MenuItem[] = [
     href: '/all-members'
   },
   {
-    icon: WalletMinimal,
-    label: 'Registration Payments  ',
-    href: '/registration-payments'
-  },
-
-  {
     icon: WalletCards,
-    label: 'Contributions Payments',
-    href: '/contributions-payments'
+    label: 'Payment Center',
+    href: '/payment-center'
   },
   {
     icon: Table2,

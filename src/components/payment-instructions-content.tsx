@@ -25,7 +25,7 @@ const getPaymentSteps = (memoReference: string) => [
     icon: WalletCards,
     title: 'Open the right payment page',
     description:
-      'Use Registration Payments for new loved one fees and Contributions Payments for monthly contributions.'
+      'In the Payment Center, choose Registration payment for new loved one fees or Contribution payment for monthly contributions.'
   },
   {
     icon: CreditCard,
@@ -41,7 +41,7 @@ const getPaymentSteps = (memoReference: string) => [
   {
     icon: Upload,
     title: 'Record the payment in SAGICAM',
-    description: 'Return to the matching payment page, enter the exact amount sent, and submit it for verification.'
+    description: 'Return to the Payment Center, enter the exact amount sent, and submit it for verification.'
   }
 ]
 
@@ -66,13 +66,10 @@ const PaymentInstructionsContent = ({ sponsorCode }: { sponsorCode?: string | nu
           </p>
           <div className='mt-6 flex flex-col gap-3 sm:flex-row'>
             <Button asChild>
-              <Link href='/contributions-payments'>
-                Contributions Payments
+              <Link href='/payment-center'>
+                Payment Center
                 <ArrowRight className='size-4' />
               </Link>
-            </Button>
-            <Button asChild variant='outline'>
-              <Link href='/registration-payments'>Registration Payments</Link>
             </Button>
           </div>
         </div>
@@ -107,8 +104,7 @@ const PaymentInstructionsContent = ({ sponsorCode }: { sponsorCode?: string | nu
               />
             </Link>
             <p className='text-muted-foreground text-center text-sm'>
-              After sending, come back to SAGICAM and submit the payment record in Registration Payments or
-              Contributions Payments.
+              After sending, come back to SAGICAM and submit the payment record in the Payment Center.
             </p>
           </CardContent>
         </Card>
