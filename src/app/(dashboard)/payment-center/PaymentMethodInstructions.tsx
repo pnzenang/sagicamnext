@@ -186,8 +186,8 @@ const ZelleSteps = ({ memo }: { memo: string }) => (
         <Link href={sagicamZellePaymentUrl} target='_blank' rel='noopener noreferrer'>
           <Image
             src={sagicamZelleQrCodeUrl}
-            width={320}
-            height={320}
+            width={1062}
+            height={1009}
             alt='SAGICAM Zelle payment QR code'
             className='h-auto w-full max-w-72 sm:max-w-80'
             unoptimized

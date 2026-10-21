@@ -5,7 +5,7 @@ export const sagicamZelleEmail = 'info@sagiusa.org'
 export const sagicamZellePaymentUrl =
   'https://enroll.zellepay.com/qr-codes?data=eyJuYW1lIjoiQUNUSVZFIFNPTElEQVJJVFkgTFREIiwiYWN0aW9uIjoicGF5bWVudCIsInRva2VuIjoiaW5mb0BzYWdpdXNhLm9yZyJ9'
 
-export const sagicamZelleQrCodeUrl = 'https://res.cloudinary.com/dp8tkb7hq/image/upload/v1778042720/sagiQrCode_jmwsbf.svg'
+export const sagicamZelleQrCodeUrl = '/images/sagicam-zelle-qr.jpg'
 
 export const sagicamBankDetails = {
   accountNumber: '446008676977',
