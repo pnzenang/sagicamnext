@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { cookies } from 'next/headers'
 
 import SidebarGroupedMenuItems from '@/components/dashboard/SidebarGroupedMenuItems'
+import { LanguageToggle } from '@/components/global/LanguageToggle'
 import { ModeToggleSmall } from '@/components/layout/mode-toggle/mode-toggle-small'
 import LogoSmall from '@/components/logoSmall'
 import { Card, CardContent } from '@/components/ui/card'
@@ -71,6 +72,7 @@ const PagesLayout = async ({ children }: Readonly<{ children: ReactNode }>) => {
                 </div>
               </div>
               <div className='flex shrink-0 items-center justify-end gap-3'>
+                <LanguageToggle compact initialLanguage={language} />
                 <ModeToggleSmall />
                 <UserButton
                   appearance={{

@@ -8,6 +8,7 @@ import { PrimaryFlowButton } from '@/components/ui/flow-button'
 import { languageCookieName, languageOptions, normalizeLanguage, type AppLanguage } from '@/lib/i18n'
 
 type LanguageToggleContentProps = {
+  compact?: boolean
   currentLanguage?: AppLanguage
   nextPath?: string
 }
@@ -32,16 +33,18 @@ const getLanguageRedirectPath = (language: AppLanguage) => {
   return `${url.pathname}${url.search}${url.hash}`
 }
 
-const LanguageToggleContent = ({ currentLanguage = 'en', nextPath }: LanguageToggleContentProps) => {
+const LanguageToggleContent = ({ compact, currentLanguage = 'en', nextPath }: LanguageToggleContentProps) => {
   const targetLanguage: AppLanguage = currentLanguage === 'fr' ? 'en' : 'fr'
   const targetOption = languageOptions[targetLanguage]
 
   return (
     <PrimaryFlowButton
       type='button'
-      size='icon-lg'
+      size={compact ? 'xs' : 'icon-lg'}
       aria-label={targetOption.ariaLabel}
-      className='bg-accent relative'
+      className={
+        compact ? 'bg-accent relative flex h-6 w-6 items-center justify-center rounded-full' : 'bg-accent relative'
+      }
       disabled={!nextPath}
       onClick={() => {
         setLanguageCookie(targetLanguage)
@@ -58,12 +61,20 @@ const LanguageToggleContent = ({ currentLanguage = 'en', nextPath }: LanguageTog
         window.location.assign(redirectPath)
       }}
     >
-      <span className='text-xs font-bold'>{targetOption.shortLabel}</span>
+      <span className={compact ? 'text-[10px] font-bold' : 'text-xs font-bold'}>{targetOption.shortLabel}</span>
     </PrimaryFlowButton>
   )
 }
 
-const LanguageToggleInner = ({ homeOnly, initialLanguage }: { homeOnly?: boolean; initialLanguage: AppLanguage }) => {
+const LanguageToggleInner = ({
+  compact,
+  homeOnly,
+  initialLanguage
+}: {
+  compact?: boolean
+  homeOnly?: boolean
+  initialLanguage: AppLanguage
+}) => {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const queryLanguage = searchParams.get('lang')
@@ -73,18 +84,20 @@ const LanguageToggleInner = ({ homeOnly, initialLanguage }: { homeOnly?: boolean
 
   if (homeOnly && pathname !== '/') return null
 
-  return <LanguageToggleContent currentLanguage={currentLanguage} nextPath={nextPath} />
+  return <LanguageToggleContent compact={compact} currentLanguage={currentLanguage} nextPath={nextPath} />
 }
 
 const LanguageToggle = ({
+  compact,
   homeOnly,
   initialLanguage = 'en'
 }: {
+  compact?: boolean
   homeOnly?: boolean
   initialLanguage?: AppLanguage
 }) => (
-  <Suspense fallback={<LanguageToggleContent currentLanguage={initialLanguage} />}>
-    <LanguageToggleInner homeOnly={homeOnly} initialLanguage={initialLanguage} />
+  <Suspense fallback={<LanguageToggleContent compact={compact} currentLanguage={initialLanguage} />}>
+    <LanguageToggleInner compact={compact} homeOnly={homeOnly} initialLanguage={initialLanguage} />
   </Suspense>
 )
 
