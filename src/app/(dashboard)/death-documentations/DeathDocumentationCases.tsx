@@ -262,7 +262,7 @@ const DeceasedMemberDocumentationCard = ({
     <Card
       className={cn(
         'rounded-lg py-0',
-        allDocumentsApproved && 'border-green-200 bg-green-50/80 dark:border-green-900/60 dark:bg-green-950/30'
+        allDocumentsApproved && 'border-green-500 bg-green-300/70 dark:border-green-600 dark:bg-green-800/70'
       )}
     >
       <CardHeader className='border-b px-4 py-4 sm:px-6'>

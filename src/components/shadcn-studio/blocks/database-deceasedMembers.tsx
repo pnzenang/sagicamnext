@@ -72,7 +72,7 @@ declare module '@tanstack/react-table' {
 }
 
 const approvedDeathDocumentsBackgroundClassName =
-  'border-green-200 bg-green-50/80 hover:bg-green-100/80 dark:border-green-900/60 dark:bg-green-950/30 dark:hover:bg-green-900/30'
+  'border-green-500 bg-green-300/70 hover:bg-green-300 dark:border-green-600 dark:bg-green-800/70 dark:hover:bg-green-800/90'
 
 const getDeathDocumentsApprovalBackgroundClassName = (deceasedMember: DeceasedMemberTableRow) =>
   deceasedMember.deathDocumentsApproved ? approvedDeathDocumentsBackgroundClassName : undefined
