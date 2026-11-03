@@ -72,7 +72,7 @@ declare module '@tanstack/react-table' {
 }
 
 const approvedDeathDocumentsBackgroundClassName =
-  'border-green-400 bg-green-300 hover:bg-green-300/90 dark:border-green-300 dark:bg-green-300/60 dark:hover:bg-green-300/70'
+  'border-green-300 bg-green-200 hover:bg-green-200/90 dark:border-green-200 dark:bg-green-200/60 dark:hover:bg-green-200/70'
 
 const completedContributionBackgroundClassName =
   'border-blue-400 bg-blue-300 hover:bg-blue-300/90 dark:border-blue-300 dark:bg-blue-300/60 dark:hover:bg-blue-300/70'
