@@ -89,6 +89,9 @@ const contributionPaymentAlertType = 'contribution'
 const registrationPaymentAlertType = 'registration'
 const allPaymentAlertSponsorsCode = '__all__'
 const MEMBER_REMOVAL_RESTORE_WINDOW_MS = 48 * 60 * 60 * 1000
+
+// Bulk status changes touch several rows per member, so large selections need more than Prisma's 5s default.
+const bulkMemberStatusTransactionOptions = { maxWait: 10_000, timeout: 60_000 }
 const blockedDeceasedRestoreStatuses = new Set<string>([contributionStatus.underway, contributionStatus.completed])
 const contributionCreditMemberStatuses = new Set<string>([memberStatus.Vested, memberStatus.Delinquent])
 
@@ -204,34 +207,17 @@ const fetchCurrentActorEmail = async (actorClerkId: string) => {
   return actor.primaryEmailAddress?.emailAddress ?? actor.emailAddresses[0]?.emailAddress ?? null
 }
 
-const recordDashboardActivity = async ({
-  action,
-  actorClerkId,
-  dashboardScope,
-  entityId,
-  entityType,
-  metadata,
-  sponsorCode,
-  summary,
-  tx = db
-}: {
-  action: string
-  actorClerkId: string
-  dashboardScope: DashboardActivityScope
-  entityId?: string | null
-  entityType: string
-  metadata?: Prisma.InputJsonValue
-  sponsorCode?: string | null
-  summary: string
-  tx?: DashboardActivityLogClient
-}) => {
-  if (!(await hasDashboardActivityLogTable(tx))) {
-    console.warn('DashboardActivityLog table is not available. Skipping activity log write.')
+type DashboardActivityActorDetails = {
+  actorEmail: string | null
+  actorName: string | null
+  actorSponsorCode: string | null
+}
 
-    return
-  }
-
-  const actorProfile = await tx.profile
+const fetchDashboardActivityActorDetails = async (
+  actorClerkId: string,
+  client: DashboardActivityLogClient = db
+): Promise<DashboardActivityActorDetails> => {
+  const actorProfile = await client.profile
     .findUnique({
       select: {
         sponsorCode: true,
@@ -246,13 +232,52 @@ const recordDashboardActivity = async ({
 
   const actorEmail = await fetchCurrentActorEmail(actorClerkId)
 
+  return {
+    actorEmail,
+    actorName: actorProfile ? getSponsorDisplayName(actorProfile) : null,
+    actorSponsorCode: actorProfile?.sponsorCode ?? null
+  }
+}
+
+const recordDashboardActivity = async ({
+  action,
+  actorClerkId,
+  actorDetails,
+  dashboardScope,
+  entityId,
+  entityType,
+  metadata,
+  sponsorCode,
+  summary,
+  tx = db
+}: {
+  action: string
+  actorClerkId: string
+  actorDetails?: DashboardActivityActorDetails
+  dashboardScope: DashboardActivityScope
+  entityId?: string | null
+  entityType: string
+  metadata?: Prisma.InputJsonValue
+  sponsorCode?: string | null
+  summary: string
+  tx?: DashboardActivityLogClient
+}) => {
+  if (!(await hasDashboardActivityLogTable(tx))) {
+    console.warn('DashboardActivityLog table is not available. Skipping activity log write.')
+
+    return
+  }
+
+  const { actorEmail, actorName, actorSponsorCode } =
+    actorDetails ?? (await fetchDashboardActivityActorDetails(actorClerkId, tx))
+
   await tx.dashboardActivityLog.create({
     data: {
       action,
       actorClerkId,
       actorEmail,
-      actorName: actorProfile ? getSponsorDisplayName(actorProfile) : null,
-      actorSponsorCode: actorProfile?.sponsorCode ?? null,
+      actorName,
+      actorSponsorCode,
       dashboardScope,
       entityId: entityId ?? null,
       entityType,
@@ -3591,6 +3616,7 @@ export const updateSelectedMembersStatusForAdminAction = async (
 
     const affectedSponsorCodes = Array.from(new Set(membersToUpdate.map(member => member.sponsorCode)))
     const manuallyVestedAt = new Date()
+    const actorDetails = await fetchDashboardActivityActorDetails(user.id)
     let updatedCount = 0
 
     await preserveContributionReserveDeficitForSponsors(
@@ -3624,6 +3650,7 @@ export const updateSelectedMembersStatusForAdminAction = async (
             await recordDashboardActivity({
               action: 'member_status_updated',
               actorClerkId: user.id,
+              actorDetails,
               dashboardScope: dashboardActivityScopes.admin,
               entityId: member.id,
               entityType: 'member',
@@ -3677,7 +3704,7 @@ export const updateSelectedMembersStatusForAdminAction = async (
 
             updatedCount += updatedMember.count
           }
-        })
+        }, bulkMemberStatusTransactionOptions)
       },
       { allowContributionCreditChanges: true }
     )
