@@ -1,5 +1,6 @@
 import { CalendarDays, DollarSign, HeartHandshake, Table2, Users } from 'lucide-react'
 
+import ContributionTableExcelButton from '@/components/dashboard/ContributionTableExcelButton'
 import PublishedContributionTables from '@/components/dashboard/PublishedContributionTables'
 import PrintButton from '@/components/global/PrintButton'
 import { Badge } from '@/components/ui/badge'
@@ -89,7 +90,15 @@ const ContributionTable = async () => {
             sponsor is expected to contribute.
           </p>
         </div>
-        <PrintButton label='Print PDF' className='w-fit' />
+        <div className='flex flex-wrap gap-2'>
+          <PrintButton label='Print PDF' className='w-fit' />
+          <ContributionTableExcelButton
+            addedMonthYearLabel={addedMonthYearLabel}
+            deaths={publishedTable.deaths}
+            groups={publishedTable.groups}
+            tableLabel={contributionTableLabel}
+          />
+        </div>
       </div>
 
       <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-5 print:mb-3'>
