@@ -250,7 +250,8 @@ const ContributionTableDocumentLink = ({ document, label }: { document: Contribu
     return (
       <span className='text-muted-foreground text-[10px] font-medium sm:text-xs'>
         <span className='sm:hidden print:hidden'>No</span>
-        <span className='hidden sm:inline print:inline'>Missing</span>
+        <span className='hidden sm:inline print:hidden'>Missing</span>
+        <span className='hidden print:inline'>Download</span>
       </span>
     )
   }
