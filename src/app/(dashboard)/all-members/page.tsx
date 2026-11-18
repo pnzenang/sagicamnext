@@ -1,5 +1,6 @@
 import { Card } from '@/components/ui/card'
 
+import SponsorAccountSummary from '@/components/dashboard/SponsorAccountSummary'
 import MembersDataTable from '@/components/shadcn-studio/blocks/datatable-members'
 import { fetchCurrentSponsorContribution, fetchCurrentSponsorRegistrationPayment, fetchMembers } from '@/utils/actions'
 import { memberStatus } from '@/utils/types'
@@ -26,7 +27,13 @@ const DataTablePreview = async () => {
 
   return (
     <div className='max-w-full min-w-0 py-4 sm:py-10'>
-      <div className='max-w-9xl mx-auto max-w-full min-w-0 px-0 sm:px-6 lg:px-8'>
+      <div className='max-w-9xl mx-auto flex max-w-full min-w-0 flex-col gap-4 px-0 sm:gap-6 sm:px-6 lg:px-8'>
+        <SponsorAccountSummary
+          currentContribution={currentContribution}
+          currentRegistrationPayment={currentRegistrationPayment}
+          delinquentMembersCount={membershipSummary.delinquent}
+          pendingMembersCount={membershipSummary.pending}
+        />
         <Card className='max-w-9xl mx-auto max-w-full min-w-0 overflow-hidden py-0'>
           <MembersDataTable
             currentContribution={currentContribution}

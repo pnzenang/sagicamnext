@@ -745,6 +745,7 @@ const preserveContributionReserveDeficitForSponsors = async (
       return {
         amount: roundCurrencyAmount(summary.manualBalanceAdjustment + balanceDifference),
         balanceDifference,
+        previousAmount: summary.manualBalanceAdjustment,
         sponsorCode: summary.sponsorCode
       }
     })
@@ -753,7 +754,7 @@ const preserveContributionReserveDeficitForSponsors = async (
   if (adjustmentUpdates.length === 0) return
 
   await db.$transaction(
-    adjustmentUpdates.map(update =>
+    adjustmentUpdates.flatMap(update => [
       db.sponsorBalanceAdjustment.upsert({
         create: {
           amount: update.amount,
@@ -769,10 +770,30 @@ const preserveContributionReserveDeficitForSponsors = async (
             sponsorCode: update.sponsorCode
           }
         }
+      }),
+      db.sponsorPaymentLedgerEntry.create({
+        data: {
+          amount: update.balanceDifference,
+          createdBy: null,
+          eventType: sponsorPaymentLedgerEventTypes.automaticAdjustment,
+          note: `Contribution reserve automatically adjusted by ${currencyFormatter.format(
+            update.balanceDifference
+          )} so the sponsor's balance stays the same after a loved one status or credit change.${describeBalanceAdjustmentChange(
+            update.previousAmount,
+            update.amount
+          )}`,
+          paymentType: sponsorPaymentTypes.contribution,
+          sponsorCode: update.sponsorCode
+        }
       })
-    )
+    ])
   )
 }
+
+const describeBalanceAdjustmentChange = (previousAmount: number, nextAmount: number) =>
+  roundCurrencyAmount(previousAmount) === roundCurrencyAmount(nextAmount)
+    ? ''
+    : ` Reserve adjustment changed from ${currencyFormatter.format(previousAmount)} to ${currencyFormatter.format(nextAmount)}.`
 
 const getPreservedContributionBalanceAdjustment = ({
   balance,
@@ -1517,11 +1538,18 @@ export const resetContributionCalculationAction = async (
       }
     })
 
+    const preservedBalanceAdjustmentByCode = new Map(
+      preservedBalanceAdjustments.map(adjustment => [adjustment.sponsorCode, adjustment.amount])
+    )
+
     const resetLedgerEntries = affectedSponsorCodes.map(sponsorCode => ({
       amount: 0,
       createdBy: user.id,
       eventType: sponsorPaymentLedgerEventTypes.reset,
-      note: 'Contribution calculation reset. Contribution owed, sent, and verified values were cleared; reserve/deficit was preserved.',
+      note: `Contribution calculation reset. Contribution owed, sent, and verified values were cleared; reserve/deficit was preserved.${describeBalanceAdjustmentChange(
+        balanceAdjustmentByCode.get(sponsorCode) ?? 0,
+        preservedBalanceAdjustmentByCode.get(sponsorCode) ?? 0
+      )}`,
       paymentType: sponsorPaymentTypes.contribution,
       sponsorCode
     }))
@@ -2995,7 +3023,10 @@ export const resetSponsorContributionPaymentAction = async (formData: FormData):
           amount: 0,
           createdBy: user.id,
           eventType: sponsorPaymentLedgerEventTypes.reset,
-          note: `Contribution payment totals reset. Cleared sent ${currencyFormatter.format(decimalToNumber(currentPayment?.amountSent))} and verified ${currencyFormatter.format(decimalToNumber(currentPayment?.amountVerified))}.`,
+          note: `Contribution payment totals reset. Cleared sent ${currencyFormatter.format(decimalToNumber(currentPayment?.amountSent))} and verified ${currencyFormatter.format(decimalToNumber(currentPayment?.amountVerified))}.${describeBalanceAdjustmentChange(
+            contributionSummary.manualBalanceAdjustment,
+            preservedBalanceAdjustment
+          )}`,
           paymentType: sponsorPaymentTypes.contribution,
           sponsorCode
         }
@@ -3292,7 +3323,10 @@ export const resetSponsorRegistrationPaymentAction = async (formData: FormData):
           amount: 0,
           createdBy: user.id,
           eventType: sponsorPaymentLedgerEventTypes.reset,
-          note: `Registration payment totals reset. Cleared sent ${currencyFormatter.format(decimalToNumber(currentPayment?.amountSent))} and verified ${currencyFormatter.format(decimalToNumber(currentPayment?.amountVerified))}.`,
+          note: `Registration payment totals reset. Cleared sent ${currencyFormatter.format(decimalToNumber(currentPayment?.amountSent))} and verified ${currencyFormatter.format(decimalToNumber(currentPayment?.amountVerified))}.${describeBalanceAdjustmentChange(
+            registrationSummary.manualBalanceAdjustment,
+            preservedBalanceAdjustment
+          )}`,
           paymentType: sponsorPaymentTypes.registration,
           sponsorCode
         }

@@ -13,6 +13,7 @@ const paymentTypeLabels: Record<string, string> = {
 }
 
 const eventTypeLabels: Record<string, string> = {
+  [sponsorPaymentLedgerEventTypes.automaticAdjustment]: 'Automatic adjustment',
   [sponsorPaymentLedgerEventTypes.manualAdjustment]: 'Amount adjusted',
   [sponsorPaymentLedgerEventTypes.reset]: 'Reset',
   [sponsorPaymentLedgerEventTypes.submitted]: 'Amount set by sponsor',
@@ -20,6 +21,7 @@ const eventTypeLabels: Record<string, string> = {
 }
 
 const historyEventTypes = [
+  sponsorPaymentLedgerEventTypes.automaticAdjustment,
   sponsorPaymentLedgerEventTypes.manualAdjustment,
   sponsorPaymentLedgerEventTypes.reset,
   sponsorPaymentLedgerEventTypes.submitted,
@@ -80,13 +82,17 @@ const AdminPaymentHistory = async () => {
 
     return {
       amountAdjusted:
-        entry.eventType === sponsorPaymentLedgerEventTypes.manualAdjustment || wasManuallyAdjustedAmountSent
+        entry.eventType === sponsorPaymentLedgerEventTypes.manualAdjustment ||
+        entry.eventType === sponsorPaymentLedgerEventTypes.automaticAdjustment ||
+        wasManuallyAdjustedAmountSent
           ? amount
           : null,
       amountSet:
         entry.eventType === sponsorPaymentLedgerEventTypes.submitted && !wasManuallyAdjustedAmountSent ? amount : null,
       amountVerified: entry.eventType === sponsorPaymentLedgerEventTypes.verified ? amount : null,
-      canDelete: entry.eventType !== sponsorPaymentLedgerEventTypes.reset,
+      canDelete:
+        entry.eventType !== sponsorPaymentLedgerEventTypes.reset &&
+        entry.eventType !== sponsorPaymentLedgerEventTypes.automaticAdjustment,
       createdAt: entry.createdAt.toISOString(),
       createdAtLabel: dateTimeFormatter.format(entry.createdAt),
       eventType: wasManuallyAdjustedAmountSent
@@ -98,7 +104,9 @@ const AdminPaymentHistory = async () => {
       source:
         entry.eventType === sponsorPaymentLedgerEventTypes.submitted && !wasManuallyAdjustedAmountSent
           ? 'Sponsor'
-          : 'SAGICAM',
+          : entry.eventType === sponsorPaymentLedgerEventTypes.automaticAdjustment
+            ? 'SAGICAM (automatic)'
+            : 'SAGICAM',
       sponsorCode: entry.sponsorCode,
       sponsorEmail: sponsor?.sponsorEmail ?? '',
       sponsorName

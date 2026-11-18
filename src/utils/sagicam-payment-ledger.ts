@@ -8,6 +8,7 @@ export const sponsorPaymentTypes = {
 } as const
 
 export const sponsorPaymentLedgerEventTypes = {
+  automaticAdjustment: 'automatic_adjustment',
   dueOffset: 'due_offset',
   manualAdjustment: 'manual_adjustment',
   reset: 'reset',
