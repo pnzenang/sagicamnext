@@ -143,6 +143,45 @@ const AdminSagicamPayments = async () => {
     }
   })
 
+  const [contributionCreditRecords, nonVestedRegisteredMembers] = await Promise.all([
+    db.sponsorContributionCredit.findMany({
+      select: {
+        amountCredited: true,
+        memberMatriculationNumber: true,
+        sponsorCode: true
+      }
+    }),
+    db.member.findMany({
+      select: {
+        memberMatriculationNumber: true,
+        sponsorCode: true
+      },
+      where: {
+        memberStatus: {
+          not: memberStatus.Vested
+        }
+      }
+    })
+  ])
+
+  // Same rule as removeSponsorInactiveContributionCreditsAction: credits of registered, non-vested loved ones.
+  const nonVestedRegisteredMemberKeys = new Set(
+    nonVestedRegisteredMembers.map(member => `${member.sponsorCode}|${member.memberMatriculationNumber}`)
+  )
+
+  const removableCreditByCode = contributionCreditRecords.reduce((amountsByCode, credit) => {
+    if (!nonVestedRegisteredMemberKeys.has(`${credit.sponsorCode}|${credit.memberMatriculationNumber}`)) {
+      return amountsByCode
+    }
+
+    amountsByCode.set(
+      credit.sponsorCode,
+      Number(((amountsByCode.get(credit.sponsorCode) ?? 0) + decimalToNumber(credit.amountCredited)).toFixed(2))
+    )
+
+    return amountsByCode
+  }, new Map<string, number>())
+
   const contributionCreditsBySponsorCode = await db.sponsorContributionCredit.groupBy({
     _sum: {
       amountCredited: true
@@ -327,6 +366,7 @@ const AdminSagicamPayments = async () => {
       }),
       contributionCredit: vestedContributionCredit,
       contributionAmountUsed: totalAmountUsed,
+      removableCredit: removableCreditByCode.get(sponsorCode) ?? 0,
       contributionAmountSent: currentContributionPaymentTotals?.amountSent ?? 0,
       cemail: sponsor?.sponsorEmail ?? '',
       sponsorCode,

@@ -26,6 +26,8 @@ import { cn } from '@/lib/utils'
 import { contributionCreditPerVestedMember } from '@/utils/sagicam-contribution-constants'
 import {
   addSponsorContributionBalanceAdjustmentAction,
+  removeSponsorInactiveContributionCreditsAction,
+  setSponsorContributionBalanceAction,
   adjustSponsorContributionAmountSentAction,
   resetSponsorContributionPaymentAction,
   verifySponsorContributionPaymentAction
@@ -44,6 +46,7 @@ export type AdminSagicamPaymentsRow = {
   contributionAmountUsed: number
   contributionCredit: number
   cemail: string
+  removableCredit: number
   sponsorCode: string
   vestedMembers: number
 }
@@ -318,14 +321,16 @@ const ManualBalanceAdjustmentForm = ({
 }) => {
   const inputId = `${balanceType}-balance-amount-${sponsorCode}`
   const reasonId = `${balanceType}-balance-adjustment-reason-${sponsorCode}`
+  const modeId = `${balanceType}-balance-mode-${sponsorCode}`
   const [balanceAmount, setBalanceAmount] = useState('')
   const [adjustmentReason, setAdjustmentReason] = useState('')
-  const shouldShowReason = isNonZeroAdjustmentValue(balanceAmount)
+  const [mode, setMode] = useState<'add' | 'set'>('add')
+  const shouldShowReason = mode === 'set' ? balanceAmount.trim() !== '' : isNonZeroAdjustmentValue(balanceAmount)
 
   const handleAction = async (formData: FormData) => {
     setBalanceAmount('')
     setAdjustmentReason('')
-    await action(formData)
+    await (mode === 'set' ? setSponsorContributionBalanceAction(formData) : action(formData))
   }
 
   return (
@@ -333,12 +338,27 @@ const ManualBalanceAdjustmentForm = ({
       action={handleAction}
       className={cn(
         'grid gap-1.5 print:hidden',
-        layout === 'card' ? '' : 'col-start-2 row-span-2 row-start-1 w-28 justify-items-end'
+        layout === 'card' ? '' : 'w-full justify-items-end'
       )}
     >
       <input type='hidden' name='sponsorCode' value={sponsorCode} />
+      <label htmlFor={modeId} className='sr-only'>
+        Adjustment mode
+      </label>
+      <select
+        id={modeId}
+        value={mode}
+        onChange={event => setMode(event.target.value === 'set' ? 'set' : 'add')}
+        className={cn(
+          'bg-background text-foreground w-full rounded-md border px-1 text-[11px]',
+          layout === 'card' ? 'h-8 text-xs' : 'h-7'
+        )}
+      >
+        <option value='add'>Add +/-</option>
+        <option value='set'>Set balance to</option>
+      </select>
       <label htmlFor={inputId} className='sr-only'>
-        Amount to manually adjust {balanceType} balance
+        {mode === 'set' ? `New ${balanceType} balance` : `Amount to manually adjust ${balanceType} balance`}
       </label>
       <Input
         id={inputId}
@@ -346,7 +366,7 @@ const ManualBalanceAdjustmentForm = ({
         type='number'
         inputMode='decimal'
         step='0.01'
-        placeholder='+/- 0.00'
+        placeholder={mode === 'set' ? '= 0.00' : '+/- 0.00'}
         value={balanceAmount}
         onChange={event => setBalanceAmount(event.target.value)}
         className={cn(
@@ -383,11 +403,37 @@ const ManualBalanceAdjustmentForm = ({
         className={cn('justify-center px-2 text-[11px]', layout === 'card' ? 'h-8 w-full' : 'h-7 w-full')}
       >
         <ArrowUpDown className='size-3' />
-        Apply
+        {mode === 'set' ? 'Set' : 'Apply'}
       </Button>
     </form>
   )
 }
+
+const RemoveInactiveCreditsForm = ({ layout, row }: { layout: 'card' | 'table'; row: AdminSagicamPaymentsRow }) => (
+  <form
+    action={removeSponsorInactiveContributionCreditsAction}
+    onSubmit={event => {
+      if (
+        !window.confirm(
+          `Remove ${row.sponsorCode}'s ${currencyFormatter.format(row.removableCredit)} credit for registered loved ones who are no longer vested (e.g. delinquent)? Removed and deceased loved ones keep their credit. This lowers their contribution balance.`
+        )
+      ) {
+        event.preventDefault()
+      }
+    }}
+    className='w-full print:hidden'
+  >
+    <input type='hidden' name='sponsorCode' value={row.sponsorCode} />
+    <Button
+      type='submit'
+      size='xs'
+      variant='outline'
+      className={cn('w-full justify-center px-2 text-[11px]', layout === 'card' ? 'h-8' : 'h-7')}
+    >
+      Remove credit ({currencyFormatter.format(row.removableCredit)})
+    </Button>
+  </form>
+)
 
 const ContributionPaymentControls = ({
   layout = 'table',
@@ -398,6 +444,8 @@ const ContributionPaymentControls = ({
 }) => {
   const hasSubmittedPayment = row.contributionAmountSent > row.amountReceived
   const hasPaymentValues = row.contributionAmountSent > 0 || row.amountReceived > 0 || row.contributionAmountUsed > 0
+
+  const hasInactiveCredits = row.removableCredit > 0
 
   return (
     <div
@@ -438,12 +486,19 @@ const ContributionPaymentControls = ({
           </Button>
         </form>
       </div>
-      <ManualBalanceAdjustmentForm
-        action={addSponsorContributionBalanceAdjustmentAction}
-        balanceType='contribution'
-        layout={layout}
-        sponsorCode={row.sponsorCode}
-      />
+      <div
+        className={
+          layout === 'card' ? 'grid gap-1.5' : 'col-start-2 row-span-2 row-start-1 grid w-32 justify-items-end gap-1.5'
+        }
+      >
+        <ManualBalanceAdjustmentForm
+          action={addSponsorContributionBalanceAdjustmentAction}
+          balanceType='contribution'
+          layout={layout}
+          sponsorCode={row.sponsorCode}
+        />
+        {hasInactiveCredits ? <RemoveInactiveCreditsForm layout={layout} row={row} /> : null}
+      </div>
     </div>
   )
 }

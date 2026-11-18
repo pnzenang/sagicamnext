@@ -14,6 +14,8 @@ const paymentTypeLabels: Record<string, string> = {
 
 const eventTypeLabels: Record<string, string> = {
   [sponsorPaymentLedgerEventTypes.automaticAdjustment]: 'Automatic adjustment',
+  [sponsorPaymentLedgerEventTypes.creditRemoved]: 'Credit removed',
+  [sponsorPaymentLedgerEventTypes.creditRestored]: 'Credit restored',
   [sponsorPaymentLedgerEventTypes.manualAdjustment]: 'Amount adjusted',
   [sponsorPaymentLedgerEventTypes.reset]: 'Reset',
   [sponsorPaymentLedgerEventTypes.submitted]: 'Amount set by sponsor',
@@ -22,6 +24,8 @@ const eventTypeLabels: Record<string, string> = {
 
 const historyEventTypes = [
   sponsorPaymentLedgerEventTypes.automaticAdjustment,
+  sponsorPaymentLedgerEventTypes.creditRemoved,
+  sponsorPaymentLedgerEventTypes.creditRestored,
   sponsorPaymentLedgerEventTypes.manualAdjustment,
   sponsorPaymentLedgerEventTypes.reset,
   sponsorPaymentLedgerEventTypes.submitted,
@@ -84,6 +88,8 @@ const AdminPaymentHistory = async () => {
       amountAdjusted:
         entry.eventType === sponsorPaymentLedgerEventTypes.manualAdjustment ||
         entry.eventType === sponsorPaymentLedgerEventTypes.automaticAdjustment ||
+        entry.eventType === sponsorPaymentLedgerEventTypes.creditRemoved ||
+        entry.eventType === sponsorPaymentLedgerEventTypes.creditRestored ||
         wasManuallyAdjustedAmountSent
           ? amount
           : null,
@@ -92,7 +98,9 @@ const AdminPaymentHistory = async () => {
       amountVerified: entry.eventType === sponsorPaymentLedgerEventTypes.verified ? amount : null,
       canDelete:
         entry.eventType !== sponsorPaymentLedgerEventTypes.reset &&
-        entry.eventType !== sponsorPaymentLedgerEventTypes.automaticAdjustment,
+        entry.eventType !== sponsorPaymentLedgerEventTypes.automaticAdjustment &&
+        entry.eventType !== sponsorPaymentLedgerEventTypes.creditRemoved &&
+        entry.eventType !== sponsorPaymentLedgerEventTypes.creditRestored,
       createdAt: entry.createdAt.toISOString(),
       createdAtLabel: dateTimeFormatter.format(entry.createdAt),
       eventType: wasManuallyAdjustedAmountSent

@@ -147,6 +147,16 @@ const ReviewDocumentControls = ({ uploadedDocument }: { uploadedDocument: DeathD
         />
       </FormContainer>
     </div>
+    {uploadedDocument.status !== 'submitted' ? (
+      <FormContainer action={reviewDeceasedMemberDocumentAction} refreshOnMessage>
+        <input type='hidden' name='documentId' value={uploadedDocument.id} />
+        <input type='hidden' name='status' value='submitted' />
+        <SubmitButton
+          text={uploadedDocument.status === 'approved' ? 'Undo approval (back to review)' : 'Undo rejection (back to review)'}
+          className='h-8 w-full bg-zinc-700 px-3 text-xs normal-case hover:bg-zinc-800 sm:w-auto'
+        />
+      </FormContainer>
+    ) : null}
   </div>
 )
 

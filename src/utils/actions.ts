@@ -513,6 +513,45 @@ const updateVestedContributionCredit = async ({
   })
 }
 
+const removeContributionCreditForRemovedMember = async ({
+  actorClerkId,
+  memberMatriculationNumber,
+  sponsorCode,
+  tx
+}: {
+  actorClerkId: string
+  memberMatriculationNumber: string
+  sponsorCode: string
+  tx: Prisma.TransactionClient
+}) => {
+  const credit = await tx.sponsorContributionCredit.findUnique({
+    where: {
+      memberMatriculationNumber
+    }
+  })
+
+  if (!credit) return
+
+  const creditAmount = decimalToNumber(credit.amountCredited)
+
+  await tx.sponsorContributionCredit.delete({
+    where: {
+      memberMatriculationNumber
+    }
+  })
+
+  await tx.sponsorPaymentLedgerEntry.create({
+    data: {
+      amount: -creditAmount,
+      createdBy: actorClerkId,
+      eventType: sponsorPaymentLedgerEventTypes.creditRemoved,
+      note: `Removed vested loved one credit of ${currencyFormatter.format(creditAmount)} because loved one ${memberMatriculationNumber} was removed.`,
+      paymentType: sponsorPaymentTypes.contribution,
+      sponsorCode
+    }
+  })
+}
+
 const syncVestedContributionCredit = async ({
   nextStatus,
   previousMatriculationNumber,
@@ -2966,6 +3005,129 @@ export const addSponsorContributionBalanceAdjustmentAction = async (formData: Fo
   await addSponsorBalanceAdjustment(formData, contributionBalanceAdjustmentType)
 }
 
+export const setSponsorContributionBalanceAction = async (formData: FormData): Promise<void> => {
+  await assertAdminUser()
+
+  try {
+    const sponsorCode = getRequiredFormValue(formData, 'sponsorCode')
+    const adjustmentReason = getAdjustmentReasonFromForm(formData)
+
+    const rawTarget = String(formData.get('balanceAmount') ?? '')
+      .replace(/[$,]/g, '')
+      .trim()
+
+    const targetBalance = Number(rawTarget)
+
+    if (!rawTarget || !Number.isFinite(targetBalance)) {
+      throw new Error('Enter the balance you want, for example 45 or -20.')
+    }
+
+    const { balance: currentBalance } = await fetchSponsorContributionSummary(sponsorCode)
+    const difference = roundCurrencyAmount(targetBalance - currentBalance)
+
+    if (Math.abs(difference) < 0.005) return
+
+    const adjustmentFormData = new FormData()
+
+    adjustmentFormData.set('sponsorCode', sponsorCode)
+    adjustmentFormData.set('balanceAmount', difference.toFixed(2))
+    adjustmentFormData.set(
+      'adjustmentReason',
+      `Balance set from ${currencyFormatter.format(currentBalance)} to ${currencyFormatter.format(
+        roundCurrencyAmount(targetBalance)
+      )}. ${adjustmentReason}`
+    )
+
+    await addSponsorBalanceAdjustment(adjustmentFormData, contributionBalanceAdjustmentType)
+  } catch (error) {
+    renderError(error)
+  }
+}
+
+export const removeSponsorInactiveContributionCreditsAction = async (formData: FormData): Promise<void> => {
+  const user = await assertAdminUser()
+
+  try {
+    const sponsorCode = getRequiredFormValue(formData, 'sponsorCode')
+
+    // Only loved ones still registered under this sponsor but no longer vested (e.g. delinquent) lose their credit.
+    // Removed and deceased loved ones keep theirs.
+    const [credits, nonVestedMembers] = await Promise.all([
+      db.sponsorContributionCredit.findMany({
+        select: {
+          amountCredited: true,
+          memberMatriculationNumber: true
+        },
+        where: {
+          sponsorCode
+        }
+      }),
+      db.member.findMany({
+        select: {
+          memberMatriculationNumber: true
+        },
+        where: {
+          memberStatus: {
+            not: memberStatus.Vested
+          },
+          sponsorCode
+        }
+      })
+    ])
+
+    const nonVestedMatriculationNumbers = new Set(nonVestedMembers.map(member => member.memberMatriculationNumber))
+
+    const inactiveCredits = credits.filter(credit => nonVestedMatriculationNumbers.has(credit.memberMatriculationNumber))
+
+    if (inactiveCredits.length === 0) {
+      throw new Error('This sponsor has no credits for registered loved ones who are not vested.')
+    }
+
+    const matriculationNumbers = inactiveCredits.map(credit => credit.memberMatriculationNumber)
+
+    const removedAmount = roundCurrencyAmount(
+      inactiveCredits.reduce((total, credit) => total + decimalToNumber(credit.amountCredited), 0)
+    )
+
+    await db.$transaction(async tx => {
+      await tx.sponsorContributionCredit.deleteMany({
+        where: {
+          memberMatriculationNumber: {
+            in: matriculationNumbers
+          },
+          sponsorCode
+        }
+      })
+
+      await tx.sponsorPaymentLedgerEntry.create({
+        data: {
+          amount: -removedAmount,
+          createdBy: user.id,
+          eventType: sponsorPaymentLedgerEventTypes.creditRemoved,
+          note: `Removed vested loved one credit of ${currencyFormatter.format(removedAmount)} for registered loved ones who are no longer vested: ${matriculationNumbers.join(', ')}.`,
+          paymentType: sponsorPaymentTypes.contribution,
+          sponsorCode
+        }
+      })
+    })
+
+    await recordDashboardActivity({
+      action: 'contribution_credit_removed',
+      actorClerkId: user.id,
+      dashboardScope: dashboardActivityScopes.admin,
+      entityType: 'payment',
+      sponsorCode,
+      summary: `Removed ${currencyFormatter.format(removedAmount)} vested loved one credit for sponsor ${sponsorCode} (${matriculationNumbers.join(', ')}).`
+    })
+
+    revalidatePath('/admin-sagicam-payments')
+    revalidatePath('/all-members')
+    revalidateSponsorPaymentPages()
+  } catch (error) {
+    renderError(error)
+  }
+}
+
 export const resetSponsorContributionPaymentAction = async (formData: FormData): Promise<void> => {
   const user = await assertAdminUser()
 
@@ -5005,8 +5167,16 @@ export const createRemovedMemberAction = async (provState: any, formData: FormDa
             id: member.id
           }
         })
+
+        // Removed loved ones lose their vested credit; restoring within 48 hours gives it back.
+        await removeContributionCreditForRemovedMember({
+          actorClerkId: user.id,
+          memberMatriculationNumber: member.memberMatriculationNumber,
+          sponsorCode: member.sponsorCode,
+          tx
+        })
       })
-    })
+    }, { allowContributionCreditChanges: true })
 
     await recordDashboardActivity({
       action: 'member_removed',
@@ -5082,8 +5252,16 @@ export const createRemovedMemberActionAdmin = async (
             id: member.id
           }
         })
+
+        // Removed loved ones lose their vested credit; restoring within 48 hours gives it back.
+        await removeContributionCreditForRemovedMember({
+          actorClerkId: user.id,
+          memberMatriculationNumber: member.memberMatriculationNumber,
+          sponsorCode: member.sponsorCode,
+          tx
+        })
       })
-    })
+    }, { allowContributionCreditChanges: true })
 
     await recordDashboardActivity({
       action: 'member_removed',
@@ -5251,6 +5429,22 @@ export const restoreRemovedMemberAction = async (prevState: { removedMemberId: s
     const restoredMemberStatus = removedMember.memberStatus
     const restoredNameOfBeneficiary = removedMember.nameOfBeneficiary
 
+    const creditRemovedAtRemoval = await db.sponsorPaymentLedgerEntry.findFirst({
+      select: {
+        id: true
+      },
+      where: {
+        createdAt: {
+          gte: new Date(removedMember.createdAt.getTime() - 60_000)
+        },
+        eventType: sponsorPaymentLedgerEventTypes.creditRemoved,
+        note: {
+          contains: `because loved one ${removedMember.memberMatriculationNumber} was removed`
+        },
+        sponsorCode: removedMember.sponsorCode
+      }
+    })
+
     await preserveContributionReserveDeficitForSponsors(
       [removedMember.sponsorCode],
       async () => {
@@ -5291,6 +5485,24 @@ export const restoreRemovedMemberAction = async (prevState: { removedMemberId: s
             previousMatriculationNumber: removedMember.memberMatriculationNumber,
             sponsorCode: removedMember.sponsorCode
           })
+
+          if (creditRemovedAtRemoval) {
+            await createVestedContributionCredit({
+              memberMatriculationNumber: removedMember.memberMatriculationNumber,
+              sponsorCode: removedMember.sponsorCode
+            })
+
+            await db.sponsorPaymentLedgerEntry.create({
+              data: {
+                amount: contributionCreditPerVestedMember,
+                createdBy: user.id,
+                eventType: sponsorPaymentLedgerEventTypes.creditRestored,
+                note: `Restored vested loved one credit of ${currencyFormatter.format(contributionCreditPerVestedMember)} because loved one ${removedMember.memberMatriculationNumber} was restored.`,
+                paymentType: sponsorPaymentTypes.contribution,
+                sponsorCode: removedMember.sponsorCode
+              }
+            })
+          }
         }
       },
       { allowContributionCreditChanges: true }
@@ -5846,7 +6058,7 @@ export const reviewDeceasedMemberDocumentAction = async (
 
     revalidateDeathDocumentationViews()
 
-    return { message: `Document marked ${status}` }
+    return { message: status === 'submitted' ? 'Document moved back to review' : `Document marked ${status}` }
   } catch (error) {
     return renderError(error)
   }
